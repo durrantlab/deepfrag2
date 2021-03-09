@@ -1,6 +1,7 @@
 
 import numpy as np
 from openbabel import pybel
+import torch
 from torch_geometric.data import Data
 
 
@@ -14,7 +15,7 @@ def _pybel_bond_index(mol: pybel.Molecule) -> np.ndarray:
         end = b.GetEndAtomIdx() - 1
         edges.append((start,end))
 
-    return np.array(edges)
+    return np.array(edges).transpose()
 
 
 class AtomFeaturizer(object):
@@ -30,16 +31,48 @@ class BondFeaturizer(object):
 
 
 class SimpleAtomFeaturizer(AtomFeaturizer):
+    # Most common ligand atoms.
+    ATOMS = [6,8,7,16,9,15,17,35,5,53,34,26,27,44,14,29,33,45,4,30,77,12,75,23,51,76,80]
+
     @staticmethod
     def featurize(mol: pybel.Molecule) -> np.ndarray:
-        return np.array([x.atomicnum for x in mol.atoms]).reshape(-1,1)
+        atomnum = [x.atomicnum for x in mol.atoms]
+
+        # idx 0 represents "other"
+        atom_types = np.zeros((len(atomnum), len(SimpleAtomFeaturizer.ATOMS)+1))
+        for i in range(len(atomnum)):
+            if atomnum[i] in SimpleAtomFeaturizer.ATOMS:
+                atom_types[i][SimpleAtomFeaturizer.ATOMS.index(atomnum[i])+1] = 1
+            else:
+                atom_types[i][0] = 1
+
+        return atom_types
 
 
 class SimpleBondFeaturizer(BondFeaturizer):
     @staticmethod
     def featurize(mol: pybel.Molecule) -> np.ndarray:
         bonds = [mol.OBMol.GetBondById(i) for i in range(mol.OBMol.NumBonds())]
-        return np.array([x.GetBondOrder() for x in bonds]).reshape(-1,1)
+
+        # inside () is mutually exclusive classes
+        # [(aro, single, double, triple), in_ring]
+        bond_types = np.zeros((len(bonds), 5))
+        for i in range(len(bonds)):
+            bond = bonds[i]
+
+            if bond.IsAromatic():
+                bond_types[i][0] = 1
+            else:
+                order = bond.GetBondOrder()
+
+                if order == 1: bond_types[i][1] = 1
+                elif order == 2: bond_types[i][2] = 1
+                elif order == 3: bond_types[i][3] = 1
+            
+            if bond.IsInRing():
+                bond_types[i][4] = 1
+
+        return bond_types
 
 
 class MolGraph(Data):
@@ -56,10 +89,10 @@ class MolGraph(Data):
     def __init__(self, atom_coords: np.ndarray, atom_types: np.ndarray,
         bond_index: np.ndarray, bond_types: np.ndarray):
         
-        self.atom_coords = atom_coords
-        self.atom_types = atom_types
-        self.bond_index = bond_index
-        self.bond_types = bond_types
+        self.atom_coords = torch.tensor(atom_coords, dtype=torch.float)
+        self.atom_types = torch.tensor(atom_types, dtype=torch.float)
+        self.bond_index = torch.tensor(bond_index, dtype=torch.long)
+        self.bond_types = torch.tensor(bond_types, dtype=torch.float)
 
     def __repr__(self):
         return f'MolGraph(atom_coords={self.atom_coords.shape}, '\
@@ -97,14 +130,15 @@ class MolGraph(Data):
         mol.make3D()
         mol.removeh()
 
-        return MolGraph.from_pybel(mol, af, bf)
+        m = MolGraph.from_pybel(mol, af, bf)
+        m._make_undirected()
+        return m
 
-    def make_undirected(self):
+    def _make_undirected(self):
         """Duplicate bond_index and bond_types so that each edge is listed as
         (a,b) and (b,a). This format is useful for message passing convolutions."""
-        self.bond_index = np.concatenate([
-            self.bond_index, 
-            np.flip(self.bond_index, axis=1)
-        ])
+        self.bond_index = torch.cat(
+            (self.bond_index, torch.flip(self.bond_index, (0,))), 1)
 
-        self.bond_types = np.repeat(self.bond_types, 2, axis=0)
+        self.bond_types = torch.cat(
+            (self.bond_types, self.bond_types), 0)
