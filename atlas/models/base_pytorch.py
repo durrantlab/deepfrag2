@@ -61,7 +61,7 @@ class BasePytorchModel(object):
             torch.save(self.models[name].state_dict(), str(p / f'{name}.pt'))
 
     @classmethod
-    def create(cls, args: dict) -> 'BasePytorchModel':
+    def create(cls, args: dict = {}) -> 'BasePytorchModel':
         """
         Create an instance of a BasePytorchModel with provided arguments.
         
