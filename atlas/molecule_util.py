@@ -95,5 +95,16 @@ class MolGraph(Data):
 
         mol = pybel.readstring('smi', smiles)
         mol.make3D()
+        mol.removeh()
 
         return MolGraph.from_pybel(mol, af, bf)
+
+    def make_undirected(self):
+        """Duplicate bond_index and bond_types so that each edge is listed as
+        (a,b) and (b,a). This format is useful for message passing convolutions."""
+        self.bond_index = np.concatenate([
+            self.bond_index, 
+            np.flip(self.bond_index, axis=1)
+        ])
+
+        self.bond_types = np.repeat(self.bond_types, 2, axis=0)
