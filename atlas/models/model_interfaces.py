@@ -1,7 +1,7 @@
 
 import torch
 
-from .base_pytorch import BasePytorchModel
+from .base_model import BasePytorchModel
 from ..molecule_util import MolGraph
 
 

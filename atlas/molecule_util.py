@@ -94,6 +94,14 @@ class MolGraph(Data):
         self.bond_index = torch.tensor(bond_index, dtype=torch.long)
         self.bond_types = torch.tensor(bond_types, dtype=torch.float)
 
+        # MolGraph objects may contain a smiles string if initialized with
+        # MolGraph.from_smiles().
+        self.smiles: str = None
+
+        # An optional dict with metadata information about the origin of the
+        # MolGraph object. E.g. may contain a "ZINC" indentifier.
+        self.meta: dict = {}
+
     def __repr__(self):
         return f'MolGraph(atom_coords={self.atom_coords.shape}, '\
                f'atom_types={self.atom_types.shape}, '\
@@ -131,6 +139,7 @@ class MolGraph(Data):
         mol.removeh()
 
         m = MolGraph.from_pybel(mol, af, bf)
+        m.smiles = smiles
         m._make_undirected()
         return m
 
@@ -142,3 +151,17 @@ class MolGraph(Data):
 
         self.bond_types = torch.cat(
             (self.bond_types, self.bond_types), 0)
+
+
+class MolGraphProvider(object):
+    """Abstract interface for a MolGraphProvider object.
+    
+    Subclasses should implement __len__ and __getitem__ to support enumeration
+    over the data.
+    """
+
+    def __len__(self):
+        raise NotImplementedError()
+
+    def __getitem__(self, idx) -> MolGraph:
+        raise NotImplementedError()

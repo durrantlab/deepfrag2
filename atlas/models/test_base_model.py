@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from .base_pytorch import TestModel
+from .base_model import TestModel
 
 
 class TestBaseModel(unittest.TestCase):
