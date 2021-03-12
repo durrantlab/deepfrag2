@@ -2,6 +2,7 @@
 import numpy as np
 from openbabel import pybel
 import torch
+from torch.utils.data import Dataset
 from torch_geometric.data import Data
 
 
@@ -129,13 +130,15 @@ class MolGraph(Data):
     def from_smiles(
         smiles: str,
         af: AtomFeaturizer = SimpleAtomFeaturizer, 
-        bf: BondFeaturizer = SimpleBondFeaturizer
+        bf: BondFeaturizer = SimpleBondFeaturizer,
+        make_3D: bool = True
     ) -> 'MolGraph':
         """Create a MolGraph from a smiles string. A reasonable conformation
         is automatically inferred."""
 
         mol = pybel.readstring('smi', smiles)
-        mol.make3D()
+        if make_3D:
+            mol.make3D()
         mol.removeh()
 
         m = MolGraph.from_pybel(mol, af, bf)
@@ -153,7 +156,7 @@ class MolGraph(Data):
             (self.bond_types, self.bond_types), 0)
 
 
-class MolGraphProvider(object):
+class MolGraphProvider(Dataset):
     """Abstract interface for a MolGraphProvider object.
     
     Subclasses should implement __len__ and __getitem__ to support enumeration

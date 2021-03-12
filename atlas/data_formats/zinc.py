@@ -30,8 +30,9 @@ class ZINCMolGraphProvider(MolGraphProvider):
     ```
     """
 
-    def __init__(self, basedir: str):
+    def __init__(self, basedir: str, make_3D: bool = True):
         self.basedir = pathlib.Path(basedir)
+        self.make_3D = make_3D
 
         self.index: Dict[str, List[int]] = self._build_index()
         self.counts: Dict[str, int] = {
@@ -82,7 +83,7 @@ class ZINCMolGraphProvider(MolGraphProvider):
 
             smi, zinc_id = line.decode('ascii').split()
 
-        m = MolGraph.from_smiles(smi)
+        m = MolGraph.from_smiles(smi, make_3D=self.make_3D)
         m.meta['zinc_id'] = zinc_id
 
         return m
