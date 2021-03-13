@@ -10,7 +10,6 @@ from typing import List
 import numpy as np
 from openbabel import pybel
 import torch
-torch.multiprocessing.set_sharing_strategy('file_system') # Fix DataLoader fd leaks
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import wandb
@@ -19,7 +18,7 @@ import yaml
 from ..molecule_util import MolGraph
 from ..models.model_interfaces import MolAutoencoder
 from ..models.dense_graph_autoencoder import DenseGraphAutoencoder
-from ..data_formats.zinc import ZINCMolGraphProvider
+from ..data_formats.zinc import ZINCMolGraphProviderH5
 
 
 def disable_ob_logging():
@@ -72,8 +71,8 @@ def do_batch(mod: MolAutoencoder, loss_fn, batch: List[MolGraph], mask_ratio: fl
 def train(attr: dict, save_path: str, wandb_project: str, cpu_only: bool):
 
     # Necessary to prevent a multi-worker DataLoader from crashing.
-    rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
-    resource.setrlimit(resource.RLIMIT_NOFILE, (4096, rlimit[1]))
+    # rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+    # resource.setrlimit(resource.RLIMIT_NOFILE, (4096, rlimit[1]))
 
     device = torch.device('cpu') if cpu_only else torch.device('cuda')
 
@@ -86,11 +85,11 @@ def train(attr: dict, save_path: str, wandb_project: str, cpu_only: bool):
 
     # Load ZINC training data.
     logging.info('Loading dataset...')
-    dat = ZINCMolGraphProvider(attr['zinc_dir'])
+    dat = ZINCMolGraphProviderH5(attr['zinc_h5'], make_3D=False)
 
     loader = DataLoader(
         dat, batch_size=attr['batch_size'], shuffle=True, 
-        collate_fn=lambda x:x, num_workers=attr['data_workers'])
+        collate_fn=lambda x:x)
 
     # Initialize the model.
     logging.info('Creating model...')

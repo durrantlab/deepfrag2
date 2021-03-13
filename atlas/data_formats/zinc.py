@@ -2,6 +2,7 @@
 import pathlib
 from typing import List, Dict
 
+import h5py
 from tqdm import tqdm
 
 from ..molecule_util import MolGraphProvider, MolGraph
@@ -85,5 +86,35 @@ class ZINCMolGraphProvider(MolGraphProvider):
 
         m = MolGraph.from_smiles(smi, make_3D=self.make_3D)
         m.meta['zinc_id'] = zinc_id
+
+        return m
+
+class ZINCMolGraphProviderH5(MolGraphProvider):
+    """
+    This version of the ZINCMolGraphProvider iterates over a pre-processed
+    h5 format of the ZINC dataset.
+
+    Use the atlas.convert.zinc_to_h5py utility to convert.
+    """
+
+    def __init__(self, db: str, make_3D: bool = True, in_mem: bool = False):
+        self.fp = h5py.File(db, 'r')
+        self.make_3D = make_3D
+        self.in_mem = in_mem
+
+        self.d_smiles = self.fp['smiles']
+        self.d_zinc = self.fp['zinc']
+
+        if in_mem:
+            self.d_smiles = self.d_smiles[()]
+            self.d_zinc = self.d_zinc[()]
+            self.fp.close()
+
+    def __len__(self):
+        return len(self.d_smiles)
+
+    def __getitem__(self, idx) -> MolGraph:
+        m = MolGraph.from_smiles(self.d_smiles[idx].decode('ascii'), make_3D=self.make_3D)
+        m.meta['zinc_id'] = self.d_zinc[idx].decode('ascii')
 
         return m
