@@ -155,6 +155,19 @@ class MolGraph(Data):
         self.bond_types = torch.cat(
             (self.bond_types, self.bond_types), 0)
 
+    def to_sdf(self) -> str:
+        """Convert the molecule to sdf using atom_coords.
+        
+        This method requires the molecule to have a smiles string set.
+        """
+        assert self.smiles is not None
+
+        mol = pybel.readstring('smi', self.smiles)
+        for i in range(len(mol.atoms)):
+            mol.atoms[i].OBAtom.SetVector(
+                *[float(x) for x in self.atom_coords[i]])
+        return mol.write('sdf')
+
 
 class MolGraphProvider(Dataset):
     """Abstract interface for a MolGraphProvider object.
