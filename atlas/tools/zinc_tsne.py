@@ -72,7 +72,7 @@ def standardize(data):
     return std
 
 
-def make_tsne(z_emb: np.array, pca_embedding_size: int) -> np.array:
+def make_tsne(z_emb: np.array, pca_embedding_size: int, jobs: int) -> np.array:
     print('[*] Computing PCA...')
     start = time.time()
     z_pre = PCA(pca_embedding_size).fit_transform(z_emb)
@@ -83,7 +83,7 @@ def make_tsne(z_emb: np.array, pca_embedding_size: int) -> np.array:
 
     print('[*] Computing t-SNE...')
     start = time.time()
-    z_out[:,:2] = TSNE(2, verbose=1).fit_transform(z_pre)
+    z_out[:,:2] = TSNE(2, verbose=1, n_jobs=jobs).fit_transform(z_pre)
     end = time.time()
     print('[*] t-SNE: %.3f s' % (end-start))
 
@@ -123,7 +123,7 @@ def run(args):
         args.zinc_path, args.dense_gcn_model, args.num, args.cpu)
 
     print('[2/3] Computing t-SNE')
-    z_out = make_tsne(z_emb, args.pca_embedding_size)
+    z_out = make_tsne(z_emb, args.pca_embedding_size, args.jobs)
 
     print('[3/3] Generating csv')
     save_csv(args.csv_out, z_out, info)
@@ -143,6 +143,8 @@ def main():
         help='Size of PCA pre-embedding step.')
     parser.add_argument('--cpu', default=False, action='store_true',
         help='Use the CPU only if set.')
+    parser.add_argument('--jobs', default=1, type=int,
+        help='Number of jobs for the t-SNE step.')
     args = parser.parse_args()
     run(args)
 

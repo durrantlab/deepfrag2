@@ -175,18 +175,37 @@ function draw_chart_webgl(data) {
 
         const point = quadtree.find(x, y);
 
-        d3.select('#mol_viewer')
-            .transition()
-            .style('opacity', 1)
-    
-        d3.select('#mol_viewer')
-            .style('left', event.clientX + 'px')
-            .style('top', event.clientY + 'px')
+        const px = xScale(point.x);
+        const py = yScale(point.y);
 
-        d3.select('#zinc_label')
-            .html(point.smiles)
+        // console.log(px, py);
 
-        draw_mol(point.smiles, point.idx);
+        const dx = (event.clientX-px);
+        const dy = (event.clientY-py);
+        const dist = (dx*dx) + (dy*dy);
+        // console.log(dist);
+
+        if (dist > 2000) {
+            d3.select('#mol_viewer')
+                // .transition()
+                .style('opacity', 0)
+
+            d3.select('#zinc_label')
+                .html('')
+        } else {
+            d3.select('#mol_viewer')
+                // .transition()
+                .style('opacity', 1)
+
+            d3.select('#mol_viewer')
+                .style('left', event.clientX + 'px')
+                .style('top', event.clientY + 'px')
+
+            d3.select('#zinc_label')
+                .html('<b>' + point.zinc_id + '</b> ' + point.smiles)
+
+            draw_mol(point.smiles, point.idx);
+        }
     }
     
     const chart = fc
