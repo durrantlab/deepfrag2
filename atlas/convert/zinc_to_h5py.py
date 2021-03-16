@@ -52,7 +52,7 @@ def convert(zinc: pathlib.Path, out: pathlib.Path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('zinc', help='Path to zinc directory.')
-    parser.add_argument('out', help='Path to output.h5py file.')
+    parser.add_argument('out', help='Path to output.h5 file.')
     args = parser.parse_args()
 
     convert(pathlib.Path(args.zinc), pathlib.Path(args.out))

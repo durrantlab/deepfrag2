@@ -4,27 +4,9 @@ var r_small = 4;
 var r_select = 8;
 var select_color = "#fcd303";
 
-var width = 600;
-var height = 600;
+var WIDTH = 600;
+var HEIGHT = 600;
 
-
-function filter_data(data, sx, sy, t) {
-    var scope = [];
-
-    for (var i = 0; i < data.length; ++i) {
-        var x = data[i].x;
-        var y = data[i].y;
-
-        var tx = t.applyX(sx(x));
-        var ty = t.applyY(sy(y));
-
-        if (tx >= 0 && tx < 600 && ty >= 0 && ty < 600) {
-            scope.push(data[i]);
-        }
-    }
-
-    return scope;
-}
 
 // Outdated SVG version (much slower)
 function draw_chart_svg(data) {
@@ -123,11 +105,11 @@ function draw_chart_webgl(data) {
 
     var xScale = d3.scaleLinear()
         .domain([ax, bx])
-        .range([ 0, width ]);
+        // .range([ 0, WIDTH ]);
 
     var yScale = d3.scaleLinear()
         .domain([ay, by])
-        .range([ height, 0]);
+        // .range([ HEIGHT, 0]);
 
     var colors = d3.scaleLinear()
         .domain([az, (az + bz)/2, bz])
@@ -155,12 +137,13 @@ function draw_chart_webgl(data) {
 
     const xScaleOriginal = xScale.copy();
     const yScaleOriginal = yScale.copy();
+
+    var transform = d3.zoomIdentity;
     
     const zoom = d3
         .zoom()
         .on("zoom", (event) => {
-            xScale.domain(event.transform.rescaleX(xScaleOriginal).domain());
-            yScale.domain(event.transform.rescaleY(yScaleOriginal).domain());
+            transform = event.transform;
             redraw();
         });
 
@@ -227,14 +210,45 @@ function draw_chart_webgl(data) {
                 .call(zoom)
                 .on('mousemove', mousemove)
         })
+
+    d3.select("#tsne_plot")
+        .datum(data)
+        .call(chart);
     
     const redraw = () => {
+        const bounds = d3.select('#tsne_plot .plot-area').node().getBoundingClientRect();
+
+        const width = bounds['width'];
+        const height = bounds['height'];
+
+        var zoomX = transform.rescaleX(xScaleOriginal).domain();
+        var zoomY = transform.rescaleY(yScaleOriginal).domain();
+
+        // if (width > height) {
+        //     const ratio = (width / height) - 1;
+        //     const x_scope = zoomX[1] - zoomX[0];
+
+        //     zoomX[0] -= (x_scope) * (ratio / 2);
+        //     zoomX[1] += (x_scope) * (ratio / 2);
+        // } else {
+        //     const ratio = (height / width) - 1;
+        //     const y_scope = zoomY[1] - zoomY[0];
+
+        //     zoomY[0] -= (y_scope) * (ratio / 2);
+        //     zoomY[1] += (y_scope) * (ratio / 2);
+        // }
+
+        xScale.domain(zoomX);
+        yScale.domain(zoomY);
+
         d3.select("#tsne_plot")
             .datum(data)
             .call(chart);
     };
 
     redraw();
+
+    window.addEventListener('resize', redraw);
 }
 
 d3.csv("/maps/tsne_gcn.csv", d3.autoType).then(draw_chart_webgl);
