@@ -1,3 +1,4 @@
 * [Frag Atlas](/)
-- Quick Start
+- Documentation
     * [Models](models.md)
+    * [Data](data.md)
