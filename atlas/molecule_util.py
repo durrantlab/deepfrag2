@@ -1,9 +1,14 @@
 
+from typing import List
+
 import numpy as np
 from openbabel import pybel
 import torch
 from torch.utils.data import Dataset
 from torch_geometric.data import Data
+
+
+from atlas.draw import DrawContext
 
 
 def _pybel_bond_index(mol: pybel.Molecule) -> np.ndarray:
@@ -167,6 +172,45 @@ class MolGraph(Data):
             mol.atoms[i].OBAtom.SetVector(
                 *[float(x) for x in self.atom_coords[i]])
         return mol.write('sdf')
+
+    def view(self, highlight = [], **kwargs) -> 'py3DMol.view':
+        """Render the molecule with py3DMol (for use in jupyter).
+        
+        Args:
+        - highlight: If a list, this is interpreted as a list of atom indexes
+            to highlight. If a dict, this is interpreted as an atom index to
+            feature mapping. If the feature is a scalar, it is interpreted as
+            the sphere radius, if it is a dictionary, the values are passed
+            directly to DrawContext.draw_sphere. For example, you can specify:
+
+            mol.view(highlight={
+                0: {
+                    'color': 'red',
+                    'radius': 0.8,
+                    'opacity': 0.5
+                }, ...
+            })
+        """
+        draw = DrawContext(**kwargs)
+        draw.draw_mol(self)
+
+        if type(highlight) is list:
+            # Binary atom selection.
+            for idx in highlight:
+                center = tuple([float(x) for x in self.atom_coords[idx].cpu().detach()])
+                draw.draw_sphere(center, opacity=0.8, radius=0.6)
+        else:
+            # Feature mapping.
+            for idx in highlight:
+                center = tuple([float(x) for x in self.atom_coords[idx].cpu().detach()])
+                ft = highlight[idx]
+
+                if type(ft) in [int, float]:
+                    draw.draw_sphere(center, opacity=0.8, radius=ft)
+                else:
+                    draw.draw_sphere(center, **ft)
+
+        return draw.render()
 
 
 class MolGraphProvider(Dataset):
