@@ -1,5 +1,5 @@
 
-from typing import List, Tuple
+from typing import List, Tuple, Set
 
 import numpy as np
 from openbabel import pybel
@@ -85,6 +85,13 @@ class SimpleBondFeaturizer(BondFeaturizer):
         return bond_types
 
 
+def _cast_tensor(arr, dtype):
+    if type(arr) is torch.Tensor:
+        return arr
+    else:
+        return torch.tensor(arr, dtype=dtype)
+
+
 class MolGraph(Data):
     """Molecule with 3D coordinates.
     
@@ -96,13 +103,11 @@ class MolGraph(Data):
     - bond_types: (B*2)x? array of bond feature vectors.
     """
 
-    def __init__(self, atom_coords: np.ndarray, atom_types: np.ndarray,
-        bond_index: np.ndarray, bond_types: np.ndarray):
-        
-        self.atom_coords = torch.tensor(atom_coords, dtype=torch.float)
-        self.atom_types = torch.tensor(atom_types, dtype=torch.float)
-        self.bond_index = torch.tensor(bond_index, dtype=torch.long)
-        self.bond_types = torch.tensor(bond_types, dtype=torch.float)
+    def __init__(self, atom_coords, atom_types, bond_index, bond_types):
+        self.atom_coords = _cast_tensor(atom_coords, dtype=torch.float)
+        self.atom_types = _cast_tensor(atom_types, dtype=torch.float)
+        self.bond_index = _cast_tensor(bond_index, dtype=torch.long)
+        self.bond_types = _cast_tensor(bond_types, dtype=torch.float)
 
         # MolGraph objects may contain a smiles string if initialized with
         # MolGraph.from_smiles().
@@ -164,18 +169,34 @@ class MolGraph(Data):
         self.bond_types = torch.cat(
             (self.bond_types, self.bond_types), 0)
 
-    def to_sdf(self) -> str:
-        """Convert the molecule to sdf using atom_coords.
-        
-        This method requires the molecule to have a smiles string set.
-        """
-        assert self.smiles is not None
+    def _make_fake_sdf(self) -> str:
+        """Generate a fake carbon skeleton SDF for visualization of abstract
+        molecular topologies."""
+        edges = self._collect_edges()
 
-        mol = pybel.readstring('smi', self.smiles)
-        for i in range(len(mol.atoms)):
-            mol.atoms[i].OBAtom.SetVector(
-                *[float(x) for x in self.atom_coords[i]])
-        return mol.write('sdf')
+        sdf = '\n\n\n'
+        sdf += f'{len(self.atom_coords):3d}{len(edges):3d}  0  0  0  0  0  0  0  0999 V2000\n'
+
+        for i in range(len(self.atom_coords)):
+            x,y,z = self.atom_coords[i]
+            sdf += f'{x:10.4f}{y:10.4f}{z:10.4f} C   0  0  0  0  0  0  0  0  0  0  0  0\n'
+        
+        for a,b in edges:
+            sdf += f'{a+1:3d}{b+1:3d}  1  0  0  0  0\n'
+
+        sdf += 'M  END\n$$$$\n'
+        return sdf
+
+    def to_sdf(self) -> str:
+        """Convert the molecule to sdf using atom_coords."""
+        if self.smiles is None:
+            return self._make_fake_sdf()
+        else:
+            mol = pybel.readstring('smi', self.smiles)
+            for i in range(len(mol.atoms)):
+                mol.atoms[i].OBAtom.SetVector(
+                    *[float(x) for x in self.atom_coords[i]])
+            return mol.write('sdf')
 
     def view(self, highlight = [], **kwargs) -> 'py3DMol.view':
         """Render the molecule with py3DMol (for use in jupyter).
@@ -281,6 +302,58 @@ class MolGraph(Data):
             seen_edges.add((a,b))
 
         return transformations
+
+    def subgraph(self, edges=List[MolEdge]) -> 'MolGraph':
+        """Sample a new subgraph from a list of edges. Gradients are preserved
+        for atom_types and bond_types.
+        
+        The returned MolGraph object has the following meta parameters:
+        - "atom_mapping": Dict[int,int] A mapping from the parent molecule atom
+            indexes to the subgraph atom indexes.
+        """
+
+        selected_atoms = set()
+        for a,b in edges:
+            selected_atoms |= {a,b}
+        selected_atoms = sorted(list(selected_atoms))
+
+        atom_coords = self.atom_coords[selected_atoms]
+
+        # Preserve computation graph so gradients work.
+        atom_types = torch.zeros(
+            (len(selected_atoms), self.atom_types.shape[1]),
+            dtype=torch.float,
+            device=self.atom_types.device
+        )
+        for i in range(len(selected_atoms)):
+            atom_types[i] = self.atom_types[i]
+
+        selected_bonds = set()
+        for i in range(self.bond_index.shape[1]):
+            a,b = self.bond_index[:,i].numpy()
+            if (a,b) in edges or (b,a) in edges:
+                selected_bonds.add(i)
+        selected_bonds = list(selected_bonds)
+
+        bond_index = self.bond_index[:,selected_bonds]
+        atom_mapping = {selected_atoms[i]:i for i in range(len(selected_atoms))}
+
+        bv = bond_index.view(-1)
+        for i in range(len(bv)):
+            bv[i] = atom_mapping[int(bv[i])]
+
+        bond_types = torch.zeros(
+            (len(selected_bonds), self.bond_types.shape[1]),
+            dtype=torch.float,
+            device=self.atom_types.device
+        )
+        for i in range(len(selected_bonds)):
+            bond_types[i] = self.bond_types[i]
+
+        sub = MolGraph(atom_coords, atom_types, bond_index, bond_types)
+        sub.meta['atom_mapping'] = atom_mapping
+
+        return sub
 
 
 class MolGraphProvider(Dataset):
