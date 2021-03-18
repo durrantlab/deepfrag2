@@ -1,5 +1,5 @@
 
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from openbabel import pybel
@@ -9,6 +9,10 @@ from torch_geometric.data import Data
 
 
 from atlas.draw import DrawContext
+
+
+# Shorthand type definitions.
+MolEdge = Tuple[int, int]
 
 
 def _pybel_bond_index(mol: pybel.Molecule) -> np.ndarray:
@@ -211,6 +215,72 @@ class MolGraph(Data):
                     draw.draw_sphere(center, **ft)
 
         return draw.render()
+
+    def _collect_edges(self) -> List[MolEdge]:
+        edges = [
+            tuple(sorted(x)) 
+            for x in self.bond_index.transpose(0,1).cpu().detach().numpy()
+        ]
+        edges = list(set(edges)) # dedup
+        return edges
+
+    def random_construction(self) -> List[MolEdge]:
+        """Generate a random permutation of edges that reconstructs the
+        molecular graph.
+
+        This is used as a data pre-processing step for training generative
+        graph models.
+        
+        This method picks a random starting index and then performs a breadth-
+        first search over the atoms until the whole graph is covered. It
+        returns a list of MolEdge (Tuple[int,int]) describing the intermediate
+        graph transformation steps.
+
+        In each new edge, the first element is the "branching" point and is
+        guaranteed to exist in the current subgraph (except for the first edge).
+        
+        For example, given the graph:
+
+        0-1-2-4
+          |/
+          3
+        
+        A valid bfs may produce:
+        [
+            (0,1),
+            (1,3),
+            (1,2),
+            (2,4),
+            (3,2)
+        ]
+        """
+        edges = self._collect_edges()
+
+        transformations = []
+
+        subgraph = {np.random.choice(len(self.atom_types))}
+        seen_edges = set()
+
+        for i in range(len(edges)):
+            valid = [
+                x for x in edges 
+                if (x[0] in subgraph or x[1] in subgraph) 
+                and not x in seen_edges]
+            
+            a,b = valid[np.random.choice(len(valid))]
+            
+            # Ensure the first element is contained in the current subgraph.
+            if not a in subgraph:
+                transformations.append((b,a))
+            elif not b in subgraph:
+                transformations.append((a,b))
+            else:
+                transformations.append((a,b) if np.random.choice(2) else (b,a))
+            
+            subgraph |= {a,b}
+            seen_edges.add((a,b))
+
+        return transformations
 
 
 class MolGraphProvider(Dataset):
