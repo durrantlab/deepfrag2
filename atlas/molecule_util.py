@@ -117,6 +117,17 @@ class MolGraph(Data):
         # MolGraph object. E.g. may contain a "ZINC" indentifier.
         self.meta: dict = {}
 
+    def clone(self) -> 'MolGraph':
+        g = MolGraph(
+            self.atom_coords.clone(),
+            self.atom_types.clone(),
+            self.bond_index.clone(),
+            self.bond_types.clone()
+        )
+        g.smiles = self.smiles
+        g.meta = {k:self.meta[k] for k in self.meta}
+        return g
+
     def __repr__(self):
         return f'MolGraph(atom_coords={self.atom_coords.shape}, '\
                f'atom_types={self.atom_types.shape}, '\
@@ -354,6 +365,83 @@ class MolGraph(Data):
         sub.meta['atom_mapping'] = atom_mapping
 
         return sub
+
+    def add_atom(self, coord, link: int, copy: bool = True) -> 'MolGraph':
+        """Add an atom and bond to the graph.
+
+        This method duplicates the current graph and appends a new entry to
+        atom_coords and atom_types. It also adds two entries to bond_index and
+        bond_types to create a bidirectional edge.
+
+        By default, atom_types and bond_types are filled with zero vectors.
+
+        Args:
+        - coord: list-like (x,y,z) coordinate of the new atom.
+        - link: index of the atom to create a bond with.
+        - copy: If True (default), create a copy of the graph, otherwise edit
+            the current graph in-place.
+        """
+        mol = self
+        if copy:
+            mol = self.clone()
+
+        # SMILES is no longer accurate.
+        mol.smiles = None
+        
+        mol.atom_coords = torch.cat([
+            mol.atom_coords,
+            _cast_tensor(coord, dtype=torch.float)
+                .unsqueeze(0).to(mol.atom_coords.device)
+        ], axis=0)
+        
+        mol.atom_types = torch.cat([
+            mol.atom_types,
+            torch.zeros((1,mol.atom_types.shape[1])).to(mol.atom_types.device)
+        ], axis=0)
+        
+        new_idx = len(mol.atom_types) - 1
+        
+        mol.bond_index = torch.cat([
+            mol.bond_index,
+            torch.tensor(
+                [[new_idx, link], [link, new_idx]]
+            ).to(mol.bond_index.device)
+        ], axis=1)
+        
+        mol.bond_types = torch.cat([
+            mol.bond_types,
+            torch.zeros((2,mol.bond_types.shape[1])).to(mol.bond_types.device)
+        ], axis=0)
+        
+        return mol
+
+    def add_bond(self, a: int, b: int, copy: bool = True) -> 'MolGraph':
+        """Add a new edge to the graph between index "a" and "b".
+        
+        Args:
+        - a: Index of the first atom.
+        - b: Index of the second atom.
+        - copy: If True (default), create a copy of the graph, otherwise edit
+            the current graph in-place.
+        """
+        mol = self
+        if copy:
+            mol = self.clone()
+
+        # SMILES is no longer accurate.
+        mol.smiles = None
+        
+        mol.bond_index = torch.cat([
+            mol.bond_index,
+            torch.tensor([[a, b], [b, a]]).to(mol.bond_index.device)
+        ], axis=1)
+        
+        mol.bond_types = torch.cat([
+            mol.bond_types,
+            torch.zeros((2,mol.bond_types.shape[1])).to(mol.bond_types.device)
+        ], axis=0)
+        
+        return mol
 
 
 class MolGraphProvider(Dataset):
