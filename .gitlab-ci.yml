@@ -10,12 +10,14 @@ test:
   except:
   - main
 
+before_script:
+- apt-get update -y
+- apt-get install -y gcc
+
 black:
   stage: test
-  before_script:
-  - apt install gcc
-  - pip install -U black
   script:
+  - pip install -U black
   - black --check ./atlas
 
 pages:
