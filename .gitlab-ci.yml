@@ -4,7 +4,7 @@ test:
   stage: test
   script:
   - pip install -U sphinx
-  - cd docs && sphinx-build -b html . public
+  - sphinx-build -b html ./docs public
   only:
   - branches
   except:
@@ -14,9 +14,9 @@ pages:
   stage: deploy
   script:
   - pip install -U sphinx
-  - cd docs && sphinx-build -b html . public
+  - sphinx-build -b html ./docs public
   artifacts:
     paths:
-    - docs/public
+    - public
   only:
   - main
