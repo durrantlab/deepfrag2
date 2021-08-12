@@ -1,4 +1,3 @@
-
 import argparse
 import pathlib
 
@@ -7,19 +6,19 @@ from tqdm import tqdm
 
 
 def append_file(d_smiles: h5py.Dataset, d_zinc: h5py.Dataset, fp: pathlib.Path):
-    
+
     arr_smiles = []
     arr_zinc = []
 
-    with open(fp, 'r') as f:
+    with open(fp, "r") as f:
         first = True
         for line in f:
             if first:
                 first = False
                 continue
-                
+
             smiles, zinc = line.split()
-            
+
             arr_smiles.append(smiles)
             arr_zinc.append(zinc)
 
@@ -34,28 +33,32 @@ def append_file(d_smiles: h5py.Dataset, d_zinc: h5py.Dataset, fp: pathlib.Path):
 
 
 def convert(zinc: pathlib.Path, out: pathlib.Path):
-    data_files = [x for x in zinc.iterdir() if x.suffix == '.smi']
-    print(f'Found {len(data_files)} files.')
+    data_files = [x for x in zinc.iterdir() if x.suffix == ".smi"]
+    print(f"Found {len(data_files)} files.")
 
-    f = h5py.File(str(out), 'w')
+    f = h5py.File(str(out), "w")
 
-    string_type = h5py.string_dtype(encoding='ascii')
-    d_smiles = f.create_dataset('smiles', shape=(0,), dtype=string_type, maxshape=(None,))
-    d_zinc = f.create_dataset('zinc', shape=(0,), dtype=string_type, maxshape=(None,))
+    string_type = h5py.string_dtype(encoding="ascii")
+    d_smiles = f.create_dataset(
+        "smiles", shape=(0,), dtype=string_type, maxshape=(None,)
+    )
+    d_zinc = f.create_dataset("zinc", shape=(0,), dtype=string_type, maxshape=(None,))
 
     for fp in tqdm(data_files):
         append_file(d_smiles, d_zinc, fp)
 
     f.close()
-    print('Done!')
+    print("Done!")
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('zinc', help='Path to zinc directory.')
-    parser.add_argument('out', help='Path to output.h5 file.')
+    parser.add_argument("zinc", help="Path to zinc directory.")
+    parser.add_argument("out", help="Path to output.h5 file.")
     args = parser.parse_args()
 
     convert(pathlib.Path(args.zinc), pathlib.Path(args.out))
 
-if __name__=='__main__':
+
+if __name__ == "__main__":
     main()

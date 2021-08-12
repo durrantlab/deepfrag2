@@ -1,4 +1,3 @@
-
 import numpy as np
 import rdkit.Chem.AllChem as Chem
 
@@ -10,18 +9,18 @@ def _rdk10(m, size):
     return np.array(n_fp)
 
 
-FINGERPRINTS = {
-    'rdk10': _rdk10
-}
+FINGERPRINTS = {"rdk10": _rdk10}
 
 
-def fingerprint_for(mol: 'rdkit.Chem.rdchem.Mol', fp_type: str, size: int) -> 'np.array':
+def fingerprint_for(
+    mol: "rdkit.Chem.rdchem.Mol", fp_type: str, size: int
+) -> "np.array":
     """Compute a fingerprint for an rdkit mol. Raises an exception if the
     fingerprint is not found."""
     if fp_type in FINGERPRINTS:
         return FINGERPRINTS[fp_type](mol, size)
     else:
-        raise Exception("Fingerprint %s not found. Available: %s" % (
-            fp_type,
-            repr([k for k in FINGERPRINTS])
-        ))
+        raise Exception(
+            "Fingerprint %s not found. Available: %s"
+            % (fp_type, repr([k for k in FINGERPRINTS]))
+        )

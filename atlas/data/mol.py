@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 from typing import List, Tuple, Iterator
 
@@ -16,7 +15,8 @@ class Mol(object):
     A Mol is a thin wrapper over rdkit.Chem.rdchem.Mol that provides data
     transformation utilities.
     """
-    def __init__(self, rdmol: 'rdkit.Chem.rdchem.Mol' = None):
+
+    def __init__(self, rdmol: "rdkit.Chem.rdchem.Mol" = None):
         self.rdmol = rdmol
 
         # An optional dict with metadata information about the origin of the
@@ -24,13 +24,15 @@ class Mol(object):
         self.meta: dict = {}
 
     def __repr__(self):
-        if 'zinc_id' in self.meta:
+        if "zinc_id" in self.meta:
             return f'Mol({self.meta["zinc_id"]})'
         else:
             return f'Mol(smiles="{self.smiles}")'
 
     @staticmethod
-    def from_smiles(smiles: str, sanitize: bool = False, make_3D: bool = False) -> 'Mol':
+    def from_smiles(
+        smiles: str, sanitize: bool = False, make_3D: bool = False
+    ) -> "Mol":
         rdmol = Chem.MolFromSmiles(smiles, sanitize=sanitize)
         rdmol.UpdatePropertyCache()
         if make_3D:
@@ -39,7 +41,7 @@ class Mol(object):
         return Mol(rdmol)
 
     @staticmethod
-    def from_rdkit(rdmol: 'rdkit.Chem.rdchem.Mol') -> 'Mol':
+    def from_rdkit(rdmol: "rdkit.Chem.rdchem.Mol") -> "Mol":
         rdmol.UpdatePropertyCache()
         return Mol(rdmol)
 
@@ -56,15 +58,15 @@ class Mol(object):
         return len(self.rdmol.GetConformers()) > 0
 
     @property
-    def coords(self) -> 'np.array':
+    def coords(self) -> "np.array":
         return self.rdmol.GetConformer().GetPositions()
 
     @property
-    def center(self) -> 'np.array':
+    def center(self) -> "np.array":
         return np.mean(self.coords, axis=0)
 
     @property
-    def atoms(self) -> List['rdkit.Chem.rdchem.Atom']:
+    def atoms(self) -> List["rdkit.Chem.rdchem.Atom"]:
         return list(self.rdmol.GetAtoms())
 
     @property
@@ -79,7 +81,9 @@ class Mol(object):
     def num_heavy_atoms(self) -> int:
         return self.rdmol.GetNumHeavyAtoms()
 
-    def split_bonds(self, only_single_bonds: bool = True) -> Iterator[Tuple['Mol', 'Mol']]:
+    def split_bonds(
+        self, only_single_bonds: bool = True
+    ) -> Iterator[Tuple["Mol", "Mol"]]:
         """
         Iterate over all bonds in the Mol and try to split into two fragments.
         Returns tuples of produced fragments.
@@ -88,7 +92,7 @@ class Mol(object):
         - only_single_bonds: If True (default) only cut on single bonds.
 
         Example:
-        
+
         >>> mol = Mol.from_smiles('CC(C)CC1=CC=C(C=C1)C(C)C(=O)O')
         >>> for a,b in mol.split_bonds():
         ...   print(a)
@@ -111,11 +115,17 @@ class Mol(object):
         Mol(smiles="*O")
         """
         num_mols = len(Chem.GetMolFrags(self.rdmol, asMols=True, sanitizeFrags=False))
-        assert num_mols == 1, f'Error, calling split_bonds() on a Mol with {num_mols} parts.'
-        
+        assert (
+            num_mols == 1
+        ), f"Error, calling split_bonds() on a Mol with {num_mols} parts."
+
         for i in range(self.rdmol.GetNumBonds()):
             # Filter single bonds.
-            if only_single_bonds and self.rdmol.GetBondWithIdx(i).GetBondType() != Chem.rdchem.BondType.SINGLE:
+            if (
+                only_single_bonds
+                and self.rdmol.GetBondWithIdx(i).GetBondType()
+                != Chem.rdchem.BondType.SINGLE
+            ):
                 continue
 
             split_mol = Chem.rdmolops.FragmentOnBonds(self.rdmol, [i])
@@ -131,31 +141,41 @@ class Mol(object):
 
             yield (Mol.from_rdkit(fragments[0]), Mol.from_rdkit(fragments[1]))
 
-    def graph(self) -> 'MolGraph':
+    def graph(self) -> "MolGraph":
         raise NotImplementedError()
 
     def voxelize(
-        self, params: 'VoxelParams', cpu: bool = False,
-        center: 'np.ndarray' = None,
-        rot: 'np.ndarray' = np.array([0,0,0,1])
-    ) -> 'torch.Tensor':
+        self,
+        params: "VoxelParams",
+        cpu: bool = False,
+        center: "np.ndarray" = None,
+        rot: "np.ndarray" = np.array([0, 0, 0, 1]),
+    ) -> "torch.Tensor":
         params.validate()
 
         tensor = torch.zeros(size=params.tensor_size())
         if not cpu:
             tensor = tensor.cuda()
 
-        self.voxelize_into(tensor, batch_idx=0, center=center, params=params, cpu=cpu, rot=rot)
+        self.voxelize_into(
+            tensor, batch_idx=0, center=center, params=params, cpu=cpu, rot=rot
+        )
 
         return tensor
 
     def voxelize_into(
-        self, tensor: 'torch.Tensor', batch_idx: int, 
-        params: 'VoxelParams', cpu: bool = False, layer_offset: int = 0, center: 'np.ndarray' = None, rot: 'np.ndarray' = np.array([0,0,0,1])
+        self,
+        tensor: "torch.Tensor",
+        batch_idx: int,
+        params: "VoxelParams",
+        cpu: bool = False,
+        layer_offset: int = 0,
+        center: "np.ndarray" = None,
+        rot: "np.ndarray" = np.array([0, 0, 0, 1]),
     ):
         """
         Voxelize a Mol into an existing 5-D tensor.
-        
+
         Args:
         - tensor: A 5-D PyTorch Tensor that will receive atomic density information. The tensor
             must have shape BxNxWxWxW. B = batch size, N = number of atom layers, W = width.
@@ -182,11 +202,10 @@ class Mol(object):
             point_radius=params.point_radius,
             point_type=params.point_type.value,
             acc_type=params.acc_type.value,
-            cpu=cpu
+            cpu=cpu,
         )
 
-
-    def fingerprint(self, fp_type: str, size: int) -> 'np.array':
+    def fingerprint(self, fp_type: str, size: int) -> "np.array":
         return fingerprint_for(self.rdmol, fp_type, size)
 
 
@@ -195,37 +214,35 @@ class MolGraph(object):
 
 
 class MolVoxel(object):
-    def __init__(self, tensor: 'torch.Tensor', parent: Mol = None):
+    def __init__(self, tensor: "torch.Tensor", parent: Mol = None):
         self.tensor = tensor
         self.parent = parent
 
     def __repr__(self):
-        return f'MolVoxel({self.tensor.shape})'
+        return f"MolVoxel({self.tensor.shape})"
 
 
 class MolProvider(object):
     """
     Abstract interface for a MolProvider object.
-    
+
     Subclasses should implement __len__ and __getitem__ to support enumeration
     over the data.
     """
+
     def __len__(self):
         raise NotImplementedError()
 
-    def __getitem__(self, idx: int) -> 'Mol':
+    def __getitem__(self, idx: int) -> "Mol":
         raise NotImplementedError()
 
 
 class AtomFeaturizer(object):
-
-    def featurize_mol(self, mol: Mol) -> 'np.ndarray':
+    def featurize_mol(self, mol: Mol) -> "np.ndarray":
         """Featurize a Mol, returns a numpy array."""
-        return np.array(
-            [self.featurize(a) for a in mol.atoms],
-            dtype=np.int32)
+        return np.array([self.featurize(a) for a in mol.atoms], dtype=np.int32)
 
-    def featurize(self, atom: 'rdkit.Chem.rdchem.Atom') -> int:
+    def featurize(self, atom: "rdkit.Chem.rdchem.Atom") -> int:
         """Returns a 32-bit layer bitmask for an RDKit atom."""
         raise NotImplementedError()
 
@@ -236,10 +253,10 @@ class AtomFeaturizer(object):
 
 class AtomicNumFeaturizer(AtomFeaturizer):
     def __init__(self, layers):
-        assert(len(layers) <= 32)
+        assert len(layers) <= 32
         self.layers = layers
 
-    def featurize(self, atom: 'rdkit.Chem.rdchem.Atom') -> int:
+    def featurize(self, atom: "rdkit.Chem.rdchem.Atom") -> int:
         num = atom.GetAtomicNum()
         if num in self.layers:
             return 1 << (self.layers.index(num))
