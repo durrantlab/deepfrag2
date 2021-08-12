@@ -10,6 +10,12 @@ test:
   except:
   - main
 
+black:
+  stage: test
+  script:
+  - pip install -U black
+  - black --check ./atlas
+
 pages:
   stage: deploy
   script:
