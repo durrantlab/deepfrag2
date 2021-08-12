@@ -12,8 +12,10 @@ test:
 
 black:
   stage: test
-  script:
+  before_script:
+  - apt install gcc
   - pip install -U black
+  script:
   - black --check ./atlas
 
 pages:
