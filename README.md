@@ -8,7 +8,7 @@ Frag Atlas (DeepFrag 2) is a collection of machine learning tools for drug disco
 The source code is organized into several subdirectoreis in the `atlas` package:
 
 - `convert`: Python scripts for converting between data formats.
-- `data_formats`: Utility library for reading different data formats.
+- `data`: Utility library for reading different data formats.
 - `models`: Model specification (PyTorch) code.
 - `tools`: Python scripts for running various tasks.
 - `train`: Python scripts for training ML models.

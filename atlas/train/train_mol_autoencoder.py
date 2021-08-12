@@ -18,7 +18,7 @@ import yaml
 from ..molecule_util import MolGraph
 from ..models.model_interfaces import MolAutoencoder
 from ..models.dense_graph_autoencoder import DenseGraphAutoencoder
-from ..data_formats.zinc import ZINCMolGraphProviderH5
+from ..data.zinc import ZINCMolGraphProviderH5
 
 
 def disable_ob_logging():

@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 import torch
 from tqdm import tqdm
 
-from ..data_formats.zinc import ZINCMolGraphProviderH5
+from ..data.zinc import ZINCMolGraphProviderH5
 from ..models.dense_graph_autoencoder import DenseGraphAutoencoder
 
 

@@ -1,5 +1,5 @@
 
-from typing import List, Tuple, Set
+from typing import List, Tuple, Set, Dict
 
 import numpy as np
 from openbabel import pybel
@@ -26,6 +26,23 @@ def _pybel_bond_index(mol: pybel.Molecule) -> np.ndarray:
         edges.append((start,end))
 
     return np.array(edges).transpose()
+
+
+def _pybel_bond_quality(mol: pybel.Molecule) -> Dict[MolEdge, int]:
+    bonds = [mol.OBMol.GetBondById(i) for i in range(mol.OBMol.NumBonds())]
+    quality = {}
+    
+    for b in bonds:
+        # Atom indexes start at 1.
+        start = b.GetBeginAtomIdx() - 1
+        end = b.GetEndAtomIdx() - 1
+
+        if end < start:
+            start, end = end, start
+
+        quality[(start, end)] = b.GetBondOrder()
+
+    return quality
 
 
 class AtomFeaturizer(object):
@@ -101,13 +118,17 @@ class MolGraph(Data):
     - atom_types: Nx? array of atom feature vectors.
     - bond_index: 2x(B*2) edge_index array.
     - bond_types: (B*2)x? array of bond feature vectors.
+
+    Metadata:
+    - bond_quality: MolEdge -> int
     """
 
-    def __init__(self, atom_coords, atom_types, bond_index, bond_types):
+    def __init__(self, atom_coords, atom_types, bond_index, bond_types, bond_quality):
         self.atom_coords = _cast_tensor(atom_coords, dtype=torch.float)
         self.atom_types = _cast_tensor(atom_types, dtype=torch.float)
         self.bond_index = _cast_tensor(bond_index, dtype=torch.long)
         self.bond_types = _cast_tensor(bond_types, dtype=torch.float)
+        self.bond_quality = bond_quality
 
         # MolGraph objects may contain a smiles string if initialized with
         # MolGraph.from_smiles().
@@ -122,7 +143,8 @@ class MolGraph(Data):
             self.atom_coords.clone(),
             self.atom_types.clone(),
             self.bond_index.clone(),
-            self.bond_types.clone()
+            self.bond_types.clone(),
+            self.bond_quality.copy()
         )
         g.smiles = self.smiles
         g.meta = {k:self.meta[k] for k in self.meta}
@@ -144,8 +166,9 @@ class MolGraph(Data):
         atom_types = af.featurize(mol)
         bond_index = _pybel_bond_index(mol)
         bond_types = bf.featurize(mol)
+        bond_quality = _pybel_bond_quality(mol)
 
-        return MolGraph(atom_coords, atom_types, bond_index, bond_types)
+        return MolGraph(atom_coords, atom_types, bond_index, bond_types, bond_quality)
 
     @staticmethod
     def from_sdf(sdf_path: str) -> 'MolGraph':
@@ -314,7 +337,7 @@ class MolGraph(Data):
 
         return transformations
 
-    def subgraph(self, edges=List[MolEdge]) -> 'MolGraph':
+    def subgraph(self, edges: List[MolEdge], atoms: Set[int] = set()) -> 'MolGraph':
         """Sample a new subgraph from a list of edges. Gradients are preserved
         for atom_types and bond_types.
         
@@ -323,7 +346,7 @@ class MolGraph(Data):
             indexes to the subgraph atom indexes.
         """
 
-        selected_atoms = set()
+        selected_atoms = set(atoms)
         for a,b in edges:
             selected_atoms |= {a,b}
         selected_atoms = sorted(list(selected_atoms))
@@ -341,7 +364,7 @@ class MolGraph(Data):
 
         selected_bonds = set()
         for i in range(self.bond_index.shape[1]):
-            a,b = self.bond_index[:,i].numpy()
+            a,b = self.bond_index[:,i].cpu().numpy()
             if (a,b) in edges or (b,a) in edges:
                 selected_bonds.add(i)
         selected_bonds = list(selected_bonds)
@@ -361,7 +384,9 @@ class MolGraph(Data):
         for i in range(len(selected_bonds)):
             bond_types[i] = self.bond_types[i]
 
-        sub = MolGraph(atom_coords, atom_types, bond_index, bond_types)
+        sub = MolGraph(
+            atom_coords, atom_types, bond_index, bond_types, 
+            {self.bond_quality[k] for k in edges})
         sub.meta['atom_mapping'] = atom_mapping
 
         return sub
@@ -442,6 +467,62 @@ class MolGraph(Data):
         ], axis=0)
         
         return mol
+
+    def pairwise_dist(self) -> torch.Tensor:
+        """Returns the pairwise distance between all atoms."""
+        dist = self.atom_coords.view(-1,1,3) - self.atom_coords.view(1,-1,3)
+        dist = torch.sqrt(torch.sum(dist ** 2, axis=2))
+        return dist
+
+    def _trace_cut(self, atom: int, edges: MolEdge) -> Tuple[Set[MolEdge], Set[int]]:
+        seen = set()
+        atoms = [atom]
+        trace_edges = set()
+
+        while len(atoms) > 0:
+            a = atoms.pop(0)
+            seen.add(a)
+
+            for x,y in edges:
+                if a == x and not y in seen and not y in atoms:
+                    atoms.append(y)
+                    trace_edges.add((x,y))
+                elif a == y and not x in seen and not x in atoms:
+                    atoms.append(x)
+                    trace_edges.add((x,y))
+
+        return (trace_edges, seen)
+
+    def fragments(self, only_single_bonds=True) -> List[Tuple['MolGraph','MolGraph']]:
+        """Iterate over edges and perform a cut. Returns a list of
+        (parent, fragment) tuples."""
+        frags = []
+
+        edges = self._collect_edges()
+
+        for i in range(len(edges)):
+            if only_single_bonds and self.bond_quality[edges[i]] != 1:
+                continue
+
+            frag1 = self._trace_cut(
+                edges[i][0], 
+                [edges[k] for k in range(len(edges)) if k != i])
+
+            frag2 = self._trace_cut(
+                edges[i][1], 
+                [edges[k] for k in range(len(edges)) if k != i])
+
+            if frag1[1] != frag2[1]:
+                
+                if len(frag1[1]) < len(frag2[1]):
+                    frag1, frag2 = frag2, frag1
+
+                frags.append((
+                    self.subgraph(*frag1),
+                    self.subgraph(*frag2)
+                ))
+
+        return frags
 
 
 class MolGraphProvider(Dataset):

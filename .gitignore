@@ -6,3 +6,6 @@ data/**
 !data/README.md
 
 .DS_Store
+
+wandb
+docs/_build

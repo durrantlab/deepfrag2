@@ -5,12 +5,12 @@ from typing import List, Dict
 import h5py
 from tqdm import tqdm
 
-from ..molecule_util import MolGraphProvider, MolGraph
+from .mol import Mol, MolProvider
 
 
-class ZINCMolGraphProvider(MolGraphProvider):
+class ZINCMolProvider(MolProvider):
     """
-    A ZINCMolGraphProvider can iterate over a directory containing ZINC
+    A ZINCMolProvider can iterate over a directory containing ZINC
     smiles files.
 
     For example, the expected directory structure is:
@@ -30,7 +30,6 @@ class ZINCMolGraphProvider(MolGraphProvider):
     Nc1nc2c(ncn2CCC(CO)CO)c(=O)[nH]1 ZINC000000001899
     ```
     """
-
     def __init__(self, basedir: str, make_3D: bool = True):
         self.basedir = pathlib.Path(basedir)
         self.make_3D = make_3D
@@ -52,7 +51,6 @@ class ZINCMolGraphProvider(MolGraphProvider):
 
         # Ignore last blank newline.
         idx = idx[:-1]
-
         return idx
 
     def _build_index(self) -> Dict[str, List[int]]:
@@ -68,7 +66,7 @@ class ZINCMolGraphProvider(MolGraphProvider):
     def __len__(self):
         return self.total
 
-    def __getitem__(self, idx) -> MolGraph:
+    def __getitem__(self, idx) -> 'Mol':
         assert idx >= 0 and idx < len(self)
 
         file_index = 0
@@ -84,14 +82,14 @@ class ZINCMolGraphProvider(MolGraphProvider):
 
             smi, zinc_id = line.decode('ascii').split()
 
-        m = MolGraph.from_smiles(smi, make_3D=self.make_3D)
+        m = Mol.from_smiles(smi, make_3D=self.make_3D)
         m.meta['zinc_id'] = zinc_id
 
         return m
 
-class ZINCMolGraphProviderH5(MolGraphProvider):
+class ZINCMolProviderH5(MolProvider):
     """
-    This version of the ZINCMolGraphProvider iterates over a pre-processed
+    This version of the ZINCMolProvider iterates over a pre-processed
     h5 format of the ZINC dataset.
 
     Use the atlas.convert.zinc_to_h5py utility to convert.
@@ -113,8 +111,8 @@ class ZINCMolGraphProviderH5(MolGraphProvider):
     def __len__(self):
         return len(self.d_smiles)
 
-    def __getitem__(self, idx) -> MolGraph:
-        m = MolGraph.from_smiles(self.d_smiles[idx].decode('ascii'), make_3D=self.make_3D)
+    def __getitem__(self, idx) -> 'Mol':
+        m = Mol.from_smiles(self.d_smiles[idx].decode('ascii'), make_3D=self.make_3D)
         m.meta['zinc_id'] = self.d_zinc[idx].decode('ascii')
 
         return m

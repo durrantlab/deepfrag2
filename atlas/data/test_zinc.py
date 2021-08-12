@@ -3,7 +3,7 @@ import pathlib
 import tempfile
 import unittest
 
-from .zinc import ZINCMolGraphProvider
+from .zinc import ZINCMolProvider
 
 F1 = '''\
 smiles zinc_id
@@ -34,16 +34,16 @@ class TestZINC(unittest.TestCase):
             with open(p / 'WXYZ.smi', 'w') as f:
                 f.write(F2)
 
-            z = ZINCMolGraphProvider(tmpdir)
+            z = ZINCMolProvider(tmpdir)
             self.assertEqual(len(z), 8)
 
             self.assertEqual(
-                z[2].smiles,
+                z[2].iso_smiles,
                 'Cc1cn([C@H]2O[C@@H](CO)[C@H](O)[C@H]2F)c(=O)[nH]c1=O'
             )
 
             self.assertEqual(
-                z[5].smiles,
+                z[5].iso_smiles,
                 'NC(=O)CC[C@H](NC(=O)[C@@H]1CCC(=O)N1)C(=O)O'
             )
 

@@ -14,7 +14,7 @@ class DrawContext(object):
     @property
     def view(self):
         return self._view
-    
+
     def draw_mol(self, mol: 'MolGraph'):
         self._view.addModel(mol.to_sdf(), 'sdf')
         self._view.setStyle({'stick':{}})

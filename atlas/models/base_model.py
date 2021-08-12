@@ -26,6 +26,9 @@ class BasePytorchModel(object):
     args: dict
     models: dict
 
+    def __repr__(self):
+        return f'{type(self).__name__}({self.args})'
+
     @classmethod
     def load(cls, path: str, device='cuda') -> 'BasePytorchModel':
         """Load the model from a directory.
@@ -74,10 +77,9 @@ class BasePytorchModel(object):
         BasePytorchModel._check_valid_args(default_args, args)
         default_args.update(args)
 
-        models = cls.build(default_args)
-
         mod.args = default_args
-        mod.models = models
+        mod.setup(mod.args)
+        mod.models = mod.build(mod.args)
 
         return mod
 
@@ -102,6 +104,11 @@ class BasePytorchModel(object):
     def get_params() -> dict:
         """Returns a dict of default parameters."""
         return {}
+
+    def setup(self, args: dict):
+        """Optional overload-able setup function called once during model
+        construction."""
+        pass
 
     @staticmethod
     def build(args: dict) -> dict:
