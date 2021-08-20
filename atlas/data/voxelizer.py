@@ -14,6 +14,17 @@ GPU_DIM = 8
 
 @dataclass
 class VoxelParams(object):
+    """
+    A VoxelParams object describes how a molecular structure is converted into a voxel tensor.
+
+    Attributes:
+        resolution (float): The distance in Angstroms between neighboring grid points. A smaller number means more zoomed-in.
+        width (int): The number of gridpoints in each spatial dimension.
+        point_radius (float): The effective atomic radius of atoms (in Angstroms).
+        point_type: (VoxelParams.PointType): Describes the atomic density sampling function.
+        acc_type: (VoxelParams.AccType): Describes how overlapping atomic densities are handled.
+    """
+
     class PointType(Enum):
         EXP = 0  # simple exponential sphere fill
         SPHERE = 1  # fixed sphere fill
@@ -26,30 +37,24 @@ class VoxelParams(object):
         SUM = 0
         MAX = 1
 
-    # Distance in Angstroms between neighboring grid points. A smaller number
-    # means a higher resolution.
     resolution: float = 1.0
-
-    # Total number of gridpoints per dimension.
     width: int = 24
-
-    # Effective atomic radius of atoms. (in Angstroms)
     point_radius: float = 1.75
-
-    # The point type describes how individual atoms are represented.
     point_type: PointType = PointType.EXP
-
-    # The accumulation type describes how overlapping atomic densities are handled.
     acc_type: AccType = AccType.SUM
-
-    # Specifies how atoms should be represented in tensor layers.
-    atom_featurizer: "AtomFeaturizer" = None
+    atom_featurizer: "atlas.data.featurizer.AtomFeaturizer" = None
 
     def validate(self):
         assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
         assert self.atom_featurizer is not None, f"atom_featurizer must not be None"
 
     def tensor_size(self, batch=1):
+        """
+        Compute the required tensor size given the voxel parameters.
+
+        Args:
+            batch (int): Number of molecules in the target tensor (default: 1).
+        """
         N = self.atom_featurizer.size()
         W = self.width
         return (batch, N, W, W, W)
@@ -74,39 +79,6 @@ def numba_ptr(tensor: "torch.Tensor", cpu: bool = False):
     )
 
     return cuda_arr
-
-
-# def shared_tensor(shape, cpu: bool = False):
-#     """Creates a PyTorch Tensor and Numba array with shared GPU memory backing.
-
-#     Args:
-#         shape: The shape of the array.
-#         cpu: If True, just instantiate and return a numpy array.
-
-#     Returns:
-#         (torch_arr, cuda_arr)
-#     """
-
-#     if cpu:
-#         t = np.empty(shape=shape, dtype=np.float32)
-#         return (t,t)
-
-#     # Get Cuda context.
-#     ctx = numba.cuda.cudadrv.driver.driver.get_active_context()
-
-#     # Set up tensor on GPU.
-#     t = torch.zeros(size=shape, dtype=torch.float32).cuda()
-
-#     memory = numba.cuda.cudadrv.driver.MemoryPointer(ctx, ctypes.c_ulong(t.data_ptr()), t.numel() * 4)
-#     cuda_arr = numba.cuda.cudadrv.devicearray.DeviceNDArray(
-#         t.size(),
-#         [i*4 for i in t.stride()],
-#         np.dtype('float32'),
-#         gpu_data=memory,
-#         stream=torch.cuda.current_stream().cuda_stream
-#     )
-
-#     return (t, cuda_arr)
 
 
 @numba.cuda.jit
@@ -498,196 +470,3 @@ def rand_rot():
     q = np.random.normal(size=4)  # sample quaternion from normal distribution
     q = q / np.sqrt(np.sum(q ** 2))  # normalize
     return q
-
-
-# def get_batch(data, batch_size=16, batch_set=None, width=48, res=0.5,
-#               ignore_receptor=False, ignore_parent=False, fixed_rot=None,
-#               point_radius=2, point_type=POINT_TYPE.EXP,
-#               acc_type=ACC_TYPE.SUM):
-#     """Builds a batch grid from a FragmentDataset.
-
-#     Args:
-#         data: a FragmentDataset object
-#         rec_channels: number of receptor channels
-#         parent_channels: number of parent channels
-#         batch_size: size of the batch
-#         batch_set: if not None, specify a list of data indexes to use for each
-#             item in the batch
-#         width: grid width
-#         res: grid resolution
-#         ignore_receptor: if True, ignore receptor atoms
-#         ignore_parent: if True, ignore parent atoms
-
-#     Returns: (torch_grid, batch_set)
-#         torch_grid: pytorch Tensor with voxel information
-#         examples: list of examples used
-#     """
-#     assert (not (ignore_receptor and ignore_parent)), "Can't ignore parent and receptor!"
-
-#     batch_size = int(batch_size)
-#     width = int(width)
-
-#     rec_channels = data.rec_layers()
-#     lig_channels = data.lig_layers()
-
-#     dim = 0
-#     if not ignore_receptor:
-#         dim += rec_channels
-#     if not ignore_parent:
-#         dim += lig_channels
-
-#     # create a tensor with shared memory on the gpu
-#     torch_grid, cuda_grid = make_tensor((batch_size, dim, width, width, width))
-
-#     if batch_set is None:
-#         batch_set = np.random.choice(len(data), size=batch_size, replace=False)
-
-#     examples = [data[idx] for idx in batch_set]
-
-#     for i in range(len(examples)):
-#         example = examples[i]
-#         rot = fixed_rot
-#         if rot is None:
-#             rot = rand_rot()
-
-#         if ignore_receptor:
-#             mol_gridify(
-#                 cuda_grid,
-#                 example['p_coords'],
-#                 example['p_types'],
-#                 layer_offset=0,
-#                 batch_idx=i,
-#                 width=width,
-#                 res=res,
-#                 center=example['conn'],
-#                 rot=rot,
-#                 point_radius=point_radius,
-#                 point_type=point_type,
-#                 acc_type=acc_type
-#             )
-#         elif ignore_parent:
-#             mol_gridify(
-#                 cuda_grid,
-#                 example['r_coords'],
-#                 example['r_types'],
-#                 layer_offset=0,
-#                 batch_idx=i,
-#                 width=width,
-#                 res=res,
-#                 center=example['conn'],
-#                 rot=rot,
-#                 point_radius=point_radius,
-#                 point_type=point_type,
-#                 acc_type=acc_type
-#             )
-#         else:
-#             mol_gridify(
-#                 cuda_grid,
-#                 example['p_coords'],
-#                 example['p_types'],
-#                 layer_offset=0,
-#                 batch_idx=i,
-#                 width=width,
-#                 res=res,
-#                 center=example['conn'],
-#                 rot=rot,
-#                 point_radius=point_radius,
-#                 point_type=point_type,
-#                 acc_type=acc_type
-#             )
-#             mol_gridify(
-#                 cuda_grid,
-#                 example['r_coords'],
-#                 example['r_types'],
-#                 layer_offset=lig_channels,
-#                 batch_idx=i,
-#                 width=width,
-#                 res=res,
-#                 center=example['conn'],
-#                 rot=rot,
-#                 point_radius=point_radius,
-#                 point_type=point_type,
-#                 acc_type=acc_type
-#             )
-
-#     return torch_grid, examples
-
-
-# def get_raw_batch(r_coords, r_types, p_coords, p_types, rec_typer, lig_typer,
-#                   conn, num_samples=32, width=24, res=1, fixed_rot=None,
-#                   point_radius=1.5, point_type=0, acc_type=0, cpu=False):
-#     """Sample a raw batch with provided atom coordinates.
-
-#     Args:
-#         r_coords: receptor coordinates
-#         r_types: receptor types (layers)
-#         p_coords: parent coordinates
-#         p_types: parent types (layers)
-#         conn: (x,y,z) connection point
-#         num_samples: number of rotations to sample
-#         width: grid width
-#         res: grid resolution
-#         fixed_rot: None or a fixed 4-element rotation vector
-#         point_radius: atom radius in Angstroms
-#         point_type: shape of the atom densities
-#         acc_type: atom density accumulation type
-#         cpu: if True, generate batches with cpu_gridify
-#     """
-#     B = num_samples
-#     T = rec_typer.size() + lig_typer.size()
-#     N = width
-
-#     if cpu:
-#         t = np.zeros((B,T,N,N,N))
-#         torch_grid = t
-#         cuda_grid = t
-#     else:
-#         torch_grid, cuda_grid = make_tensor((B,T,N,N,N))
-
-#     r_mask = np.zeros(len(r_types), dtype=np.uint32)
-#     p_mask = np.zeros(len(p_types), dtype=np.uint32)
-
-#     for i in range(len(r_types)):
-#         r_mask[i] = rec_typer.apply(*r_types[i])
-
-#     for i in range(len(p_types)):
-#         p_mask[i] = lig_typer.apply(*p_types[i])
-
-#     for i in range(num_samples):
-#         rot = fixed_rot
-#         if rot is None:
-#             rot = rand_rot()
-
-#         mol_gridify(
-#             cuda_grid,
-#             p_coords,
-#             p_mask,
-#             layer_offset=0,
-#             batch_idx=i,
-#             width=width,
-#             res=res,
-#             center=conn,
-#             rot=rot,
-#             point_radius=point_radius,
-#             point_type=point_type,
-#             acc_type=acc_type,
-#             cpu=cpu
-#         )
-
-#         mol_gridify(
-#             cuda_grid,
-#             r_coords,
-#             r_mask,
-#             layer_offset=lig_typer.size(),
-#             batch_idx=i,
-#             width=width,
-#             res=res,
-#             center=conn,
-#             rot=rot,
-#             point_radius=point_radius,
-#             point_type=point_type,
-#             acc_type=acc_type,
-#             cpu=cpu
-#         )
-
-#     return torch_grid

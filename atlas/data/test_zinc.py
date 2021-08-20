@@ -2,7 +2,7 @@ import pathlib
 import tempfile
 import unittest
 
-from .zinc import ZINCMolProvider
+from .zinc import ZINCDataset
 
 F1 = """\
 smiles zinc_id
@@ -33,7 +33,7 @@ class TestZINC(unittest.TestCase):
             with open(p / "WXYZ.smi", "w") as f:
                 f.write(F2)
 
-            z = ZINCMolProvider(tmpdir)
+            z = ZINCDataset(tmpdir)
             self.assertEqual(len(z), 8)
 
             self.assertEqual(

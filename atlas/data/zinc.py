@@ -4,30 +4,33 @@ from typing import List, Dict
 import h5py
 from tqdm import tqdm
 
-from .mol import Mol, MolProvider
+from .mol import Mol, MolDataset
 
 
-class ZINCMolProvider(MolProvider):
+class ZINCDataset(MolDataset):
     """
-    A ZINCMolProvider can iterate over a directory containing ZINC
-    smiles files.
+    A dataset that iterates over a raw ZINC directory.
 
-    For example, the expected directory structure is:
-    ```
-    zinc/CAAA.smi
-    zinc/CAAB.smi
-    ...
-    ```
+    Note:
+        The expected directory structure is:
+        ::
 
-    where each file is structured like:
-    ```
-    smiles zinc_id
-    Cn1cnc2c1c(=O)n(C[C@H](O)CO)c(=O)n2C ZINC000000000221
-    OC[C@@H]1O[C@H](Oc2ccc(O)cc2)[C@@H](O)[C@H](O)[C@H]1O ZINC000000000964
-    Cc1cn([C@H]2O[C@@H](CO)[C@H](O)[C@H]2F)c(=O)[nH]c1=O ZINC000000001484
-    Nc1nc2c(ncn2COC(CO)CO)c(=O)[nH]1 ZINC000000001505
-    Nc1nc2c(ncn2CCC(CO)CO)c(=O)[nH]1 ZINC000000001899
-    ```
+            zinc/CAAA.smi
+            zinc/CAAB.smi
+
+        where each file is structured like:
+        ::
+
+            smiles zinc_id
+            Cn1cnc2c1c(=O)n(C[C@H](O)CO)c(=O)n2C ZINC000000000221
+            OC[C@@H]1O[C@H](Oc2ccc(O)cc2)[C@@H](O)[C@H](O)[C@H]1O ZINC000000000964
+            Cc1cn([C@H]2O[C@@H](CO)[C@H](O)[C@H]2F)c(=O)[nH]c1=O ZINC000000001484
+            Nc1nc2c(ncn2COC(CO)CO)c(=O)[nH]1 ZINC000000001505
+            Nc1nc2c(ncn2CCC(CO)CO)c(=O)[nH]1 ZINC000000001899
+
+    Args:
+        basedir (str): Path to the base ZINC directory.
+        make_3D (bool): If True, generate 3D coordinates for each sample (slow).
     """
 
     def __init__(self, basedir: str, make_3D: bool = True):
@@ -87,12 +90,19 @@ class ZINCMolProvider(MolProvider):
         return m
 
 
-class ZINCMolProviderH5(MolProvider):
+class ZINCDatasetH5(MolDataset):
     """
-    This version of the ZINCMolProvider iterates over a pre-processed
-    h5 format of the ZINC dataset.
+    An accelerated version of the ZINCDataset that iterates a pre-processed
+    H5 format of the ZINC dataset.
 
-    Use the atlas.convert.zinc_to_h5py utility to convert.
+    Note:
+        Use the ``atlas.convert.zinc_to_h5py`` utility to convert.
+
+    Args:
+        db (str): Path to a pre-processed ``zinc.h5`` database.
+        make_3D (bool): If True, generate 3D coordinates for each sample (slow).
+        in_mem (bool): If True, load the entire database file into memory. This can speed
+            up iteration at the expense of RAM.
     """
 
     def __init__(self, db: str, make_3D: bool = True, in_mem: bool = False):

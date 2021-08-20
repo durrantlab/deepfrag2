@@ -3,13 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Frag Atlas's documentation!
-======================================
+<name> documentation!
+=====================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :numbered:
 
+   Overview.rst
+   Mol.rst
+   LoadingData.rst
+   Voxelization.rst
+   Jupyter.rst
 
 
 Indices and tables
