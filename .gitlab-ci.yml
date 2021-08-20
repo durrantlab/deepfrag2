@@ -8,7 +8,7 @@ before_script:
 test:
   stage: test
   script:
-  - pip install -U sphinx
+  - pip install -U sphinx furo
   - sphinx-build -b html ./docs public
   only:
   - branches
@@ -24,7 +24,7 @@ black:
 pages:
   stage: deploy
   script:
-  - pip install -U sphinx
+  - pip install -U sphinx furo
   - sphinx-build -b html ./docs public
   artifacts:
     paths:
