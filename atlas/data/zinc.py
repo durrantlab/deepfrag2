@@ -105,10 +105,13 @@ class ZINCDatasetH5(MolDataset):
             up iteration at the expense of RAM.
     """
 
-    def __init__(self, db: str, make_3D: bool = True, in_mem: bool = False):
+    def __init__(
+        self, db: str, make_3D: bool = True, in_mem: bool = False, transform=None
+    ):
         self.fp = h5py.File(db, "r")
         self.make_3D = make_3D
         self.in_mem = in_mem
+        self.transform = transform
 
         self.d_smiles = self.fp["smiles"]
         self.d_zinc = self.fp["zinc"]
@@ -124,5 +127,8 @@ class ZINCDatasetH5(MolDataset):
     def __getitem__(self, idx) -> "Mol":
         m = Mol.from_smiles(self.d_smiles[idx].decode("ascii"), make_3D=self.make_3D)
         m.meta["zinc_id"] = self.d_zinc[idx].decode("ascii")
+
+        if self.transform:
+            return self.transform(m)
 
         return m

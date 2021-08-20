@@ -37,7 +37,7 @@ Graph conversion TODO
 
 .. automethod:: atlas.data.mol.Mol.split_bonds
 
-Voxelation
+Voxelization
 ----------
 
 See :doc:`Voxelization`.

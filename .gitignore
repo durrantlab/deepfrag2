@@ -11,3 +11,4 @@ wandb
 docs/_build
 .vscode
 .tmp*
+.save
