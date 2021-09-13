@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+from io import StringIO
 from typing import List, Tuple, Iterator
 
 import numpy as np
+import prody
 import rdkit.Chem.AllChem as Chem
 from rdkit.Chem.Descriptors import ExactMolWt
 import torch
@@ -23,10 +25,16 @@ class Mol(object):
 
         # An optional dict with metadata information about the origin of the
         # Mol object. E.g. may contain a "ZINC" indentifier.
-        self.meta: dict = {}
+        #
+        # Optional attributes:
+        # - zinc_id: ZINC database identifier
+        # - name: Optional display name
+        self.meta = {}
 
     def __repr__(self):
-        if "zinc_id" in self.meta:
+        if "name" in self.meta:
+            return f'Mol("{self.meta["name"]}")'
+        elif "zinc_id" in self.meta:
             return f'Mol({self.meta["zinc_id"]})'
         else:
             return f'Mol(smiles="{self.smiles}")'
@@ -56,6 +64,52 @@ class Mol(object):
         if make_3D:
             Chem.EmbedMolecule(rdmol)
 
+        return Mol(rdmol)
+
+    @staticmethod
+    def from_prody(
+        atoms: "prody.atomic.atomgroup.AtomGroup",
+        template: str = "",
+        sanitize: bool = False,
+    ) -> "Mol":
+        """Construct a Mol from a ProDy AtomGroup.
+
+        Args:
+            atoms (prody.atomic.atomgroup.AtomGroup): A ProDy atom group.
+            template (str, optional): An optional SMILES string used as a template to assign bond orders.
+            sanitize (bool, optional): If True, attempt to sanitize the internal RDKit molecule.
+
+        Examples:
+            Extract the aspirin ligand from the 1OXR PDB structure:
+
+            >>> g = prody.parsePDB(prody.fetchPDB('1OXR'))
+            >>> g = g.select('resname AIN')
+            >>> m = Mol.from_prody(g, template='CC(=O)Oc1ccccc1C(=O)O')
+            >>> print(m.coords)
+            [[13.907 16.13   0.624]
+            [13.254 15.778  1.723]
+            [13.911 15.759  2.749]
+            [11.83  15.316  1.664]
+            [11.114 15.381  0.456]
+            [ 9.774 15.001  0.429]
+            [ 9.12  14.601  1.58 ]
+            [ 9.752 14.568  2.802]
+            [11.088 14.922  2.923]
+            [11.823 14.906  4.09 ]
+            [12.477 13.77   4.769]
+            [12.686 13.87   5.971]
+            [12.89  12.509  4.056]]
+        """
+        pdb = StringIO()
+        prody.writePDBStream(pdb, atoms)
+
+        rdmol = Chem.MolFromPDBBlock(pdb.getvalue(), sanitize=sanitize)
+
+        if template != "":
+            ref_mol = Chem.MolFromSmiles(template)
+            rdmol = Chem.AssignBondOrdersFromTemplate(ref_mol, rdmol)
+
+        rdmol.UpdatePropertyCache()
         return Mol(rdmol)
 
     @staticmethod
@@ -119,13 +173,15 @@ class Mol(object):
         return self.rdmol.GetNumHeavyAtoms()
 
     def split_bonds(
-        self, only_single_bonds: bool = True
+        self, only_single_bonds: bool = True, max_frag_size: int = -1
     ) -> Iterator[Tuple["Mol", "Mol"]]:
         """
         Iterate over all bonds in the Mol and try to split into two fragments, returning tuples of produced fragments.
+        Each returned tuple is of the form (parent, fragment).
 
         Args:
             only_single_bonds (bool): If True (default) only cut on single bonds.
+            max_frag_size (int): If set, only return fragments smaller or equal to this molecular weight.
 
         Examples:
             >>> mol = Mol.from_smiles('CC(C)CC1=CC=C(C=C1)C(C)C(=O)O')
@@ -167,14 +223,24 @@ class Mol(object):
             fragments = Chem.GetMolFrags(split_mol, asMols=True, sanitizeFrags=False)
 
             # Skip if this did not break the molecule into two pieces.
-            if len(fragments) != num_mols + 1:
+            if len(fragments) != 2:
                 continue
+
+            parent = Mol.from_rdkit(fragments[0])
+            frag = Mol.from_rdkit(fragments[1])
+
+            if parent.mass < frag.mass:
+                frag, parent = parent, frag
 
             # Ensure the fragment has at least one heavy atom.
-            if fragments[1].GetNumHeavyAtoms() == 0:
+            if frag.num_heavy_atoms == 0:
                 continue
 
-            yield (Mol.from_rdkit(fragments[0]), Mol.from_rdkit(fragments[1]))
+            # Filter by atomic mass (if enabled).
+            if max_frag_size != -1 and frag.mass > max_frag_size:
+                continue
+
+            yield (parent, frag)
 
     def graph(self):
         """TODO"""

@@ -10,6 +10,7 @@ You can construct a Mol using the provided ``from_*`` method or using a data loa
 
 .. automethod:: atlas.data.mol.Mol.from_smiles
 .. automethod:: atlas.data.mol.Mol.from_rdkit
+.. automethod:: atlas.data.mol.Mol.from_prody
 
 Attributes
 ----------
