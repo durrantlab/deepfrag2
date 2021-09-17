@@ -1,7 +1,8 @@
 import argparse
 
 import torch
-torch.multiprocessing.set_sharing_strategy('file_system')
+
+torch.multiprocessing.set_sharing_strategy("file_system")
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
@@ -12,9 +13,11 @@ from collagen.models.voxel_to_fingerprint import VoxelToFingerprint
 
 # Disable warnings
 from rdkit import RDLogger
+
 RDLogger.DisableLog("rdApp.*")
 
 import prody
+
 prody.confProDy(verbosity="none")
 
 FP_SIZE = 2048
@@ -81,32 +84,34 @@ def run(args):
     train, val, test = moad.compute_split(seed=args.split_seed)
 
     train_frags = MOADFragmentDataset(
-        moad,
-        cache_file=args.cache,
-        split=train,
-        transform=TransformFn(vp)
+        moad, cache_file=args.cache, split=train, transform=TransformFn(vp)
     )
-    train_data = MultiLoader(
-        train_frags,
-        batch_size=1,
-        shuffle=True,
-        num_workers=args.num_workers,
-        collate_fn=collate_none,
-    ).batch(16).map(VoxelizeFingerprintFn(vp, args.cpu))
+    train_data = (
+        MultiLoader(
+            train_frags,
+            batch_size=1,
+            shuffle=True,
+            num_workers=args.num_workers,
+            collate_fn=collate_none,
+        )
+        .batch(16)
+        .map(VoxelizeFingerprintFn(vp, args.cpu))
+    )
 
     val_frags = MOADFragmentDataset(
-        moad,
-        cache_file=args.cache,
-        split=val,
-        transform=TransformFn(vp)
+        moad, cache_file=args.cache, split=val, transform=TransformFn(vp)
     )
-    val_data = MultiLoader(
-        val_frags,
-        batch_size=1,
-        shuffle=True,
-        num_workers=args.num_workers,
-        collate_fn=collate_none,
-    ).batch(16).map(VoxelizeFingerprintFn(vp, args.cpu))
+    val_data = (
+        MultiLoader(
+            val_frags,
+            batch_size=1,
+            shuffle=True,
+            num_workers=args.num_workers,
+            collate_fn=collate_none,
+        )
+        .batch(16)
+        .map(VoxelizeFingerprintFn(vp, args.cpu))
+    )
 
     logger = None
     if args.wandb_project:

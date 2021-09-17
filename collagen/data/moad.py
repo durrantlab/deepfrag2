@@ -158,7 +158,7 @@ def div3(seq):
 
 class MOADBase(object):
     """
-    Base class for interacting with Binding MOAD data. Initialize by passing the path to 
+    Base class for interacting with Binding MOAD data. Initialize by passing the path to
     "every.csv" and the path to a folder containing structure files (can be nested).
 
     Args:
@@ -187,7 +187,7 @@ class MOADBase(object):
         self._all_targets = [k for k in self._lookup]
 
     @property
-    def targets(self) -> List['str']:
+    def targets(self) -> List["str"]:
         return self._all_targets
 
     def __getitem__(self, key: str) -> "MOAD_target":
@@ -391,8 +391,9 @@ class MOADFragmentDataset(Dataset):
     A Dataset that provides (receptor, parent, fragment) tuples by splitting ligands on single bonds.
 
     Args:
-        moad 
+        moad
     """
+
     moad: MOADBase
     split: MOAD_split
     has_index: bool
