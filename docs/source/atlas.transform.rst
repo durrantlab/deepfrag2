@@ -1,21 +1,21 @@
-atlas.transform package
+collagen.transform package
 =======================
 
 Submodules
 ----------
 
-atlas.transform.fragment module
+collagen.transform.fragment module
 -------------------------------
 
-.. automodule:: atlas.transform.fragment
+.. automodule:: collagen.transform.fragment
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.transform.transform module
+collagen.transform.transform module
 --------------------------------
 
-.. automodule:: atlas.transform.transform
+.. automodule:: collagen.transform.transform
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ atlas.transform.transform module
 Module contents
 ---------------
 
-.. automodule:: atlas.transform
+.. automodule:: collagen.transform
    :members:
    :undoc-members:
    :show-inheritance:

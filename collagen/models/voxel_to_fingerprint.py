@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-from atlas.data import VoxelParams, AtomicNumFeaturizer
+from collagen.data import VoxelParams, AtomicNumFeaturizer
 
 
 _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
@@ -55,6 +55,15 @@ class VoxelToFingerprint(pl.LightningModule):
         loss = cos(pred, fp).mean()
 
         self.log("loss", loss)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        voxel, fp = batch
+        pred = self(voxel)
+
+        loss = cos(pred, fp).mean()
+
+        self.log("val_loss", loss)
         return loss
 
     def configure_optimizers(self):

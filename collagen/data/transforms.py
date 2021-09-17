@@ -1,7 +1,7 @@
 import torch
 
-from atlas.data.mol import Mol
-from atlas.data.voxelizer import VoxelParams
+from collagen.data.mol import Mol
+from collagen.data.voxelizer import VoxelParams
 
 
 class Voxelize(object):

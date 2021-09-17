@@ -1,13 +1,13 @@
-atlas.pipeline package
+collagen.pipeline package
 ======================
 
 Submodules
 ----------
 
-atlas.pipeline.pipeline module
+collagen.pipeline.pipeline module
 ------------------------------
 
-.. automodule:: atlas.pipeline.pipeline
+.. automodule:: collagen.pipeline.pipeline
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ atlas.pipeline.pipeline module
 Module contents
 ---------------
 
-.. automodule:: atlas.pipeline
+.. automodule:: collagen.pipeline
    :members:
    :undoc-members:
    :show-inheritance:

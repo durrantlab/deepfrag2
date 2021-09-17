@@ -1,21 +1,21 @@
-atlas.train package
+collagen.train package
 ===================
 
 Submodules
 ----------
 
-atlas.train.train\_lig\_shaper module
+collagen.train.train\_lig\_shaper module
 -------------------------------------
 
-.. automodule:: atlas.train.train_lig_shaper
+.. automodule:: collagen.train.train_lig_shaper
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.train.train\_mol\_autoencoder module
+collagen.train.train\_mol\_autoencoder module
 ------------------------------------------
 
-.. automodule:: atlas.train.train_mol_autoencoder
+.. automodule:: collagen.train.train_mol_autoencoder
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ atlas.train.train\_mol\_autoencoder module
 Module contents
 ---------------
 
-.. automodule:: atlas.train
+.. automodule:: collagen.train
    :members:
    :undoc-members:
    :show-inheritance:

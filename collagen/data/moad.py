@@ -156,11 +156,27 @@ def div3(seq):
     return (set(l[:v]), set(l[v : v * 2]), set(l[v * 2 :]))
 
 
-@dataclass
-class MOAD_metadata(object):
+class MOADBase(object):
+    """
+    Base class for interacting with Binding MOAD data. Initialize by passing the path to 
+    "every.csv" and the path to a folder containing structure files (can be nested).
+
+    Args:
+        metadata: Path to the metadata "every.csv" file.
+        structures: Path to a folder container structure files.
+    """
+
     classes: List["MOAD_class"]
     _lookup: Dict["str", "MOAD_target"] = field(default_factory=dict)
     _all_targets: List["str"] = field(default_factory=list)
+
+    def __init__(self, metadata: Union[str, Path], structures: Union[str, Path]):
+        self.classes = MOADBase.load_classes(metadata)
+        self._lookup = {}
+        self._all_targets = []
+
+        self._init_lookup()
+        self.resolve_paths(structures)
 
     def _init_lookup(self):
         for c in self.classes:
@@ -171,17 +187,25 @@ class MOAD_metadata(object):
         self._all_targets = [k for k in self._lookup]
 
     @property
-    def targets(self):
+    def targets(self) -> List['str']:
         return self._all_targets
 
     def __getitem__(self, key: str) -> "MOAD_target":
+        """
+        Fetch a specific target by PDB ID.
+
+        Args:
+            key (str): A PDB ID (case-insensitive).
+
+        Returns (MOAD_target) a MOAD_target object if found.
+        """
         assert type(key) is str, f"PDB ID must be a str (got {type(key)})"
         k = key.lower()
         assert k in self._lookup, f'Target "{k}" not found.'
         return self._lookup[k]
 
     @staticmethod
-    def load_from_csv(path) -> "MOAD_metadata":
+    def load_classes(path):
         dat = open(path, "r").read().strip().split("\n")
 
         classes = []
@@ -226,9 +250,7 @@ class MOAD_metadata(object):
         if curr_class is not None:
             classes.append(curr_class)
 
-        meta = MOAD_metadata(classes=classes)
-        meta._init_lookup()
-        return meta
+        return classes
 
     def resolve_paths(self, path: Union[str, Path]):
         path = Path(path)
@@ -365,7 +387,13 @@ class MOADFragmentDataset_entry(object):
 
 
 class MOADFragmentDataset(Dataset):
-    moad: MOAD_metadata
+    """
+    A Dataset that provides (receptor, parent, fragment) tuples by splitting ligands on single bonds.
+
+    Args:
+        moad 
+    """
+    moad: MOADBase
     split: MOAD_split
     has_index: bool
     transform: Optional[Callable[[Mol, Mol, Mol], Any]]
@@ -382,7 +410,9 @@ class MOADFragmentDataset(Dataset):
 
     def __init__(
         self,
-        moad: MOAD_metadata,
+        moad: MOADBase,
+        cache_file: Optional[Union[str, Path]] = None,
+        cache_cores: int = 1,
         split: Optional[MOAD_split] = None,
         transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
     ):
@@ -390,6 +420,7 @@ class MOADFragmentDataset(Dataset):
         self.split = split if split is not None else moad.full_split()
         self.has_index = False
         self.transform = transform
+        self.index(cache_file, cache_cores)
 
     def _build_index(self, cores: int = 1) -> dict:
         """

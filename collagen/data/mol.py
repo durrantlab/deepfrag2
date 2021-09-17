@@ -53,7 +53,7 @@ class Mol(object):
             make_3D (bool, optional): If True, generate 3D coordinates.
 
         Returns:
-            atlas.data.mol.Mol: A new Mol object.
+            collagen.data.mol.Mol: A new Mol object.
 
         Examples:
             Load aspirin from a SMILES string:
@@ -126,7 +126,7 @@ class Mol(object):
             rdmol (rdkit.Chem.rdchem.Mol): An existing RDKit Mol.
 
         Returns:
-            atlas.data.mol.Mol: A new Mol object.
+            collagen.data.mol.Mol: A new Mol object.
         """
         rdmol.UpdatePropertyCache()
         return Mol(rdmol)
@@ -217,25 +217,15 @@ class Mol(object):
 
         Examples:
             >>> mol = Mol.from_smiles('CC(C)CC1=CC=C(C=C1)C(C)C(=O)O')
-            >>> for a,b in mol.split_bonds():
-            ...   print(a)
-            ...   print(b)
-            Mol(smiles="*C")
-            Mol(smiles="*C(C)CC1=CC=C(C(C)C(=O)O)C=C1")
-            Mol(smiles="*C(C)CC1=CC=C(C(C)C(=O)O)C=C1")
-            Mol(smiles="*C")
-            Mol(smiles="*C(C)C")
-            Mol(smiles="*CC1=CC=C(C(C)C(=O)O)C=C1")
-            Mol(smiles="*CC(C)C")
-            Mol(smiles="*C1=CC=C(C(C)C(=O)O)C=C1")
-            Mol(smiles="*C1=CC=C(CC(C)C)C=C1")
-            Mol(smiles="*C(C)C(=O)O")
-            Mol(smiles="*C(C(=O)O)C1=CC=C(CC(C)C)C=C1")
-            Mol(smiles="*C")
-            Mol(smiles="*C(C)C1=CC=C(CC(C)C)C=C1")
-            Mol(smiles="*C(=O)O")
-            Mol(smiles="*C(=O)C(C)C1=CC=C(CC(C)C)C=C1")
-            Mol(smiles="*O")
+            >>> mol.split_bonds()
+            [(Mol(smiles="*C(C)CC1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*C")),
+            (Mol(smiles="*C(C)CC1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*C")),
+            (Mol(smiles="*CC1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*C(C)C")),
+            (Mol(smiles="*C1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*CC(C)C")),
+            (Mol(smiles="*C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*C(C)C(=O)O")),
+            (Mol(smiles="*C(C(=O)O)C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*C")),
+            (Mol(smiles="*C(C)C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*C(=O)O")),
+            (Mol(smiles="*C(=O)C(C)C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*O"))]
         """
         num_mols = len(Chem.GetMolFrags(self.rdmol, asMols=True, sanitizeFrags=False))
         assert (
@@ -387,6 +377,18 @@ class Mol(object):
         center: "np.ndarray" = None,
         rot: "np.ndarray" = np.array([0, 0, 0, 1]),
     ) -> "DelayedMolVoxel":
+        """
+        Pre-compute voxelation parameters without actually invoking ``voxelize``.
+
+        Args:
+            params (VoxelParams): A VoxelParams object specifying how to perform voxelation.
+            center (np.ndarray): A size 3 array containing the (x,y,z) coordinate of the grid center. If not specified,
+                will use the center of the molecule.
+            rot (np.ndarray): A size 4 quaternion in form (x,y,z,w) describing a grid rotation.
+
+        Returns:
+            DelayedMolVoxel: An ephemeral, minimal Mol object with pre-computed voxelation arguments.
+        """
         return DelayedMolVoxel(
             atom_coords=self.coords,
             atom_mask=params.atom_featurizer.featurize_mol(self),

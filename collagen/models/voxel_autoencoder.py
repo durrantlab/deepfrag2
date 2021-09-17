@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-from atlas.data import VoxelParams, AtomicNumFeaturizer
+from collagen.data import VoxelParams, AtomicNumFeaturizer
 
 
 class VoxelAutoencoder(pl.LightningModule):

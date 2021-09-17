@@ -1,4 +1,4 @@
-atlas package
+collagen package
 =============
 
 Subpackages
@@ -7,44 +7,44 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   atlas.data
-   atlas.models
-   atlas.pipeline
-   atlas.train
-   atlas.transform
-   atlas.viz
+   collagen.data
+   collagen.models
+   collagen.pipeline
+   collagen.train
+   collagen.transform
+   collagen.viz
 
 Submodules
 ----------
 
-atlas.draw module
+collagen.draw module
 -----------------
 
-.. automodule:: atlas.draw
+.. automodule:: collagen.draw
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.molecule\_util module
+collagen.molecule\_util module
 ---------------------------
 
-.. automodule:: atlas.molecule_util
+.. automodule:: collagen.molecule_util
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.test\_molecule\_util module
+collagen.test\_molecule\_util module
 ---------------------------------
 
-.. automodule:: atlas.test_molecule_util
+.. automodule:: collagen.test_molecule_util
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.util module
+collagen.util module
 -----------------
 
-.. automodule:: atlas.util
+.. automodule:: collagen.util
    :members:
    :undoc-members:
    :show-inheritance:
@@ -52,7 +52,7 @@ atlas.util module
 Module contents
 ---------------
 
-.. automodule:: atlas
+.. automodule:: collagen
    :members:
    :undoc-members:
    :show-inheritance:

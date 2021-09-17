@@ -1,53 +1,53 @@
-atlas.data package
+collagen.data package
 ==================
 
 Submodules
 ----------
 
-atlas.data.fingerprints module
+collagen.data.fingerprints module
 ------------------------------
 
-.. automodule:: atlas.data.fingerprints
+.. automodule:: collagen.data.fingerprints
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.data.mol module
+collagen.data.mol module
 ---------------------
 
-.. automodule:: atlas.data.mol
+.. automodule:: collagen.data.mol
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.data.test\_mol module
+collagen.data.test\_mol module
 ---------------------------
 
-.. automodule:: atlas.data.test_mol
+.. automodule:: collagen.data.test_mol
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.data.test\_zinc module
+collagen.data.test\_zinc module
 ----------------------------
 
-.. automodule:: atlas.data.test_zinc
+.. automodule:: collagen.data.test_zinc
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.data.voxelizer module
+collagen.data.voxelizer module
 ---------------------------
 
-.. automodule:: atlas.data.voxelizer
+.. automodule:: collagen.data.voxelizer
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.data.zinc module
+collagen.data.zinc module
 ----------------------
 
-.. automodule:: atlas.data.zinc
+.. automodule:: collagen.data.zinc
    :members:
    :undoc-members:
    :show-inheritance:
@@ -55,7 +55,7 @@ atlas.data.zinc module
 Module contents
 ---------------
 
-.. automodule:: atlas.data
+.. automodule:: collagen.data
    :members:
    :undoc-members:
    :show-inheritance:

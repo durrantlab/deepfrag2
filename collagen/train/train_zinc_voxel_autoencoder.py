@@ -4,10 +4,10 @@ from torch.utils.data import DataLoader, random_split
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
-from atlas.data.zinc import ZINCDatasetH5
-from atlas.data import VoxelParams, AtomicNumFeaturizer
-from atlas.models.voxel_autoencoder import VoxelAutoencoder
-from atlas.data import transforms
+from collagen.data.zinc import ZINCDatasetH5
+from collagen.data import VoxelParams, AtomicNumFeaturizer
+from collagen.models.voxel_autoencoder import VoxelAutoencoder
+from collagen.data import transforms
 
 
 def run(args):

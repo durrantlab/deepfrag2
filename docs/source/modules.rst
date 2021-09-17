@@ -1,7 +1,7 @@
-atlas
+collagen
 =====
 
 .. toctree::
    :maxdepth: 4
 
-   atlas
+   collagen

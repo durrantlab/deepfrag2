@@ -1,5 +1,5 @@
 Jupyter
 =======
 
-<name> provides several visualization integrations:
+Collagen provides several visualization integrations:
 

@@ -19,7 +19,7 @@ black:
   stage: test
   script:
   - pip install -U black
-  - black --check ./atlas
+  - black --check ./collagen
 
 pages:
   stage: deploy

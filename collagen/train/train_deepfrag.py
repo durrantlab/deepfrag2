@@ -1,22 +1,20 @@
 import argparse
 
 import torch
-from torch.utils.data import DataLoader, random_split
+torch.multiprocessing.set_sharing_strategy('file_system')
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
-from atlas.data import VoxelParams, AtomicNumFeaturizer
-from atlas.data.moad import MOADFragmentDataset, MOAD_metadata
-from atlas.data.util import DataLambda, DataBatch, FastLoader, rand_rot
-from atlas.models.voxel_to_fingerprint import VoxelToFingerprint
+from collagen.data import VoxelParams, AtomicNumFeaturizer
+from collagen.data.moad import MOADFragmentDataset, MOADBase
+from collagen.data.util import DataLambda, DataBatch, MultiLoader, rand_rot
+from collagen.models.voxel_to_fingerprint import VoxelToFingerprint
 
 # Disable warnings
 from rdkit import RDLogger
-
 RDLogger.DisableLog("rdApp.*")
 
 import prody
-
 prody.confProDy(verbosity="none")
 
 FP_SIZE = 2048
@@ -76,26 +74,39 @@ def run(args):
     )
 
     model = VoxelToFingerprint(
-        voxel_features=vp.atom_featurizer.size() * 2, fp_size=2048
+        voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
     )
 
-    moad = MOAD_metadata.load_from_csv(args.csv)
-    moad.resolve_paths(args.data)
-
+    moad = MOADBase(args.csv, args.data)
     train, val, test = moad.compute_split(seed=args.split_seed)
 
-    train_dat = MOADFragmentDataset(moad, split=train, transform=TransformFn(vp))
-    train_dat.index(cache_file=args.cache)
-
-    data = FastLoader(
-        train_dat,
+    train_frags = MOADFragmentDataset(
+        moad,
+        cache_file=args.cache,
+        split=train,
+        transform=TransformFn(vp)
+    )
+    train_data = MultiLoader(
+        train_frags,
         batch_size=1,
         shuffle=True,
         num_workers=args.num_workers,
         collate_fn=collate_none,
+    ).batch(16).map(VoxelizeFingerprintFn(vp, args.cpu))
+
+    val_frags = MOADFragmentDataset(
+        moad,
+        cache_file=args.cache,
+        split=val,
+        transform=TransformFn(vp)
     )
-    data = DataBatch(data, batch=16)
-    data = DataLambda(data, fn=VoxelizeFingerprintFn(vp, args.cpu))
+    val_data = MultiLoader(
+        val_frags,
+        batch_size=1,
+        shuffle=True,
+        num_workers=args.num_workers,
+        collate_fn=collate_none,
+    ).batch(16).map(VoxelizeFingerprintFn(vp, args.cpu))
 
     logger = None
     if args.wandb_project:
@@ -104,7 +115,7 @@ def run(args):
     trainer = pl.Trainer.from_argparse_args(
         args, default_root_dir="./.save", logger=logger
     )
-    trainer.fit(model, data)
+    trainer.fit(model, train_data, val_data)
 
 
 if __name__ == "__main__":

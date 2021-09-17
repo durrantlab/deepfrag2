@@ -1,45 +1,45 @@
-atlas.models package
+collagen.models package
 ====================
 
 Submodules
 ----------
 
-atlas.models.base\_model module
+collagen.models.base\_model module
 -------------------------------
 
-.. automodule:: atlas.models.base_model
+.. automodule:: collagen.models.base_model
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.models.dense\_graph\_autoencoder module
+collagen.models.dense\_graph\_autoencoder module
 ---------------------------------------------
 
-.. automodule:: atlas.models.dense_graph_autoencoder
+.. automodule:: collagen.models.dense_graph_autoencoder
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.models.graph\_generator module
+collagen.models.graph\_generator module
 ------------------------------------
 
-.. automodule:: atlas.models.graph_generator
+.. automodule:: collagen.models.graph_generator
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.models.model\_interfaces module
+collagen.models.model\_interfaces module
 -------------------------------------
 
-.. automodule:: atlas.models.model_interfaces
+.. automodule:: collagen.models.model_interfaces
    :members:
    :undoc-members:
    :show-inheritance:
 
-atlas.models.test\_base\_model module
+collagen.models.test\_base\_model module
 -------------------------------------
 
-.. automodule:: atlas.models.test_base_model
+.. automodule:: collagen.models.test_base_model
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ atlas.models.test\_base\_model module
 Module contents
 ---------------
 
-.. automodule:: atlas.models
+.. automodule:: collagen.models
    :members:
    :undoc-members:
    :show-inheritance:

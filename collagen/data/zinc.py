@@ -96,7 +96,7 @@ class ZINCDatasetH5(MolDataset):
     H5 format of the ZINC dataset.
 
     Note:
-        Use the ``atlas.convert.zinc_to_h5py`` utility to convert.
+        Use the ``collagen.convert.zinc_to_h5py`` utility to convert.
 
     Args:
         db (str): Path to a pre-processed ``zinc.h5`` database.

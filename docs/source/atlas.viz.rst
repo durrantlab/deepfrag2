@@ -1,13 +1,13 @@
-atlas.viz package
+collagen.viz package
 =================
 
 Submodules
 ----------
 
-atlas.viz.viz module
+collagen.viz.viz module
 --------------------
 
-.. automodule:: atlas.viz.viz
+.. automodule:: collagen.viz.viz
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ atlas.viz.viz module
 Module contents
 ---------------
 
-.. automodule:: atlas.viz
+.. automodule:: collagen.viz
    :members:
    :undoc-members:
    :show-inheritance:

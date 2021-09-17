@@ -1,11 +1,11 @@
 
-# Frag Atlas
+# Collagen
 
-Frag Atlas (DeepFrag 2) is a collection of machine learning tools for drug discovery & lead optimization applications.
+Collagen is Python package that bridges the gap between biological datasets, cheminformatics libraries and machine learning frameworks.
 
 ## Overview
 
-The source code is organized into several subdirectoreis in the `atlas` package:
+The source code is organized into several subdirectoreis in the `collagen` package:
 
 - `convert`: Python scripts for converting between data formats.
 - `data`: Utility library for reading different data formats.

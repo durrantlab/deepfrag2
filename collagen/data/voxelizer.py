@@ -42,7 +42,7 @@ class VoxelParams(object):
     point_radius: float = 1.75
     point_type: PointType = PointType.EXP
     acc_type: AccType = AccType.SUM
-    atom_featurizer: "atlas.data.featurizer.AtomFeaturizer" = None
+    atom_featurizer: "collagen.data.featurizer.AtomFeaturizer" = None
 
     def validate(self):
         assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
