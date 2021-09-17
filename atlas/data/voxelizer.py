@@ -48,14 +48,15 @@ class VoxelParams(object):
         assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
         assert self.atom_featurizer is not None, f"atom_featurizer must not be None"
 
-    def tensor_size(self, batch=1):
+    def tensor_size(self, batch=1, feature_mult=1):
         """
         Compute the required tensor size given the voxel parameters.
 
         Args:
-            batch (int): Number of molecules in the target tensor (default: 1).
+            batch (int, optional): Number of molecules in the target tensor (default: 1).
+            feature_mult (int, optional): Optional multiplier for the channel size.
         """
-        N = self.atom_featurizer.size()
+        N = self.atom_featurizer.size() * feature_mult
         W = self.width
         return (batch, N, W, W, W)
 

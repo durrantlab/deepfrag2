@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from io import StringIO
-from typing import List, Tuple, Iterator
+from typing import List, Tuple, Iterator, Any
 
 import numpy as np
 import prody
@@ -11,6 +11,7 @@ from torch.utils.data import Dataset
 
 from .fingerprints import fingerprint_for
 from .voxelizer import numba_ptr, mol_gridify
+from ..draw.draw import DrawContext
 
 
 class Mol(object):
@@ -29,6 +30,7 @@ class Mol(object):
         # Optional attributes:
         # - zinc_id: ZINC database identifier
         # - name: Optional display name
+        # - moad_ligand: MOAD_ligand object
         self.meta = {}
 
     def __repr__(self):
@@ -106,10 +108,14 @@ class Mol(object):
         rdmol = Chem.MolFromPDBBlock(pdb.getvalue(), sanitize=sanitize)
 
         if template != "":
-            ref_mol = Chem.MolFromSmiles(template)
+            ref_mol = Chem.MolFromSmiles(template, sanitize=False)
+            # Remove stereochemistry and explicit hydrogens so AssignBondOrdersFromTemplate works.
+            Chem.RemoveStereochemistry(ref_mol)
+            ref_mol = Chem.RemoveAllHs(ref_mol)
+            rdmol.UpdatePropertyCache()
             rdmol = Chem.AssignBondOrdersFromTemplate(ref_mol, rdmol)
 
-        rdmol.UpdatePropertyCache()
+        rdmol.UpdatePropertyCache(strict=False)
         return Mol(rdmol)
 
     @staticmethod
@@ -124,6 +130,23 @@ class Mol(object):
         """
         rdmol.UpdatePropertyCache()
         return Mol(rdmol)
+
+    def to_sdf(self) -> str:
+        """Convert to SDF format."""
+        if self.rdmol is not None:
+            s = StringIO()
+            w = Chem.SDWriter(s)
+            w.write(self.rdmol)
+            w.close()
+            return s.getvalue()
+        else:
+            return ""
+
+    def to_pdb(self) -> str:
+        if self.rdmol is not None:
+            return Chem.MolToPDBBlock(self.rdmol)
+        else:
+            return ""
 
     @property
     def smiles(self) -> str:
@@ -157,6 +180,15 @@ class Mol(object):
         return np.mean(self.coords, axis=0)
 
     @property
+    def connector(self) -> "np.array":
+        """If this Mol has a single atom of type 0, it returns that coordinate."""
+        for atom in self.atoms:
+            if atom.GetAtomicNum() == 0:
+                return self.coords[atom.GetIdx()]
+
+        return None
+
+    @property
     def atoms(self) -> List["rdkit.Chem.rdchem.Atom"]:
         return list(self.rdmol.GetAtoms())
 
@@ -174,7 +206,7 @@ class Mol(object):
 
     def split_bonds(
         self, only_single_bonds: bool = True, max_frag_size: int = -1
-    ) -> Iterator[Tuple["Mol", "Mol"]]:
+    ) -> List[Tuple["Mol", "Mol"]]:
         """
         Iterate over all bonds in the Mol and try to split into two fragments, returning tuples of produced fragments.
         Each returned tuple is of the form (parent, fragment).
@@ -210,6 +242,7 @@ class Mol(object):
             num_mols == 1
         ), f"Error, calling split_bonds() on a Mol with {num_mols} parts."
 
+        pairs = []
         for i in range(self.rdmol.GetNumBonds()):
             # Filter single bonds.
             if (
@@ -240,7 +273,9 @@ class Mol(object):
             if max_frag_size != -1 and frag.mass > max_frag_size:
                 continue
 
-            yield (parent, frag)
+            pairs.append((parent, frag))
+
+        return pairs
 
     def graph(self):
         """TODO"""
@@ -346,8 +381,60 @@ class Mol(object):
             cpu=cpu,
         )
 
+    def voxelize_delayed(
+        self,
+        params: "VoxelParams",
+        center: "np.ndarray" = None,
+        rot: "np.ndarray" = np.array([0, 0, 0, 1]),
+    ) -> "DelayedMolVoxel":
+        return DelayedMolVoxel(
+            atom_coords=self.coords,
+            atom_mask=params.atom_featurizer.featurize_mol(self),
+            width=params.width,
+            res=params.resolution,
+            center=(center if center is not None else self.center),
+            rot=rot,
+            point_radius=params.point_radius,
+            point_type=params.point_type.value,
+            acc_type=params.acc_type.value,
+        )
+
     def fingerprint(self, fp_type: str, size: int) -> "np.array":
         return fingerprint_for(self.rdmol, fp_type, size)
+
+    def stick(self, **kwargs) -> "py3DMol.view":
+        """Render the molecule with py3DMol (for use in jupyter)."""
+        draw = DrawContext(**kwargs)
+        draw.add_stick(self)
+        return draw.render()
+
+    def cartoon(self, **kwargs) -> "py3DMol.view":
+        """Render the molecule with py3DMol (for use in jupyter)."""
+        draw = DrawContext(**kwargs)
+        draw.add_cartoon(self)
+        return draw.render()
+
+
+class DelayedMolVoxel(object):
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    def voxelize_into(
+        self,
+        tensor: "torch.Tensor",
+        batch_idx: int,
+        layer_offset: int = 0,
+        cpu: bool = False,
+    ):
+        grid = numba_ptr(tensor, cpu=cpu)
+
+        mol_gridify(
+            grid=grid,
+            batch_idx=batch_idx,
+            layer_offset=layer_offset,
+            cpu=cpu,
+            **self.kwargs,
+        )
 
 
 class MolDataset(Dataset):
