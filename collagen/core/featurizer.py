@@ -1,6 +1,10 @@
-from typing import List
+from typing import List, Any
+import warnings
 
 import numpy as np
+import rdkit
+
+from .types import AnyAtom
 
 
 class AtomFeaturizer(object):
@@ -10,7 +14,7 @@ class AtomFeaturizer(object):
         """Featurize a Mol, returns a numpy array."""
         return np.array([self.featurize(a) for a in mol.atoms], dtype=np.int32)
 
-    def featurize(self, atom: "rdkit.Chem.rdchem.Atom") -> int:
+    def featurize(self, atom: AnyAtom) -> int:
         """Returns a 32-bit layer bitmask for an RDKit atom."""
         raise NotImplementedError()
 
@@ -31,8 +35,21 @@ class AtomicNumFeaturizer(AtomFeaturizer):
         assert len(layers) <= 32
         self.layers = layers
 
-    def featurize(self, atom: "rdkit.Chem.rdchem.Atom") -> int:
-        num = atom.GetAtomicNum()
+    def featurize(self, atom: Any) -> int:
+        num = None
+
+        if type(atom) is rdkit.Chem.rdchem.Atom:
+            num = atom.GetAtomicNum()
+        elif type(atom).__name__ == "AbstractAtom":
+            num = atom.num
+        else:
+            warnings.warn(
+                f"Unknown unknown atom type {type(atom)} in AtomicNumFeaturizer"
+            )
+
+        if num is None:
+            warnings.warn("Atom type is None in AtomicNumFeaturizer.featurize")
+
         if num in self.layers:
             return 1 << (self.layers.index(num))
         else:

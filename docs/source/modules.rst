@@ -1,5 +1,5 @@
 collagen
-=====
+========
 
 .. toctree::
    :maxdepth: 4

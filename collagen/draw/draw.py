@@ -5,26 +5,32 @@ import numpy as np
 import py3Dmol
 
 
-def voxel(tensor: "torch.Tensor", color_map: list):
-    points = []
-    opacities = []
-    colors = []
+class VoxelView(object):
+    @staticmethod
+    def draw(tensor: "torch.Tensor", color_map: list = None) -> "k3d.plot.Plot":
+        points = []
+        opacities = []
+        colors = []
 
-    c, x, y, z = np.where(tensor[0] > 0.001)
-    opacities = tensor[0][c, x, y, z]
-    points = np.stack([x, y, z]).transpose()
-    colors = [color_map[x] for x in c]
+        c, x, y, z = np.where(tensor[0] > 0.001)
+        opacities = tensor[0][c, x, y, z]
+        points = np.stack([x, y, z]).transpose()
 
-    plot = k3d.plot()
+        if color_map is None:
+            colors = [0 for x in c]
+        else:
+            colors = [color_map[x] for x in c]
 
-    plot += k3d.points(points, colors=colors, point_sizes=opacities)
+        plot = k3d.plot()
 
-    plot.grid = [0, tensor.shape[-3], 0, tensor.shape[-2], 0, tensor.shape[-1]]
-    plot.grid_auto_fit = False
-    plot.display()
+        plot += k3d.points(points, colors=colors, point_sizes=opacities)
+
+        plot.grid = [0, tensor.shape[-3], 0, tensor.shape[-2], 0, tensor.shape[-1]]
+        plot.grid_auto_fit = False
+        plot.display()
 
 
-class DrawContext(object):
+class MolView(object):
     """A DrawContext is a thin wrapper over a py3Dmol.view that provides some
     helper methods for drawing molecular structures."""
 
@@ -36,12 +42,16 @@ class DrawContext(object):
         return self._view
 
     def add_cartoon(self, mol: "Mol", style: dict = {}):
-        self._view.addModel(mol.to_pdb(), "pdb")
+        self._view.addModel(mol.pdb(), "pdb")
         self._view.setStyle({"model": -1}, {"cartoon": style})
 
     def add_stick(self, mol: "Mol", style: dict = {}):
-        self._view.addModel(mol.to_sdf(), "sdf")
+        self._view.addModel(mol.sdf(), "sdf")
         self._view.setStyle({"model": -1}, {"stick": style})
+
+    def add_sphere(self, mol: "Mol", style: dict = {}):
+        self._view.addModel(mol.sdf(), "sdf")
+        self._view.setStyle({"model": -1}, {"sphere": style})
 
     def draw_sphere(
         self,

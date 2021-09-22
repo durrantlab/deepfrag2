@@ -1,13 +1,13 @@
-collagen.pipeline package
+collagen.tools package
 ======================
 
 Submodules
 ----------
 
-collagen.pipeline.pipeline module
-------------------------------
+collagen.tools.zinc\_tsne module
+--------------------------------
 
-.. automodule:: collagen.pipeline.pipeline
+.. automodule:: collagen.tools.zinc_tsne
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ collagen.pipeline.pipeline module
 Module contents
 ---------------
 
-.. automodule:: collagen.pipeline
+.. automodule:: collagen.tools
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,7 +1,6 @@
 import torch
 
-from collagen.data.mol import Mol
-from collagen.data.voxelizer import VoxelParams
+from collagen.core import Mol, VoxelParams
 
 
 class Voxelize(object):

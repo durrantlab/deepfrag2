@@ -1,68 +1,89 @@
 Voxelization
 ============
 
-Collagen provides GPU-accelerated voxelization utilities for converting molecular structures to 3D density tensors.
+Collagen provides CPU/GPU voxelization utilities for converting molecular structures to 3D density tensors. A density tensor is a ``NxWxWxW`` matrix with ``N`` channels and ``W`` grid points. In machine learning applications, different atoms are typically assigned to different *density channels* based on properties like atomic number or higher level features such as aromaticity. In Collagen, this process of channel-assignment is called *atom featurization* and is implemented by the :class:`~collagen.core.featurizer.AtomFeaturizer` class.
 
 Voxel Parameters
 ----------------
 
-Voxelation parameters are controlled by the :class:`collagen.data.voxelizer.VoxelParams` class. For example, we can instantiate a simple atomic-number-based voxelizer with the following parameters:
+In Collagen, voxelation methods accept a single :class:`~collagen.VoxelParams` container object which specifies how structures are transformed into density tensors. An example of the parameters used in DeepFrag are shown below:
 
 .. code-block:: python
 
     vp = VoxelParams(
         resolution=0.75,
         width=24,
+        point_radius=1.75,
+        point_type=VoxelParams.PointType.EXP,
+        acc_type=VoxelParams.AccType.SUM,
         atom_featurizer=AtomicNumFeaturizer([1,6,7,8,16])
     )
 
-.. autoclass:: collagen.data.voxelizer.VoxelParams
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Parameter
+     - Meaning
+   * - resolution (:class:`~float`)
+     - Distance in Angstroms between neighboring gridpoints. A smaller number will "zoom in" on the structure more.
+   * - width (:class:`~int`)
+     - Number of grid points in each dimension. I.e. a value of ``24`` will produce a tensor of size ``Nx24x24x24``.
+   * - point_radius (:class:`~float`)
+     - Radius in Angstroms of each atom.
+   * - point_type (:class:`~collagen.core.voxelizer.VoxelParams.PointType`)
+     - An enum that describes the atom shape function.
+   * - acc_type (:class:`~collagen.core.voxelizer.VoxelParams.AccType`)
+     - An enum that describes how to handle overlapping atomic densities.
+   * - atom_featurizer (:class:`~collagen.core.featurizer.AtomFeaturizer`)
+     - An :class:`~collagen.core.featurizer.AtomFeaturizer` class that assigns atoms to channels.
+
+Collagen also provides a set of default voxelization parameters in :class:`~collagen.core.voxelizer.VoxelParamsDefault` as used in recent machine learning papers:
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Default
+     - Source
+   * - :class:`~collagen.core.voxelizer.VoxelParamsDefault.DeepFrag`
+     - `"DeepFrag: a deep convolutional neural network for fragment-based lead optimization" <https://doi.org/10.1039/D1SC00163A>`_
 
 Voxelize a Single Mol
 ---------------------
 
-The :class:`collagen.data.mol.Mol` class provides a ``voxelize`` method to generate a tensor for a single molecule:
+The :class:`~collagen.core.mol.Mol` class provides a :py:meth:`~collagen.core.mol.Mol.voxelize` method to generate a tensor for a single molecule:
 
-.. automethod:: collagen.data.mol.Mol.voxelize
+.. automethod:: collagen.Mol.voxelize
 
 Voxelize a Batch of Mols
 ------------------------
 
-It is often useful to construct a single tensor with a batch of voxelized molecules. The :class:`collagen.data.mol.Mol` class also provides a ``voxelize_into`` method which can facilitate in-place voxelization for an existing PyTorch tensor.
+While training machine learning models, it is useful to generate a batch of voxelized molecules at once. The :class:`~collagen.core.mol.Mol` class also provides a :py:meth:`~collagen.core.mol.Mol.voxelize_into` method which can perform in-place voxelization with an existing PyTorch tensor.
 
-Note that if you invoke ``voxelize_into`` with ``cpu=False``, your tensor must be on the GPU (i.e. initialize with ``device='cuda'``). You can use :py:meth:`collagen.data.voxelizer.VoxelParams.tensor_size` to compute the target tensor size for a multi-batch tensor.
+Note that if you invoke :py:meth:`~collagen.core.mol.Mol.voxelize_into` with ``cpu=False``, your tensor must be on the GPU (i.e. initialized with ``device='cuda'``). You can use :py:meth:`collagen.core.voxelizer.VoxelParams.tensor_size` to compute the target tensor size for a multi-batch tensor.
 
-.. automethod:: collagen.data.mol.Mol.voxelize_into
+.. automethod:: collagen.Mol.voxelize_into
 
-Delayed Voxelation
-------------------
+Delayed Voxelation (advanced)
+-----------------------------
 
-.. automethod:: collagen.data.mol.Mol.voxelize_delayed
-
-PyTorch Voxelize Transform
---------------------------
-
-For dealing with on-the-fly voxelation, you can also use the :class:`collagen.data.transforms.Voxelize` class as a Dataset transform. For example:
+In specific cases, you may want to perform atom featurization in a multiprocess CPU pool and GPU-accelerated voxelization later, on a single GPU. For this workflow, you can use :py:meth:`~collagen.core.mol.Mol.voxelize_delayed` to perform atom featurization and cache necessary arguments for voxeliation in a :class:`~collagen.core.mol.Mol.DelayedMolVoxel` object. The returned :class:`~collagen.core.mol.Mol.DelayedMolVoxel` class provides a single :py:meth:`~collagen.core.mol.Mol.DelayedMolVoxel.voxelize_into` method. For example:
 
 .. code-block:: python
 
-    vp = VoxelParams(
-        resolution=0.75,
-        width=24,
-        atom_featurizer=AtomicNumFeaturizer([1,6,7,8,15])
+    m = Mol.from_smiles(
+        'CC(=O)O[C@H]1C=C[C@@H]2[C@@]34[C@H]1Oc1c4c(C[C@H]2N(CC3)C)ccc1OC(=O)C',
+        make_3D=True
+    )
+    
+    # On CPU
+    delayed = m.voxelize_delayed(
+        VoxelParamsDefault.DeepFrag,
+        center=m.center,
+        rot=np.array([1,0,0,0])
     )
 
-    zinc = ZINCDatasetH5(
-        './path/to/zinc.h5', 
-        make_3D=True, 
-        transform=transforms.Voxelize(vp, cpu=True)
-    )
-
-The Dataset will invoke :py:meth:`collagen.data.mol.Mol.voxelize` automatically upon loading the sample and this can be used with DataLoader to instantiate a tensor batch automatically, e.g.:
-
-.. code-block:: python
-
-    data = DataLoader(zinc, batch_size=16)
-
-    print(next(iter(data)).shape)
-    # torch.Size([16, 5, 24, 24, 24])
+    # On GPU
+    tensor = torch.zeros(VoxelParamsDefault.DeepFrag.tensor_size(1), device='cuda')
+    delayed.voxelize_into(tensor, batch_idx=0, cpu=False)

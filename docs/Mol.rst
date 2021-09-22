@@ -1,43 +1,61 @@
 The Mol Class
 =============
 
-The :class:`~collagen.data.mol.Mol` class acts as a wrapper over a `Chem.rdmol.RDMol` object and provides various data transformation functions.
+Molecular structures in Collagen are stored in the :class:`~collagen.core.mol.Mol` class. There are several variants depending on the type and source of molecular data:
+
+* :class:`~collagen.core.mol.BackedMol`: A Mol backed by an RDKit :class:`rdkit.Chem.rdchem.Mol`. Used for representing *real* molecular data (i.e. loaded from a dataset or constructed from SMILES strings).
+* :class:`~collagen.core.abstract_mol.AbstractMol`: A customizeable Mol that does not care about chemical feasability constraints. Used for representing graph-like molecular information in the same coordinate space as a :class:`~collagen.core.mol.BackedMol`.
 
 Constructing a Mol
 ------------------
 
-You can construct a Mol using the provided ``from_*`` method or using a data loader (see :doc:`LoadingData`).
+You can construct a Mol using the provided ``from_*`` method or using an external data loader (see :doc:`LoadingData`).
 
-.. automethod:: collagen.data.mol.Mol.from_smiles
-.. automethod:: collagen.data.mol.Mol.from_rdkit
-.. automethod:: collagen.data.mol.Mol.from_prody
+.. currentmodule:: collagen.core.mol
+.. autosummary::
+    Mol.from_smiles
+    Mol.from_rdkit
+    Mol.from_prody
+
+The :class:`~collagen.core.abstract_mol.AbstractMol` is intended to be created programatically using the following two methods:
+
+.. currentmodule:: collagen.core.abstract_mol
+.. autosummary::
+    AbstractMol.add_atom
+    AbstractMol.add_bond
+
+For example:
+
+.. code-block:: python
+
+    mol = AbstractMol()
+    a = mol.add_atom(AbstractAtom(coord=[1,2,3]))
+    b = mol.add_atom(AbstractAtom(coord=[5,6,7]))
+    mol.add_bond(AbstractBond(edge=(a,b)))
 
 Attributes
 ----------
 
 There are several attribute wrappers for quick access to molecular data:
 
-.. autoproperty:: collagen.data.mol.Mol.has_coords
-.. autoproperty:: collagen.data.mol.Mol.coords
-.. autoproperty:: collagen.data.mol.Mol.center
-
-.. autoproperty:: collagen.data.mol.Mol.atoms
-.. autoproperty:: collagen.data.mol.Mol.mass
-
-.. autoproperty:: collagen.data.mol.Mol.num_atoms
-.. autoproperty:: collagen.data.mol.Mol.num_heavy_atoms
-
-.. autoproperty:: collagen.data.mol.Mol.smiles
-.. autoproperty:: collagen.data.mol.Mol.iso_smiles
+.. currentmodule:: collagen.core.mol
+.. autosummary::
+    Mol.coords
+    Mol.center
+    Mol.atoms
+    Mol.mass
+    Mol.num_atoms
+    Mol.num_heavy_atoms
+    Mol.smiles
 
 Topology
 --------
 
 Graph conversion TODO
 
-.. automethod:: collagen.data.mol.Mol.split_bonds
+.. automethod:: collagen.Mol.split_bonds
 
 Voxelization
-----------
+------------
 
 See :doc:`Voxelization`.

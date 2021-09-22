@@ -1,25 +1,32 @@
 Loading Data
 ============
 
-Data loading is provided by a series of Datasets that implement :class:`collagen.data.mol.MolDataset` (which is itself a child of :class:`torch.utils.data.Dataset`.
+Collagen provides a series of external dataset adapters. There are two types of adapters:
 
-ZINC Database
--------------
+* **Interfaces** provide scriptable access to the contents of an on-disk dataset, pulling out metadata and transforming structures into :class:`~collagen.core.mol.Mol` objects.
+* **Datasets** subclass :class:`torch.utils.data.Dataset` and implement post-processing (such as voxelization), generating train/val/test splits and iterating over examples for a given interface.
+
+Supported Datasets
+------------------
+
+ZINC
+^^^^
 
 Homepage: https://zinc.docking.org/
 
-.. autoclass:: collagen.data.zinc.ZINCDataset
-    :members:
-    :undoc-members:
-    :show-inheritance:
+...
 
-.. autoclass:: collagen.data.zinc.ZINCDatasetH5
-    :members:
-    :undoc-members:
-    :show-inheritance:
+Binding MOAD
+^^^^^^^^^^^^
 
-MOAD
-----
+Homepage: http://www.bindingmoad.org/
 
-:doc:`external/Moad`
+Interfaces:
 
+.. autosummary::
+    collagen.external.moad.MOADInterface
+
+Datasets:
+
+.. autosummary::
+    collagen.external.moad.MOADFragmentDataset

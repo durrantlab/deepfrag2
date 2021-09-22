@@ -1,21 +1,21 @@
 collagen.train package
-===================
+======================
 
 Submodules
 ----------
 
-collagen.train.train\_lig\_shaper module
+collagen.train.train\_deepfrag module
 -------------------------------------
 
-.. automodule:: collagen.train.train_lig_shaper
+.. automodule:: collagen.train.train_deepfrag
    :members:
    :undoc-members:
    :show-inheritance:
 
-collagen.train.train\_mol\_autoencoder module
-------------------------------------------
+collagen.train.train\_zinc\_voxel\_autoencoder module
+-----------------------------------------------------
 
-.. automodule:: collagen.train.train_mol_autoencoder
+.. automodule:: collagen.train.train_zinc_voxel_autoencoder
    :members:
    :undoc-members:
    :show-inheritance:

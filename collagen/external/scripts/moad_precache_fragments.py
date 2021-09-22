@@ -1,6 +1,6 @@
 import argparse
 
-from ..data.moad import MOADFragmentDataset, MOADBase
+from ..data.moad import MOADFragmentDataset, MOADInterface
 
 
 # Disable warnings
@@ -14,7 +14,7 @@ prody.confProDy(verbosity="none")
 
 
 def run(args):
-    moad = MOADBase(args.csv, args.data)
+    moad = MOADInterface(args.csv, args.data)
     dat = MOADFragmentDataset(moad, cache_file=args.out, cache_cores=args.cores)
     print("Done")
 

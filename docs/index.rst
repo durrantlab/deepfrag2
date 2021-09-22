@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Collagen documentation!
-=====================
+=======================
 
 .. toctree::
    :maxdepth: 2

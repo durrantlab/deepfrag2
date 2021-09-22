@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
 from collagen.data import VoxelParams, AtomicNumFeaturizer
-from collagen.data.moad import MOADFragmentDataset, MOADBase
+from collagen.data.moad import MOADFragmentDataset, MOADInterface
 from collagen.data.util import DataLambda, DataBatch, MultiLoader, rand_rot
 from collagen.models.voxel_to_fingerprint import VoxelToFingerprint
 
@@ -80,7 +80,7 @@ def run(args):
         voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
     )
 
-    moad = MOADBase(args.csv, args.data)
+    moad = MOADInterface(args.csv, args.data)
     train, val, test = moad.compute_split(seed=args.split_seed)
 
     train_frags = MOADFragmentDataset(

@@ -2,12 +2,15 @@ import ctypes
 from dataclasses import dataclass
 from enum import Enum
 import math
+from typing import List, Any
 
 import torch
 import numba
 import numba.cuda
 import numpy as np
+import rdkit
 
+from .featurizer import AtomicNumFeaturizer
 
 GPU_DIM = 8
 
@@ -23,6 +26,7 @@ class VoxelParams(object):
         point_radius (float): The effective atomic radius of atoms (in Angstroms).
         point_type: (VoxelParams.PointType): Describes the atomic density sampling function.
         acc_type: (VoxelParams.AccType): Describes how overlapping atomic densities are handled.
+        atom_featurizer (AtomFeaturizer): An atom featurizer that describes how to assign atoms to layers.
     """
 
     class PointType(Enum):
@@ -42,7 +46,7 @@ class VoxelParams(object):
     point_radius: float = 1.75
     point_type: PointType = PointType.EXP
     acc_type: AccType = AccType.SUM
-    atom_featurizer: "collagen.data.featurizer.AtomFeaturizer" = None
+    atom_featurizer: "collagen.core.featurizer.AtomFeaturizer" = None
 
     def validate(self):
         assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
@@ -59,6 +63,17 @@ class VoxelParams(object):
         N = self.atom_featurizer.size() * feature_mult
         W = self.width
         return (batch, N, W, W, W)
+
+
+class VoxelParamsDefault(object):
+    DeepFrag = VoxelParams(
+        resolution=0.75,
+        width=24,
+        point_radius=1.75,
+        point_type=VoxelParams.PointType.EXP,
+        acc_type=VoxelParams.AccType.SUM,
+        atom_featurizer=AtomicNumFeaturizer([1, 6, 7, 8, 16]),
+    )
 
 
 def numba_ptr(tensor: "torch.Tensor", cpu: bool = False):

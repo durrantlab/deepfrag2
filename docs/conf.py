@@ -29,7 +29,10 @@ author = 'Harrison Green'
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon"
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.autosummary",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -52,3 +55,11 @@ html_theme = 'furo'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = []
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'PyTorch': ('http://pytorch.org/docs/master/', None),
+    'RDKit': ('https://www.rdkit.org/docs/', None),
+    'ProDy': ('http://prody.csb.pitt.edu/', None),
+}

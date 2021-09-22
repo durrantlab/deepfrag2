@@ -9,7 +9,7 @@ import prody
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
-from .mol import Mol, MolDataset
+from ..core.mol import Mol
 
 
 def _fix_moad_smiles(smi):
@@ -44,8 +44,15 @@ class MOAD_target(object):
         """Returns the number of on-disk structures."""
         return len(self.files)
 
-    def __getitem__(self, idx: int):
-        """"""
+    def __getitem__(self, idx: int) -> Tuple["Mol", "Mol"]:
+        """
+        Load the Nth structure for this target.
+
+        Args:
+            idx (int): The index of the biological assembly to load.
+
+        Returns a (receptor, ligand) tuple of :class:`atlas.data.mol.Mol` objects.
+        """
         f = open(self.files[idx], "r")
         m = prody.parsePDBStream(f)
         f.close()
@@ -137,7 +144,7 @@ def _flatten(seq):
     return a
 
 
-def div2(seq):
+def _div2(seq):
     l = list(seq)
     sz = len(l)
 
@@ -146,7 +153,7 @@ def div2(seq):
     return (set(l[: sz // 2]), set(l[sz // 2 :]))
 
 
-def div3(seq):
+def _div3(seq):
     l = list(seq)
     sz = len(l)
 
@@ -156,7 +163,7 @@ def div3(seq):
     return (set(l[:v]), set(l[v : v * 2]), set(l[v * 2 :]))
 
 
-class MOADBase(object):
+class MOADInterface(object):
     """
     Base class for interacting with Binding MOAD data. Initialize by passing the path to
     "every.csv" and the path to a folder containing structure files (can be nested).
@@ -171,12 +178,12 @@ class MOADBase(object):
     _all_targets: List["str"] = field(default_factory=list)
 
     def __init__(self, metadata: Union[str, Path], structures: Union[str, Path]):
-        self.classes = MOADBase.load_classes(metadata)
+        self.classes = MOADInterface._load_classes(metadata)
         self._lookup = {}
         self._all_targets = []
 
         self._init_lookup()
-        self.resolve_paths(structures)
+        self._resolve_paths(structures)
 
     def _init_lookup(self):
         for c in self.classes:
@@ -197,7 +204,8 @@ class MOADBase(object):
         Args:
             key (str): A PDB ID (case-insensitive).
 
-        Returns (MOAD_target) a MOAD_target object if found.
+        Returns:
+            MOAD_target: a MOAD_target object if found.
         """
         assert type(key) is str, f"PDB ID must be a str (got {type(key)})"
         k = key.lower()
@@ -205,7 +213,7 @@ class MOADBase(object):
         return self._lookup[k]
 
     @staticmethod
-    def load_classes(path):
+    def _load_classes(path):
         dat = open(path, "r").read().strip().split("\n")
 
         classes = []
@@ -252,7 +260,7 @@ class MOADBase(object):
 
         return classes
 
-    def resolve_paths(self, path: Union[str, Path]):
+    def _resolve_paths(self, path: Union[str, Path]):
         path = Path(path)
 
         files = {}
@@ -301,7 +309,8 @@ class MOADBase(object):
             p_train (float, optional): Percentage of targets to use in the TRAIN set.
             p_val (float, optional): Percentage of (non-train) targets to use in the VAL set.
 
-        Returns (TRAIN, VAL, TEST)
+        Returns:
+            Tuple[MOAD_split, MOAD_split, MOAD_split]: train/val/test sets
         """
 
         if seed != 0:
@@ -325,10 +334,10 @@ class MOADBase(object):
 
         if prevent_smiles_overlap:
             # Reassign overlapping SMILES.
-            a_train, a_val = div2((train_smi & val_smi) - test_smi)
-            b_val, b_test = div2((val_smi & test_smi) - train_smi)
-            c_train, c_test = div2((train_smi & test_smi) - val_smi)
-            d_train, d_val, d_test = div3((train_smi & val_smi & test_smi))
+            a_train, a_val = _div2((train_smi & val_smi) - test_smi)
+            b_val, b_test = _div2((val_smi & test_smi) - train_smi)
+            c_train, c_test = _div2((train_smi & test_smi) - val_smi)
+            d_train, d_val, d_test = _div3((train_smi & val_smi & test_smi))
 
             train_smi = (train_smi - (val_smi | test_smi)) | a_train | c_train | d_train
             val_smi = (val_smi - (train_smi | test_smi)) | a_val | b_val | d_val
@@ -341,6 +350,7 @@ class MOADBase(object):
         )
 
     def full_split(self) -> MOAD_split:
+        """Returns a split containing all targets and smiles strings."""
         return MOAD_split(
             name="Full",
             targets=self.targets,
@@ -391,12 +401,16 @@ class MOADFragmentDataset(Dataset):
     A Dataset that provides (receptor, parent, fragment) tuples by splitting ligands on single bonds.
 
     Args:
-        moad
+        moad (MOADInterface): An initialized MOADInterface object.
+        cache_file (str, optional): Path to a cache file to store or load fragment metadata.
+        cache_cores (int, optional): If a cache file is not found, use this many cores to compute a new cache.
+        split (MOAD_split, optional): An optional split to constrain the space of examples.
+        transform (Callable[[Mol, Mol, Mol], Any], optional): An optional transformation function to invoke before returning samples.
+            Takes the arguments (receptor, parent, fragment) as Mol objects.
     """
 
-    moad: MOADBase
+    moad: MOADInterface
     split: MOAD_split
-    has_index: bool
     transform: Optional[Callable[[Mol, Mol, Mol], Any]]
 
     # A cache-able index listing every fragment size for every ligand/target in the dataset.
@@ -411,7 +425,7 @@ class MOADFragmentDataset(Dataset):
 
     def __init__(
         self,
-        moad: MOADBase,
+        moad: MOADInterface,
         cache_file: Optional[Union[str, Path]] = None,
         cache_cores: int = 1,
         split: Optional[MOAD_split] = None,
@@ -419,9 +433,8 @@ class MOADFragmentDataset(Dataset):
     ):
         self.moad = moad
         self.split = split if split is not None else moad.full_split()
-        self.has_index = False
         self.transform = transform
-        self.index(cache_file, cache_cores)
+        self._index(cache_file, cache_cores)
 
     def _build_index(self, cores: int = 1) -> dict:
         """
@@ -453,7 +466,7 @@ class MOADFragmentDataset(Dataset):
         pbar.close()
         return index
 
-    def index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
+    def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
         cache_file = Path(cache_file) if cache_file is not None else None
 
         if cache_file is not None and cache_file.exists():
@@ -494,15 +507,12 @@ class MOADFragmentDataset(Dataset):
 
         self._fragment_index = index
         self._internal_index = internal_index
-        self.has_index = True
 
     def __len__(self) -> int:
-        assert self.has_index, "Call MOADFragmentDataset.index() first"
         return len(self._internal_index)
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
         """Returns (receptor, parent, fragment)"""
-        assert self.has_index, "Call MOADFragmentDataset.index() first"
         assert idx >= 0 and idx <= len(self), "Index out of bounds"
 
         entry = self._internal_index[idx]
