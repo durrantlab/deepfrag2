@@ -24,7 +24,7 @@ black:
 pages:
   stage: deploy
   script:
-  - pip install -U sphinx furo
+  - pip install -U sphinx furo nbsphinx
   - sphinx-build -b html ./docs public
   artifacts:
     paths:
