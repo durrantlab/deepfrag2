@@ -8,7 +8,7 @@ before_script:
 test:
   stage: test
   script:
-  - pip install -U sphinx furo
+  - pip install -U sphinx furo nbsphinx
   - sphinx-build -b html ./docs public
   only:
   - branches
