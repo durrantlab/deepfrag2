@@ -13,8 +13,8 @@ In Collagen, voxelation methods accept a single :class:`~collagen.VoxelParams` c
     vp = VoxelParams(
         resolution=0.75,
         width=24,
-        point_radius=1.75,
-        point_type=VoxelParams.PointType.EXP,
+        atom_scale=1.75,
+        atom_shape=VoxelParams.AtomShapeType.EXP,
         acc_type=VoxelParams.AccType.SUM,
         atom_featurizer=AtomicNumFeaturizer([1,6,7,8,16])
     )
@@ -29,14 +29,14 @@ In Collagen, voxelation methods accept a single :class:`~collagen.VoxelParams` c
      - Distance in Angstroms between neighboring gridpoints. A smaller number will "zoom in" on the structure more.
    * - width (:class:`~int`)
      - Number of grid points in each dimension. I.e. a value of ``24`` will produce a tensor of size ``Nx24x24x24``.
-   * - point_radius (:class:`~float`)
-     - Radius in Angstroms of each atom.
-   * - point_type (:class:`~collagen.core.voxelizer.VoxelParams.PointType`)
+   * - atom_scale (:class:`~float`)
+     - Optional scale applied to each atomic radius.
+   * - atom_shape (:class:`~collagen.core.voxelizer.VoxelParams.AtomShapeType`)
      - An enum that describes the atom shape function.
    * - acc_type (:class:`~collagen.core.voxelizer.VoxelParams.AccType`)
      - An enum that describes how to handle overlapping atomic densities.
    * - atom_featurizer (:class:`~collagen.core.featurizer.AtomFeaturizer`)
-     - An :class:`~collagen.core.featurizer.AtomFeaturizer` class that assigns atoms to channels.
+     - An :class:`~collagen.core.featurizer.AtomFeaturizer` class that assigns atoms to channels and computes atomic radii for each atom.
 
 Collagen also provides a set of default voxelization parameters in :class:`~collagen.core.voxelizer.VoxelParamsDefault` as used in recent machine learning papers:
 
@@ -44,7 +44,7 @@ Collagen also provides a set of default voxelization parameters in :class:`~coll
    :widths: 50 50
    :header-rows: 1
 
-   * - Default
+   * - ``collagen.VoxelParamsDefault.*``
      - Source
    * - :class:`~collagen.core.voxelizer.VoxelParamsDefault.DeepFrag`
      - `"DeepFrag: a deep convolutional neural network for fragment-based lead optimization" <https://doi.org/10.1039/D1SC00163A>`_

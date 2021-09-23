@@ -23,13 +23,13 @@ class VoxelParams(object):
     Attributes:
         resolution (float): The distance in Angstroms between neighboring grid points. A smaller number means more zoomed-in.
         width (int): The number of gridpoints in each spatial dimension.
-        point_radius (float): The effective atomic radius of atoms (in Angstroms).
-        point_type: (VoxelParams.PointType): Describes the atomic density sampling function.
+        atom_scale (float): A multiplier applied to atomic radii.
+        atom_shape: (VoxelParams.AtomShapeType): Describes the atomic density sampling function.
         acc_type: (VoxelParams.AccType): Describes how overlapping atomic densities are handled.
         atom_featurizer (AtomFeaturizer): An atom featurizer that describes how to assign atoms to layers.
     """
 
-    class PointType(Enum):
+    class AtomShapeType(Enum):
         EXP = 0  # simple exponential sphere fill
         SPHERE = 1  # fixed sphere fill
         CUBE = 2  # fixed cube fill
@@ -43,8 +43,8 @@ class VoxelParams(object):
 
     resolution: float = 1.0
     width: int = 24
-    point_radius: float = 1.75
-    point_type: PointType = PointType.EXP
+    atom_scale: float = 1
+    atom_shape: AtomShapeType = AtomShapeType.EXP
     acc_type: AccType = AccType.SUM
     atom_featurizer: "collagen.core.featurizer.AtomFeaturizer" = None
 
@@ -69,8 +69,8 @@ class VoxelParamsDefault(object):
     DeepFrag = VoxelParams(
         resolution=0.75,
         width=24,
-        point_radius=1.75,
-        point_type=VoxelParams.PointType.EXP,
+        atom_scale=1.75,
+        atom_shape=VoxelParams.AtomShapeType.EXP,
         acc_type=VoxelParams.AccType.SUM,
         atom_featurizer=AtomicNumFeaturizer([1, 6, 7, 8, 16]),
     )
@@ -103,14 +103,15 @@ def gpu_gridify(
     atom_num,
     atom_coords,
     atom_mask,
+    atom_radii,
     layer_offset,
     batch_idx,
     width,
     res,
     center,
     rot,
-    point_radius,
-    point_type,
+    atom_scale,
+    atom_shape,
     acc_type,
 ):
     """
@@ -143,6 +144,8 @@ def gpu_gridify(
         atom_coords: Array containing (x,y,z) atom coordinates.
         atom_mask: A uint32 array of size atom_num containing a destination
             layer bitmask (i.e. if bit k is set, write atom to index k).
+        atom_radii: A float32 array of size atom_num containing invidiual
+            atomic radius values.
         layer_offset: A fixed ofset added to each atom layer index.
         batch_idx: Index specifiying where to write information.
         width: Number of grid points in each dimension.
@@ -197,15 +200,15 @@ def gpu_gridify(
         # fetch atom
         fx, fy, fz = atom_coords[i]
         mask = atom_mask[i]
+
+        r = atom_radii[i] * atom_scale
+        r2 = r * r
+
         i += 1
 
         # invisible atoms
         if mask == 0:
             continue
-
-        # point radius squared
-        r = point_radius
-        r2 = point_radius * point_radius
 
         # quick cube bounds check
         if abs(fx - tx) > r2 or abs(fy - ty) > r2 or abs(fz - tz) > r2:
@@ -214,7 +217,7 @@ def gpu_gridify(
         # value to add to this gridpoint
         val = 0
 
-        if point_type == 0:  # PointType.EXP
+        if atom_shape == 0:  # AtomShapeType.EXP
             # exponential sphere fill
             # compute squared distance to atom
             d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
@@ -223,7 +226,7 @@ def gpu_gridify(
 
             # compute effect
             val = math.exp((-2 * d2) / r2)
-        elif point_type == 1:  # PointType.SPHERE
+        elif atom_shape == 1:  # AtomShapeType.SPHERE
             # solid sphere fill
             # compute squared distance to atom
             d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
@@ -231,10 +234,10 @@ def gpu_gridify(
                 continue
 
             val = 1
-        elif point_type == 2:  # PointType.CUBE
+        elif atom_shape == 2:  # AtomShapeType.CUBE
             # solid cube fill
             val = 1
-        elif point_type == 3:  # PointType.GAUSSIAN
+        elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
             # (Ragoza, 2016)
             #
             # piecewise gaussian sphere fill
@@ -248,7 +251,7 @@ def gpu_gridify(
                 val = math.exp(-2.0) * ((4 * d2 / r2) - (12 * d / r) + 9)
             else:
                 val = math.exp((-2 * d2) / r2)
-        elif point_type == 4:  # PointType.LJ
+        elif atom_shape == 4:  # AtomShapeType.LJ
             # (Jimenez, 2017) - DeepSite
             #
             # LJ potential
@@ -260,7 +263,7 @@ def gpu_gridify(
                 continue
             else:
                 val = 1 - math.exp(-((r / d) ** 12))
-        elif point_type == 5:  # PointType.DISCRETE
+        elif atom_shape == 5:  # AtomShapeType.DISCRETE
             # nearest-gridpoint
             # L1 distance
             if (
@@ -286,14 +289,15 @@ def cpu_gridify(
     atom_num,
     atom_coords,
     atom_mask,
+    atom_radii,
     layer_offset,
     batch_idx,
     width,
     res,
     center,
     rot,
-    point_radius,
-    point_type,
+    atom_scale,
+    atom_shape,
     acc_type,
 ):
     """
@@ -347,15 +351,15 @@ def cpu_gridify(
                     # fetch atom
                     fx, fy, fz = atom_coords[i]
                     mask = atom_mask[i]
+
+                    r = atom_radii[i] * atom_scale
+                    r2 = r * r
+
                     i += 1
 
                     # invisible atoms
                     if mask == 0:
                         continue
-
-                    # point radius squared
-                    r = point_radius
-                    r2 = point_radius * point_radius
 
                     # quick cube bounds check
                     if abs(fx - tx) > r2 or abs(fy - ty) > r2 or abs(fz - tz) > r2:
@@ -364,7 +368,7 @@ def cpu_gridify(
                     # value to add to this gridpoint
                     val = 0
 
-                    if point_type == 0:  # PointType.EXP
+                    if atom_shape == 0:  # AtomShapeType.EXP
                         # exponential sphere fill
                         # compute squared distance to atom
                         d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
@@ -373,7 +377,7 @@ def cpu_gridify(
 
                         # compute effect
                         val = math.exp((-2 * d2) / r2)
-                    elif point_type == 1:  # PointType.SPHERE
+                    elif atom_shape == 1:  # AtomShapeType.SPHERE
                         # solid sphere fill
                         # compute squared distance to atom
                         d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
@@ -381,10 +385,10 @@ def cpu_gridify(
                             continue
 
                         val = 1
-                    elif point_type == 2:  # PointType.CUBE
+                    elif atom_shape == 2:  # AtomShapeType.CUBE
                         # solid cube fill
                         val = 1
-                    elif point_type == 3:  # PointType.GAUSSIAN
+                    elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
                         # (Ragoza, 2016)
                         #
                         # piecewise gaussian sphere fill
@@ -398,7 +402,7 @@ def cpu_gridify(
                             val = math.exp(-2.0) * ((4 * d2 / r2) - (12 * d / r) + 9)
                         else:
                             val = math.exp((-2 * d2) / r2)
-                    elif point_type == 4:  # PointType.LJ
+                    elif atom_shape == 4:  # AtomShapeType.LJ
                         # (Jimenez, 2017) - DeepSite
                         #
                         # LJ potential
@@ -410,7 +414,7 @@ def cpu_gridify(
                             continue
                         else:
                             val = 1 - math.exp(-((r / d) ** 12))
-                    elif point_type == 5:  # PointType.DISCRETE
+                    elif atom_shape == 5:  # AtomShapeType.DISCRETE
                         # nearest-gridpoint
                         # L1 distance
                         if (
@@ -434,14 +438,15 @@ def mol_gridify(
     grid,
     atom_coords,
     atom_mask,
+    atom_radii,
     layer_offset,
     batch_idx,
     width,
     res,
     center,
     rot,
-    point_radius,
-    point_type,
+    atom_scale,
+    atom_shape,
     acc_type,
     cpu=False,
 ):
@@ -452,14 +457,15 @@ def mol_gridify(
             len(atom_coords),
             atom_coords,
             atom_mask,
+            atom_radii,
             layer_offset,
             batch_idx,
             width,
             res,
             center,
             rot,
-            point_radius,
-            point_type,
+            atom_scale,
+            atom_shape,
             acc_type,
         )
     else:
@@ -469,20 +475,14 @@ def mol_gridify(
             len(atom_coords),
             atom_coords,
             atom_mask,
+            atom_radii,
             layer_offset,
             batch_idx,
             width,
             res,
             center,
             rot,
-            point_radius,
-            point_type,
+            atom_scale,
+            atom_shape,
             acc_type,
         )
-
-
-def rand_rot():
-    """Returns a random uniform quaternion rotation."""
-    q = np.random.normal(size=4)  # sample quaternion from normal distribution
-    q = q / np.sqrt(np.sum(q ** 2))  # normalize
-    return q

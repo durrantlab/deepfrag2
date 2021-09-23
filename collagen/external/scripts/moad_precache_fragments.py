@@ -1,6 +1,6 @@
 import argparse
 
-from ..data.moad import MOADFragmentDataset, MOADInterface
+from collagen.external import MOADFragmentDataset, MOADInterface
 
 
 # Disable warnings

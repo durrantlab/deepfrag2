@@ -21,8 +21,11 @@ class Mol(object):
 
     _KW_MOL_NAME = "name"
 
-    def __init__(self, meta: dict = {}):
-        self.meta = meta
+    def __init__(self, meta: dict = None):
+        if meta is None:
+            self.meta = {}
+        else:
+            self.meta = meta
 
     def __repr__(self):
         _cls = type(self).__name__
@@ -263,18 +266,20 @@ class Mol(object):
             rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w) describing a grid rotation.
         """
         grid = numba_ptr(tensor, cpu=cpu)
+        atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
         mol_gridify(
             grid=grid,
             atom_coords=self.coords,
-            atom_mask=params.atom_featurizer.featurize_mol(self),
+            atom_mask=atom_mask,
+            atom_radii=atom_radii,
             layer_offset=layer_offset,
             batch_idx=batch_idx,
             width=params.width,
             res=params.resolution,
             center=(center if center is not None else self.center),
             rot=rot,
-            point_radius=params.point_radius,
-            point_type=params.point_type.value,
+            atom_scale=params.atom_scale,
+            atom_shape=params.atom_shape.value,
             acc_type=params.acc_type.value,
             cpu=cpu,
         )
@@ -298,15 +303,17 @@ class Mol(object):
             DelayedMolVoxel: An ephemeral, minimal Mol object with pre-computed voxelation arguments.
         """
         params.validate()
+        atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
         return DelayedMolVoxel(
             atom_coords=self.coords,
-            atom_mask=params.atom_featurizer.featurize_mol(self),
+            atom_mask=atom_mask,
+            atom_radii=atom_radii,
             width=params.width,
             res=params.resolution,
             center=(center if center is not None else self.center),
             rot=rot,
-            point_radius=params.point_radius,
-            point_type=params.point_type.value,
+            atom_scale=params.atom_scale,
+            atom_shape=params.atom_shape.value,
             acc_type=params.acc_type.value,
         )
 
@@ -354,7 +361,7 @@ class DelayedMolVoxel(object):
 class BackedMol(Mol):
     """A BackedMol is a thin wrapper over an RDKit molecule."""
 
-    def __init__(self, rdmol: "rdkit.Chem.rdchem.Mol", meta: dict = {}):
+    def __init__(self, rdmol: "rdkit.Chem.rdchem.Mol", meta: dict = None):
         """Initialize a new BackedMol with an existing RDMol."""
         super(BackedMol, self).__init__(meta=meta)
         self.rdmol = rdmol
@@ -485,7 +492,7 @@ class BackedMol(Mol):
 
         return pairs
 
-    def fingerprint(self, fp_type: str, size: int) -> "np.array":
+    def fingerprint(self, fp_type: str, size: int) -> "numpy.ndarray":
         return fingerprint_for(self.rdmol, fp_type, size)
 
 

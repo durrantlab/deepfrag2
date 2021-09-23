@@ -14,7 +14,7 @@ FINGERPRINTS = {"rdk10": _rdk10}
 
 def fingerprint_for(
     mol: "rdkit.Chem.rdchem.Mol", fp_type: str, size: int
-) -> "np.array":
+) -> "numpy.ndarray":
     """Compute a fingerprint for an rdkit mol. Raises an exception if the
     fingerprint is not found."""
     if fp_type in FINGERPRINTS:

@@ -1,48 +1,56 @@
+
 import argparse
+from typing import List, Tuple
 
 import torch
-
 torch.multiprocessing.set_sharing_strategy("file_system")
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
-from collagen.data import VoxelParams, AtomicNumFeaturizer
-from collagen.data.moad import MOADFragmentDataset, MOADInterface
-from collagen.data.util import DataLambda, DataBatch, MultiLoader, rand_rot
-from collagen.models.voxel_to_fingerprint import VoxelToFingerprint
+from collagen import VoxelParamsDefault, AtomicNumFeaturizer, Mol, DelayedMolVoxel, VoxelParams
+from collagen.external import MOADInterface, MOADFragmentDataset
+from collagen.util import MultiLoader, rand_rot
 
-# Disable warnings
-from rdkit import RDLogger
-
-RDLogger.DisableLog("rdApp.*")
-
-import prody
-
-prody.confProDy(verbosity="none")
+from model import DeepFragModel
 
 FP_SIZE = 2048
 
 
-class TransformFn(object):
-    def __init__(self, voxel_params):
+def disable_warnings():
+    from rdkit import RDLogger
+    RDLogger.DisableLog("rdApp.*")
+
+    import prody
+    prody.confProDy(verbosity="none")
+
+
+class PreVoxelize(object):
+    """
+    Pre-voxelize transform. Given a (receptor, parent, fragment) tuple, prepare to voxelize the receptor and parent
+    and compute the fingerprint for the fragment.
+    """
+    def __init__(self, voxel_params: VoxelParams):
         self.voxel_params = voxel_params
 
-    def __call__(self, rec, parent, frag):
+    def __call__(self, rec: Mol, parent: Mol, frag: Mol) -> Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
         return (
-            rec.voxelize_delayed(self.voxel_params, center=frag.connector, rot=rot),
-            parent.voxelize_delayed(self.voxel_params, center=frag.connector, rot=rot),
+            rec.voxelize_delayed(self.voxel_params, center=frag.connectors[0], rot=rot),
+            parent.voxelize_delayed(self.voxel_params, center=frag.connectors[0], rot=rot),
             torch.tensor(frag.fingerprint("rdk10", 2048)),
         )
 
 
-class VoxelizeFingerprintFn(object):
-    def __init__(self, voxel_params, cpu):
+class BatchVoxelize(object):
+    """
+    Voxelize multiple samples on the GPU.
+    """
+    def __init__(self, voxel_params: VoxelParams, cpu: bool):
         self.voxel_params = voxel_params
         self.cpu = cpu
         self.device = torch.device("cpu") if cpu else torch.device("cuda")
 
-    def __call__(self, data):
+    def __call__(self, data: List[Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor]:
         voxels = torch.zeros(
             size=self.voxel_params.tensor_size(batch=len(data), feature_mult=2),
             device=self.device,
@@ -72,19 +80,20 @@ def collate_none(x):
 
 
 def run(args):
-    vp = VoxelParams(
-        resolution=0.75, width=24, atom_featurizer=AtomicNumFeaturizer([1, 6, 7, 8, 16])
-    )
+    disable_warnings()
 
-    model = VoxelToFingerprint(
-        voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
+    vp = VoxelParamsDefault.DeepFrag
+
+    model = DeepFragModel(
+        voxel_features=vp.atom_featurizer.size() * 2,
+        fp_size=FP_SIZE
     )
 
     moad = MOADInterface(args.csv, args.data)
-    train, val, test = moad.compute_split(seed=args.split_seed)
+    train, val, _ = moad.compute_split(seed=args.split_seed)
 
     train_frags = MOADFragmentDataset(
-        moad, cache_file=args.cache, split=train, transform=TransformFn(vp)
+        moad, cache_file=args.cache, split=train, transform=PreVoxelize(vp)
     )
     train_data = (
         MultiLoader(
@@ -95,11 +104,11 @@ def run(args):
             collate_fn=collate_none,
         )
         .batch(16)
-        .map(VoxelizeFingerprintFn(vp, args.cpu))
+        .map(BatchVoxelize(vp, args.cpu))
     )
 
     val_frags = MOADFragmentDataset(
-        moad, cache_file=args.cache, split=val, transform=TransformFn(vp)
+        moad, cache_file=args.cache, split=val, transform=PreVoxelize(vp)
     )
     val_data = (
         MultiLoader(
@@ -110,7 +119,7 @@ def run(args):
             collate_fn=collate_none,
         )
         .batch(16)
-        .map(VoxelizeFingerprintFn(vp, args.cpu))
+        .map(BatchVoxelize(vp, args.cpu))
     )
 
     logger = None

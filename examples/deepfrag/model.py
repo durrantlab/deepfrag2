@@ -3,8 +3,6 @@ from torch import nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-from collagen.data import VoxelParams, AtomicNumFeaturizer
-
 
 _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
@@ -14,7 +12,7 @@ def cos(yp, yt):
     return 1 - _cos(yp, yt)
 
 
-class VoxelToFingerprint(pl.LightningModule):
+class DeepFragModel(pl.LightningModule):
     def __init__(self, voxel_features: int = 10, fp_size: int = 2048):
         super().__init__()
         self.save_hyperparameters()

@@ -1,6 +1,7 @@
 __all__ = [
     "Mol",
     "BackedMol",
+    "DelayedMolVoxel",
     "AbstractMol",
     "AbstractAtom",
     "AbstractBond",
@@ -11,8 +12,8 @@ __all__ = [
     "AnyAtom",
 ]
 
+from .mol import Mol, BackedMol, DelayedMolVoxel
 from .abstract_mol import AbstractMol, AbstractAtom, AbstractBond
 from .voxelizer import VoxelParams, VoxelParamsDefault
 from .featurizer import *
 from .types import AnyAtom
-from .mol import Mol, BackedMol
