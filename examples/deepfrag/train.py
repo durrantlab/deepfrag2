@@ -1,13 +1,19 @@
-
 import argparse
 from typing import List, Tuple
 
 import torch
+
 torch.multiprocessing.set_sharing_strategy("file_system")
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
-from collagen import VoxelParamsDefault, AtomicNumFeaturizer, Mol, DelayedMolVoxel, VoxelParams
+from collagen import (
+    VoxelParamsDefault,
+    AtomicNumFeaturizer,
+    Mol,
+    DelayedMolVoxel,
+    VoxelParams,
+)
 from collagen.external import MOADInterface, MOADFragmentDataset
 from collagen.util import MultiLoader, rand_rot
 
@@ -18,9 +24,11 @@ FP_SIZE = 2048
 
 def disable_warnings():
     from rdkit import RDLogger
+
     RDLogger.DisableLog("rdApp.*")
 
     import prody
+
     prody.confProDy(verbosity="none")
 
 
@@ -29,14 +37,19 @@ class PreVoxelize(object):
     Pre-voxelize transform. Given a (receptor, parent, fragment) tuple, prepare to voxelize the receptor and parent
     and compute the fingerprint for the fragment.
     """
+
     def __init__(self, voxel_params: VoxelParams):
         self.voxel_params = voxel_params
 
-    def __call__(self, rec: Mol, parent: Mol, frag: Mol) -> Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]:
+    def __call__(
+        self, rec: Mol, parent: Mol, frag: Mol
+    ) -> Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
         return (
             rec.voxelize_delayed(self.voxel_params, center=frag.connectors[0], rot=rot),
-            parent.voxelize_delayed(self.voxel_params, center=frag.connectors[0], rot=rot),
+            parent.voxelize_delayed(
+                self.voxel_params, center=frag.connectors[0], rot=rot
+            ),
             torch.tensor(frag.fingerprint("rdk10", 2048)),
         )
 
@@ -45,12 +58,15 @@ class BatchVoxelize(object):
     """
     Voxelize multiple samples on the GPU.
     """
+
     def __init__(self, voxel_params: VoxelParams, cpu: bool):
         self.voxel_params = voxel_params
         self.cpu = cpu
         self.device = torch.device("cpu") if cpu else torch.device("cuda")
 
-    def __call__(self, data: List[Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __call__(
+        self, data: List[Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         voxels = torch.zeros(
             size=self.voxel_params.tensor_size(batch=len(data), feature_mult=2),
             device=self.device,
@@ -84,10 +100,7 @@ def run(args):
 
     vp = VoxelParamsDefault.DeepFrag
 
-    model = DeepFragModel(
-        voxel_features=vp.atom_featurizer.size() * 2,
-        fp_size=FP_SIZE
-    )
+    model = DeepFragModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
 
     moad = MOADInterface(args.csv, args.data)
     train, val, _ = moad.compute_split(seed=args.split_seed)

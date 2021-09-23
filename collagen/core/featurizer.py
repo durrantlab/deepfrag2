@@ -43,12 +43,15 @@ class AtomicNumFeaturizer(AtomFeaturizer):
         layers (List[int]): A list of atomic numbers.
         radii (List[float], optional): An optional list of atomic radii to use (of the same length as layers).
     """
+
     def __init__(self, layers: List[int], radii: Optional[List[float]] = None):
         assert len(layers) <= 32, "AtomicNumFeaturizer supports a maximum of 32 layers"
         self.layers = layers
 
         if radii is not None:
-            assert len(layers) == len(radii), "Must provide an equal number of radii as layers"
+            assert len(layers) == len(
+                radii
+            ), "Must provide an equal number of radii as layers"
             self.radii = radii
         else:
             self.radii = [1] * len(self.layers)
@@ -72,7 +75,7 @@ class AtomicNumFeaturizer(AtomFeaturizer):
             idx = self.layers.index(num)
             return (1 << idx, self.radii[idx])
         else:
-            return (0,0)
+            return (0, 0)
 
     def size(self) -> int:
         return len(self.layers)
