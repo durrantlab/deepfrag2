@@ -15,6 +15,7 @@ Collagen documentation!
    LoadingData.rst
    Voxelization.rst
    Jupyter.rst
+   Examples.rst
 
 
 Indices and tables

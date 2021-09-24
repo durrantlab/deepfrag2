@@ -10,10 +10,12 @@ __all__ = [
     "AtomFeaturizer",
     "AtomicNumFeaturizer",
     "AnyAtom",
+    "MultiLoader",
 ]
 
 from .mol import Mol, BackedMol, DelayedMolVoxel
 from .abstract_mol import AbstractMol, AbstractAtom, AbstractBond
 from .voxelizer import VoxelParams, VoxelParamsDefault
-from .featurizer import *
+from .featurizer import AtomFeaturizer, AtomicNumFeaturizer
 from .types import AnyAtom
+from .loader import MultiLoader

@@ -1,3 +1,7 @@
-__all__ = ["MOADInterface", "MOADFragmentDataset"]
+__all__ = [
+    "MOADInterface",
+    "MOADFragmentDataset",
+    "MOADPocketDataset",
+]
 
-from .moad import MOADInterface, MOADFragmentDataset
+from .moad import MOADInterface, MOADFragmentDataset, MOADPocketDataset

@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 from typing import List, Tuple
 
 import torch
@@ -13,13 +14,12 @@ from collagen import (
     Mol,
     DelayedMolVoxel,
     VoxelParams,
+    MultiLoader,
 )
-from collagen.external import MOADInterface, MOADFragmentDataset
-from collagen.util import MultiLoader, rand_rot
+from collagen.external import MOADInterface, MOADPocketDataset
+from collagen.util import rand_rot
 
-from model import DeepFragModel
-
-FP_SIZE = 2048
+from model import BindingSiteModel
 
 
 def disable_warnings():
@@ -42,15 +42,12 @@ class PreVoxelize(object):
         self.voxel_params = voxel_params
 
     def __call__(
-        self, rec: Mol, parent: Mol, frag: Mol
-    ) -> Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]:
+        self, rec: Mol, pos: "numpy.ndarray", neg: "numpy.ndarray"
+    ) -> Tuple[DelayedMolVoxel, DelayedMolVoxel]:
         rot = rand_rot()
         return (
-            rec.voxelize_delayed(self.voxel_params, center=frag.connectors[0], rot=rot),
-            parent.voxelize_delayed(
-                self.voxel_params, center=frag.connectors[0], rot=rot
-            ),
-            torch.tensor(frag.fingerprint("rdk10", 2048)),
+            rec.voxelize_delayed(self.voxel_params, center=pos, rot=rot),
+            rec.voxelize_delayed(self.voxel_params, center=neg, rot=rot),
         )
 
 
@@ -65,73 +62,79 @@ class BatchVoxelize(object):
         self.device = torch.device("cpu") if cpu else torch.device("cuda")
 
     def __call__(
-        self, data: List[Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]]
+        self, data: List[Tuple[DelayedMolVoxel, DelayedMolVoxel]]
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        data = [x for x in data if x is not None]
+        if len(data) == 0:
+            return None
+
         voxels = torch.zeros(
-            size=self.voxel_params.tensor_size(batch=len(data), feature_mult=2),
+            size=self.voxel_params.tensor_size(batch=len(data) * 2),
             device=self.device,
         )
 
-        fingerprints = torch.zeros(size=(len(data), FP_SIZE), device=self.device)
+        targets = torch.zeros(size=(len(data) * 2, 1), device=self.device)
 
         for i in range(len(data)):
-            rec, parent, frag = data[i]
+            rec_pos, rec_neg = data[i]
 
-            rec.voxelize_into(voxels, batch_idx=i, layer_offset=0, cpu=self.cpu)
-
-            parent.voxelize_into(
-                voxels,
-                batch_idx=i,
-                layer_offset=self.voxel_params.atom_featurizer.size(),
-                cpu=self.cpu,
+            rec_pos.voxelize_into(
+                voxels, batch_idx=(i * 2), layer_offset=0, cpu=self.cpu
+            )
+            rec_neg.voxelize_into(
+                voxels, batch_idx=(i * 2) + 1, layer_offset=0, cpu=self.cpu
             )
 
-            fingerprints[i] = frag
+            targets[(i * 2)] = 1
+            targets[(i * 2) + 1] = 0
 
-        return (voxels, fingerprints)
-
-
-def collate_none(x):
-    return x[0]
+        return (voxels, targets)
 
 
 def run(args):
     disable_warnings()
 
     vp = VoxelParamsDefault.DeepFrag
+    model = BindingSiteModel(voxel_features=vp.atom_featurizer.size())
 
-    model = DeepFragModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
+    moad_path = Path(args.moad)
+    moad_csv = next(moad_path.glob("./**/every.csv"))
+    moad_data = moad_path
 
-    moad = MOADInterface(args.csv, args.data)
+    moad = MOADInterface(moad_csv, moad_data)
     train, val, _ = moad.compute_split(seed=args.split_seed)
 
-    train_frags = MOADFragmentDataset(
-        moad, cache_file=args.cache, split=train, transform=PreVoxelize(vp)
+    train_set = MOADPocketDataset(
+        moad,
+        split=train,
+        transform=PreVoxelize(vp),
+        padding=10,
     )
     train_data = (
         MultiLoader(
-            train_frags,
+            train_set,
             batch_size=1,
             shuffle=True,
             num_workers=args.num_workers,
-            collate_fn=collate_none,
         )
-        .batch(16)
+        .batch(32)
         .map(BatchVoxelize(vp, args.cpu))
     )
 
-    val_frags = MOADFragmentDataset(
-        moad, cache_file=args.cache, split=val, transform=PreVoxelize(vp)
+    val_set = MOADPocketDataset(
+        moad,
+        split=val,
+        transform=PreVoxelize(vp),
+        padding=10,
     )
     val_data = (
         MultiLoader(
-            val_frags,
+            val_set,
             batch_size=1,
             shuffle=True,
             num_workers=args.num_workers,
-            collate_fn=collate_none,
         )
-        .batch(16)
+        .batch(32)
         .map(BatchVoxelize(vp, args.cpu))
     )
 
@@ -147,11 +150,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")
-    parser.add_argument(
-        "--data", required=True, help="Path to MOAD root structure folder"
-    )
-    parser.add_argument("--cache", required=True, help="Path to MOAD cache.json file")
+    parser.add_argument("--moad", required=True, help="Path to MOAD data")
     parser.add_argument(
         "--split_seed",
         required=False,
