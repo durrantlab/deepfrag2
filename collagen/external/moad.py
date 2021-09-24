@@ -572,13 +572,30 @@ def _sample_inside(bmin, bmax, thresh, avoid):
 
 
 class MOADPocketDataset(Dataset):
+    """
+    A Dataset that provides (receptor, pos, neg) tuples where pos and neg are points in a binding pocket and outside of a binding pocket respectively.
+
+    Positive samples are genearated by picking a random ligand atom and sampling a random offset. Negative samples are generated
+    by randomly sampling a point withing the bounding box of the receptor (plus padding) that is not near any ligand atom.
+
+    Args:
+        moad (MOADInterface): An initialized MOADInterface object.
+        thresh (float, optional): Threshold to ligand atoms to consider a "binding pocket."
+        padding (float, optional): Padding added to receptor bounding box to sample negative examples.
+        split (MOAD_split, optional): An optional split to constrain the space of examples.
+        transform (Callable[[Mol, numpy.ndarray, numpy.ndarray], Any], optional): An optional transformation function to invoke before returning samples.
+            Takes the arguments (receptor, pos, neg).
+    """
+
     def __init__(
         self,
         moad: MOADInterface,
         thresh: float = 3,
         padding: float = 5,
         split: Optional[MOAD_split] = None,
-        transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
+        transform: Optional[
+            Callable[[Mol, "numpy.ndarray", "numpy.ndarray"], Any]
+        ] = None,
     ):
         self.moad = moad
         self.thresh = thresh

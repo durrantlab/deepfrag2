@@ -9,6 +9,8 @@ Collagen provides a series of external dataset adapters. There are two types of 
 Supported Datasets
 ------------------
 
+The following classes are importable under the ``collagen.external`` namespace:
+
 ZINC
 ^^^^
 
@@ -24,9 +26,10 @@ Homepage: http://www.bindingmoad.org/
 Interfaces:
 
 .. autosummary::
-    collagen.external.moad.MOADInterface
+    ~collagen.external.moad.MOADInterface
 
 Datasets:
 
 .. autosummary::
-    collagen.external.moad.MOADFragmentDataset
+    ~collagen.external.moad.MOADFragmentDataset
+    ~collagen.external.moad.MOADPocketDataset
