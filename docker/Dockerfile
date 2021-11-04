@@ -14,10 +14,13 @@ RUN python3 -m pip install --upgrade pip
 RUN apt-get update && \
     apt-get -y install sudo
 RUN apt-get -y install vim
+RUN apt-get -y install g++
 
 RUN python --version
 
 COPY requirements.txt /tmp/requirements.txt
 RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
+
+RUN conda install -y -c conda-forge rdkit
 
 WORKDIR /mnt
