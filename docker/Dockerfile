@@ -1,5 +1,6 @@
 FROM nvidia/cuda:11.3.0-cudnn8-runtime-ubuntu20.04
-  
+#FROM nvidia/cuda:10.1-cudnn8-runtime-ubuntu18.04
+
 RUN apt update && apt install -y wget unzip curl bzip2 git gcc
 RUN rm -f /miniconda
 RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh

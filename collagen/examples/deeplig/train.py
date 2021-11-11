@@ -142,6 +142,7 @@ def run(args):
     trainer = pl.Trainer.from_argparse_args(
         args, default_root_dir="./.save", logger=logger
     )
+
     trainer.fit(model, train_data, val_data)
 
 

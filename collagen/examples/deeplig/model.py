@@ -44,18 +44,22 @@ class DeepFragModel(pl.LightningModule):
         )
 
     def forward(self, voxel):
+        # self.log("here1", 0)
         return self.model(voxel)
 
     def training_step(self, batch, batch_idx):
+        # self.log("here2", 0)
+
         voxel, fp = batch
         pred = self(voxel)
 
         loss = cos(pred, fp).mean()
 
-        self.log("loss", loss)
+        # self.log("loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
+        # self.log("here3", 0)
         voxel, fp = batch
         pred = self(voxel)
 
