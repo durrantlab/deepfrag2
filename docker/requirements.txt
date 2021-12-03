@@ -8,11 +8,15 @@ gitdb==4.0.5
 GitPython==3.1.7
 gql==0.2.0
 graphql-core==1.1
-h5py==2.10.0
+# h5py==3.6.0
+# h5py==2.10.0
 idna==2.10
-llvmlite==0.33.0
-numba==0.50.1
-numpy==1.21.2
+# llvmlite==0.33.0
+# numba==0.50.1
+llvmlite==0.37.0
+numba==0.54.1
+# numpy==1.21
+# numpy==1.21.2
 nvidia-ml-py3==7.352.0
 pathtools==0.1.2
 Pillow==7.2.0
@@ -26,7 +30,8 @@ shortuuid==1.0.1
 six==1.15.0
 smmap==3.0.4
 subprocess32==3.5.4
-torch==1.10.0+cu113
+torch==1.10.0+cu111
+# torch==1.10.0+cu113
 #torch==1.9.1+cu133
 #torchvision==0.11.1+cu113
 tqdm==4.48.2
@@ -34,6 +39,7 @@ urllib3==1.25.10
 wandb==0.9.4
 watchdog==0.10.3
 pytorch-lightning==1.5.0
-Prody==2.0
+# Prody needs to come from git
+# Prody==2.0
 k3d==2.11.0
 py3Dmol==1.7.0

@@ -110,7 +110,7 @@ def run(args):
             train_frags,
             batch_size=1,
             shuffle=True,
-            num_workers=args.num_workers,
+            num_dataloader_workers=args.num_dataloader_workers,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -124,7 +124,7 @@ def run(args):
             val_frags,
             batch_size=1,
             shuffle=True,
-            num_workers=args.num_workers,
+            num_dataloader_workers=args.num_dataloader_workers,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         help="Seed for TRAIN/VAL/TEST split.",
     )
     parser.add_argument(
-        "--num_workers", default=1, type=int, help="Number of workers for DataLoader"
+        "--num_dataloader_workers", default=1, type=int, help="Number of workers for DataLoader"
     )
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)

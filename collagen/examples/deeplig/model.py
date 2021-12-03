@@ -55,6 +55,8 @@ class DeepFragModel(pl.LightningModule):
 
         loss = cos(pred, fp).mean()
 
+        # self.print("hi")
+
         # self.log("loss", loss)
         return loss
 

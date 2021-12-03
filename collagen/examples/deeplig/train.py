@@ -6,6 +6,9 @@ import torch
 torch.multiprocessing.set_sharing_strategy("file_system")
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import CSVLogger
+# from pytorch_lightning.callbacks import ModelSummary
+# from pytorch_lightning.callbacks import DeviceStatsMonitor
 
 from collagen import (
     VoxelParamsDefault,
@@ -98,6 +101,7 @@ class BatchVoxelize(object):
 
 
 def run(args):
+    # import pdb;pdb.set_trace()
     disable_warnings()
 
     vp = VoxelParamsDefault.DeepFrag
@@ -115,7 +119,7 @@ def run(args):
             train_frags,
             batch_size=1,
             shuffle=True,
-            num_workers=args.num_workers,
+            num_dataloader_workers=args.num_dataloader_workers,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -129,7 +133,7 @@ def run(args):
             val_frags,
             batch_size=1,
             shuffle=True,
-            num_workers=args.num_workers,
+            num_dataloader_workers=args.num_dataloader_workers,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -138,10 +142,32 @@ def run(args):
     logger = None
     if args.wandb_project:
         logger = WandbLogger(project=args.wandb_project)
+    else:
+        logger = CSVLogger(
+            "logs", 
+            name="my_exp_name", 
+            # flush_logs_every_n_steps=1
+        )
 
     trainer = pl.Trainer.from_argparse_args(
-        args, default_root_dir="./.save", logger=logger
+        args, default_root_dir="./.save", logger=logger,
+
+        # Below for debugging
+        # log_every_n_steps=1,
+        # fast_dev_run=True,
+        # callbacks=[ModelSummary(max_depth=-1), DeviceStatsMonitor()],
+        # overfit_batches=0.0001,
+        # track_grad_norm=2,
+        # limit_train_batches=0.000001,
+        # limit_val_batches=0.000001
     )
+
+    # Use below to debug errors in file loading and grid generation.
+    # print(len(train_data))
+    # for t in train_data:
+        # dir(t)
+        # print("h")
+    # import pdb; pdb.set_trace()
 
     trainer.fit(model, train_data, val_data)
 
@@ -161,7 +187,7 @@ if __name__ == "__main__":
         help="Seed for TRAIN/VAL/TEST split.",
     )
     parser.add_argument(
-        "--num_workers", default=1, type=int, help="Number of workers for DataLoader"
+        "--num_dataloader_workers", default=1, type=int, help="Number of workers for DataLoader"
     )
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)

@@ -347,6 +347,8 @@ class DelayedMolVoxel(object):
         layer_offset: int = 0,
         cpu: bool = False,
     ):
+        # import pdb;pdb.set_trace()
+
         grid = numba_ptr(tensor, cpu=cpu)
 
         mol_gridify(

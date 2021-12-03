@@ -16,10 +16,10 @@ def _collate_none(x):
 
 class MultiLoader(object):
     def __init__(
-        self, data, num_workers=1, batch_size=1, shuffle=False, collate_fn=_collate_none
+        self, data, num_dataloader_workers=1, batch_size=1, shuffle=False, collate_fn=_collate_none
     ):
         self.data = data
-        self.num_workers = num_workers
+        self.num_dataloader_workers = num_dataloader_workers
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.collate_fn = collate_fn
@@ -44,7 +44,7 @@ class MultiLoader(object):
         for i in range(0, len(work), self.batch_size):
             batches.append(work[i : i + self.batch_size])
 
-        with multiprocessing.Pool(self.num_workers) as p:
+        with multiprocessing.Pool(self.num_dataloader_workers) as p:
             for item in p.imap_unordered(_process, batches):
                 yield item
 
