@@ -27,7 +27,7 @@ six==1.15.0
 smmap==3.0.4
 subprocess32==3.5.4
 torch==1.10.0
-torchvision==0.7.0+cu101
+torchvision==0.7.0
 tqdm==4.48.2
 urllib3==1.25.10
 wandb==0.9.4

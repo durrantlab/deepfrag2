@@ -20,7 +20,10 @@ RUN apt-get -y install g++
 RUN python --version
 
 COPY requirements.txt /tmp/requirements.txt
+
 RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
+#RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu101/torch_stable.html
+#RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/nightly/cu101/torch_nightly.html
 
 RUN conda install -y -c conda-forge rdkit
 
