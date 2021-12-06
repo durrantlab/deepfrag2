@@ -146,27 +146,27 @@ def run(args):
         logger = CSVLogger(
             "logs", 
             name="my_exp_name", 
-            # flush_logs_every_n_steps=1
+            flush_logs_every_n_steps=25
         )
 
     trainer = pl.Trainer.from_argparse_args(
         args, default_root_dir="./.save", logger=logger,
 
         # Below for debugging
-        # log_every_n_steps=1,
+        log_every_n_steps=25,
         # fast_dev_run=True,
         # callbacks=[ModelSummary(max_depth=-1), DeviceStatsMonitor()],
-        # overfit_batches=0.0001,
+        # overfit_batches=0.001,
         # track_grad_norm=2,
-        # limit_train_batches=0.000001,
-        # limit_val_batches=0.000001
+        # limit_train_batches=0.0001,
+        # limit_val_batches=0.0001
     )
 
     # Use below to debug errors in file loading and grid generation.
     # print(len(train_data))
     # for t in train_data:
-        # dir(t)
-        # print("h")
+    #     dir(t)
+    #     print("h")
     # import pdb; pdb.set_trace()
 
     trainer.fit(model, train_data, val_data)

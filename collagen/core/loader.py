@@ -44,6 +44,11 @@ class MultiLoader(object):
         for i in range(0, len(work), self.batch_size):
             batches.append(work[i : i + self.batch_size])
 
+        # JDD added below based on
+        # https://github.com/pytorch/pytorch/issues/67844 See also
+        # https://pytorch.org/docs/stable/multiprocessing.html#multiprocessing-cuda-sharing-details
+        # multiprocessing.set_sharing_strategy("file_system")
+
         with multiprocessing.Pool(self.num_dataloader_workers) as p:
             for item in p.imap_unordered(_process, batches):
                 yield item

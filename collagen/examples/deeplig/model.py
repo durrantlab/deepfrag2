@@ -57,7 +57,7 @@ class DeepFragModel(pl.LightningModule):
 
         # self.print("hi")
 
-        # self.log("loss", loss)
+        self.log("loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
