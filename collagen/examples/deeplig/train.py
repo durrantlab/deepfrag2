@@ -192,6 +192,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)
+
+
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
+
     run(args)

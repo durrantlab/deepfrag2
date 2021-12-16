@@ -214,7 +214,8 @@ class MOADInterface(object):
 
     @staticmethod
     def _load_classes(path):
-        dat = open(path, "r").read().strip().split("\n")
+        with open(path, "r") as f:
+            dat = f.read().strip().split("\n")
 
         classes = []
         curr_class = None
@@ -471,11 +472,13 @@ class MOADFragmentDataset(Dataset):
 
         if cache_file is not None and cache_file.exists():
             print("Loading MOAD fragments from cache...")
-            index = json.load(open(cache_file, "r"))
+            with open(cache_file, "r") as f:
+                index = json.load(f)
         else:
             index = self._build_index(cores)
             if cache_file is not None:
-                open(cache_file, "w").write(json.dumps(index))
+                with open(cache_file, "w") as f:
+                    f.write(json.dumps(index))
 
         internal_index = []
         for pdb_id in tqdm(self.split.targets, desc="Runtime filters"):

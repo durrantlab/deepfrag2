@@ -100,7 +100,8 @@ def save_csv(csv_path: str, z_out: np.array, info: list):
         x, y, z = z_out[i]
         csv.append([float(x), float(y), float(z), info[i][0], info[i][1], info[i][2]])
 
-    open(csv_path, "w").write(to_csv(csv))
+    with open(csv_path, "w") as f:
+        f.write(to_csv(csv))
 
 
 def run(args):

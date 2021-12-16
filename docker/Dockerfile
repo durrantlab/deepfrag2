@@ -44,4 +44,6 @@ RUN conda install -y -c conda-forge rdkit
 # Need to install prody from git, not conda (out of date).
 RUN cd /tmp/; wget https://github.com/prody/ProDy/archive/refs/heads/master.zip; unzip master.zip; cd ProDy-master; pip install .
 
+RUN apt install -y lsof
+
 WORKDIR /mnt
