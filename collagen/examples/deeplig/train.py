@@ -121,6 +121,7 @@ def run(args):
             batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
+            max_voxels_in_memory=args.max_voxels_in_memory
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -135,6 +136,7 @@ def run(args):
             batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
+            max_voxels_in_memory=args.max_voxels_in_memory
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))

@@ -31,11 +31,11 @@ six==1.15.0
 smmap==3.0.4
 subprocess32==3.5.4
 
-# Harrison used 1.6.0, though not with cu1111
+# Harrison used 1.6.0, though not with cu111
 # torch==1.6.0+cu111
-torch==1.8.0+cu111
+# torch==1.8.0+cu111
 
-# torch==1.9.1+cu111
+torch==1.9.1+cu111
 #torch==1.10.0+cu111
 # torch==1.10.0+cu113
 #torch==1.9.1+cu133

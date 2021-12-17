@@ -23,12 +23,13 @@ parser.add_argument(
 )
 parser.add_argument("--cpu", default=False, action="store_true")
 parser.add_argument("--wandb_project", required=False, default=None)
+parser.add_argument("--max_voxels_in_memory", required=True, default=80, type=int, help="The data loader will store no more than this number of voxel in memory at once.")
 parser = pl.Trainer.add_argparse_args(parser)
 args = parser.parse_args()
 
 # JDD added to see if helps with error:
 # https://stackoverflow.com/questions/67876741/unable-to-mmap-1024-bytes-cannot-allocate-memory-even-though-there-is-more-t/67969244#67969244
-args.use_multiprocessing = False
+# args.use_multiprocessing = False
 
 train.run(args)
 
