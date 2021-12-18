@@ -1,8 +1,8 @@
 import torch
 from torch import nn
-import torch.nn.functional as F
 import pytorch_lightning as pl
 
+# import torch.nn.functional as F
 
 _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
@@ -53,6 +53,11 @@ class DeepFragModel(pl.LightningModule):
         loss = cos(pred, fp).mean()
 
         self.log("loss", loss)
+
+        # For debugging...
+        # num_file_descriptors = int(subprocess.check_output("lsof | wc -l", shell=True).strip())
+        # self.log("num_files", num_file_descriptors)
+
         return loss
 
     def validation_step(self, batch, batch_idx):

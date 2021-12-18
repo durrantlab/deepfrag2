@@ -4,8 +4,10 @@ from typing import List, Tuple
 import torch
 
 torch.multiprocessing.set_sharing_strategy("file_system")
+
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import CSVLogger
 
 from collagen import (
     VoxelParamsDefault,
@@ -18,7 +20,7 @@ from collagen import (
 from collagen.external import MOADInterface, MOADFragmentDataset
 from collagen.util import rand_rot
 
-from model import DeepFragModel
+from collagen.examples.deeplig.model import DeepFragModel
 
 FP_SIZE = 2048
 
@@ -35,8 +37,9 @@ def disable_warnings():
 
 class PreVoxelize(object):
     """
-    Pre-voxelize transform. Given a (receptor, parent, fragment) tuple, prepare to voxelize the receptor and parent
-    and compute the fingerprint for the fragment.
+    Pre-voxelize transform. Given a (receptor, parent, fragment) tuple, prepare
+    to voxelize the receptor and parent and compute the fingerprint for the
+    fragment.
     """
 
     def __init__(self, voxel_params: VoxelParams):
@@ -111,6 +114,7 @@ def run(args):
             batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
+            max_voxels_in_memory=args.max_voxels_in_memory,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -125,6 +129,7 @@ def run(args):
             batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
+            max_voxels_in_memory=args.max_voxels_in_memory,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -133,10 +138,30 @@ def run(args):
     logger = None
     if args.wandb_project:
         logger = WandbLogger(project=args.wandb_project)
+    else:
+        logger = CSVLogger("logs", name="my_exp_name", flush_logs_every_n_steps=25)
 
     trainer = pl.Trainer.from_argparse_args(
-        args, default_root_dir="./.save", logger=logger
+        args,
+        default_root_dir="./.save",
+        logger=logger,
+        # Below for debugging
+        log_every_n_steps=25,
+        # fast_dev_run=True,
+        # callbacks=[ModelSummary(max_depth=-1), DeviceStatsMonitor()],
+        # overfit_batches=0.001,
+        # track_grad_norm=2,
+        # limit_train_batches=0.0001,
+        # limit_val_batches=0.0001
     )
+
+    # Use below to debug errors in file loading and grid generation.
+    # print(len(train_data))
+    # for t in train_data:
+    #     dir(t)
+    #     print("h")
+    # import pdb; pdb.set_trace()
+
     trainer.fit(model, train_data, val_data)
 
 
@@ -155,10 +180,15 @@ if __name__ == "__main__":
         help="Seed for TRAIN/VAL/TEST split.",
     )
     parser.add_argument(
-        "--num_dataloader_workers", default=1, type=int, help="Number of workers for DataLoader"
+        "--num_dataloader_workers",
+        default=1,
+        type=int,
+        help="Number of workers for DataLoader",
     )
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)
+
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
+
     run(args)

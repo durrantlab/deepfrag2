@@ -8,8 +8,6 @@ torch.multiprocessing.set_sharing_strategy("file_system")
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.loggers import CSVLogger
-# from pytorch_lightning.callbacks import ModelSummary
-# from pytorch_lightning.callbacks import DeviceStatsMonitor
 
 from collagen import (
     VoxelParamsDefault,
@@ -51,10 +49,6 @@ class PreVoxelize(object):
         self, rec: Mol, parent: Mol, frag: Mol
     ) -> Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
-
-        # JDD TODO: Note center=frag.connectors[0]. Instead, pick something
-        # else.
-
         return (
             rec.voxelize_delayed(self.voxel_params, center=frag.connectors[0], rot=rot),
             parent.voxelize_delayed(
@@ -102,7 +96,6 @@ class BatchVoxelize(object):
 
 
 def run(args):
-    # import pdb;pdb.set_trace()
     disable_warnings()
 
     vp = VoxelParamsDefault.DeepFrag
@@ -121,7 +114,7 @@ def run(args):
             batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
-            max_voxels_in_memory=args.max_voxels_in_memory
+            max_voxels_in_memory=args.max_voxels_in_memory,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -136,7 +129,7 @@ def run(args):
             batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
-            max_voxels_in_memory=args.max_voxels_in_memory
+            max_voxels_in_memory=args.max_voxels_in_memory,
         )
         .batch(16)
         .map(BatchVoxelize(vp, args.cpu))
@@ -146,15 +139,12 @@ def run(args):
     if args.wandb_project:
         logger = WandbLogger(project=args.wandb_project)
     else:
-        logger = CSVLogger(
-            "logs", 
-            name="my_exp_name", 
-            flush_logs_every_n_steps=25
-        )
+        logger = CSVLogger("logs", name="my_exp_name", flush_logs_every_n_steps=25)
 
     trainer = pl.Trainer.from_argparse_args(
-        args, default_root_dir="./.save", logger=logger,
-
+        args,
+        default_root_dir="./.save",
+        logger=logger,
         # Below for debugging
         log_every_n_steps=25,
         # fast_dev_run=True,
@@ -190,11 +180,13 @@ if __name__ == "__main__":
         help="Seed for TRAIN/VAL/TEST split.",
     )
     parser.add_argument(
-        "--num_dataloader_workers", default=1, type=int, help="Number of workers for DataLoader"
+        "--num_dataloader_workers",
+        default=1,
+        type=int,
+        help="Number of workers for DataLoader",
     )
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)
-
 
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
