@@ -2,6 +2,7 @@ import numpy as np
 from torch import multiprocessing
 import copy
 import time
+import os
 
 DATA = None
 COLLATE = None
@@ -12,20 +13,19 @@ TIMEOUT = 60.0 * 5
 # def _process(batch, return_list):
 #     return COLLATE([DATA[x] for x in batch])
 
-def _process2(batch_of_batches, return_list):
+
+def log(txt):
+    os.system('echo "' + txt + '" >> log.txt')
+    print(txt)
+
+
+def _process2(batch_of_batches, return_list, id):
     for batch in batch_of_batches:
         try:
             return_list.append(COLLATE([DATA[x] for x in batch]))
+            # print("WORKED", id, batch)
         except:
-            print("ERROR:")
-            print("return_list len:", len(return_list))
-            print("DATA:", DATA)
-            for x in batch:
-                print("-" * 15)
-                print("x:", x)
-                print("DATA[x]: ", DATA[x])
-            print("=" * 15)
-            print("\n\n")
+            print("FAILED", id, batch)
 
 
 def _collate_none(x):
@@ -34,8 +34,13 @@ def _collate_none(x):
 
 class MultiLoader(object):
     def __init__(
-        self, data, num_dataloader_workers=1, batch_size=1, shuffle=False, collate_fn=_collate_none,
-        max_voxels_in_memory=80
+        self,
+        data,
+        num_dataloader_workers=1,
+        batch_size=1,
+        shuffle=False,
+        collate_fn=_collate_none,
+        max_voxels_in_memory=80,
     ):
         self.data = data
         self.num_dataloader_workers = num_dataloader_workers
@@ -57,9 +62,9 @@ class MultiLoader(object):
         else:
             return (len(self.data) // self.batch_size) + 1
 
-    def _add_procs(self):
+    def _add_procs(self, id):
         global TIMEOUT
-        
+
         if len(self.return_list) >= self.max_voxels_in_memory:
             # You already have enough
             return
@@ -70,7 +75,7 @@ class MultiLoader(object):
         # for too long, and join those that have finished.
         for i, (p, timestamp) in enumerate(self.procs):
             if p.is_alive():
-                if cur_time - timestamp > TIMEOUT: 
+                if cur_time - timestamp > TIMEOUT:
                     # It's been running for too long
                     print("timed out, killing a process: " + p.name)
                     p.terminate()
@@ -85,25 +90,30 @@ class MultiLoader(object):
         self.procs = [p for p in self.procs if p is not None]
 
         # Keep adding new procs until you reach the limit
-        while len(self.procs) < self.num_dataloader_workers and len(self.batches_of_batches) > 0:
-            batch =  self.batches_of_batches.pop(0)
+        while (
+            len(self.procs) < self.num_dataloader_workers
+            and len(self.batches_of_batches) > 0
+        ):
+            batch = self.batches_of_batches.pop(0)
 
             p = multiprocessing.Process(
-                target = _process2, 
-                args = (batch, self.return_list),
-                name = ('process_' + str(self.name_idx+1))
+                target=_process2,
+                args=(batch, self.return_list, id),
+                name=("process_" + str(self.name_idx + 1)),
             )
             self.name_idx = self.name_idx + 1
             p.start()
             self.procs.append((p, cur_time))
-            
+
     def __iter__(self):
         global DATA
         global COLLATE
-        # global BATCHES_OF_BATCHES_FAC
 
         DATA = self.data
         COLLATE = self.collate_fn
+
+        # id is for debugging. Not critical.
+        id = str(time.time())
 
         # Avoiding multiprocessing.Pool because I want to terminate threads if
         # they take too long.
@@ -113,22 +123,34 @@ class MultiLoader(object):
         if self.shuffle:
             np.random.shuffle(data_idxs)
         batches_idxs = []
-        for i in range(0, len(data_idxs), self.batch_size):
+        num_data = len(data_idxs)
+        for i in range(0, num_data, self.batch_size):
             batches_idxs.append(data_idxs[i : i + self.batch_size])
 
         # Batch the batches. Each of these uber batches goes to its own
         # processor.
-        batches_to_process_per_proc = self.max_voxels_in_memory // self.num_dataloader_workers
-        batches_to_process_per_proc = 1 if batches_to_process_per_proc == 0 else batches_to_process_per_proc
-        
+        batches_to_process_per_proc = (
+            self.max_voxels_in_memory // self.num_dataloader_workers
+        )
+        batches_to_process_per_proc = (
+            1 if batches_to_process_per_proc == 0 else batches_to_process_per_proc
+        )
+
         self.batches_of_batches = []
         for j in range(1 + len(batches_idxs) // batches_to_process_per_proc):
-            self.batches_of_batches.append(
-                batches_idxs[j * batches_to_process_per_proc: (j + 1) * batches_to_process_per_proc]
-            )
+            batch_of_batches = batches_idxs[
+                j * batches_to_process_per_proc : (j + 1) * batches_to_process_per_proc
+            ]
+            if len(batch_of_batches) > 0:
+                self.batches_of_batches.append(batch_of_batches)
 
+        # For debugging...
         # should be "file_system"
-        # print(multiprocessing.get_sharing_strategy())  
+        # print(multiprocessing.get_sharing_strategy())
+        # print(len(self.data))
+        # print(batches_idxs[-1])
+        # print(self.batches_of_batches[-1])
+        # print("-----")
 
         self.procs = []
         manager = multiprocessing.Manager()
@@ -141,8 +163,9 @@ class MultiLoader(object):
         # self._add_procs()
         # time.sleep(15)
 
-        while len(self.batches_of_batches) > 0:           
-            self._add_procs()
+        count = 0
+        while len(self.batches_of_batches) > 0:
+            self._add_procs(id)
 
             # Wait until you've got at least one ready
             while len(self.return_list) == 0:
@@ -150,15 +173,22 @@ class MultiLoader(object):
                 time.sleep(0.1)
 
             # Yield the data as it is needed
-            while len(self.return_list) > 0:
+            while count < num_data:  # len(self.return_list) > 0 or
+                if len(self.return_list) == 0:
+                    time.sleep(0.1)
+                    continue
+
                 item = self.return_list.pop(0)
 
                 if len(self.return_list) < self.max_voxels_in_memory * 0.1:
                     # Getting low on voxels...
-                    self._add_procs()
+                    self._add_procs(id)
+
+                count = count + 1
+                # print(count)
 
                 yield item
-        
+
         # ===== WORKS BUT IF ERROR ON ANY THREAD, HANGS WHOLE PROGRAM ====
         # with multiprocessing.Pool(self.num_dataloader_workers) as p:
         #     items = p.imap_unordered(_process, these_batches_idxs)

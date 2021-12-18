@@ -9,7 +9,7 @@ CUDA_LAUNCH_BLOCKING=1 NCCL_ASYNC_ERROR_HANDLING=1 python deeplig.py \
     --gpus 1 \
     --wandb_project 3aee432b3e7c672a3b2d2accf15b6b56a2770584 \
     --num_dataloader_workers 16 \
-    --max_voxels_in_memory 640
+    --max_voxels_in_memory 320
 
     # based on https://discuss.pytorch.org/t/pytorch-cannot-allocate-memory/134754/2
     # --num_dataloader_workers 0
