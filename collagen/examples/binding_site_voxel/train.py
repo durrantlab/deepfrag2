@@ -159,7 +159,10 @@ if __name__ == "__main__":
         help="Seed for TRAIN/VAL/TEST split.",
     )
     parser.add_argument(
-        "--num_dataloader_workers", default=1, type=int, help="Number of workers for DataLoader"
+        "--num_dataloader_workers",
+        default=1,
+        type=int,
+        help="Number of workers for DataLoader",
     )
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)

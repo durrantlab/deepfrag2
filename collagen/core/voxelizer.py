@@ -66,6 +66,7 @@ class VoxelParams(object):
 
 
 class VoxelParamsDefault(object):
+    # Same params as used in DeepFrag paper.
     DeepFrag = VoxelParams(
         resolution=0.75,
         width=24,
