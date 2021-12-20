@@ -16,3 +16,6 @@ docs/_build
 moad
 cache.json
 cache_little.json
+
+Singularity.def
+Singularity.sif
