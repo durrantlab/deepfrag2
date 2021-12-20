@@ -1,7 +1,8 @@
-# DOCKER_BUILDKIT=0
 sudo docker build \
-    --shm-size="2g" \
     -t jdurrant/deeplig . 
+
+# --shm-size="2g" \
+
 sudo docker run \
     --gpus all \
     -it --rm \

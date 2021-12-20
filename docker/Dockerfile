@@ -1,4 +1,4 @@
-# The first Cuda version to recognise the RTX3090 was 11.1. numba doesn't
+# The first Cuda version to recognise the RTX3090 was 11.1. numba does not
 # support cuda 11.2 or higher. https://github.com/numba/numba/issues/6607 So you
 # must get thisworking in 11.1. Only option.
 
