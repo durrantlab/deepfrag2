@@ -44,7 +44,10 @@ RUN cd /tmptmp/ && ls /tmptmp/ && /miniconda/bin/python3 -m pip install -r /tmpt
 RUN conda install -y -c conda-forge rdkit
 
 # Need to install prody from git, not conda (out of date).
-RUN cd /tmptmp/ && wget https://github.com/prody/ProDy/archive/refs/heads/master.zip && unzip master.zip && cd ProDy-master && pip install .
+RUN cd /tmptmp/ && \
+    wget https://github.com/prody/ProDy/archive/refs/heads/master.zip && \
+    unzip master.zip && \
+    cd ProDy-master && pip install .
 
 RUN apt install -y lsof
 
