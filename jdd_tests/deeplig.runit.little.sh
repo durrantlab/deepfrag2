@@ -2,7 +2,7 @@ export NCCL_ASYNC_ERROR_HANDLING=1
 #wandb login
 echo START: $(date)
 # 
-CUDA_LAUNCH_BLOCKING=1 NCCL_ASYNC_ERROR_HANDLING=1 python deeplig.py \
+CUDA_LAUNCH_BLOCKING=1 NCCL_ASYNC_ERROR_HANDLING=1 /miniconda/bin/python3 deeplig.py \
     --csv ../data/moad/every_smaller.csv \
     --data ../data/moad/BindingMoad2019/ \
     --cache ./cache_little.json \

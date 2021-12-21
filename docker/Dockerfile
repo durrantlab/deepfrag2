@@ -18,31 +18,33 @@ ENV PATH=/miniconda/bin:${PATH}
 RUN conda update -y conda
 
 RUN conda install -y pip
-RUN python3 -m pip install --upgrade pip
+RUN /miniconda/bin/python3 -m pip install --upgrade pip
 
 RUN apt-get update && \
     apt-get -y install sudo
 RUN apt-get -y install vim
 RUN apt-get -y install g++
 
-RUN python --version
+RUN /miniconda/bin/python3 --version
 
 RUN conda install -y cudatoolkit
 
-COPY requirements.txt /tmp/requirements.txt
+RUN mkdir -p /tmptmp/
 
-RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu111/torch_stable.html
-# RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
-# RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu101/torch_stable.html
-# RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu102/torch_stable.html
-# RUN cd /tmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/nightly/cu101/torch_nightly.html
+COPY ./requirements.txt /tmptmp/requirements.txt
 
-# RUN cd /tmp/; 
+RUN cd /tmptmp/ && ls /tmptmp/ && /miniconda/bin/python3 -m pip install -r /tmptmp/requirements.txt -f https://download.pytorch.org/whl/cu111/torch_stable.html
+# RUN cd /tmptmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
+# RUN cd /tmptmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu101/torch_stable.html
+# RUN cd /tmptmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/cu102/torch_stable.html
+# RUN cd /tmptmp/; /miniconda/bin/python3 -m pip install -r requirements.txt -f https://download.pytorch.org/whl/nightly/cu101/torch_nightly.html
+
+# RUN cd /tmptmp/; 
 
 RUN conda install -y -c conda-forge rdkit
 
 # Need to install prody from git, not conda (out of date).
-RUN cd /tmp/; wget https://github.com/prody/ProDy/archive/refs/heads/master.zip; unzip master.zip; cd ProDy-master; pip install .
+RUN cd /tmptmp/ && wget https://github.com/prody/ProDy/archive/refs/heads/master.zip && unzip master.zip && cd ProDy-master && pip install .
 
 RUN apt install -y lsof
 
