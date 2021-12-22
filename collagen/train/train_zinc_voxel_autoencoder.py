@@ -28,7 +28,9 @@ def run(args):
         logger = WandbLogger(project=args.wandb_project)
 
     trainer = pl.Trainer.from_argparse_args(
-        args, default_root_dir="./.save", logger=logger, limit_train_batches=500
+        args, 
+        # default_root_dir="./.save", 
+        logger=logger, limit_train_batches=500
     )
     trainer.fit(vae, data)
 

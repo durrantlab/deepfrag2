@@ -67,6 +67,7 @@ class DeepFragModel(pl.LightningModule):
         loss = cos(pred, fp).mean()
 
         self.log("val_loss", loss)
+        
         return loss
 
     def configure_optimizers(self):

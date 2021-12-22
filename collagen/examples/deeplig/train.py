@@ -143,7 +143,7 @@ def run(args):
 
     trainer = pl.Trainer.from_argparse_args(
         args,
-        default_root_dir="./.save",
+        # default_root_dir="./.save",
         logger=logger,
         # Below for debugging
         log_every_n_steps=25,

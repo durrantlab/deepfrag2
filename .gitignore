@@ -20,3 +20,5 @@ cache_little.json
 Singularity.def
 Singularity.sif
 .fuse_hidden*
+
+.cur_app

@@ -52,3 +52,5 @@ RUN cd /tmptmp/ && \
 RUN apt install -y lsof
 
 WORKDIR /mnt
+
+ENTRYPOINT /mnt/apps/utils/run_app.sh

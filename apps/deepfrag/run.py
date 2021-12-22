@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../..')
 
-from collagen.examples.deeplig import train
+from collagen.examples.deepfrag import train
 import argparse
 import pytorch_lightning as pl
 

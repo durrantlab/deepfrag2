@@ -8,6 +8,7 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.loggers import CSVLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from collagen import (
     VoxelParamsDefault,
@@ -143,8 +144,19 @@ def run(args):
 
     trainer = pl.Trainer.from_argparse_args(
         args,
-        default_root_dir="./.save",
+        # default_root_dir="./.save",
         logger=logger,
+        callbacks=[
+            ModelCheckpoint(
+                monitor="val_loss", filename="val-loss-{epoch:02d}-{val_loss:.2f}"
+            ),
+            ModelCheckpoint(monitor="loss", filename="loss-{epoch:02d}-{loss:.2f}"),
+            ModelCheckpoint(
+                monitor="val_loss",
+                filename="last-epoch-{epoch:02d}-loss-{loss:.2f}-val-loss-{val_loss:.2f}",
+                save_last=True,
+            ),
+        ],
         # Below for debugging
         log_every_n_steps=25,
         # fast_dev_run=True,
