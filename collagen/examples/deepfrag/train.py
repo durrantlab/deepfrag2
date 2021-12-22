@@ -1,5 +1,7 @@
 import argparse
 from typing import List, Tuple
+import glob
+import os
 
 import torch
 
@@ -19,7 +21,7 @@ from collagen import (
     MultiLoader,
 )
 from collagen.external import MOADInterface, MOADFragmentDataset
-from collagen.util import rand_rot
+from collagen.util import get_last_checkpoint, rand_rot
 
 from collagen.examples.deeplig.model import DeepFragModel
 
@@ -101,7 +103,19 @@ def run(args):
 
     vp = VoxelParamsDefault.DeepFrag
 
-    model = DeepFragModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
+    ckpt = get_last_checkpoint(args)
+    if ckpt is None:
+        model = DeepFragModel(
+            voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
+        )
+    else:
+        print("Loading checkpoint from " + ckpt + "...")
+        model = DeepFragModel.load_from_checkpoint(
+            ckpt, voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
+        )
+        import pdb
+
+        pdb.set_trace()
 
     moad = MOADInterface(args.csv, args.data)
     train, val, _ = moad.compute_split(seed=args.split_seed)
@@ -148,13 +162,17 @@ def run(args):
         logger=logger,
         callbacks=[
             ModelCheckpoint(
-                monitor="val_loss", filename="val-loss-{epoch:02d}-{val_loss:.2f}"
-            ),
-            ModelCheckpoint(monitor="loss", filename="loss-{epoch:02d}-{loss:.2f}"),
-            ModelCheckpoint(
+                dirpath=args.default_root_dir,
                 monitor="val_loss",
-                filename="last-epoch-{epoch:02d}-loss-{loss:.2f}-val-loss-{val_loss:.2f}",
+                filename="val-loss-{epoch:02d}-{val_loss:.2f}",
                 save_last=True,
+                save_top_k=3,
+            ),
+            ModelCheckpoint(
+                dirpath=args.default_root_dir,
+                monitor="loss",
+                filename="loss-{epoch:02d}-{loss:.2f}",
+                save_top_k=3,
             ),
         ],
         # Below for debugging

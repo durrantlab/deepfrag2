@@ -50,7 +50,7 @@ def make_cur_app_dir(args):
         custom_params = json.load(open(args.params_json))
         for key in custom_params:
             params[key] = custom_params[key]
-    params["default_root_dir"] = "/working/"
+    params["default_root_dir"] = "/working/checkpoints/"
 
     exec = """echo START: $(date)
     python run.py """ + " ".join(
