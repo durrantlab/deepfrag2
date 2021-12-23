@@ -2,6 +2,7 @@ import argparse
 from typing import List, Tuple
 import glob
 import os
+import time
 
 import torch
 
@@ -20,10 +21,11 @@ from collagen import (
     VoxelParams,
     MultiLoader,
 )
+from collagen.checkpoints import MyModelCheckpoint, get_last_checkpoint
 from collagen.external import MOADInterface, MOADFragmentDataset
-from collagen.util import get_last_checkpoint, rand_rot
+from collagen.util import rand_rot
 
-from collagen.examples.deeplig.model import DeepFragModel
+from collagen.examples.deepfrag.model import DeepFragModel
 
 FP_SIZE = 2048
 
@@ -103,19 +105,13 @@ def run(args):
 
     vp = VoxelParamsDefault.DeepFrag
 
-    ckpt = get_last_checkpoint(args)
-    if ckpt is None:
-        model = DeepFragModel(
-            voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
-        )
-    else:
-        print("Loading checkpoint from " + ckpt + "...")
-        model = DeepFragModel.load_from_checkpoint(
-            ckpt, voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
-        )
-        import pdb
+    model = DeepFragModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
 
-        pdb.set_trace()
+    # TODO: Code like below might be useful at inference time...
+    #     print("Loading checkpoint from " + ckpt + "...")
+    #     model = DeepFragModel.load_from_checkpoint(
+    #         ckpt, voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
+    #     )
 
     moad = MOADInterface(args.csv, args.data)
     train, val, _ = moad.compute_split(seed=args.split_seed)
@@ -161,17 +157,17 @@ def run(args):
         # default_root_dir="./.save",
         logger=logger,
         callbacks=[
-            ModelCheckpoint(
+            MyModelCheckpoint(
                 dirpath=args.default_root_dir,
                 monitor="val_loss",
                 filename="val-loss-{epoch:02d}-{val_loss:.2f}",
-                save_last=True,
                 save_top_k=3,
             ),
-            ModelCheckpoint(
+            MyModelCheckpoint(
                 dirpath=args.default_root_dir,
                 monitor="loss",
                 filename="loss-{epoch:02d}-{loss:.2f}",
+                save_last=True,
                 save_top_k=3,
             ),
         ],
@@ -192,7 +188,14 @@ def run(args):
     #     print("h")
     # import pdb; pdb.set_trace()
 
-    trainer.fit(model, train_data, val_data)
+    ckpt = get_last_checkpoint(args)
+    if ckpt is not None:
+        print("\n")
+        print("WARNING: Restarting training from where it previously left off (" + ckpt + ").")
+        print("\n")
+        time.sleep(5)
+
+    trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
 
 if __name__ == "__main__":

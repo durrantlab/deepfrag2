@@ -67,7 +67,12 @@ class DeepFragModel(pl.LightningModule):
         loss = cos(pred, fp).mean()
 
         self.log("val_loss", loss)
-        
+
+        # self.log(
+        #     "weight_sample",
+        #     float([p for n, p in self.named_parameters() if n == "model.0.weight"][0][7]),
+        # )
+
         return loss
 
     def configure_optimizers(self):
