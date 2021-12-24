@@ -4,6 +4,8 @@ import argparse
 import json
 from datetime import datetime
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -20,8 +22,9 @@ def get_args():
     )
 
     args = parser.parse_args()
-    args.app_name = os.path.realpath(args.app_name)
+    args.app_name = SCRIPT_DIR + "/" + args.app_name
     args.working_dir = os.path.realpath(args.working_dir)
+
     return args
 
 
@@ -31,36 +34,68 @@ def validate(args):
         print("No app found at " + args.app_name)
         sys.exit(0)
 
-    if not os.path.exists(args.app_name + os.sep + "run.py"):
-        print("Required file missing: " + args.app_name + os.sep + "run.py")
+    if not os.path.exists(args.app_name + "/run.py"):
+        print("Required file missing: " + args.app_name + "/run.py")
         sys.exit(0)
 
-    if not os.path.exists(args.app_name + os.sep + "defaults.json"):
-        print("Required file missing: " + args.app_name + os.sep + "defaults.json")
+    if not os.path.exists(args.app_name + "/defaults.json"):
+        print("Required file missing: " + args.app_name + "/defaults.json")
         sys.exit(0)
 
+    if not os.path.exists(args.working_dir):
+        os.system("mkdir " + args.working_dir)
 
-def make_cur_app_dir(args):
-    # Copy selected app to common name.
-    os.system("rm -rf .cur_app; cp -r " + os.path.basename(args.app_name) + " .cur_app")
+def compile_parameters(args):
+    # Get defaults
+    params = json.load(open(SCRIPT_DIR + "/.cur_app/defaults.json"))
 
-    # Construct commandline
-    params = json.load(open("./.cur_app/defaults.json"))
+    # Merge in user specified
     if args.params_json is not None:
         custom_params = json.load(open(args.params_json))
         for key in custom_params:
             params[key] = custom_params[key]
+    
+    # Hard code some parameters
     params["default_root_dir"] = "/working/checkpoints/"
+    params["cache"] = params["csv"] + ".cache.json"
 
+    # Change csv to working dir if exists relative to this script.
+    if os.path.exists(params["csv"]):
+        bsnm = os.path.basename(params["csv"])
+        new_csv = args.working_dir + "/" + bsnm
+        os.system("cp " + params["csv"] + " " + new_csv)
+        params["csv"] = "/working/" + bsnm
+
+    # Change cache to working dir if exists relative to this script.
+    if os.path.exists(params["cache"]):
+        bsnm = os.path.basename(params["cache"])
+        new_cache = args.working_dir + "/" + bsnm
+        os.system("cp " + params["cache"] + " " + new_cache)
+        params["cache"] = "/working/" + bsnm
+
+    return params
+
+def make_cur_app_dir(args):
+    # Copy selected app to common name.
+    os.system(
+        "cd "
+        + SCRIPT_DIR
+        + "; rm -rf .cur_app; cp -r "
+        + os.path.basename(args.app_name)
+        + " .cur_app"
+    )
+
+    # Construct commandline
+    params = compile_parameters(args)
     exec = """echo START: $(date)
     python run.py """ + " ".join(
         ["--" + key + " " + str(params[key]) for key in params]
     )
 
-    with open("./.cur_app/run.sh", "w") as f:
+    with open(SCRIPT_DIR + "/.cur_app/run.sh", "w") as f:
         f.write(exec)
 
-    os.system("chmod +x ./.cur_app/run.sh")
+    os.system("cd " + SCRIPT_DIR + ";chmod +x ./.cur_app/run.sh")
 
     return params
 
@@ -71,20 +106,18 @@ params = make_cur_app_dir(args)
 
 # Save parameters to working directory.
 date_str = datetime.now().strftime("%b-%d-%Y.%H-%M-%S")
-with open(args.working_dir + os.sep + "params." + date_str + ".json", "w") as f:
+with open(args.working_dir + "/params." + date_str + ".json", "w") as f:
     json.dump(params, f, indent=4)
 
 # Build the docker image (every time).
-os.system("cd ./utils/docker && docker build -t jdurrant/deeplig . ")
+os.system("cd " + SCRIPT_DIR + "/utils/docker && docker build -t jdurrant/deeplig . ")
 
 # Run the docker image
 os.system(
-    """cd ./utils/docker && \
-docker run \
-    --gpus all \
-    -it --rm \
-    --shm-size="2g" \
-    --ipc=host \
+    """cd """
+    + SCRIPT_DIR
+    + """/utils/docker && \
+docker run --gpus all -it --rm --shm-size="2g" --ipc=host \
     -v $(realpath ../../../):/mnt \
     -v $(realpath """
     + args.working_dir
