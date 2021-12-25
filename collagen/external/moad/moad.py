@@ -1,15 +1,12 @@
 from dataclasses import dataclass, field
-import json
-import multiprocessing
 from pathlib import Path
 from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
 
 import numpy as np
 import prody
 from torch.utils.data import Dataset
-from tqdm.auto import tqdm
 
-from ..core.mol import Mol
+from ...core.mol import Mol
 
 
 def _fix_moad_smiles(smi):
@@ -360,182 +357,6 @@ class MOADInterface(object):
 
 
 MOAD_REF = None
-
-
-def _build_index_target(packed):
-    global MOAD_REF
-
-    pdb = packed
-    target = MOAD_REF[pdb]
-    samples = []
-
-    for i in range(len(target)):
-        sample = {}
-
-        try:
-            _, ligands = target[i]
-
-            for lig in ligands:
-                try:
-                    frags = [int(x[1].mass) for x in lig.split_bonds()]
-                except:
-                    frags = []
-                sample[lig.meta["moad_ligand"].name] = frags
-        except:
-            pass
-
-        samples.append(sample)
-
-    return (pdb, samples)
-
-
-@dataclass
-class MOADFragmentDataset_entry(object):
-    pdb_id: str
-    sample: int
-    ligand: str
-    frag_idx: int
-
-
-class MOADFragmentDataset(Dataset):
-    """
-    A Dataset that provides (receptor, parent, fragment) tuples by splitting ligands on single bonds.
-
-    Args:
-        moad (MOADInterface): An initialized MOADInterface object.
-        cache_file (str, optional): Path to a cache file to store or load fragment metadata.
-        cache_cores (int, optional): If a cache file is not found, use this many cores to compute a new cache.
-        split (MOAD_split, optional): An optional split to constrain the space of examples.
-        transform (Callable[[Mol, Mol, Mol], Any], optional): An optional transformation function to invoke before returning samples.
-            Takes the arguments (receptor, parent, fragment) as Mol objects.
-    """
-
-    moad: MOADInterface
-    split: MOAD_split
-    transform: Optional[Callable[[Mol, Mol, Mol], Any]]
-
-    # A cache-able index listing every fragment size for every ligand/target in the dataset.
-    #
-    # See MOADFragmentDataset._build_index for structure. This index only needs to be updated
-    # for new structure files.
-    _fragment_index: Optional[dict]
-
-    # The internal listing of every valid fragment example. This index is generated on each
-    # run based on the runtime filters: (targets, smiles, fragment_size).
-    _internal_index: List[MOADFragmentDataset_entry]
-
-    def __init__(
-        self,
-        moad: MOADInterface,
-        cache_file: Optional[Union[str, Path]] = None,
-        cache_cores: int = 1,
-        split: Optional[MOAD_split] = None,
-        transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
-    ):
-        self.moad = moad
-        self.split = split if split is not None else moad.full_split()
-        self.transform = transform
-        self._index(cache_file, cache_cores)
-
-    def _build_index(self, cores: int = 1) -> dict:
-        """
-        Cache format:
-
-        {
-            "pdb_id": [
-                {
-                    "lig_name": [fmass1, fmass2, ..., fmassN],
-                    "lig_name2": [...]
-                },
-                ...
-            ],
-            ...
-        }
-        """
-        global MOAD_REF
-        MOAD_REF = self.moad
-
-        index = {}
-        queue = self.moad.targets
-
-        pbar = tqdm(total=len(queue), desc="Building MOAD cache")
-        with multiprocessing.Pool(cores) as p:
-            for pdb, item in p.imap_unordered(_build_index_target, queue):
-                index[pdb.lower()] = item
-                pbar.update(1)
-
-        pbar.close()
-        return index
-
-    def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
-        cache_file = Path(cache_file) if cache_file is not None else None
-
-        if cache_file is not None and cache_file.exists():
-            print("Loading MOAD fragments from cache...")
-            with open(cache_file, "r") as f:
-                index = json.load(f)
-        else:
-            index = self._build_index(cores)
-            if cache_file is not None:
-                with open(cache_file, "w") as f:
-                    f.write(json.dumps(index))
-
-        internal_index = []
-        for pdb_id in tqdm(self.split.targets, desc="Runtime filters"):
-            samples = index[pdb_id.lower()]
-            for sample in range(len(samples)):
-                s = samples[sample]
-                for ligand in s:
-                    # Enforce SMILES filter.
-                    skip = False
-                    for lig in self.moad[pdb_id].ligands:
-                        if lig.name == ligand and lig.smiles not in self.split.smiles:
-                            skip = True
-                            break
-
-                    if skip:
-                        continue
-
-                    frags = s[ligand]
-                    for frag_idx in range(len(frags)):
-                        if frags[frag_idx] != 0:
-                            internal_index.append(
-                                MOADFragmentDataset_entry(
-                                    pdb_id=pdb_id,
-                                    sample=sample,
-                                    ligand=ligand,
-                                    frag_idx=frag_idx,
-                                )
-                            )
-
-        self._fragment_index = index
-        self._internal_index = internal_index
-
-    def __len__(self) -> int:
-        return len(self._internal_index)
-
-    def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
-        """Returns (receptor, parent, fragment)"""
-        assert idx >= 0 and idx <= len(self), "Index out of bounds"
-
-        entry = self._internal_index[idx]
-
-        receptor, ligands = self.moad[entry.pdb_id][entry.sample]
-
-        for ligand in ligands:
-            if ligand.meta["moad_ligand"].name == entry.ligand:
-                pairs = ligand.split_bonds()
-                parent, fragment = pairs[entry.frag_idx]
-                break
-        else:
-            raise Exception("Ligand not found")
-
-        sample = (receptor, parent, fragment)
-
-        if self.transform:
-            return self.transform(*sample)
-        else:
-            return sample
 
 
 def _unit_rand(thresh):

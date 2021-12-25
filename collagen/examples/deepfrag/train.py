@@ -22,7 +22,8 @@ from collagen import (
     MultiLoader,
 )
 from collagen.checkpoints import MyModelCheckpoint, get_last_checkpoint
-from collagen.external import MOADInterface, MOADFragmentDataset
+from collagen.external import MOADInterface
+from collagen.external.moad.fragment import MOADFragmentDataset
 from collagen.util import rand_rot
 
 from collagen.examples.deepfrag.model import DeepFragModel
@@ -186,7 +187,7 @@ def run(args):
     # for t in train_data:
     #     dir(t)
     #     print("h")
-    # import pdb; pdb.set_trace()
+    #     import pdb; pdb.set_trace()
 
     ckpt = get_last_checkpoint(args)
     if ckpt is not None:

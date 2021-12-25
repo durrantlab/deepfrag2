@@ -67,4 +67,4 @@ Datasets
 Terminal Fragment Dataset
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :class:`collagen.data.moad.MOADFragmentDataset` class provides a 
+The :class:`collagen.data.moad.fragment.MOADFragmentDataset` class provides a 

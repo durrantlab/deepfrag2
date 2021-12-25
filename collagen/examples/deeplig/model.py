@@ -12,7 +12,7 @@ def cos(yp, yt):
     return 1 - _cos(yp, yt)
 
 
-class DeepFragModel(pl.LightningModule):
+class DeepLigModel(pl.LightningModule):
     def __init__(self, voxel_features: int = 10, fp_size: int = 2048):
         super().__init__()
         self.save_hyperparameters()

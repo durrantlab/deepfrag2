@@ -22,6 +22,7 @@ def get_args():
     )
 
     args = parser.parse_args()
+    args.name = args.app_name.replace("/", "")
     args.app_name = SCRIPT_DIR + "/" + args.app_name
     args.working_dir = os.path.realpath(args.working_dir)
 
@@ -45,6 +46,7 @@ def validate(args):
     if not os.path.exists(args.working_dir):
         os.system("mkdir " + args.working_dir)
 
+
 def compile_parameters(args):
     # Get defaults
     params = json.load(open(SCRIPT_DIR + "/.cur_app/defaults.json"))
@@ -54,10 +56,10 @@ def compile_parameters(args):
         custom_params = json.load(open(args.params_json))
         for key in custom_params:
             params[key] = custom_params[key]
-    
+
     # Hard code some parameters
     params["default_root_dir"] = "/working/checkpoints/"
-    params["cache"] = params["csv"] + ".cache.json"
+    params["cache"] = params["csv"] + "." + args.name + ".cache.json"
 
     # Change csv to working dir if exists relative to this script.
     if os.path.exists(params["csv"]):
@@ -72,8 +74,12 @@ def compile_parameters(args):
         new_cache = args.working_dir + "/" + bsnm
         os.system("cp " + params["cache"] + " " + new_cache)
         params["cache"] = "/working/" + bsnm
+    else:
+        # cache file doesn't exist. Update to be same as new csv file.
+        params["cache"] = params["csv"] + "." + args.name + ".cache.json"
 
     return params
+
 
 def make_cur_app_dir(args):
     # Copy selected app to common name.

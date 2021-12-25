@@ -13,7 +13,7 @@ docs/_build
 .tmp*
 .save
 
-moad
+data/moad
 cache.json
 cache_little.json
 
@@ -22,3 +22,6 @@ Singularity.sif
 .fuse_hidden*
 
 .cur_app
+
+__pycache__
+*.pyc

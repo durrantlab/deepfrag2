@@ -4,4 +4,5 @@ __all__ = [
     "MOADPocketDataset",
 ]
 
-from .moad import MOADInterface, MOADFragmentDataset, MOADPocketDataset
+from .moad.moad import MOADInterface, MOADPocketDataset
+from .moad.fragment import MOADFragmentDataset

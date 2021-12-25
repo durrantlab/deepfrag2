@@ -1,0 +1,10 @@
+{
+    "csv": "../../data/moad/every.csv",
+    "data": "../../data/moad/BindingMoad2019/",
+    "gpus": 1,
+    "num_dataloader_workers": 16,
+    "max_voxels_in_memory": 320,
+    "split_seed": 31415,
+    "default_root_dir": "/working/"
+}
+

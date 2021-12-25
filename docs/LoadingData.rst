@@ -31,5 +31,5 @@ Interfaces:
 Datasets:
 
 .. autosummary::
-    ~collagen.external.moad.MOADFragmentDataset
+    ~collagen.external.moad.fragment.MOADFragmentDataset
     ~collagen.external.moad.MOADPocketDataset

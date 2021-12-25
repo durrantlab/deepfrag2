@@ -1,6 +1,6 @@
 import argparse
 from typing import List, Tuple
-
+import numpy as np
 import torch
 
 # JDD NO: torch.multiprocessing.set_sharing_strategy("file_system")
@@ -17,10 +17,11 @@ from collagen import (
     VoxelParams,
     MultiLoader,
 )
-from collagen.external import MOADInterface, MOADFragmentDataset
+from collagen.external import MOADInterface
+from collagen.external.moad.whole_ligand import MOADWholeLigDataset
 from collagen.util import rand_rot
 
-from collagen.examples.deeplig.model import DeepFragModel
+from collagen.examples.deeplig.model import DeepLigModel
 
 FP_SIZE = 2048
 
@@ -37,24 +38,24 @@ def disable_warnings():
 
 class PreVoxelize(object):
     """
-    Pre-voxelize transform. Given a (receptor, parent, fragment) tuple, prepare
-    to voxelize the receptor and parent and compute the fingerprint for the
-    fragment.
+    Pre-voxelize transform. Given a (receptor, ligand) tuple, prepare to
+    voxelize the receptor and compute the fingerprint for the ligand.
     """
 
     def __init__(self, voxel_params: VoxelParams):
         self.voxel_params = voxel_params
 
     def __call__(
-        self, rec: Mol, parent: Mol, frag: Mol
-    ) -> Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]:
+        self, rec: Mol, ligand: Mol
+    ) -> Tuple[DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
+        # JDD TODO: center???
         return (
-            rec.voxelize_delayed(self.voxel_params, center=frag.connectors[0], rot=rot),
-            parent.voxelize_delayed(
-                self.voxel_params, center=frag.connectors[0], rot=rot
-            ),
-            torch.tensor(frag.fingerprint("rdk10", 2048)),
+            rec.voxelize_delayed(self.voxel_params, center=np.array([0, 0, 0]), rot=rot),
+            # parent.voxelize_delayed(
+            #     self.voxel_params, center=frag.connectors[0], rot=rot
+            # ),
+            torch.tensor(ligand.fingerprint("rdk10", 2048)),
         )
 
 
@@ -69,7 +70,7 @@ class BatchVoxelize(object):
         self.device = torch.device("cpu") if cpu else torch.device("cuda")
 
     def __call__(
-        self, data: List[Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]]
+        self, data: List[Tuple[DelayedMolVoxel, torch.Tensor]]
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         voxels = torch.zeros(
             size=self.voxel_params.tensor_size(batch=len(data), feature_mult=2),
@@ -79,18 +80,18 @@ class BatchVoxelize(object):
         fingerprints = torch.zeros(size=(len(data), FP_SIZE), device=self.device)
 
         for i in range(len(data)):
-            rec, parent, frag = data[i]
+            rec, lig = data[i]
 
             rec.voxelize_into(voxels, batch_idx=i, layer_offset=0, cpu=self.cpu)
 
-            parent.voxelize_into(
-                voxels,
-                batch_idx=i,
-                layer_offset=self.voxel_params.atom_featurizer.size(),
-                cpu=self.cpu,
-            )
+            # parent.voxelize_into(
+            #     voxels,
+            #     batch_idx=i,
+            #     layer_offset=self.voxel_params.atom_featurizer.size(),
+            #     cpu=self.cpu,
+            # )
 
-            fingerprints[i] = frag
+            fingerprints[i] = lig
 
         return (voxels, fingerprints)
 
@@ -100,12 +101,12 @@ def run(args):
 
     vp = VoxelParamsDefault.DeepFrag
 
-    model = DeepFragModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
+    model = DeepLigModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
 
     moad = MOADInterface(args.csv, args.data)
     train, val, _ = moad.compute_split(seed=args.split_seed)
 
-    train_frags = MOADFragmentDataset(
+    train_frags = MOADWholeLigDataset(
         moad, cache_file=args.cache, split=train, transform=PreVoxelize(vp)
     )
     train_data = (
@@ -120,7 +121,14 @@ def run(args):
         .map(BatchVoxelize(vp, args.cpu))
     )
 
-    val_frags = MOADFragmentDataset(
+    # Use below to debug errors in file loading and grid generation.
+    # print(len(train_data))
+    # import pdb; pdb.set_trace()
+    # for t in train_data:
+    #     dir(t)
+    #     print("h")
+
+    val_frags = MOADWholeLigDataset(
         moad, cache_file=args.cache, split=val, transform=PreVoxelize(vp)
     )
     val_data = (
@@ -154,13 +162,6 @@ def run(args):
         # limit_train_batches=0.0001,
         # limit_val_batches=0.0001
     )
-
-    # Use below to debug errors in file loading and grid generation.
-    # print(len(train_data))
-    # for t in train_data:
-    #     dir(t)
-    #     print("h")
-    # import pdb; pdb.set_trace()
 
     trainer.fit(model, train_data, val_data)
 

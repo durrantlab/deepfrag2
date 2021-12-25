@@ -37,7 +37,7 @@ For more advanced visualizations, such as rendering multiple molecules or render
 
 Examples:
 
-Rendering a sample from :class:`~collagen.external.moad.MOADFragmentDataset`:
+Rendering a sample from :class:`~collagen.external.moad.fragment.MOADFragmentDataset`:
 
 .. image:: res/draw_multi.png
   :alt: Render with custom view methods.
