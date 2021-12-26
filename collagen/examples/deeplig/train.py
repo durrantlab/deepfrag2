@@ -49,9 +49,15 @@ class PreVoxelize(object):
         self, rec: Mol, ligand: Mol
     ) -> Tuple[DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
-        # JDD TODO: center???
+        
+        # Get one of the ligand atoms
+        center=ligand.coords[np.random.randint(ligand.coords.shape[0])]
+
+        # Add random offset to that.
+        center += np.random.uniform(-5,5,size=(1,3))[0]
+
         return (
-            rec.voxelize_delayed(self.voxel_params, center=np.array([0, 0, 0]), rot=rot),
+            rec.voxelize_delayed(self.voxel_params, center=center, rot=rot),
             # parent.voxelize_delayed(
             #     self.voxel_params, center=frag.connectors[0], rot=rot
             # ),

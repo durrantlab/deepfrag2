@@ -12,37 +12,41 @@ import json
 from dataclasses import dataclass
 
 
-def build_frag_index_target(packed):
+def build_frag_index_target(pdb_id):
+    # Given a pdb_id, gets its ligands and maps those to the massess of all
+    # associated fragments. Fragments are determined deterministically, so no
+    # need to store fragment indexes.
+
     global MOAD_REF
 
-    pdb = packed
-    target = MOAD_REF[pdb]
-    samples = []
+    moad_entry_info = MOAD_REF[pdb_id]
+    ligs_to_frag_masses = []
 
-    for i in range(len(target)):
-        sample = {}
+    for i in range(len(moad_entry_info)):
+        lig_to_frag_masses = {}
 
         try:
-            _, ligands = target[i]
+            # Unpack info to get ligands
+            _, ligands = moad_entry_info[i]
 
             for lig in ligands:
                 try:
                     frag_masses = [int(x[1].mass) for x in lig.split_bonds()]
                 except:
                     frag_masses = []
-                sample[lig.meta["moad_ligand"].name] = frag_masses
+                lig_to_frag_masses[lig.meta["moad_ligand"].name] = frag_masses
         except:
             pass
 
-        samples.append(sample)
+        ligs_to_frag_masses.append(lig_to_frag_masses)
 
-    return (pdb, samples)
+    return (pdb_id, ligs_to_frag_masses)
 
 
 @dataclass
 class MOADFragmentDataset_entry(object):
     pdb_id: str
-    sample_idx: int
+    lig_to_frag_masses_chunk_idx: int
     ligand_id: str
     frag_idx: int
 
@@ -68,11 +72,11 @@ class MOADFragmentDataset(Dataset):
     #
     # See MOADFragmentDataset._build_index for structure. This index only needs to be updated
     # for new structure files.
-    _fragment_index: Optional[dict]
+    _fragment_index_cached: Optional[dict]
 
     # The internal listing of every valid fragment example. This index is generated on each
     # run based on the runtime filters: (targets, smiles, fragment_size).
-    _internal_index: List[MOADFragmentDataset_entry]
+    _internal_index_valids_filtered: List[MOADFragmentDataset_entry]
 
     def __init__(
         self,
@@ -106,12 +110,14 @@ class MOADFragmentDataset(Dataset):
         MOAD_REF = self.moad
 
         index = {}
-        queue = self.moad.targets
+        pdb_ids_queue = self.moad.targets
 
-        pbar = tqdm(total=len(queue), desc="Building MOAD cache")
+        pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
         with multiprocessing.Pool(cores) as p:
-            for pdb, item in p.imap_unordered(build_frag_index_target, queue):
-                index[pdb.lower()] = item
+            for pdb_id, ligs_to_frag_masses in p.imap_unordered(
+                build_frag_index_target, pdb_ids_queue
+            ):
+                index[pdb_id.lower()] = ligs_to_frag_masses
                 pbar.update(1)
 
         pbar.close()
@@ -132,58 +138,68 @@ class MOADFragmentDataset(Dataset):
 
         internal_index = []
         for pdb_id in tqdm(self.split.targets, desc="Runtime filters"):
-            samples = index[pdb_id.lower()]
-            for sample_idx in range(len(samples)):
-                sample = samples[sample_idx]
-                # sample looks like:
+            ligs_to_frag_masses_chunks = index[pdb_id.lower()]
+            for lig_to_frag_masses_chunk_idx in range(len(ligs_to_frag_masses_chunks)):
+                lig_to_frag_masses_chunk = ligs_to_frag_masses_chunks[
+                    lig_to_frag_masses_chunk_idx
+                ]
+                # lig_to_frag_masses_chunk looks like:
                 # {
-                #   'ADN:A:901': [17, 31, 17, 17, 133, 16], 
-                #   'ADN:B:902': [17, 31, 17, 17, 133, 16], 
-                #   'ADN:C:903': [17, 31, 17, 17, 133, 16], 
-                #   'ADN:D:904': [17, 31, 17, 17, 133, 16], 
-                #   'ADN:E:905': [17, 31, 17, 17, 133, 16], 
+                #   'ADN:A:901': [17, 31, 17, 17, 133, 16],
+                #   'ADN:B:902': [17, 31, 17, 17, 133, 16],
+                #   'ADN:C:903': [17, 31, 17, 17, 133, 16],
+                #   'ADN:D:904': [17, 31, 17, 17, 133, 16],
+                #   'ADN:E:905': [17, 31, 17, 17, 133, 16],
                 #   'ADN:F:906': [17, 31, 17, 17, 133, 16]
                 # }
 
-                for ligand_id in sample:
-                    # Enforce SMILES filter.
+                for ligand_id in lig_to_frag_masses_chunk:
+                    # Enforce SMILES filter.  TODO: Distance to receptor, number
+                    # of heavy atoms, etc.?
                     skip = False
                     for lig in self.moad[pdb_id].ligands:
-                        if lig.name == ligand_id and lig.smiles not in self.split.smiles:
-                            # You've found the ligand in this sample, and it is
-                            # not in the split, so skip it.
+                        if (
+                            lig.name == ligand_id
+                            and lig.smiles not in self.split.smiles
+                        ):
+                            # You've found the ligand that is not in the split,
+                            # so skip it.
                             skip = True
                             break
 
                     if skip:
                         continue
 
-                    frag_masses = sample[ligand_id]
+                    frag_masses = lig_to_frag_masses_chunk[ligand_id]
                     for frag_idx in range(len(frag_masses)):
                         if frag_masses[frag_idx] != 0:
+                            # A fragment with mass, so proceed.
                             internal_index.append(
                                 MOADFragmentDataset_entry(
                                     pdb_id=pdb_id,
-                                    sample_idx=sample_idx,
+                                    lig_to_frag_masses_chunk_idx=lig_to_frag_masses_chunk_idx,
                                     ligand_id=ligand_id,
                                     frag_idx=frag_idx,
                                 )
                             )
 
-        self._fragment_index = index
-        self._internal_index = internal_index
+        self._fragment_index_cached = index
+        self._internal_index_valids_filtered = internal_index
 
     def __len__(self) -> int:
-        return len(self._internal_index)
+        return len(self._internal_index_valids_filtered)
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
         """Returns (receptor, parent, fragment)"""
         assert idx >= 0 and idx <= len(self), "Index out of bounds"
 
-        entry = self._internal_index[idx]
+        entry = self._internal_index_valids_filtered[idx]
 
-        receptor, ligands = self.moad[entry.pdb_id][entry.sample_idx]
+        receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
 
+        # This chunk has many ligands. You need to look up the one that matches
+        # entry.ligand_id (the one that actually corresponds to this entry).
+        # Once you find it, actually do the fragmenting.
         for ligand in ligands:
             if ligand.meta["moad_ligand"].name == entry.ligand_id:
                 pairs = ligand.split_bonds()
@@ -197,6 +213,7 @@ class MOADFragmentDataset(Dataset):
         # print(receptor,  parent.pdb(), fragment.pdb())
 
         if self.transform:
+            # Actually performs voxelization and fingerprinting.
             return self.transform(*sample)
         else:
             return sample
