@@ -183,6 +183,31 @@ class Mol(object):
         """Mass of this Mol in daltons."""
         raise NotImplementedError()
 
+    def split_bonds(
+        self, only_single_bonds: bool = True, max_frag_size: int = -1
+    ) -> List[Tuple["Mol", "Mol"]]:
+        """
+        Iterate over all bonds in the Mol and try to split into two fragments, returning tuples of produced fragments.
+        Each returned tuple is of the form (parent, fragment).
+
+        Args:
+            only_single_bonds (bool): If True (default) only cut on single bonds.
+            max_frag_size (int): If set, only return fragments smaller or equal to this molecular weight.
+
+        Examples:
+            >>> mol = Mol.from_smiles('CC(C)CC1=CC=C(C=C1)C(C)C(=O)O')
+            >>> mol.split_bonds()
+            [(Mol(smiles="*C(C)CC1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*C")),
+            (Mol(smiles="*C(C)CC1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*C")),
+            (Mol(smiles="*CC1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*C(C)C")),
+            (Mol(smiles="*C1=CC=C(C(C)C(=O)O)C=C1"), Mol(smiles="*CC(C)C")),
+            (Mol(smiles="*C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*C(C)C(=O)O")),
+            (Mol(smiles="*C(C(=O)O)C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*C")),
+            (Mol(smiles="*C(C)C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*C(=O)O")),
+            (Mol(smiles="*C(=O)C(C)C1=CC=C(CC(C)C)C=C1"), Mol(smiles="*O"))]
+        """
+        raise NotImplementedError()
+
     def voxelize(
         self,
         params: "VoxelParams",
