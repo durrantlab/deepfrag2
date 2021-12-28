@@ -210,8 +210,6 @@ class MOADFragmentDataset(Dataset):
 
         sample = (receptor, parent, fragment)
 
-        # print(receptor,  parent.pdb(), fragment.pdb())
-
         if self.transform:
             # Actually performs voxelization and fingerprinting.
             return self.transform(*sample)

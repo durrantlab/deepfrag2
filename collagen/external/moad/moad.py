@@ -275,8 +275,8 @@ class MOADInterface(object):
                     if k in files:
                         t.files = sorted(files[k])
                     else:
+                        # No structures for this pdb id!
                         pass
-                        # print(f"Warn: no structures for {k}")
 
     def _smiles_for(self, targets: List[str]) -> Set[str]:
         """Return all the SMILES strings contained in the selected targets."""
