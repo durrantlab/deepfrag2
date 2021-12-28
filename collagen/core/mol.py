@@ -118,7 +118,7 @@ class Mol(object):
         return BackedMol(rdmol=rdmol)
 
     @staticmethod
-    def from_rdkit(rdmol: "rdkit.Chem.rdchem.Mol") -> "BackedMol":
+    def from_rdkit(rdmol: "rdkit.Chem.rdchem.Mol", strict: bool = True) -> "BackedMol":
         """Construct a Mol from an RDKit Mol.
 
         Args:
@@ -127,7 +127,7 @@ class Mol(object):
         Returns:
             collagen.core.mol.BackedMol: A new Mol object.
         """
-        rdmol.UpdatePropertyCache()
+        rdmol.UpdatePropertyCache(strict=strict)
         return BackedMol(rdmol=rdmol)
 
     def sdf(self) -> str:
