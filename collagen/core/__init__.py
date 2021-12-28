@@ -11,7 +11,7 @@ __all__ = [
     "AtomicNumFeaturizer",
     "AnyAtom",
     "MultiLoader",
-    "GraphMol"
+    "GraphMol",
 ]
 
 from .mol import Mol, BackedMol, DelayedMolVoxel

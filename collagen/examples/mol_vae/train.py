@@ -1,4 +1,3 @@
-
 import argparse
 
 from torch.utils.data import DataLoader
@@ -31,7 +30,7 @@ def run(args):
         kl_warm=100,
         kl_ramp=100,
         kl_hold=50,
-        kl_max=0.05
+        kl_max=0.05,
     )
 
     logger = None

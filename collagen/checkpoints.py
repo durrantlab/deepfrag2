@@ -5,16 +5,15 @@ import os
 # see  https://github.com/PyTorchLightning/pytorch-lightning/issues/4911 Saves
 # and loads checkpoints in a way that respects previously saved checkpoints.
 class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
-
     def on_save_checkpoint(self, trainer, pl_module, checkpoint):
         return {
-            "monitor":          self.monitor,
+            "monitor": self.monitor,
             "best_model_score": self.best_model_score,
-            "best_model_path":  self.best_model_path,
-            "current_score":    self.current_score,
-            "dirpath":          self.dirpath,
-            "best_k_models":    self.best_k_models,
-            "save_last":        self.save_last,
+            "best_model_path": self.best_model_path,
+            "current_score": self.current_score,
+            "dirpath": self.dirpath,
+            "best_k_models": self.best_k_models,
+            "save_last": self.save_last,
             "kth_best_model_path": self.kth_best_model_path,
         }
 
@@ -25,6 +24,7 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
         self.best_k_models = callback_state["best_k_models"]
         self.save_last = callback_state["save_last"]
         self.kth_best_model_path = callback_state["kth_best_model_path"]
+
 
 def get_last_checkpoint(args):
     saved_checkpoints = glob.glob(
