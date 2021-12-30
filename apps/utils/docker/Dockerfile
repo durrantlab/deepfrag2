@@ -51,6 +51,8 @@ RUN cd /tmptmp/ && \
 
 RUN apt install -y lsof
 
+RUN /miniconda/bin/python3 -m pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.9.0+cu111.html
+
 WORKDIR /mnt
 
 ENTRYPOINT /mnt/apps/utils/run_app.sh

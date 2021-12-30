@@ -197,7 +197,8 @@ def run(args):
 
     # May possibly speed things up:
     # https://discuss.pytorch.org/t/what-does-torch-backends-cudnn-benchmark-do/5936/36
-    torch.backends.cudnn.benchmark = True
+    # Commented out because improvement was minor, if any, in quick benchmark.
+    # torch.backends.cudnn.benchmark = True
 
     trainer.fit(model, train_data, val_data)
 
