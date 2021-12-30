@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
-
+import os
+import json
 import numpy as np
 import prody
 from torch.utils.data import Dataset
@@ -340,6 +341,17 @@ class MOADInterface(object):
             train_smi = (train_smi - (val_smi | test_smi)) | a_train | c_train | d_train
             val_smi = (val_smi - (train_smi | test_smi)) | a_val | b_val | d_val
             test_smi = (test_smi - (train_smi | val_smi)) | b_test | c_test | d_test
+
+        # Save spit and seed to json in working directory if running in docker
+        # container.
+        if os.path.exists("/working/"):
+            split_inf = {
+                "seed": seed,
+                "train": train_ids,
+                "val": val_ids,
+                "test": test_ids
+            }
+            json.dump(split_inf, open("/working/moad_split.json", "w"), indent=4)
 
         return (
             MOAD_split(name="TRAIN", targets=train_ids, smiles=train_smi),
