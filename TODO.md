@@ -1,1 +1,16 @@
 Create moad cache using multiple processors?
+
+Re. learning rate, this is great: https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
+
+And what is the cardinal rule of neural network training? Whenever possible, use a larger batch size.
+
+# DONE
+
+Store splits, split seed in json file in working dir?
+
+torch.backends.cudnn.benchmark = True
+
+Due to changes in the batch size, you will have to tune your learning rate. You can also incorporate learning rate warmup and learning rate decay. Apart from that, you can use weight decay in your model.
+
+https://pytorch-lightning.readthedocs.io/en/latest/advanced/lr_finder.html
+

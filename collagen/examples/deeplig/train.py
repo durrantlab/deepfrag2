@@ -2,6 +2,7 @@ import argparse
 from typing import List, Tuple
 import numpy as np
 import torch
+# from scipy.spatial.distance import cdist
 
 # JDD NO: torch.multiprocessing.set_sharing_strategy("file_system")
 
@@ -47,12 +48,33 @@ class PreVoxelize(object):
 
     def __call__(self, rec: Mol, ligand: Mol) -> Tuple[DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
+        
+        passes = False
 
-        # Get one of the ligand atoms
-        center = ligand.coords[np.random.randint(ligand.coords.shape[0])]
+        # now = time.time()
+
+        # Get the ligand center
+        center =  np.mean(ligand.coords, axis=0)
 
         # Add random offset to that.
-        center += np.random.uniform(-5, 5, size=(1, 3))[0]
+        center += np.random.uniform(-3,3,size=(1,3))[0]
+        # print(rec, center)
+
+        # https://www.rdkit.org/docs/source/rdkit.Chem.Scaffolds.MurckoScaffold.html
+        # https://github.com/rdkit/rdkit/issues/1947
+
+        # while not passes:
+        #     # Get one of the ligand atoms
+        #     center=ligand.coords[np.random.randint(ligand.coords.shape[0])]
+
+        #     # Add random offset to that.
+        #     center += np.random.uniform(-5,5,size=(1,3))[0]
+
+        #     # Make sure center is not near any receptor atom, nor too far.
+        #     min_dist = np.min(cdist(np.array([center]), rec.coords))
+        #     if min_dist > 2.0:
+        #         if min_dist < 6.0 or time.time() - now > 15:
+        #             passes = True
 
         return (
             rec.voxelize_delayed(self.voxel_params, center=center, rot=rot),
@@ -108,7 +130,7 @@ def run(args):
     model = DeepLigModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
 
     moad = MOADInterface(args.csv, args.data)
-    train, val, _ = moad.compute_split(seed=args.split_seed)
+    train, val, test = moad.compute_split(seed=args.split_seed)
 
     train_frags = MOADWholeLigDataset(
         moad, cache_file=args.cache, split=train, transform=PreVoxelize(vp)
@@ -153,12 +175,16 @@ def run(args):
     else:
         logger = CSVLogger("logs", name="my_exp_name", flush_logs_every_n_steps=25)
 
+    print(args)  
+    input("Anything to indicate batches? Didn't see anything. I think it's hard coded.")
+
     trainer = pl.Trainer.from_argparse_args(
         args,
         # default_root_dir="./.save",
         logger=logger,
         # Below for debugging
         log_every_n_steps=25,
+        # auto_lr_find=True
         # fast_dev_run=True,
         # callbacks=[ModelSummary(max_depth=-1), DeviceStatsMonitor()],
         # overfit_batches=0.001,
@@ -166,6 +192,12 @@ def run(args):
         # limit_train_batches=0.0001,
         # limit_val_batches=0.0001
     )
+
+    # trainer.tune(model)
+
+    # May possibly speed things up:
+    # https://discuss.pytorch.org/t/what-does-torch-backends-cudnn-benchmark-do/5936/36
+    torch.backends.cudnn.benchmark = True
 
     trainer.fit(model, train_data, val_data)
 
