@@ -4,10 +4,10 @@ from typing import List, Dict
 import h5py
 from tqdm import tqdm
 
-from .mol import Mol, MolDataset
+from ..core.mol import Mol
 
 
-class ZINCDataset(MolDataset):
+class ZINCDataset(object):
     """
     A dataset that iterates over a raw ZINC directory.
 
@@ -90,7 +90,7 @@ class ZINCDataset(MolDataset):
         return m
 
 
-class ZINCDatasetH5(MolDataset):
+class ZINCDatasetH5(object):
     """
     An accelerated version of the ZINCDataset that iterates a pre-processed
     H5 format of the ZINC dataset.

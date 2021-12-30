@@ -3,20 +3,13 @@ from torch import nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-from collagen.data import VoxelParams, AtomicNumFeaturizer
+from collagen import VoxelParams, AtomicNumFeaturizer
 
 
 class VoxelAutoencoder(pl.LightningModule):
-    def __init__(self, latent_size: int = 1024):
+    def __init__(self, latent_size: int = 1024, voxel_params: VoxelParams = None):
         super().__init__()
         self.save_hyperparameters()
-
-        self.voxel_params = VoxelParams(
-            resolution=0.75,
-            width=24,
-            acc_type=VoxelParams.AccType.MAX,
-            atom_featurizer=AtomicNumFeaturizer([1, 6, 7, 8, 16]),
-        )
 
         N = self.voxel_params.atom_featurizer.size()
         self.encoder = nn.Sequential(

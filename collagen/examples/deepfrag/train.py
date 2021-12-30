@@ -192,7 +192,11 @@ def run(args):
     ckpt = get_last_checkpoint(args)
     if ckpt is not None:
         print("\n")
-        print("WARNING: Restarting training from where it previously left off (" + ckpt + ").")
+        print(
+            "WARNING: Restarting training from where it previously left off ("
+            + ckpt
+            + ")."
+        )
         print("\n")
         time.sleep(5)
 

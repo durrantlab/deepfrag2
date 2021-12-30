@@ -46,9 +46,7 @@ class PreVoxelize(object):
     def __init__(self, voxel_params: VoxelParams):
         self.voxel_params = voxel_params
 
-    def __call__(
-        self, rec: Mol, ligand: Mol
-    ) -> Tuple[DelayedMolVoxel, torch.Tensor]:
+    def __call__(self, rec: Mol, ligand: Mol) -> Tuple[DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
         
         passes = False
