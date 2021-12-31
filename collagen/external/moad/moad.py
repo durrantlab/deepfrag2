@@ -6,6 +6,7 @@ import json
 import numpy as np
 import prody
 from torch.utils.data import Dataset
+import numpy
 
 from ...core.mol import Mol
 
@@ -316,7 +317,8 @@ class MOADInterface(object):
             np.random.seed(seed)
 
         families: List[List[str]] = []
-        for c in self.classes:
+        import pdb; pdb.set_trace()
+        for c in self.classes[:50]:
             for f in c.families:
                 families.append([x.pdb_id for x in f.targets])
 

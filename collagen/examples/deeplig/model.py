@@ -18,7 +18,7 @@ class DeepLigModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.learning_rate = 1e-4
+        self.learning_rate = 1e-3
 
         self.model = nn.Sequential(
             nn.BatchNorm3d(voxel_features),
