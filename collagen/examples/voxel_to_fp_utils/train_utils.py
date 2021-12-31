@@ -46,13 +46,14 @@ def run_voxel_to_fp_model(
     train_data = (
         MultiLoader(
             train_frags,
+            # Number of examples pulled at a time for loading data.
             batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
             max_voxels_in_memory=args.max_voxels_in_memory,
         )
-        .batch(16)
-        .map(BatchVoxelizeCls(vp, args.cpu))
+        # This is batch size from ML perspective.
+        .batch(args.batch_size).map(BatchVoxelizeCls(vp, args.cpu))
     )
 
     # Use below to debug errors in file loading and grid generation.
@@ -68,24 +69,23 @@ def run_voxel_to_fp_model(
     val_data = (
         MultiLoader(
             val_frags,
-            batch_size=1,  # Number of examples pulled at a time for loading data.
+            # Number of examples pulled at a time for loading data.
+            batch_size=1,
             shuffle=True,
             num_dataloader_workers=args.num_dataloader_workers,
             max_voxels_in_memory=args.max_voxels_in_memory,
         )
-        # This is batch size from ML perspective. TODO: Check if hard coded
-        # anywhere else.
-        .batch(16).map(BatchVoxelizeCls(vp, args.cpu))
+        # This is batch size from ML perspective.
+        .batch(args.batch_size).map(BatchVoxelizeCls(vp, args.cpu))
     )
 
     logger = None
     if args.wandb_project:
         logger = WandbLogger(project=args.wandb_project)
     else:
-        logger = CSVLogger("logs", name="my_exp_name", flush_logs_every_n_steps=25)
-
-    print(args)
-    input("Anything to indicate batches? Didn't see anything. I think it's hard coded.")
+        logger = CSVLogger(
+            "logs", name="my_exp_name", flush_logs_every_n_steps=args.log_every_n_steps
+        )
 
     trainer = pl.Trainer.from_argparse_args(
         args,
@@ -107,7 +107,7 @@ def run_voxel_to_fp_model(
             ),
         ],
         # Below for debugging
-        log_every_n_steps=25,
+        log_every_n_steps=args.log_every_n_steps,
         # fast_dev_run=True,
         # callbacks=[ModelSummary(max_depth=-1), DeviceStatsMonitor()],
         # overfit_batches=0.001,
@@ -166,7 +166,34 @@ def add_args_voxel_to_fp_model():
     )
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)
+    parser.add_argument(
+        "--max_voxels_in_memory",
+        required=True,
+        default=80,
+        type=int,
+        help="The data loader will store no more than this number of voxel in memory at once.",
+    )
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        required=False,
+        default=16,
+        help="The size of the batch",
+    )
+
+    # parser.add_argument(
+    #     "--log_every_n_steps",
+    #     type=int,
+    #     required=False,
+    #     default=25,
+    #     help="How often to log data",
+    # )
 
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
+
+    # JDD added to see if helps with error:
+    # https://stackoverflow.com/questions/67876741/unable-to-mmap-1024-bytes-cannot-allocate-memory-even-though-there-is-more-t/67969244#67969244
+    # args.use_multiprocessing = False
+
     return args

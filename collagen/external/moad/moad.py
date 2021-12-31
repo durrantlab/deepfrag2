@@ -318,7 +318,7 @@ class MOADInterface(object):
 
         families: List[List[str]] = []
         import pdb; pdb.set_trace()
-        for c in self.classes[:50]:
+        for c in self.classes[:250]:
             for f in c.families:
                 families.append([x.pdb_id for x in f.targets])
 
