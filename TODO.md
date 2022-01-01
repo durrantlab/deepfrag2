@@ -2,9 +2,9 @@ Create moad cache using multiple processors?
 
 Re. learning rate, this is great: https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
 
-And what is the cardinal rule of neural network training? Whenever possible, use a larger batch size.
-
 # Training goal
+
+And what is the cardinal rule of neural network training? Whenever possible, use a larger batch size.
 
 Find where validation set is a nadir. If going back up again, indicates
 overfitting. 

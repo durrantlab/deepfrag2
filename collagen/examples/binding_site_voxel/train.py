@@ -16,7 +16,8 @@ from collagen import (
     VoxelParams,
     MultiLoader,
 )
-from collagen.external import MOADInterface, MOADPocketDataset
+from collagen.external import MOADPocketDataset
+from collagen.external.moad.moad_interface import MOADInterface
 from collagen.util import rand_rot
 
 from model import BindingSiteModel

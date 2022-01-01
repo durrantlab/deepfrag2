@@ -14,8 +14,8 @@ from collagen.examples.voxel_to_fp_utils.train_utils import (
     add_args_voxel_to_fp_model,
     run_voxel_to_fp_model,
 )
-from collagen.external import MOADInterface
-from collagen.external.moad.whole_ligand import MOADWholeLigDataset
+from collagen.external.moad.moad_interface import MOADInterface
+from collagen.external.moad.whole_ligand_to_murcko import MOADMurckoLigDataset
 from collagen.util import rand_rot
 
 from collagen.examples.deeplig.model import DeepLigModel
@@ -111,7 +111,7 @@ def run(args):
         args,
         DeepLigModel,
         MOADInterface,
-        MOADWholeLigDataset,
+        MOADMurckoLigDataset,
         PreVoxelize,
         BatchVoxelize,
     )

@@ -59,7 +59,8 @@ def compile_parameters(args):
 
     # Hard code some parameters
     params["default_root_dir"] = "/working/checkpoints/"
-    params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+    # params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+    params["cache"] = params["csv"] + ".cache.json"
 
     # Change csv to working dir if exists relative to this script.
     if os.path.exists(params["csv"]):
@@ -76,7 +77,8 @@ def compile_parameters(args):
         params["cache"] = "/working/" + bsnm
     else:
         # cache file doesn't exist. Update to be same as new csv file.
-        params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+        # params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+        params["cache"] = params["csv"] + ".cache.json"
 
     return params
 

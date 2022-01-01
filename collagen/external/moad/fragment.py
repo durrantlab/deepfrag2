@@ -1,7 +1,5 @@
-from collagen.external.moad.moad import (
-    MOAD_split,
-    MOADInterface,
-)
+from collagen.external.moad.moad import MOAD_split
+from collagen.external.moad.moad_interface import MOADInterface
 from torch.utils.data import Dataset
 from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
 from ...core.mol import Mol
