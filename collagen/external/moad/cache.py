@@ -73,6 +73,8 @@ def build_moad_cache(
     cache_items_to_update: CacheItemsToUpdate,
     cores: int = None,
 ):
+    # TODO: hard coding to use all cores
+    cores = None
 
     global MOAD_REF
     MOAD_REF = moad
