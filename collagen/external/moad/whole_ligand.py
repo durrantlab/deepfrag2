@@ -1,48 +1,11 @@
-from collagen.external.moad.moad import (
-    MOAD_split,
-    MOADInterface,
-)
+from collagen.external.moad.cache import CacheItemsToUpdate
+from collagen.external.moad.moad import MOAD_ligand, MOAD_split, build_index_and_filter
+from collagen.external.moad.moad_interface import MOADInterface
 from torch.utils.data import Dataset
-from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
+from typing import List, Dict, Union, Tuple, Optional, Any, Callable
 from ...core.mol import Mol
 from pathlib import Path
-import multiprocessing
-from tqdm.auto import tqdm
-import json
 from dataclasses import dataclass
-
-
-def build_frag_index_target(pdb_id):
-    # Given a pdb_id, gets its ligands and maps those to the massess of all
-    # associated fragments. Fragments are determined deterministically, so no
-    # need to store fragment indexes.
-
-    global MOAD_REF
-
-    moad_entry_info = MOAD_REF[pdb_id]
-    ligs_to_mass = []
-
-    for i in range(len(moad_entry_info)):
-        # lig_to_mass = {}
-        lig_to_mass = []
-
-        try:
-            # Unpack info to get ligands
-            _, ligands = moad_entry_info[i]
-
-            for lig in ligands:
-                # try:
-                #     frag_masses = [int(x[1].mass) for x in lig.split_bonds()]
-                # except:
-                #     frag_masses = []
-                # lig_to_mass[lig.meta["moad_ligand"].name] = int(lig.mass)
-                lig_to_mass.append(lig.meta["moad_ligand"].name)
-        except:
-            pass
-
-        ligs_to_mass.append(lig_to_mass)
-
-    return (pdb_id, ligs_to_mass)
 
 
 @dataclass
@@ -93,98 +56,35 @@ class MOADWholeLigDataset(Dataset):
         self.transform = transform
         self._index(cache_file, cache_cores)
 
-    def _build_index(self, cores: int = 1) -> dict:
-        """
-        Cache format:
-
-        {
-            "pdb_id": [
-                {
-                    "lig_name": [fmass1, fmass2, ..., fmassN],
-                    "lig_name2": [...]
-                },
-                ...
-            ],
-            ...
-        }
-        """
-        global MOAD_REF
-        MOAD_REF = self.moad
-
-        index = {}
-        pdb_ids_queue = self.moad.targets
-
-        pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
-        with multiprocessing.Pool(cores) as p:
-            for pdb_id, ligs_to_frag_masses in p.imap_unordered(
-                build_frag_index_target, pdb_ids_queue
-            ):
-                index[pdb_id.lower()] = ligs_to_frag_masses
-                pbar.update(1)
-
-        pbar.close()
-        return index
-
     def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
-        cache_file = Path(cache_file) if cache_file is not None else None
+        def make_dataset_entries_func(
+            pdb_id: str, lig_name: str, lig_inf: Dict
+        ) -> List[MOADWholeLigDataset_entry]:
+            return [
+                MOADWholeLigDataset_entry(
+                    pdb_id=pdb_id,
+                    lig_to_mass_chunk_idx=lig_inf["lig_chunk_idx"],
+                    ligand_id=lig_name,
+                    # frag_idx=frag_idx,
+                )
+            ]
 
-        if cache_file is not None and cache_file.exists():
-            print("Loading MOAD fragments from cache...")
-            with open(cache_file, "r") as f:
-                index = json.load(f)
-        else:
-            index = self._build_index(cores)
-            if cache_file is not None:
-                with open(cache_file, "w") as f:
-                    f.write(json.dumps(index))
+        def lig_filter(lig: MOAD_ligand, lig_inf: Dict) -> bool:
+            if lig_inf["lig_mass"] > 500:
+                # Ligand is too big.
+                return False
 
-        internal_index = []
-        for pdb_id in tqdm(self.split.targets, desc="Runtime filters"):
-            ligs_to_mass_chunks = index[pdb_id.lower()]
-            for lig_to_mass_chunk_idx in range(len(ligs_to_mass_chunks)):
-                lig_to_mass_chunk = ligs_to_mass_chunks[lig_to_mass_chunk_idx]
-                # lig_to_frag_masses_chunk looks like:
-                # {
-                #   'ADN:A:901': [17, 31, 17, 17, 133, 16],
-                #   'ADN:B:902': [17, 31, 17, 17, 133, 16],
-                #   'ADN:C:903': [17, 31, 17, 17, 133, 16],
-                #   'ADN:D:904': [17, 31, 17, 17, 133, 16],
-                #   'ADN:E:905': [17, 31, 17, 17, 133, 16],
-                #   'ADN:F:906': [17, 31, 17, 17, 133, 16]
-                # }
+            return True
 
-                for ligand_id in lig_to_mass_chunk:
-                    # Enforce SMILES filter.  TODO: Distance to receptor, number
-                    # of heavy atoms, etc.?
-                    skip = False
-                    for lig in self.moad[pdb_id].ligands:
-                        if (
-                            lig.name == ligand_id
-                            and lig.smiles not in self.split.smiles
-                        ):
-                            # You've found the ligand that is not in the split,
-                            # so skip it.
-                            skip = True
-                            break
-
-                    if skip:
-                        continue
-
-                    # lig_mass = lig_to_mass_chunk[ligand_id]
-                    # if lig_mass != 0:
-                    # A fragment with mass, so proceed.
-                    internal_index.append(
-                        MOADWholeLigDataset_entry(
-                            pdb_id=pdb_id,
-                            lig_to_mass_chunk_idx=lig_to_mass_chunk_idx,
-                            ligand_id=ligand_id,
-                            # frag_idx=frag_idx,
-                        )
-                    )
-                    # print(lig_mass)
-                    # for frag_idx in range(len(lig_mass)):
-                    # if lig_mass[frag_idx] != 0:
-
+        index, internal_index = build_index_and_filter(
+            lig_filter,
+            self.moad,
+            self.split,
+            make_dataset_entries_func,
+            CacheItemsToUpdate(lig_mass=True),
+            cache_file,
+            cores,
+        )
         self._ligand_index_cached = index
         self._internal_index_valids_filtered = internal_index
 

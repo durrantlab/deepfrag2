@@ -1,8 +1,5 @@
-from collagen.external.moad.moad import (
-    MOAD_ligand,
-    MOAD_split,
-    build_index_and_filter,
-)
+from collagen.external.moad.cache import CacheItemsToUpdate
+from collagen.external.moad.moad import MOAD_ligand, MOAD_split, build_index_and_filter
 from collagen.external.moad.moad_interface import MOADInterface
 from torch.utils.data import Dataset
 from typing import Dict, List, Union, Tuple, Optional, Any, Callable
@@ -62,15 +59,19 @@ class MOADMurckoLigDataset(Dataset):
         self._index(cache_file, cache_cores)
 
     def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
-        def make_dataset_entry_func(pdb_id: str, lig_name: str, lig_inf: Dict):
-            MOADMurckoDataset_entry(
-                pdb_id=pdb_id,
-                lig_to_mass_chunk_idx=lig_inf["lig_chunk_idx"],
-                ligand_id=lig_name,
-                # frag_idx=frag_idx,
-            )
+        def make_dataset_entries_func(
+            pdb_id: str, lig_name: str, lig_inf: Dict
+        ) -> List[MOADMurckoDataset_entry]:
+            return [
+                MOADMurckoDataset_entry(
+                    pdb_id=pdb_id,
+                    lig_to_mass_chunk_idx=lig_inf["lig_chunk_idx"],
+                    ligand_id=lig_name,
+                    # frag_idx=frag_idx,
+                )
+            ]
 
-        def filter(lig: MOAD_ligand, lig_inf: Dict) -> bool:
+        def lig_filter(lig: MOAD_ligand, lig_inf: Dict) -> bool:
             if lig_inf["lig_mass"] > 500:
                 # Lignad is too big.
                 return False
@@ -91,68 +92,17 @@ class MOADMurckoLigDataset(Dataset):
             return True
 
         index, internal_index = build_index_and_filter(
-            filter, self.moad, self.split, make_dataset_entry_func, cache_file, cores
+            lig_filter,
+            self.moad,
+            self.split,
+            make_dataset_entries_func,
+            CacheItemsToUpdate(lig_mass=True),
+            cache_file,
+            cores,
         )
+
         self._ligand_index_cached = index
         self._internal_index_valids_filtered = internal_index
-
-        # cache_file = Path(cache_file) if cache_file is not None else None
-
-        # index = build_moad_cache(cache_file, self.moad, lig_mass=True, cores=cores)
-
-        # internal_index = []
-        # for pdb_id in tqdm(self.split.targets, desc="Runtime filters"):
-        #     pdb_id = pdb_id.lower()
-        #     receptor_inf = index[pdb_id]
-        #     for lig_name in receptor_inf.keys():
-        #         lig_inf = receptor_inf[lig_name]
-
-        #         # Enforce SMILES filter. TODO: Distance to receptor, number of
-        #         # heavy atoms, etc.?
-        #         skip = False
-        #         for lig in self.moad[pdb_id].ligands:
-        #             if lig.name == lig_name:
-        #                 # You've found the ligand.
-        #                 if lig.smiles not in self.split.smiles:
-        #                     # It is not in the split, so skip it.
-        #                     skip = True
-        #                     break
-
-        #                 if lig_inf["lig_mass"] > 500:
-        #                     # Lignad is too big.
-        #                     skip = True
-        #                     break
-
-        #                 # smi_fixed = fix_moad_smiles(lig.smiles)
-        #                 # # if lig.smiles == "":
-        #                 # # import pdb; pdb.set_trace()
-        #                 # print(lig.name)
-        #                 # print("*" + smi_fixed)
-        #                 # print(MurckoScaffoldSmilesFromSmiles(smiles=smi_fixed, includeChirality=True))
-        #                 # print("===")
-        #                 # print(MurckoScaffoldSmilesFromSmiles(lig.smiles, includeChirality=True))
-        #                 # if MurckoScaffoldSmilesFromSmiles(lig.smiles, includeChirality=True) == "":
-        #                 #     # It has no mercko scaffold, so skip.
-        #                 #     skip = True
-        #                 #     break
-
-        #         if skip:
-        #             continue
-
-        #         # lig_mass = lig_to_mass_chunk[ligand_id]
-        #         # if lig_mass != 0:
-        #         # A fragment with mass, so proceed.
-        #         internal_index.append(
-        #             MOADMurckoDataset_entry(
-        #                 pdb_id=pdb_id,
-        #                 lig_to_mass_chunk_idx=lig_inf["lig_chunk_idx"],
-        #                 ligand_id=lig_name,
-        #                 # frag_idx=frag_idx,
-        #             )
-        #         )
-
-        # self._ligand_index_cached = index
-        # self._internal_index_valids_filtered = internal_index
 
     def __len__(self) -> int:
         return len(self._internal_index_valids_filtered)
@@ -178,6 +128,7 @@ class MOADMurckoLigDataset(Dataset):
             raise Exception("Ligand not found")
 
         # print(receptor,  parent.pdb(), fragment.pdb())
+        # print(sample)
 
         if self.transform:
             # Actually performs voxelization and fingerprinting.

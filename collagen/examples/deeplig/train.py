@@ -4,18 +4,15 @@ import torch
 
 # from scipy.spatial.distance import cdist
 
-from collagen import (
-    Mol,
-    DelayedMolVoxel,
-    VoxelParams,
-)
+from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.examples.voxel_to_fp_utils.train_utils import (
     FP_SIZE,
     add_args_voxel_to_fp_model,
     run_voxel_to_fp_model,
 )
 from collagen.external.moad.moad_interface import MOADInterface
-from collagen.external.moad.whole_ligand_to_murcko import MOADMurckoLigDataset
+from collagen.external.moad.whole_ligand_to_murcko import MOADMurckoLigDataset as MOADLigDataset
+# from collagen.external.moad.whole_ligand import MOADWholeLigDataset as MOADLigDataset
 from collagen.util import rand_rot
 
 from collagen.examples.deeplig.model import DeepLigModel
@@ -111,7 +108,7 @@ def run(args):
         args,
         DeepLigModel,
         MOADInterface,
-        MOADMurckoLigDataset,
+        MOADLigDataset,
         PreVoxelize,
         BatchVoxelize,
     )

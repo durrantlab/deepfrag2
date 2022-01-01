@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, Union, Tuple, Optional, Any, Callable
 import numpy as np
 from tqdm.std import tqdm
-from collagen.external.moad.cache import build_moad_cache
+from collagen.external.moad.cache import CacheItemsToUpdate, build_moad_cache
 import prody
 from torch.utils.data import Dataset
 import numpy
@@ -246,16 +246,17 @@ class MOADPocketDataset(Dataset):
 
 
 def build_index_and_filter(
-    filter_func: Any,
+    lig_filter_func: Any,
     moad: MOADInterface,
     split: MOAD_split,
-    make_dataset_entry_func: Any,
+    make_dataset_entries_func: Any,
+    cache_items_to_update: CacheItemsToUpdate,
     cache_file: Optional[Union[str, Path]] = None,
     cores: int = 1,
 ):
     cache_file = Path(cache_file) if cache_file is not None else None
 
-    index = build_moad_cache(cache_file, moad, lig_mass=True, cores=cores)
+    index = build_moad_cache(cache_file, moad, cache_items_to_update, cores=cores)
 
     internal_index = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
@@ -275,7 +276,7 @@ def build_index_and_filter(
                         skip = True
                         break
 
-                    if not filter_func(lig, lig_inf):
+                    if not lig_filter_func(lig, lig_inf):
                         # You've found the ligand, but it doesn't pass the
                         # filter.
                         skip = True
@@ -284,6 +285,6 @@ def build_index_and_filter(
             if skip:
                 continue
 
-            internal_index.append(make_dataset_entry_func(pdb_id, lig_name, lig_inf))
+            internal_index.extend(make_dataset_entries_func(pdb_id, lig_name, lig_inf))
 
     return index, internal_index

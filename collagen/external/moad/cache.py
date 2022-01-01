@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from collagen.external.moad.moad_interface import MOADInterface
 
@@ -18,6 +19,10 @@ class CacheItemsToUpdate(object):
     frag_masses: bool
     # has_murcko_scaffold: bool
 
+    def __init__(self, lig_mass=False, frag_masses=False):
+        self.lig_mass = lig_mass
+        self.frag_masses = frag_masses
+
     def updatable(self) -> bool:
         # Updatable
         return True in [self.lig_mass, self.frag_masses]
@@ -27,7 +32,7 @@ MOAD_REF: MOADInterface
 CACHE_ITEMS_TO_UPDATE = CacheItemsToUpdate()
 
 
-def get_info_given_pdb(pdb_id: str):
+def get_info_given_pdb_id(pdb_id: str):
     global MOAD_REF
     global CACHE_ITEMS_TO_UPDATE
 
@@ -65,8 +70,7 @@ def get_info_given_pdb(pdb_id: str):
 def build_moad_cache(
     filename: str,
     moad: MOADInterface,
-    lig_mass: bool = False,
-    frag_masses: bool = False,
+    cache_items_to_update: CacheItemsToUpdate,
     cores: int = None,
 ):
 
@@ -82,10 +86,7 @@ def build_moad_cache(
 
     # Setup and modify cache items to update.
     global CACHE_ITEMS_TO_UPDATE
-
-    # Updatable
-    CACHE_ITEMS_TO_UPDATE.lig_mass = lig_mass
-    CACHE_ITEMS_TO_UPDATE.frag_masses = frag_masses
+    CACHE_ITEMS_TO_UPDATE = cache_items_to_update
 
     if len(cache.keys()) > 0:
         first_pdb = cache[list(cache.keys())[0]]
@@ -101,7 +102,9 @@ def build_moad_cache(
         pdb_ids_queue = MOAD_REF.targets
         pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
         with multiprocessing.Pool(cores) as p:
-            for pdb_id, lig_infs in p.imap_unordered(get_info_given_pdb, pdb_ids_queue):
+            for pdb_id, lig_infs in p.imap_unordered(
+                get_info_given_pdb_id, pdb_ids_queue
+            ):
                 pdb_id = pdb_id.lower()
 
                 if not pdb_id in cache:

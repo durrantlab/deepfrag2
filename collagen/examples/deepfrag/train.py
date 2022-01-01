@@ -1,11 +1,7 @@
 from typing import List, Tuple
 import torch
 
-from collagen import (
-    Mol,
-    DelayedMolVoxel,
-    VoxelParams,
-)
+from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.examples.voxel_to_fp_utils.train_utils import (
     FP_SIZE,
     add_args_voxel_to_fp_model,
