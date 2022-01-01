@@ -3,16 +3,17 @@ from collagen.external.moad.moad import MOAD_ligand, MOAD_split, build_index_and
 from collagen.external.moad.moad_interface import MOADInterface
 from torch.utils.data import Dataset
 from typing import Dict, List, Union, Tuple, Optional, Any, Callable
-from ...core.mol import Mol
+from ...core.mol import BackedMol, Mol
 from pathlib import Path
 from dataclasses import dataclass
-
+from rdkit import Chem
 
 @dataclass
 class MOADMurckoDataset_entry(object):
     pdb_id: str
     lig_to_mass_chunk_idx: int
     ligand_id: str
+    murcko: str
     # frag_idx: int
 
 
@@ -67,27 +68,19 @@ class MOADMurckoLigDataset(Dataset):
                     pdb_id=pdb_id,
                     lig_to_mass_chunk_idx=lig_inf["lig_chunk_idx"],
                     ligand_id=lig_name,
+                    murcko=lig_inf["murcko_scaffold"]
                     # frag_idx=frag_idx,
                 )
             ]
 
         def lig_filter(lig: MOAD_ligand, lig_inf: Dict) -> bool:
             if lig_inf["lig_mass"] > 500:
-                # Lignad is too big.
+                # Ligand is too big.
                 return False
-
-            # smi_fixed = fix_moad_smiles(lig.smiles)
-            # # if lig.smiles == "":
-            # # import pdb; pdb.set_trace()
-            # print(lig.name)
-            # print("*" + smi_fixed)
-            # print(MurckoScaffoldSmilesFromSmiles(smiles=smi_fixed, includeChirality=True))
-            # print("===")
-            # print(MurckoScaffoldSmilesFromSmiles(lig.smiles, includeChirality=True))
-            # if MurckoScaffoldSmilesFromSmiles(lig.smiles, includeChirality=True) == "":
-            #     # It has no mercko scaffold, so skip.
-            #     skip = True
-            #     break
+            
+            if lig_inf["murcko_scaffold"] == "":
+                # Probably no rings, so no scaffold.
+                return False
 
             return True
 
@@ -96,7 +89,7 @@ class MOADMurckoLigDataset(Dataset):
             self.moad,
             self.split,
             make_dataset_entries_func,
-            CacheItemsToUpdate(lig_mass=True),
+            CacheItemsToUpdate(lig_mass=True, murcko_scaffold=True),
             cache_file,
             cores,
         )
@@ -122,6 +115,7 @@ class MOADMurckoLigDataset(Dataset):
             if ligand.meta["moad_ligand"].name == entry.ligand_id:
                 # pairs = ligand.split_bonds()
                 # parent, fragment = pairs[entry.frag_idx]
+                # scaff = Chem.MolFromSmiles(entry.murcko)
                 sample = (receptor, ligand)
                 break
         else:

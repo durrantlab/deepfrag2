@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from collagen.external.moad.moad_utils import fix_moad_smiles
+
 if TYPE_CHECKING:
     from collagen.external.moad.moad_interface import MOADInterface
 
@@ -11,21 +13,42 @@ from typing import Any
 from tqdm.std import tqdm
 from rdkit import Chem
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
+from scipy.spatial.distance import cdist
+import numpy as np
 
 
 class CacheItemsToUpdate(object):
     # Updatable
     lig_mass: bool
     frag_masses: bool
-    # has_murcko_scaffold: bool
+    murcko_scaffold: bool
+    num_heavy_atoms: bool  # TODO: Test this
+    frag_dist_to_recep: bool  # TODO: Test this
 
-    def __init__(self, lig_mass=False, frag_masses=False):
+    # Updatable
+    def __init__(
+        self,
+        lig_mass=False,
+        frag_masses=False,
+        murcko_scaffold=False,
+        num_heavy_atoms=False,
+        frag_dist_to_recep=False,
+    ):
         self.lig_mass = lig_mass
         self.frag_masses = frag_masses
+        self.murcko_scaffold = murcko_scaffold
+        self.num_heavy_atoms = num_heavy_atoms
+        self.frag_dist_to_recep = frag_dist_to_recep
 
     def updatable(self) -> bool:
         # Updatable
-        return True in [self.lig_mass, self.frag_masses]
+        return True in [
+            self.lig_mass,
+            self.frag_masses,
+            self.murcko_scaffold,
+            self.num_heavy_atoms,
+            self.frag_dist_to_recep,
+        ]
 
 
 MOAD_REF: MOADInterface
@@ -49,8 +72,13 @@ def get_info_given_pdb_id(pdb_id: str):
                 lig_name = lig.meta["moad_ligand"].name
                 lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
 
+                # Updatable
                 if CACHE_ITEMS_TO_UPDATE.lig_mass:
-                    lig_infs[lig_name]["lig_mass"] = int(lig.mass)
+                    try:
+                        lig_infs[lig_name]["lig_mass"] = int(lig.mass)
+                    except:
+                        lig_infs[lig_name]["lig_mass"] = 999999
+
                 if CACHE_ITEMS_TO_UPDATE.frag_masses:
                     try:
                         lig_infs[lig_name]["frag_masses"] = [
@@ -59,8 +87,30 @@ def get_info_given_pdb_id(pdb_id: str):
                     except:
                         lig_infs[lig_name]["frag_masses"] = []
 
-                # lig_to_mass[lig.meta["moad_ligand"].name] = int(lig.mass)
-                # lig_infs.append(lig_name)
+                if CACHE_ITEMS_TO_UPDATE.murcko_scaffold:
+                    try:
+                        smi_fixed = fix_moad_smiles(lig.smiles(True))
+                        scaffold_smi = MurckoScaffoldSmilesFromSmiles(
+                            smi_fixed, includeChirality=True
+                        )
+                        lig_infs[lig_name]["murcko_scaffold"] = scaffold_smi
+                        # str(dir(lig)) # scaffold_smi
+                    except:
+                        lig_infs[lig_name]["murcko_scaffold"] = ""
+
+                if CACHE_ITEMS_TO_UPDATE.num_heavy_atoms:
+                    try:
+                        lig_infs[lig_name]["num_heavy_atoms"] = lig.num_heavy_atoms
+                    except:
+                        lig_infs[lig_name]["num_heavy_atoms"] = 999999
+
+                if CACHE_ITEMS_TO_UPDATE.frag_dist_to_recep:
+                    try:
+                        min_dist = np.min(cdist(lig.coords, receptor.coords))
+                        lig_infs[lig_name]["frag_dist_to_recep"] = min_dist
+                    except:
+                        lig_infs[lig_name]["frag_dist_to_recep"] = 999999
+
         except:
             pass
 
@@ -99,6 +149,12 @@ def build_moad_cache(
             CACHE_ITEMS_TO_UPDATE.lig_mass = False
         if "frag_masses" in first_lig:
             CACHE_ITEMS_TO_UPDATE.frag_masses = False
+        if "murcko_scaffold" in first_lig:
+            CACHE_ITEMS_TO_UPDATE.murcko_scaffold = False
+        if "num_heavy_atoms" in first_lig:
+            CACHE_ITEMS_TO_UPDATE.num_heavy_atoms = False
+        if "frag_dist_to_recep" in first_lig:
+            CACHE_ITEMS_TO_UPDATE.frag_dist_to_recep = False
 
     if CACHE_ITEMS_TO_UPDATE.updatable():
         pdb_ids_queue = MOAD_REF.targets

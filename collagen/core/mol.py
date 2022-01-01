@@ -388,12 +388,12 @@ class DelayedMolVoxel(object):
 class BackedMol(Mol):
     """A BackedMol is a thin wrapper over an RDKit molecule."""
 
-    def __init__(self, rdmol: "rdkit.Chem.rdchem.Mol", meta: dict = None):
+    def __init__(self, rdmol: "rdkit.Chem.rdchem.Mol", meta: dict = None, warn_no_confs: bool = True):
         """Initialize a new BackedMol with an existing RDMol."""
         super(BackedMol, self).__init__(meta=meta)
         self.rdmol = rdmol
 
-        if self.rdmol.GetNumConformers() == 0:
+        if warn_no_confs and self.rdmol.GetNumConformers() == 0:
             warnings.warn("Internal rdmol has no conformers")
 
     def __repr__(self):

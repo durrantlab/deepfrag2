@@ -1,6 +1,10 @@
 from typing import List, Tuple
 import numpy as np
 import torch
+from collagen.core.mol import BackedMol
+
+from rdkit import Chem
+from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 
 # from scipy.spatial.distance import cdist
 
@@ -11,11 +15,19 @@ from collagen.examples.voxel_to_fp_utils.train_utils import (
     run_voxel_to_fp_model,
 )
 from collagen.external.moad.moad_interface import MOADInterface
-from collagen.external.moad.whole_ligand_to_murcko import MOADMurckoLigDataset as MOADLigDataset
+from collagen.external.moad.moad_utils import fix_moad_smiles
+from collagen.external.moad.whole_ligand_to_murcko import (
+    MOADMurckoLigDataset as MOADLigDataset,
+)
+
 # from collagen.external.moad.whole_ligand import MOADWholeLigDataset as MOADLigDataset
 from collagen.util import rand_rot
 
 from collagen.examples.deeplig.model import DeepLigModel
+
+from rdkit import RDLogger
+
+RDLogger.DisableLog("rdApp.*")
 
 
 class PreVoxelize(object):
@@ -30,7 +42,7 @@ class PreVoxelize(object):
     def __call__(self, rec: Mol, ligand: Mol) -> Tuple[DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
 
-        passes = False
+        # passes = False
 
         # now = time.time()
 
@@ -38,7 +50,7 @@ class PreVoxelize(object):
         center = np.mean(ligand.coords, axis=0)
 
         # Add random offset to that.
-        center += np.random.uniform(-3, 3, size=(1, 3))[0]
+        # center += np.random.uniform(-3, 3, size=(1, 3))[0]
         # print(rec, center)
 
         # https://www.rdkit.org/docs/source/rdkit.Chem.Scaffolds.MurckoScaffold.html
@@ -57,12 +69,17 @@ class PreVoxelize(object):
         #         if min_dist < 6.0 or time.time() - now > 15:
         #             passes = True
 
+        smi_fixed = fix_moad_smiles(ligand.smiles(True))
+        scaffold_smi = MurckoScaffoldSmilesFromSmiles(smi_fixed, includeChirality=True)
+        scaffold_rdkit = Chem.MolFromSmiles(scaffold_smi)
+        scaffold_mol = BackedMol(scaffold_rdkit, warn_no_confs=False)
+
         return (
             rec.voxelize_delayed(self.voxel_params, center=center, rot=rot),
             # parent.voxelize_delayed(
             #     self.voxel_params, center=frag.connectors[0], rot=rot
             # ),
-            torch.tensor(ligand.fingerprint("rdk10", 2048)),
+            torch.tensor(scaffold_mol.fingerprint("rdk10", 2048)),
         )
 
 
@@ -79,6 +96,7 @@ class BatchVoxelize(object):
     def __call__(
         self, data: List[Tuple[DelayedMolVoxel, torch.Tensor]]
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+
         voxels = torch.zeros(
             size=self.voxel_params.tensor_size(batch=len(data), feature_mult=2),
             device=self.device,

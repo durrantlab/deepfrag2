@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from collagen.external.moad.moad_utils import fix_moad_smiles
+
 if TYPE_CHECKING:
     from collagen.external.moad.moad_interface import MOADInterface
 
@@ -15,17 +17,6 @@ from torch.utils.data import Dataset
 import numpy
 
 from ...core.mol import Mol
-
-
-def fix_moad_smiles(smi):
-    return (
-        smi.replace("+H3", "H3+")
-        .replace("+H2", "H2+")
-        .replace("+H", "H+")
-        .replace("-H", "H-")
-        .replace("Al-11H0", "Al-")  # Strange smiles in pdb 2WZC
-    )
-
 
 @dataclass
 class MOAD_class(object):
