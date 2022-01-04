@@ -3,8 +3,8 @@
 ## Introduction
 
 This directory allows users to run different collagen-powered apps via Docker.
-Collagen is a framework that allows for rapid prototyping of machine-learning
-approaches to computer-aided drug discovery.
+Collagen is a framework for rapid prototyping machine-learning approaches to
+computer-aided drug discovery.
 
 We have nearly finished implementing `deepfrag` as a Collagen app. Here's how to
 run deepfrag:
