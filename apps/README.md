@@ -41,7 +41,7 @@ This list of parameters may not be exhaustive, and acceptable parameters may
 vary depending on the app. To see the default parameter values for each app,
 look at `/PATH/TO/deepfrag2/apps/APP_NAME/defaults.json`.
 
-To use these optional parameters (rather than just using the defaults), run the
+To use these optional parameters (rather than just the defaults), run the
 app like this:
 
 ```bash
