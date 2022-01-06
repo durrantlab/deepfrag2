@@ -74,6 +74,10 @@ class DeepLigModel(pl.LightningModule):
 
         return loss
 
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        # this calls forward
+        return self(batch)
+        
     def configure_optimizers(self):
         # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         # print(self.learning_rate)

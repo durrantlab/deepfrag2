@@ -21,7 +21,7 @@ Singularity.def
 Singularity.sif
 .fuse_hidden*
 
-.cur_app
+.cur_app*
 
 __pycache__
 *.pyc

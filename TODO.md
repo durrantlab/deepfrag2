@@ -1,7 +1,9 @@
-Create moad cache using multiple processors?
-
 Re. learning rate, this is great:
 https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
+
+Ask Harrison to look over inference code.
+
+When doing inference, get best validation checkpoint (not last).
 
 # Training goal
 
@@ -24,6 +26,8 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Create moad cache using multiple processors?
 
 Store splits, split seed in json file in working dir?
 

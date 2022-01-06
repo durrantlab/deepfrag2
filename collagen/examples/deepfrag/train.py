@@ -5,7 +5,7 @@ from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.examples.voxel_to_fp_utils.train_utils import (
     FP_SIZE,
     add_args_voxel_to_fp_model,
-    run_voxel_to_fp_model,
+    train_voxel_to_fp_model,
 )
 from collagen.external.moad.fragment import MOADFragmentDataset
 from collagen.external.moad.moad_interface import MOADInterface
@@ -75,7 +75,7 @@ class BatchVoxelize(object):
 
 
 def run(args):
-    run_voxel_to_fp_model(
+    train_voxel_to_fp_model(
         args,
         DeepFragModel,
         MOADInterface,
