@@ -26,7 +26,7 @@ from collagen.external import MOADInterface
 from collagen.external.moad.fragment import MOADFragmentDataset
 from collagen.util import rand_rot
 
-from collagen.examples.deepfrag.model import DeepFragModel
+from model import DeepFragModel
 
 FP_SIZE = 2048
 

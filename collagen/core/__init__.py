@@ -20,4 +20,9 @@ from .voxelizer import VoxelParams, VoxelParamsDefault
 from .featurizer import AtomFeaturizer, AtomicNumFeaturizer
 from .types import AnyAtom
 from .loader import MultiLoader
-from .graph_mol import GraphMol
+
+try:
+    from .graph_mol import GraphMol
+except:
+    GraphMol = None
+    print("collagen.GraphMol requires torch_geometric!")

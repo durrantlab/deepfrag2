@@ -1,0 +1,38 @@
+
+
+FROM ubuntu:20.04
+
+RUN apt-get update -y && \
+    apt-get install -y \
+    wget unzip curl bzip2 git gcc sudo vim g++ lsof
+
+# Install Miniconda.
+RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-py38_4.10.3-Linux-x86_64.sh && \
+    bash Miniconda3-py38_4.10.3-Linux-x86_64.sh -p /miniconda -b && \
+    rm Miniconda3-py38_4.10.3-Linux-x86_64.sh
+
+ENV PATH=/miniconda/bin:${PATH}
+
+RUN conda update -y conda && \
+    conda install -y pip && \
+    python3 -m pip install --upgrade pip
+
+RUN mkdir -p /install/
+
+COPY docker/requirements.txt.cpu /install/requirements.txt.cpu
+
+RUN python3 -m pip install -r /install/requirements.txt.cpu && \
+    python3 -m pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
+
+RUN conda install -y -c conda-forge rdkit
+
+# Need to install prody from git, not conda (out of date).
+RUN cd /install/ && \
+    wget https://github.com/prody/ProDy/archive/refs/heads/master.zip && \
+    unzip master.zip && \
+    cd ProDy-master && python3 -m pip install .
+
+
+COPY collagen /home/collagen
+ENV PYTHONPATH=$PYTHONPATH:/home/
+WORKDIR /home/collagen

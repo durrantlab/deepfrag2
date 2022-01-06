@@ -25,3 +25,8 @@ Singularity.sif
 
 __pycache__
 *.pyc
+
+projects/checkpoints/**
+projects/data/**
+!projects/data/helpers
+!projects/data/helpers/*

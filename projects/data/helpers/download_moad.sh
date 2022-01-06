@@ -8,5 +8,3 @@ unzip every_part_a.zip
 unzip every_part_b.zip
 
 rm every_part_?.zip
-
-
