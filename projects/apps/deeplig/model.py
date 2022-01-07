@@ -1,3 +1,4 @@
+from typing import Any
 import torch
 from torch import nn
 import pytorch_lightning as pl
@@ -16,6 +17,8 @@ class DeepLigModel(pl.LightningModule):
     def __init__(self, voxel_features: int = 10, fp_size: int = 2048):
         super().__init__()
         self.save_hyperparameters()
+
+        self.learning_rate = 1e-3
 
         self.model = nn.Sequential(
             nn.BatchNorm3d(voxel_features),
@@ -53,6 +56,7 @@ class DeepLigModel(pl.LightningModule):
         loss = cos(pred, fp).mean()
 
         self.log("loss", loss)
+        # self.log("learning_rate", self.learning_rate)
 
         # For debugging...
         # num_file_descriptors = int(subprocess.check_output("lsof | wc -l", shell=True).strip())
@@ -67,8 +71,15 @@ class DeepLigModel(pl.LightningModule):
         loss = cos(pred, fp).mean()
 
         self.log("val_loss", loss)
+
         return loss
 
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        # this calls forward
+        return self(batch)
+        
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        # print(self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer

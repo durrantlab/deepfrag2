@@ -3,9 +3,10 @@ import os
 import argparse
 import json
 from datetime import datetime
+import time
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
+CUR_APP_DIR = ".cur_app_" + str(time.time()).replace(".", "")
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -19,6 +20,15 @@ def get_args():
         type=str,
         help="A json file containing the app parameters. If omitted, uses default values.",
         default=None,
+    )
+
+    # Redundant (update elsewhere too)
+    parser.add_argument(
+        "-m",
+        "--mode",
+        type=str,
+        help="Can be train or test. If train, trains the model. If test, runs inference on the test set. Defaults to train.",
+        default="train",
     )
 
     args = parser.parse_args()
@@ -49,7 +59,7 @@ def validate(args):
 
 def compile_parameters(args):
     # Get defaults
-    params = json.load(open(SCRIPT_DIR + "/.cur_app/defaults.json"))
+    params = json.load(open(SCRIPT_DIR + "/" + CUR_APP_DIR + "/defaults.json"))
 
     # Merge in user specified
     if args.params_json is not None:
@@ -57,9 +67,13 @@ def compile_parameters(args):
         for key in custom_params:
             params[key] = custom_params[key]
 
+    # If inference, make note of that too.
+    params["mode"] = args.mode
+
     # Hard code some parameters
     params["default_root_dir"] = "/working/checkpoints/"
-    params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+    # params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+    params["cache"] = params["csv"] + ".cache.json"
 
     # Change csv to working dir if exists relative to this script.
     if os.path.exists(params["csv"]):
@@ -76,7 +90,8 @@ def compile_parameters(args):
         params["cache"] = "/working/" + bsnm
     else:
         # cache file doesn't exist. Update to be same as new csv file.
-        params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+        # params["cache"] = params["csv"] + "." + args.name + ".cache.json"
+        params["cache"] = params["csv"] + ".cache.json"
 
     return params
 
@@ -86,9 +101,9 @@ def make_cur_app_dir(args):
     os.system(
         "cd "
         + SCRIPT_DIR
-        + "; rm -rf .cur_app; cp -r "
+        + "; rm -rf " + CUR_APP_DIR + "; cp -r "
         + os.path.basename(args.app_name)
-        + " .cur_app"
+        + " " + CUR_APP_DIR
     )
 
     # Construct commandline
@@ -98,10 +113,10 @@ def make_cur_app_dir(args):
         ["--" + key + " " + str(params[key]) for key in params]
     )
 
-    with open(SCRIPT_DIR + "/.cur_app/run.sh", "w") as f:
+    with open(SCRIPT_DIR + "/" + CUR_APP_DIR + "/run.sh", "w") as f:
         f.write(exec)
 
-    os.system("cd " + SCRIPT_DIR + ";chmod +x ./.cur_app/run.sh")
+    os.system("cd " + SCRIPT_DIR + ";chmod +x ./" + CUR_APP_DIR + "/run.sh")
 
     return params
 
@@ -114,6 +129,10 @@ params = make_cur_app_dir(args)
 date_str = datetime.now().strftime("%b-%d-%Y.%H-%M-%S")
 with open(args.working_dir + "/params." + date_str + ".json", "w") as f:
     json.dump(params, f, indent=4)
+
+# Save record of the .cur_app_* dirname being used
+with open(args.working_dir + "/cur_app_name.txt", "w") as f:
+    f.write(CUR_APP_DIR)
 
 # Build the docker image (every time).
 os.system("cd " + SCRIPT_DIR + "/utils/docker && docker build -t jdurrant/deeplig . ")
@@ -130,3 +149,6 @@ docker run --gpus all -it --rm --shm-size="2g" --ipc=host \
     + """):/working \
     jdurrant/deeplig"""
 )
+
+# Clean up
+os.system("rm -rf " + CUR_APP_DIR)

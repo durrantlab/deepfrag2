@@ -1,44 +1,17 @@
-import argparse
 from typing import List, Tuple
-import glob
-import os
-import time
-
 import torch
 
-# JDD NO: torch.multiprocessing.set_sharing_strategy("file_system")
-
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.loggers import CSVLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
-
-from collagen import (
-    VoxelParamsDefault,
-    AtomicNumFeaturizer,
-    Mol,
-    DelayedMolVoxel,
-    VoxelParams,
-    MultiLoader,
+from collagen import Mol, DelayedMolVoxel, VoxelParams
+from collagen.examples.voxel_to_fp_utils.train_utils import (
+    FP_SIZE,
+    add_args_voxel_to_fp_model,
+    train_voxel_to_fp_model,
 )
-from collagen.checkpoints import MyModelCheckpoint, get_last_checkpoint
-from collagen.external import MOADInterface
 from collagen.external.moad.fragment import MOADFragmentDataset
+from collagen.external.moad.moad_interface import MOADInterface
 from collagen.util import rand_rot
 
 from model import DeepFragModel
-
-FP_SIZE = 2048
-
-
-def disable_warnings():
-    from rdkit import RDLogger
-
-    RDLogger.DisableLog("rdApp.*")
-
-    import prody
-
-    prody.confProDy(verbosity="none")
 
 
 class PreVoxelize(object):
@@ -102,131 +75,16 @@ class BatchVoxelize(object):
 
 
 def run(args):
-    disable_warnings()
-
-    vp = VoxelParamsDefault.DeepFrag
-
-    model = DeepFragModel(voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE)
-
-    # TODO: Code like below might be useful at inference time...
-    #     print("Loading checkpoint from " + ckpt + "...")
-    #     model = DeepFragModel.load_from_checkpoint(
-    #         ckpt, voxel_features=vp.atom_featurizer.size() * 2, fp_size=FP_SIZE
-    #     )
-
-    moad = MOADInterface(args.csv, args.data)
-    train, val, _ = moad.compute_split(seed=args.split_seed)
-
-    train_frags = MOADFragmentDataset(
-        moad, cache_file=args.cache, split=train, transform=PreVoxelize(vp)
-    )
-    train_data = (
-        MultiLoader(
-            train_frags,
-            batch_size=1,
-            shuffle=True,
-            num_dataloader_workers=args.num_dataloader_workers,
-            max_voxels_in_memory=args.max_voxels_in_memory,
-        )
-        .batch(16)
-        .map(BatchVoxelize(vp, args.cpu))
-    )
-
-    val_frags = MOADFragmentDataset(
-        moad, cache_file=args.cache, split=val, transform=PreVoxelize(vp)
-    )
-    val_data = (
-        MultiLoader(
-            val_frags,
-            batch_size=1,
-            shuffle=True,
-            num_dataloader_workers=args.num_dataloader_workers,
-            max_voxels_in_memory=args.max_voxels_in_memory,
-        )
-        .batch(16)
-        .map(BatchVoxelize(vp, args.cpu))
-    )
-
-    logger = None
-    if args.wandb_project:
-        logger = WandbLogger(project=args.wandb_project)
-    else:
-        logger = CSVLogger("logs", name="my_exp_name", flush_logs_every_n_steps=25)
-
-    trainer = pl.Trainer.from_argparse_args(
+    train_voxel_to_fp_model(
         args,
-        # default_root_dir="./.save",
-        logger=logger,
-        callbacks=[
-            MyModelCheckpoint(
-                dirpath=args.default_root_dir,
-                monitor="val_loss",
-                filename="val-loss-{epoch:02d}-{val_loss:.2f}",
-                save_top_k=3,
-            ),
-            MyModelCheckpoint(
-                dirpath=args.default_root_dir,
-                monitor="loss",
-                filename="loss-{epoch:02d}-{loss:.2f}",
-                save_last=True,
-                save_top_k=3,
-            ),
-        ],
-        # Below for debugging
-        log_every_n_steps=25,
-        # fast_dev_run=True,
-        # callbacks=[ModelSummary(max_depth=-1), DeviceStatsMonitor()],
-        # overfit_batches=0.001,
-        # track_grad_norm=2,
-        # limit_train_batches=0.0001,
-        # limit_val_batches=0.0001
+        DeepFragModel,
+        MOADInterface,
+        MOADFragmentDataset,
+        PreVoxelize,
+        BatchVoxelize,
     )
-
-    # Use below to debug errors in file loading and grid generation.
-    # print(len(train_data))
-    # for t in train_data:
-    #     dir(t)
-    #     print("h")
-    #     import pdb; pdb.set_trace()
-
-    ckpt = get_last_checkpoint(args)
-    if ckpt is not None:
-        print("\n")
-        print(
-            "WARNING: Restarting training from where it previously left off ("
-            + ckpt
-            + ")."
-        )
-        print("\n")
-        time.sleep(5)
-
-    trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")
-    parser.add_argument(
-        "--data", required=True, help="Path to MOAD root structure folder"
-    )
-    parser.add_argument("--cache", required=True, help="Path to MOAD cache.json file")
-    parser.add_argument(
-        "--split_seed",
-        required=False,
-        default=1,
-        type=int,
-        help="Seed for TRAIN/VAL/TEST split.",
-    )
-    parser.add_argument(
-        "--num_dataloader_workers",
-        default=1,
-        type=int,
-        help="Number of workers for DataLoader",
-    )
-    parser.add_argument("--cpu", default=False, action="store_true")
-    parser.add_argument("--wandb_project", required=False, default=None)
-
-    parser = pl.Trainer.add_argparse_args(parser)
-    args = parser.parse_args()
-
+    args = add_args_voxel_to_fp_model()
     run(args)
