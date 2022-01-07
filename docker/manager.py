@@ -35,6 +35,10 @@ def ensure_tag(tag):
         exit(-1)
 
 
+def get_root() -> Path:
+    return Path(os.path.realpath(__file__)).absolute().parent.parent
+
+
 def build_image(path, tag, dockerfile):
     subprocess.run([
         'docker', 'build',
@@ -61,15 +65,14 @@ def run_image(tag, extra='', cmd='/bin/bash', mounts={}, workdir='/home'):
 
 
 def cmd_list(args):
-    print('name: info')
-    print('----------')
     for tag, help in VERSIONS:
         print(f'{tag}: {help}')
 
 
 def cmd_build(args):
     ensure_tag(args.name)
-    root = Path(os.path.realpath(__file__)).absolute().parent.parent
+    root = get_root()
+    print(root)
 
     build_image(
         path=str(root), 
@@ -80,16 +83,21 @@ def cmd_build(args):
 
 def cmd_run(args):
     ensure_tag(args.name)
-    root = Path(os.path.realpath(__file__)).absolute().parent.parent
-    projects = root / 'projects'
+    root = get_root()
+    
+    mounts = {}
+    if args.apps is not None:
+        mounts[str((root / args.apps).absolute())] = '/mnt/apps'
+    if args.data is not None:
+        mounts[str((root / args.data).absolute())] = '/mnt/data'
+    if args.checkpoints is not None:
+        mounts[str((root / args.checkpoints).absolute())] = '/mnt/checkpoints'
 
     run_image(
         tag=f'collagen_{args.name}',
         extra=args.extra,
-        mounts={
-            str(projects.absolute()): '/mnt/projects',
-        },
-        workdir='/mnt/projects',
+        mounts=mounts,
+        workdir='/mnt/apps',
     )
 
 
@@ -116,6 +124,9 @@ if __name__=='__main__':
 
     p_run = subparsers.add_parser('run')
     p_run.add_argument('name', help='Version name.')
+    p_run.add_argument('--apps', default='./apps', help='Path to apps folder, mounted at /mnt/apps')
+    p_run.add_argument('--data', default=None, help='Path to data folder, mounted at /mnt/data')
+    p_run.add_argument('--checkpoints', default=None, help='Path to checkpoints folder, mounted at /mnt/checkpoints')
     p_run.add_argument('--extra', required=False, default='', help='Extra arguments passed directly to `docker run`.')
 
     p_test = subparsers.add_parser('test')

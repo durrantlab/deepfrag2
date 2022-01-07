@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, List, Union, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
 

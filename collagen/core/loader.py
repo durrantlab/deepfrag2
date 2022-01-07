@@ -1,6 +1,5 @@
 import numpy as np
 from torch import multiprocessing
-import copy
 import time
 import os
 
@@ -54,9 +53,8 @@ class MultiLoader(object):
         # https://pytorch.org/docs/stable/multiprocessing.html#multiprocessing-cuda-sharing-details
         # JDD NO: multiprocessing.set_sharing_strategy("file_system")
 
-    def __len__(self):
-        # So it's returning number of batches, not number of examples (though
-        # same if batch size is 1)
+    def __len__(self) -> int:
+        """Returns number of batches."""
         if len(self.data) % self.batch_size == 0:
             return len(self.data) // self.batch_size
         else:

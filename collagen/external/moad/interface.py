@@ -1,15 +1,18 @@
+
 from dataclasses import field
 import json
 import os
 from pathlib import Path
 from typing import Dict, List, Set, Tuple, Union
+
 import numpy as np
-from collagen.external.moad.moad import (
-    MOAD_class,
-    MOAD_family,
-    MOAD_ligand,
+
+from .types import (
     MOAD_split,
-    MOAD_target,
+    MOAD_family,
+    MOAD_class,
+    MOAD_ligand,
+    MOAD_target
 )
 
 

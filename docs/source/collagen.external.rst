@@ -1,11 +1,18 @@
 collagen.external package
 =========================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   collagen.external.moad
+
 Module contents
 ---------------
 
 .. automodule:: collagen.external
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:

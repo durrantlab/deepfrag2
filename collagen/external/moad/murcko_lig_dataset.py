@@ -1,24 +1,26 @@
-from collagen.external.moad.cache import CacheItemsToUpdate
-from collagen.external.moad.moad import MOAD_ligand, MOAD_split, build_index_and_filter
-from collagen.external.moad.moad_interface import MOADInterface
-from torch.utils.data import Dataset
-from typing import List, Dict, Union, Tuple, Optional, Any, Callable
-from ...core.mol import Mol
-from pathlib import Path
+
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Union, Tuple, Optional, Any, Callable
+
+from torch.utils.data import Dataset
+
+from .cache import CacheItemsToUpdate, build_index_and_filter
+from ... import Mol
 
 
 @dataclass
-class MOADWholeLigDataset_entry(object):
+class MOADMurckoDataset_entry(object):
     pdb_id: str
     lig_to_mass_chunk_idx: int
     ligand_id: str
+    murcko: str
     # frag_idx: int
 
 
-class MOADWholeLigDataset(Dataset):
+class MOADMurckoLigDataset(Dataset):
     """
-    A Dataset that provides (receptor, parent, fragment) tuples by splitting ligands on single bonds.
+    MOADMurckoLigDataset
 
     Args:
         moad (MOADInterface): An initialized MOADInterface object.
@@ -29,26 +31,28 @@ class MOADWholeLigDataset(Dataset):
             Takes the arguments (receptor, parent, fragment) as Mol objects.
     """
 
-    moad: MOADInterface
-    split: MOAD_split
+    moad: "MOADInterface"
+    split: "MOAD_split"
     transform: Optional[Callable[[Mol, Mol, Mol], Any]]
 
-    # A cache-able index listing every fragment size for every ligand/target in the dataset.
+    # A cache-able index listing every fragment size for every ligand/target in
+    # the dataset.
     #
-    # See MOADFragmentDataset._build_index for structure. This index only needs to be updated
-    # for new structure files.
+    # See MOADFragmentDataset._build_index for structure. This index only needs
+    # to be updated for new structure files.
     _ligand_index_cached: Optional[dict]
 
-    # The internal listing of every valid fragment example. This index is generated on each
-    # run based on the runtime filters: (targets, smiles, fragment_size).
-    _internal_index_valids_filtered: List[MOADWholeLigDataset_entry]
+    # The internal listing of every valid fragment example. This index is
+    # generated on each run based on the runtime filters: (targets, smiles,
+    # fragment_size).
+    _internal_index_valids_filtered: List[MOADMurckoDataset_entry]
 
     def __init__(
         self,
-        moad: MOADInterface,
+        moad: "MOADInterface",
         cache_file: Optional[Union[str, Path]] = None,
-        cache_cores: int = 1,
-        split: Optional[MOAD_split] = None,
+        cache_cores: int = None,
+        split: Optional["MOAD_split"] = None,
         transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
     ):
         self.moad = moad
@@ -59,19 +63,24 @@ class MOADWholeLigDataset(Dataset):
     def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
         def make_dataset_entries_func(
             pdb_id: str, lig_name: str, lig_inf: Dict
-        ) -> List[MOADWholeLigDataset_entry]:
+        ) -> List[MOADMurckoDataset_entry]:
             return [
-                MOADWholeLigDataset_entry(
+                MOADMurckoDataset_entry(
                     pdb_id=pdb_id,
                     lig_to_mass_chunk_idx=lig_inf["lig_chunk_idx"],
                     ligand_id=lig_name,
+                    murcko=lig_inf["murcko_scaffold"]
                     # frag_idx=frag_idx,
                 )
             ]
 
-        def lig_filter(lig: MOAD_ligand, lig_inf: Dict) -> bool:
+        def lig_filter(lig: "MOAD_ligand", lig_inf: Dict) -> bool:
             if lig_inf["lig_mass"] > 500:
                 # Ligand is too big.
+                return False
+            
+            if lig_inf["murcko_scaffold"] == "":
+                # Probably no rings, so no scaffold.
                 return False
 
             return True
@@ -81,10 +90,11 @@ class MOADWholeLigDataset(Dataset):
             self.moad,
             self.split,
             make_dataset_entries_func,
-            CacheItemsToUpdate(lig_mass=True),
+            CacheItemsToUpdate(lig_mass=True, murcko_scaffold=True),
             cache_file,
             cores,
         )
+
         self._ligand_index_cached = index
         self._internal_index_valids_filtered = internal_index
 
@@ -106,12 +116,14 @@ class MOADWholeLigDataset(Dataset):
             if ligand.meta["moad_ligand"].name == entry.ligand_id:
                 # pairs = ligand.split_bonds()
                 # parent, fragment = pairs[entry.frag_idx]
+                # scaff = Chem.MolFromSmiles(entry.murcko)
                 sample = (receptor, ligand)
                 break
         else:
             raise Exception("Ligand not found")
 
         # print(receptor,  parent.pdb(), fragment.pdb())
+        # print(sample)
 
         if self.transform:
             # Actually performs voxelization and fingerprinting.

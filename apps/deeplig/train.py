@@ -23,7 +23,7 @@ from collagen.external.moad.whole_ligand_to_murcko import (
 # from collagen.external.moad.whole_ligand import MOADWholeLigDataset as MOADLigDataset
 from collagen.util import rand_rot
 
-from collagen.examples.deeplig.model import DeepLigModel
+from model import DeepLigModel
 
 from rdkit import RDLogger
 

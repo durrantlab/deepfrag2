@@ -2,6 +2,8 @@ import pytorch_lightning as pl
 import glob
 import os
 
+from torch._C import Value
+
 # see  https://github.com/PyTorchLightning/pytorch-lightning/issues/4911 Saves
 # and loads checkpoints in a way that respects previously saved checkpoints.
 class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
@@ -26,13 +28,13 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
         self.kth_best_model_path = callback_state["kth_best_model_path"]
 
 
-def get_last_checkpoint(args):
+def get_last_checkpoint(args) -> str:
     saved_checkpoints = glob.glob(
         args.default_root_dir + os.sep + "**" + os.sep + "last.ckpt", recursive=True
     )
 
     if len(saved_checkpoints) == 0:
-        return None
+        raise ValueError("No checkpoints available")
 
     if len(saved_checkpoints) == 1:
         return saved_checkpoints[0]

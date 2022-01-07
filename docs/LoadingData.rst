@@ -30,10 +30,12 @@ Homepage: http://www.bindingmoad.org/
 Interfaces:
 
 .. autosummary::
-    ~collagen.external.MOADInterface
+    ~collagen.external.moad.MOADInterface
 
 Datasets:
 
 .. autosummary::
-    ~collagen.external.MOADFragmentDataset
-    ~collagen.external.MOADPocketDataset
+    ~collagen.external.moad.MOADFragmentDataset
+    ~collagen.external.moad.MOADPocketDataset
+    ~collagen.external.moad.MOADWholeLigDataset
+    ~collagen.external.moad.MOADMurckoLigDataset

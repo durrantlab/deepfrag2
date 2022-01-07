@@ -8,7 +8,6 @@ import torch
 import numba
 import numba.cuda
 import numpy as np
-import rdkit
 
 from .featurizer import AtomicNumFeaturizer
 

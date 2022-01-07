@@ -1,14 +1,12 @@
-from collagen.external.moad.cache import CacheItemsToUpdate
-from collagen.external.moad.moad import MOAD_ligand, MOAD_split, build_index_and_filter
-from collagen.external.moad.moad_interface import MOADInterface
-from torch.utils.data import Dataset
-from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
-from ...core.mol import Mol
-from pathlib import Path
-import multiprocessing
-from tqdm.auto import tqdm
-import json
+
 from dataclasses import dataclass
+from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
+from pathlib import Path
+
+from torch.utils.data import Dataset
+
+from .cache import CacheItemsToUpdate, build_index_and_filter
+from ... import Mol
 
 
 # def build_frag_index_target(pdb_id):
@@ -63,8 +61,8 @@ class MOADFragmentDataset(Dataset):
             Takes the arguments (receptor, parent, fragment) as Mol objects.
     """
 
-    moad: MOADInterface
-    split: MOAD_split
+    moad: "MOADInterface"
+    split: "MOAD_split"
     transform: Optional[Callable[[Mol, Mol, Mol], Any]]
 
     # A cache-able index listing every fragment size for every ligand/target in the dataset.
@@ -79,10 +77,10 @@ class MOADFragmentDataset(Dataset):
 
     def __init__(
         self,
-        moad: MOADInterface,
+        moad: "MOADInterface",
         cache_file: Optional[Union[str, Path]] = None,
         cache_cores: int = 1,
-        split: Optional[MOAD_split] = None,
+        split: Optional["MOAD_split"] = None,
         transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
     ):
         self.moad = moad
@@ -142,7 +140,7 @@ class MOADFragmentDataset(Dataset):
                     )
             return entries_to_return
 
-        def lig_filter(lig: MOAD_ligand, lig_inf: Dict) -> bool:
+        def lig_filter(lig: "MOAD_ligand", lig_inf: Dict) -> bool:
             # Filter applied to fragment, but not whole ligand.
             return True
 

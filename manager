@@ -1,1 +1,2 @@
-docker/manager.py
+#!/bin/bash
+docker/manager.py "$@"

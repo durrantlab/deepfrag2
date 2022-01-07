@@ -1,61 +1,44 @@
-from __future__ import annotations
-from typing import TYPE_CHECKING
 
-from collagen.external.moad.moad_utils import fix_moad_smiles
-
-if TYPE_CHECKING:
-    from collagen.external.moad.moad_interface import MOADInterface
-
+from dataclasses import dataclass
+import json
 import multiprocessing
 import os
-import json
-from typing import Any
+from pathlib import Path
+from typing import Tuple, Union, Any, Optional
+
 from tqdm.std import tqdm
-from rdkit import Chem
+import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
-import numpy as np
+
+from .moad_utils import fix_moad_smiles
 
 
+@dataclass
 class CacheItemsToUpdate(object):
     # Updatable
-    lig_mass: bool
-    frag_masses: bool
-    murcko_scaffold: bool
-    num_heavy_atoms: bool  # TODO: Test this
-    frag_dist_to_recep: bool  # TODO: Test this
-
-    # Updatable
-    def __init__(
-        self,
-        lig_mass=False,
-        frag_masses=False,
-        murcko_scaffold=False,
-        num_heavy_atoms=False,
-        frag_dist_to_recep=False,
-    ):
-        self.lig_mass = lig_mass
-        self.frag_masses = frag_masses
-        self.murcko_scaffold = murcko_scaffold
-        self.num_heavy_atoms = num_heavy_atoms
-        self.frag_dist_to_recep = frag_dist_to_recep
+    lig_mass: bool = False
+    frag_masses: bool = False
+    murcko_scaffold: bool = False
+    num_heavy_atoms: bool = False  # TODO: Test this
+    frag_dist_to_recep: bool = False  # TODO: Test this
 
     def updatable(self) -> bool:
         # Updatable
-        return True in [
+        return any([
             self.lig_mass,
             self.frag_masses,
             self.murcko_scaffold,
             self.num_heavy_atoms,
             self.frag_dist_to_recep,
-        ]
+        ])
 
 
-MOAD_REF: MOADInterface
+MOAD_REF: "MOADInterface"
 CACHE_ITEMS_TO_UPDATE = CacheItemsToUpdate()
 
 
-def get_info_given_pdb_id(pdb_id: str):
+def get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
     global MOAD_REF
     global CACHE_ITEMS_TO_UPDATE
 
@@ -64,7 +47,6 @@ def get_info_given_pdb_id(pdb_id: str):
     lig_infs = {}
     for lig_chunk_idx in range(len(moad_entry_info)):
         try:
-
             # Unpack info to get ligands
             receptor, ligands = moad_entry_info[lig_chunk_idx]
 
@@ -119,7 +101,7 @@ def get_info_given_pdb_id(pdb_id: str):
 
 def build_moad_cache(
     filename: str,
-    moad: MOADInterface,
+    moad: "MOADInterface",
     cache_items_to_update: CacheItemsToUpdate,
     cores: int = None,
 ):
@@ -184,3 +166,48 @@ def build_moad_cache(
             json.dump(cache, f, indent=4)
 
     return cache
+
+
+def build_index_and_filter(
+    lig_filter_func: Any,
+    moad: "MOADInterface",
+    split: "MOAD_split",
+    make_dataset_entries_func: Any,
+    cache_items_to_update: CacheItemsToUpdate,
+    cache_file: Optional[Union[str, Path]] = None,
+    cores: int = 1,
+):
+    cache_file = Path(cache_file) if cache_file is not None else None
+
+    index = build_moad_cache(cache_file, moad, cache_items_to_update, cores=cores)
+
+    internal_index = []
+    for pdb_id in tqdm(split.targets, desc="Runtime filters"):
+        pdb_id = pdb_id.lower()
+        receptor_inf = index[pdb_id]
+        for lig_name in receptor_inf.keys():
+            lig_inf = receptor_inf[lig_name]
+
+            # Enforce filters. TODO: Distance to receptor, number of heavy
+            # atoms, etc.?
+            skip = False
+            for lig in moad[pdb_id].ligands:
+                if lig.name == lig_name:
+                    # You've found the ligand.
+                    if lig.smiles not in split.smiles:
+                        # It is not in the split, so always skip it.
+                        skip = True
+                        break
+
+                    if not lig_filter_func(lig, lig_inf):
+                        # You've found the ligand, but it doesn't pass the
+                        # filter.
+                        skip = True
+                        break
+
+            if skip:
+                continue
+
+            internal_index.extend(make_dataset_entries_func(pdb_id, lig_name, lig_inf))
+
+    return index, internal_index

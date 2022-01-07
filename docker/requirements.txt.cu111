@@ -8,7 +8,7 @@ gitdb==4.0.5
 GitPython==3.1.7
 gql==0.2.0
 graphql-core==1.1
-# h5py==3.6.0
+h5py==3.6.0
 # h5py==2.10.0
 idna==2.10
 # llvmlite==0.33.0
