@@ -111,6 +111,22 @@ def cmd_test(args):
     )
 
 
+def cmd_docs(args):
+    ensure_tag(args.name)
+    root = get_root()
+    
+    mounts = {
+        str(root.absolute()): '/mnt/project'
+    }
+
+    run_image(
+        tag=f'collagen_{args.name}',
+        mounts=mounts,
+        workdir='/mnt/project/docs',
+        cmd='make html',
+    )
+
+
 if __name__=='__main__':
     ensure_docker()
 
@@ -132,6 +148,9 @@ if __name__=='__main__':
     p_test = subparsers.add_parser('test')
     p_test.add_argument('name', help='Version name.')
 
+    p_docs = subparsers.add_parser('docs')
+    p_docs.add_argument('name', help='Version name.')
+
     args = parser.parse_args()
 
     if args.command == 'list':
@@ -142,5 +161,7 @@ if __name__=='__main__':
         cmd_run(args)
     elif args.command == 'test':
         cmd_test(args)
+    elif args.command == 'docs':
+        cmd_docs(args)
     else:
         parser.print_usage()
