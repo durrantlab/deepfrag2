@@ -110,6 +110,6 @@ class MOADPocketDataset(Dataset):
         out = (rec, pos, neg)
 
         if self.transform is not None:
-            out = self.transform(*out)
+            out = self.transform(out)
 
         return out

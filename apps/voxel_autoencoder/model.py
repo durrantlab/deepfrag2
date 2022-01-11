@@ -1,17 +1,18 @@
+
+import argparse
+
 import torch
 from torch import nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-from collagen import VoxelParams, AtomicNumFeaturizer
-
 
 class VoxelAutoencoder(pl.LightningModule):
-    def __init__(self, latent_size: int = 1024, voxel_params: VoxelParams = None):
+    def __init__(self, latent_size: int = 1024, voxel_features: int = 10):
         super().__init__()
         self.save_hyperparameters()
 
-        N = self.voxel_params.atom_featurizer.size()
+        N = self.hparams.voxel_features
         self.encoder = nn.Sequential(
             nn.Conv3d(N, 32, kernel_size=3, padding=1),
             nn.MaxPool3d(2),
@@ -43,6 +44,13 @@ class VoxelAutoencoder(pl.LightningModule):
                 32, N, kernel_size=3, stride=2, padding=1, output_padding=1
             ),
         )
+
+    @staticmethod
+    def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        parser = parent_parser.add_argument_group('VoxelAutoencoder')
+        parser.add_argument('--voxel_features', type=int, default=10)
+        parser.add_argument('--latent_size', type=int, default=1024)
+        return parent_parser
 
     def forward(self, tensor):
         z = self.encoder(tensor)

@@ -11,7 +11,7 @@ from rdkit.Chem import Draw
 from PIL import Image
 import numpy as np
 
-from ...core import GraphMol, Mol
+from collagen import GraphMol, Mol
 
 
 slots = [

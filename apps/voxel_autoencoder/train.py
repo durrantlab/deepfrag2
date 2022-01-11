@@ -1,15 +1,15 @@
+
 import argparse
 
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
-from collagen.data.zinc import ZINCDatasetH5
-from collagen.data import VoxelParams, AtomicNumFeaturizer
-from collagen.models.voxel_autoencoder import VoxelAutoencoder
-from collagen.data import transforms
+from collagen.external import ZINCDatasetH5
+from collagen import VoxelParams, AtomicNumFeaturizer
+from collagen.core import transforms
 
-from .model import VoxelAutoencoder
+from model import VoxelAutoencoder
 
 
 def run(args):

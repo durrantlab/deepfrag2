@@ -1,11 +1,12 @@
+
+import argparse
+
 import torch
 from torch import nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-
-def _bin_acc(pred, target):
-    return torch.mean((torch.round(pred) == target).float())
+from collagen.metrics import bin_acc
 
 
 class BindingSiteModel(pl.LightningModule):
@@ -41,6 +42,12 @@ class BindingSiteModel(pl.LightningModule):
 
         self.loss = nn.BCELoss()
 
+    @staticmethod
+    def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        parser = parent_parser.add_argument_group('DeepFragModel')
+        parser.add_argument('--voxel_features', type=int, default=10)
+        return parent_parser
+
     def forward(self, voxel):
         return self.model(voxel)
 
@@ -54,7 +61,7 @@ class BindingSiteModel(pl.LightningModule):
         pred = self(voxel)
 
         loss = self.loss(pred, p)
-        acc = _bin_acc(pred, p)
+        acc = bin_acc(pred, p)
 
         self.log("loss", loss)
         self.log("acc", acc)
@@ -69,7 +76,7 @@ class BindingSiteModel(pl.LightningModule):
         pred = self(voxel)
 
         loss = self.loss(pred, p)
-        acc = _bin_acc(pred, p)
+        acc = bin_acc(pred, p)
 
         self.log("val_loss", loss)
         self.log("val_acc", acc)

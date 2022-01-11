@@ -127,6 +127,6 @@ class MOADMurckoLigDataset(Dataset):
 
         if self.transform:
             # Actually performs voxelization and fingerprinting.
-            return self.transform(*sample)
+            return self.transform(sample)
         else:
             return sample

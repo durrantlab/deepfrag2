@@ -1,45 +1,38 @@
-from typing import List, Tuple
-import numpy as np
-import torch
-from collagen.core.mol import BackedMol
 
+import argparse
+from typing import List, Tuple
+
+import numpy as np
 from rdkit import Chem
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
+import torch
 
-# from scipy.spatial.distance import cdist
-
-from collagen import Mol, DelayedMolVoxel, VoxelParams
-from collagen.examples.voxel_to_fp_utils.train_utils import (
-    FP_SIZE,
-    add_args_voxel_to_fp_model,
-    train_voxel_to_fp_model,
-)
-from collagen.external.moad.moad_interface import MOADInterface
+from collagen import BackedMol, Mol, DelayedMolVoxel, VoxelParams
+from collagen.external.moad import MOADInterface
 from collagen.external.moad.moad_utils import fix_moad_smiles
-from collagen.external.moad.whole_ligand_to_murcko import (
-    MOADMurckoLigDataset as MOADLigDataset,
-)
-
-# from collagen.external.moad.whole_ligand import MOADWholeLigDataset as MOADLigDataset
+from collagen.external.moad import MOADMurckoLigDataset
 from collagen.util import rand_rot
+from collagen.skeletons import MoadVoxelSkeleton
 
 from model import DeepLigModel
 
-from rdkit import RDLogger
 
-RDLogger.DisableLog("rdApp.*")
+ENTRY_T = Tuple[Mol, Mol] # (rec, ligand)
+TMP_T = Tuple[DelayedMolVoxel, torch.Tensor, str, str] # (delayed_voxel, fingerprint, rec_name, lig_name)
+OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str], List[str]] # (voxels, fingerprints, rec_names, lig_names)
 
 
-class PreVoxelize(object):
-    """
-    Pre-voxelize transform. Given a (receptor, ligand) tuple, prepare to
-    voxelize the receptor and compute the fingerprint for the ligand.
-    """
+class DeepLig(MoadVoxelSkeleton):
+    def __init__(self):
+        super().__init__(
+            model_cls=DeepLigModel,
+            dataset_cls=MOADMurckoLigDataset,
+        )
 
-    def __init__(self, voxel_params: VoxelParams):
-        self.voxel_params = voxel_params
+    @staticmethod
+    def pre_voxelize(args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:
+        rec, ligand = entry
 
-    def __call__(self, rec: Mol, ligand: Mol) -> Tuple[DelayedMolVoxel, torch.Tensor]:
         rot = rand_rot()
         rot = np.array([0, 0, 0, 1])
 
@@ -80,7 +73,7 @@ class PreVoxelize(object):
         scaffold_mol = BackedMol(scaffold_rdkit, warn_no_confs=False)
 
         return (
-            rec.voxelize_delayed(self.voxel_params, center=center, rot=rot),
+            rec.voxelize_delayed(voxel_params, center=center, rot=rot),
             # parent.voxelize_delayed(
             #     self.voxel_params, center=frag.connectors[0], rot=rot
             # ),
@@ -88,36 +81,23 @@ class PreVoxelize(object):
             recep_name, lig_name
         )
 
-
-class BatchVoxelize(object):
-    """
-    Voxelize multiple samples on the GPU.
-    """
-
-    def __init__(self, voxel_params: VoxelParams, cpu: bool):
-        self.voxel_params = voxel_params
-        self.cpu = cpu
-        self.device = torch.device("cpu") if cpu else torch.device("cuda")
-
-    def __call__(
-        self, data: List[Tuple[DelayedMolVoxel, torch.Tensor]]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-
+    @staticmethod
+    def voxelize(args: argparse.Namespace, voxel_params: VoxelParams, device: torch.device, batch: List[TMP_T]) -> OUT_T:
         voxels = torch.zeros(
-            size=self.voxel_params.tensor_size(batch=len(data), feature_mult=2),
-            device=self.device,
+            size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
+            device=device,
         )
 
-        fingerprints = torch.zeros(size=(len(data), FP_SIZE), device=self.device)
+        fingerprints = torch.zeros(size=(len(batch), args.fp_size), device=device)
         rec_names = []
         lig_names = []
 
-        for i in range(len(data)):
-            rec, lig, rec_name, lig_name = data[i]
+        for i in range(len(batch)):
+            rec, lig, rec_name, lig_name = batch[i]
             rec_names.append(rec_name)
             lig_names.append(lig_name)
 
-            rec.voxelize_into(voxels, batch_idx=i, layer_offset=0, cpu=self.cpu)
+            rec.voxelize_into(voxels, batch_idx=i, layer_offset=0, cpu=(device.type == 'cpu'))
 
             # parent.voxelize_into(
             #     voxels,
@@ -131,17 +111,9 @@ class BatchVoxelize(object):
         return (voxels, fingerprints, rec_names, lig_names)
 
 
-def run(args):
-    train_voxel_to_fp_model(
-        args,
-        DeepLigModel,
-        MOADInterface,
-        MOADLigDataset,
-        PreVoxelize,
-        BatchVoxelize,
-    )
-
-
 if __name__ == "__main__":
-    args = add_args_voxel_to_fp_model()
-    run(args)
+    mod = DeepLig()
+    parser = mod.build_parser()
+    DeepLigModel.add_model_args(parser)
+    args = parser.parse_args()
+    mod.run(args)

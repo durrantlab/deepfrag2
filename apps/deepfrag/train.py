@@ -6,7 +6,7 @@ import torch
 from torch.utils import data
 
 from collagen import Mol, DelayedMolVoxel, VoxelParams
-from collagen.external.moad.fragment import MOADFragmentDataset
+from collagen.external.moad import MOADFragmentDataset
 from collagen.util import rand_rot
 from collagen.skeletons import MoadVoxelSkeleton
 
@@ -68,5 +68,4 @@ if __name__ == "__main__":
     parser = mod.build_parser()
     DeepFragModel.add_model_args(parser)
     args = parser.parse_args()
-    print(args)
     mod.run(args)

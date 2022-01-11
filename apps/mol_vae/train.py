@@ -6,9 +6,9 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
 
-from collagen.external.zinc import ZINCDatasetH5
+from collagen.external import ZINCDatasetH5
 
-from .model import MolVAE
+from model import MolVAE
 
 
 def run(args):

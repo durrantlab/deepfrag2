@@ -1,20 +1,15 @@
-from typing import Any
+
+import argparse
+
 import torch
 from torch import nn
 import pytorch_lightning as pl
 
-# import torch.nn.functional as F
-
-_cos = nn.CosineSimilarity(dim=1, eps=1e-6)
-
-
-def cos(yp, yt):
-    """Cosine distance as a loss (inverted)."""
-    return 1 - _cos(yp, yt)
+from collagen.metrics import cos_loss
 
 
 class DeepLigModel(pl.LightningModule):
-    def __init__(self, voxel_features: int = 10, fp_size: int = 2048):
+    def __init__(self, voxel_features: int = 10, fp_size: int = 2048, **kwargs):
         super().__init__()
         self.save_hyperparameters()
 
@@ -45,6 +40,13 @@ class DeepLigModel(pl.LightningModule):
             nn.Linear(512, fp_size),
             nn.Sigmoid(),
         )
+    
+    @staticmethod
+    def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        parser = parent_parser.add_argument_group('DeepFragModel')
+        parser.add_argument('--voxel_features', type=int, default=10)
+        parser.add_argument('--fp_size', type=int, default=2048)
+        return parent_parser
 
     def forward(self, voxel):
         return self.model(voxel)
@@ -53,7 +55,7 @@ class DeepLigModel(pl.LightningModule):
         voxel, fp = batch
         pred = self(voxel)
 
-        loss = cos(pred, fp).mean()
+        loss = cos_loss(pred, fp).mean()
 
         self.log("loss", loss)
         # self.log("learning_rate", self.learning_rate)
@@ -68,7 +70,7 @@ class DeepLigModel(pl.LightningModule):
         voxel, fp = batch
         pred = self(voxel)
 
-        loss = cos(pred, fp).mean()
+        loss = cos_loss(pred, fp).mean()
 
         self.log("val_loss", loss)
 
@@ -77,7 +79,7 @@ class DeepLigModel(pl.LightningModule):
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         # this calls forward
         return self(batch)
-        
+
     def configure_optimizers(self):
         # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         # print(self.learning_rate)

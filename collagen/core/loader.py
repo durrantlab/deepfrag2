@@ -2,6 +2,7 @@ import numpy as np
 from torch import multiprocessing
 import time
 import os
+import traceback
 
 DATA = None
 COLLATE = None
@@ -22,9 +23,9 @@ def _process2(batch_of_batches, return_list, id):
     for batch in batch_of_batches:
         try:
             return_list.append(COLLATE([DATA[x] for x in batch]))
-            # print("WORKED", id, batch)
-        except:
+        except Exception as e:
             print("FAILED", id, batch)
+            traceback.print_exc(e)
 
 
 def _collate_none(x):

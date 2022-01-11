@@ -20,8 +20,8 @@ import pytorch_lightning as pl
 import wandb
 
 
-from ...core import Mol, GraphMol
-from . import util
+from collagen import Mol, GraphMol
+import util
 
 
 class CustomGraphConv(MessagePassing):

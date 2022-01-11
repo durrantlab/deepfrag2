@@ -57,13 +57,13 @@ class MoadVoxelSkeleton(object):
         )
         parser.add_argument("--cpu", default=False, action="store_true")
         parser.add_argument("--wandb_project", required=False, default=None)
-        # parser.add_argument(
-        #     "--max_voxels_in_memory",
-        #     required=True,
-        #     default=80,
-        #     type=int,
-        #     help="The data loader will store no more than this number of voxel in memory at once.",
-        # )
+        parser.add_argument(
+            "--max_voxels_in_memory",
+            required=True,
+            default=80,
+            type=int,
+            help="The data loader will store no more than this number of voxel in memory at once.",
+        )
         parser.add_argument(
             "--batch_size",
             type=int,
@@ -203,17 +203,17 @@ class MoadVoxelSkeleton(object):
             moad,
             cache_file=args.cache,
             split=train,
-            transform=partial(self.__class__.pre_voxelize, args=args, voxel_params=voxel_params)
+            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry))
         )
         train_data = (
             MultiLoader(
                 train_dataset,
                 shuffle=True,
                 num_dataloader_workers=args.num_dataloader_workers,
-                # max_voxels_in_memory=args.max_voxels_in_memory,
+                max_voxels_in_memory=args.max_voxels_in_memory,
             )
             .batch(args.batch_size).map(
-                partial(self.__class__.voxelize, args=args, voxel_params=voxel_params, device=device)
+                lambda batch: self.voxelize(args, voxel_params, device, batch)
             )
         )
 
@@ -221,17 +221,17 @@ class MoadVoxelSkeleton(object):
             moad,
             cache_file=args.cache,
             split=val,
-            transform=partial(self.__class__.pre_voxelize, voxel_params=voxel_params)
+            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry))
         )
         val_data = (
             MultiLoader(
                 val_dataset,
                 shuffle=True,
                 num_dataloader_workers=args.num_dataloader_workers,
-                # max_voxels_in_memory=args.max_voxels_in_memory,
+                max_voxels_in_memory=args.max_voxels_in_memory,
             )
             .batch(args.batch_size).map(
-                partial(self.__class__.voxelize, voxel_params=voxel_params, device=device)
+                lambda batch: self.voxelize(args, voxel_params, device, batch)
             )
         )
 
