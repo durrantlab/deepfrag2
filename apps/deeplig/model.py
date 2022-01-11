@@ -43,7 +43,7 @@ class DeepLigModel(pl.LightningModule):
     
     @staticmethod
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-        parser = parent_parser.add_argument_group('DeepFragModel')
+        parser = parent_parser.add_argument_group('DeepLigModel')
         parser.add_argument('--voxel_features', type=int, default=10)
         parser.add_argument('--fp_size', type=int, default=2048)
         return parent_parser
@@ -52,7 +52,7 @@ class DeepLigModel(pl.LightningModule):
         return self.model(voxel)
 
     def training_step(self, batch, batch_idx):
-        voxel, fp = batch
+        voxel, fp, recs, ligs = batch
         pred = self(voxel)
 
         loss = cos_loss(pred, fp).mean()
@@ -67,7 +67,7 @@ class DeepLigModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        voxel, fp = batch
+        voxel, fp, recs, ligs = batch
         pred = self(voxel)
 
         loss = cos_loss(pred, fp).mean()

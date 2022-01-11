@@ -10,7 +10,7 @@ from collagen.metrics import bin_acc
 
 
 class BindingSiteModel(pl.LightningModule):
-    def __init__(self, voxel_features: int = 10):
+    def __init__(self, voxel_features: int = 5, **kwargs):
         super().__init__()
         self.save_hyperparameters()
 
@@ -44,8 +44,8 @@ class BindingSiteModel(pl.LightningModule):
 
     @staticmethod
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-        parser = parent_parser.add_argument_group('DeepFragModel')
-        parser.add_argument('--voxel_features', type=int, default=10)
+        parser = parent_parser.add_argument_group('BindingSiteModel')
+        parser.add_argument('--voxel_features', type=int, default=5)
         return parent_parser
 
     def forward(self, voxel):

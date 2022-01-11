@@ -68,6 +68,7 @@ class MOADPocketDataset(Dataset):
         transform: Optional[
             Callable[["Mol", "numpy.ndarray", "numpy.ndarray"], Any]
         ] = None,
+        **kwargs
     ):
         self.moad = moad
         self.thresh = thresh
