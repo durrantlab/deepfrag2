@@ -1,4 +1,3 @@
-
 import argparse
 from functools import partial
 from multiprocessing import Value
@@ -14,35 +13,48 @@ from .. import VoxelParams, VoxelParamsDefault, MultiLoader
 from ..external import MOADInterface
 
 
-ENTRY_T = TypeVar('ENTRY_T')
-TMP_T = TypeVar('TMP_T')
-OUT_T = TypeVar('OUT_T')
+ENTRY_T = TypeVar("ENTRY_T")
+TMP_T = TypeVar("TMP_T")
+OUT_T = TypeVar("OUT_T")
 
 
 def _disable_warnings():
     from rdkit import RDLogger
+
     RDLogger.DisableLog("rdApp.*")
 
     import prody
+
     prody.confProDy(verbosity="none")
 
 
 class MoadVoxelSkeleton(object):
-    def __init__(self, model_cls: Type[pl.LightningModule], dataset_cls: Type[torch.utils.data.Dataset]):
+    def __init__(
+        self,
+        model_cls: Type[pl.LightningModule],
+        dataset_cls: Type[torch.utils.data.Dataset],
+    ):
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
 
     @staticmethod
-    def build_parser(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    def add_moad_args(
+        parent_parser: argparse.ArgumentParser,
+    ) -> argparse.ArgumentParser:
         # parent_parser = argparse.ArgumentParser()
 
-        parser = parent_parser.add_argument_group('Binding MOAD')
+        parser = parent_parser.add_argument_group("Binding MOAD")
 
         parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")
         parser.add_argument(
             "--data", required=True, help="Path to MOAD root structure folder"
         )
-        parser.add_argument("--cache", required=True, help="Path to MOAD cache.json file")
+        parser.add_argument(
+            "--cache",
+            required=False,
+            default=None,
+            help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--csv`.",
+        )
         parser.add_argument(
             "--split_seed",
             required=False,
@@ -73,23 +85,36 @@ class MoadVoxelSkeleton(object):
         parser.add_argument(
             "--inference_limit",
             default=None,
-            help="Maximum number of examples to run inference on."
+            help="Maximum number of examples to run inference on.",
         )
         parser.add_argument(
             "--inference_rotations",
             default=1,
             type=int,
-            help="Number of rotations to sample during inference."
+            help="Number of rotations to sample during inference.",
         )
 
         return parent_parser
 
     @staticmethod
-    def pre_voxelize(args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:
+    def fix_moad_args(args: argparse.Namespace) -> argparse.Namespace:
+        if args.cache is None:
+            args.cache = args.csv + ".cache.json"
+        return args
+
+    @staticmethod
+    def pre_voxelize(
+        args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T
+    ) -> TMP_T:
         return entry
 
     @staticmethod
-    def voxelize(args: argparse.Namespace, voxel_params: VoxelParams, device: torch.device, batch: List[TMP_T]) -> OUT_T:
+    def voxelize(
+        args: argparse.Namespace,
+        voxel_params: VoxelParams,
+        device: torch.device,
+        batch: List[TMP_T],
+    ) -> OUT_T:
         raise NotImplementedError()
 
     @staticmethod
@@ -102,7 +127,9 @@ class MoadVoxelSkeleton(object):
             logger = WandbLogger(project=args.wandb_project)
         else:
             logger = CSVLogger(
-                "logs", name="my_exp_name", flush_logs_every_n_steps=args.log_every_n_steps
+                "logs",
+                name="my_exp_name",
+                flush_logs_every_n_steps=args.log_every_n_steps,
             )
 
         trainer = pl.Trainer.from_argparse_args(
@@ -127,27 +154,31 @@ class MoadVoxelSkeleton(object):
 
         return trainer
 
-    def _init_model(self, args: argparse.Namespace, ckpt: Optional[str]) -> pl.LightningModule:
+    def _init_model(
+        self, args: argparse.Namespace, ckpt: Optional[str]
+    ) -> pl.LightningModule:
         if ckpt:
             print(f"Loading model from checkpoint {ckpt}")
             return self.model_cls.load_from_checkpoint(ckpt)
         else:
             return self.model_cls(**vars(args))
-    
+
     def _init_voxel_params(self, args: argparse.Namespace) -> VoxelParams:
         # TODO: make configurable via argparse
         return VoxelParamsDefault.DeepFrag
 
     def _init_device(self, args: argparse.Namespace) -> torch.device:
         if args.cpu:
-            return torch.device('cpu')
+            return torch.device("cpu")
         else:
-            return torch.device('cuda')
+            return torch.device("cuda")
 
     def _get_checkpoint(self, args: argparse.Namespace) -> Optional[str]:
         if args.load_checkpoint and args.load_newest_checkpoint:
-            raise ValueError(f"Can specify 'load_checkpoint=xyz' or 'load_newest_checkpoint' but not both.")
-        
+            raise ValueError(
+                f"Can specify 'load_checkpoint=xyz' or 'load_newest_checkpoint' but not both."
+            )
+
         ckpt = None
         if args.load_checkpoint:
             ckpt = args.load_checkpoint
@@ -162,9 +193,9 @@ class MoadVoxelSkeleton(object):
         if ckpt is not None:
             print(f"Restoring from checkpoint: {ckpt}")
 
-        if args.mode == 'train':
+        if args.mode == "train":
             self._run_train(args, ckpt)
-        elif args.mode == 'test':
+        elif args.mode == "test":
             self._run_test(args, ckpt)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
@@ -182,7 +213,7 @@ class MoadVoxelSkeleton(object):
             moad,
             cache_file=args.cache,
             split=train,
-            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry))
+            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry)),
         )
         train_data = (
             MultiLoader(
@@ -191,16 +222,15 @@ class MoadVoxelSkeleton(object):
                 num_dataloader_workers=args.num_dataloader_workers,
                 max_voxels_in_memory=args.max_voxels_in_memory,
             )
-            .batch(args.batch_size).map(
-                lambda batch: self.voxelize(args, voxel_params, device, batch)
-            )
+            .batch(args.batch_size)
+            .map(lambda batch: self.voxelize(args, voxel_params, device, batch))
         )
 
         val_dataset = self.dataset_cls(
             moad,
             cache_file=args.cache,
             split=val,
-            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry))
+            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry)),
         )
         val_data = (
             MultiLoader(
@@ -209,9 +239,8 @@ class MoadVoxelSkeleton(object):
                 num_dataloader_workers=args.num_dataloader_workers,
                 max_voxels_in_memory=args.max_voxels_in_memory,
             )
-            .batch(args.batch_size).map(
-                lambda batch: self.voxelize(args, voxel_params, device, batch)
-            )
+            .batch(args.batch_size)
+            .map(lambda batch: self.voxelize(args, voxel_params, device, batch))
         )
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
@@ -232,7 +261,9 @@ class MoadVoxelSkeleton(object):
             moad,
             cache_file=args.cache,
             split=test,
-            transform=partial(self.__class__.pre_voxelize, args=args, voxel_params=voxel_params)
+            transform=partial(
+                self.__class__.pre_voxelize, args=args, voxel_params=voxel_params
+            ),
         )
         test_data = (
             MultiLoader(
@@ -241,13 +272,19 @@ class MoadVoxelSkeleton(object):
                 num_dataloader_workers=args.num_dataloader_workers,
                 # max_voxels_in_memory=args.max_voxels_in_memory,
             )
-            .batch(args.batch_size).map(
-                partial(self.__class__.voxelize, args=args, voxel_params=voxel_params, device=device)
+            .batch(args.batch_size)
+            .map(
+                partial(
+                    self.__class__.voxelize,
+                    args=args,
+                    voxel_params=voxel_params,
+                    device=device,
+                )
             )
         )
 
         model.eval()
 
         for i in range(args.inference_rotations):
-            print(f'Inference rotation {i+1}/{args.inference_rotations}')
+            print(f"Inference rotation {i+1}/{args.inference_rotations}")
             trainer.test(model, test_data, verbose=True)

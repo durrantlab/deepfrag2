@@ -113,7 +113,7 @@ class DeepLig(MoadVoxelSkeleton):
 
 if __name__ == "__main__":
     mod = DeepLig()
-    parser = mod.build_parser()
+    parser = mod.add_moad_args()
     DeepLigModel.add_model_args(parser)
     args = parser.parse_args()
     mod.run(args)

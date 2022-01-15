@@ -63,7 +63,7 @@ class BindingSiteVoxel(MoadVoxelSkeleton):
 
 if __name__ == "__main__":
     mod = BindingSiteVoxel()
-    parser = mod.build_parser()
+    parser = mod.add_moad_args()
     BindingSiteModel.add_model_args(parser)
     args = parser.parse_args()
     mod.run(args)

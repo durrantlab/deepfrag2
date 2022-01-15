@@ -71,7 +71,8 @@ class DeepFrag(MoadVoxelSkeleton):
 
 if __name__ == "__main__":
     args = get_args(
-        [DeepFrag.build_parser, DeepFragModel.add_model_args], 
-        True
+        parser_funcs=[MoadVoxelSkeleton.add_moad_args, DeepFragModel.add_model_args],
+        fix_args_funcs=[MoadVoxelSkeleton.fix_moad_args],
+        is_pytorch_lightning=True,
     )
     DeepFrag().run(args)

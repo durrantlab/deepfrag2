@@ -1,7 +1,20 @@
 import argparse
 import json
 
-def _add_generic_params(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+
+def _add_generic_params(
+    parent_parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """Adds parameters (args) that are common to all collagen apps.
+
+    Args:
+        parent_parser (argparse.ArgumentParser): The argparser.
+
+    Returns:
+        argparse.ArgumentParser: The updated argparser with the generic
+        parameters added.
+    """
+
     parser = parent_parser.add_argument_group("Common")
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)
@@ -9,7 +22,7 @@ def _add_generic_params(parent_parser: argparse.ArgumentParser) -> argparse.Argu
         "-m",
         "--mode",
         type=str,
-        choices=['train', 'test'],
+        choices=["train", "test"],
         help="Can be train or test. If train, trains the model. If test, runs inference on the test set. Defaults to train.",
         default="train",
     )
@@ -17,13 +30,13 @@ def _add_generic_params(parent_parser: argparse.ArgumentParser) -> argparse.Argu
         "--load_checkpoint",
         type=str,
         default=None,
-        help="If specified, the model will be loaded from this checkpoint."
+        help="If specified, the model will be loaded from this checkpoint.",
     )
     parser.add_argument(
         "--load_newest_checkpoint",
         default=False,
-        action='store_true',
-        help="If set, the most recent checkpoint will be loaded."
+        action="store_true",
+        help="If set, the most recent checkpoint will be loaded.",
     )
     # TODO: JDD: Load from best validation checkpoint.
     parser.add_argument(
@@ -36,12 +49,14 @@ def _add_generic_params(parent_parser: argparse.ArgumentParser) -> argparse.Argu
     return parent_parser
 
 
-def _get_arg_parser(parser_funcs: list, is_pytorch_lightning=False):
+def _get_arg_parser(
+    parser_funcs: list, is_pytorch_lightning=False
+) -> argparse.ArgumentParser:
     """Constructs an arg parser.
 
     Args:
         parser_funcs (list): A list of functions that add arguments to a 
-            parser. They each return a parser.
+            parser. They each accept a parser and return a parser.
         is_pytorch_lightning (bool, optional): Whether the app uses pytorch
             lightning. Defaults to False.
 
@@ -68,7 +83,25 @@ def _get_arg_parser(parser_funcs: list, is_pytorch_lightning=False):
     return parent_parser
 
 
-def get_args(parser_funcs: list, is_pytorch_lightning=False) -> argparse.Namespace:
+def get_args(
+    parser_funcs=[], fix_args_funcs=[], is_pytorch_lightning=False
+) -> argparse.Namespace:
+    """The function creates a parser and gets the associated parameters.
+
+    Args:
+        parser_funcs (list, optional): A list of functions that add arguments to
+            a parser. They each accept a parser and return a parser. Defaults to
+            [].
+        fix_args_funcs (list, optional): A list of functions that modify the
+            parsed args. Each accepts args and returns args. Allows for
+            modifying one argument based on the value of another. Defaults to
+            [].
+        is_pytorch_lightning (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        argparse.Namespace: The parsed and updated args.
+    """
+
     # Get the parser
     parser = _get_arg_parser(parser_funcs, is_pytorch_lightning)
 
@@ -82,11 +115,19 @@ def get_args(parser_funcs: list, is_pytorch_lightning=False) -> argparse.Namespa
             for k in new_args.keys():
                 setattr(args, k, new_args[k])
 
+    # Fix the arguments.
+    for func in fix_args_funcs:
+        args = func(args)
+
     # Always print out the arguments to the screen.
     print("\nPARAMETERS")
     print("-----------\n")
     for k, v in vars(args).items():
         print(k.rjust(35) + " : " + str(v))
     print("")
+
+    import pdb
+
+    pdb.set_trace()
 
     return args
