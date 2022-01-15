@@ -126,8 +126,4 @@ def get_args(
         print(k.rjust(35) + " : " + str(v))
     print("")
 
-    import pdb
-
-    pdb.set_trace()
-
     return args

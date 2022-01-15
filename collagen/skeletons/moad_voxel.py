@@ -41,8 +41,6 @@ class MoadVoxelSkeleton(object):
     def add_moad_args(
         parent_parser: argparse.ArgumentParser,
     ) -> argparse.ArgumentParser:
-        # parent_parser = argparse.ArgumentParser()
-
         parser = parent_parser.add_argument_group("Binding MOAD")
 
         parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")

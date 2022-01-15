@@ -88,38 +88,6 @@ class MOADFragmentDataset(Dataset):
         self.transform = transform
         self._index(cache_file, cache_cores)
 
-    # def _build_index(self, cores: int = 1) -> dict:
-    #     """
-    #     Cache format:
-
-    #     {
-    #         "pdb_id": [
-    #             {
-    #                 "lig_name": [fmass1, fmass2, ..., fmassN],
-    #                 "lig_name2": [...]
-    #             },
-    #             ...
-    #         ],
-    #         ...
-    #     }
-    #     """
-    #     global MOAD_REF
-    #     MOAD_REF = self.moad
-
-    #     index = {}
-    #     pdb_ids_queue = self.moad.targets
-
-    #     pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
-    #     with multiprocessing.Pool(cores) as p:
-    #         for pdb_id, ligs_to_frag_masses in p.imap_unordered(
-    #             build_frag_index_target, pdb_ids_queue
-    #         ):
-    #             index[pdb_id.lower()] = ligs_to_frag_masses
-    #             pbar.update(1)
-
-    #     pbar.close()
-    #     return index
-
     def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
         def make_dataset_entries_func(
             pdb_id: str, lig_name: str, lig_inf: Dict
@@ -157,68 +125,6 @@ class MOADFragmentDataset(Dataset):
 
         self._ligand_index_cached = index
         self._internal_index_valids_filtered = internal_index
-
-        # cache_file = Path(cache_file) if cache_file is not None else None
-
-        # if cache_file is not None and cache_file.exists():
-        #     print("Loading MOAD fragments from cache...")
-        #     with open(cache_file, "r") as f:
-        #         index = json.load(f)
-        # else:
-        #     index = self._build_index(cores)
-        #     if cache_file is not None:
-        #         with open(cache_file, "w") as f:
-        #             f.write(json.dumps(index))
-
-        # internal_index = []
-        # for pdb_id in tqdm(self.split.targets, desc="Runtime filters"):
-        #     ligs_to_frag_masses_chunks = index[pdb_id.lower()]
-        #     for lig_to_frag_masses_chunk_idx in range(len(ligs_to_frag_masses_chunks)):
-        #         lig_to_frag_masses_chunk = ligs_to_frag_masses_chunks[
-        #             lig_to_frag_masses_chunk_idx
-        #         ]
-        #         # lig_to_frag_masses_chunk looks like:
-        #         # {
-        #         #   'ADN:A:901': [17, 31, 17, 17, 133, 16],
-        #         #   'ADN:B:902': [17, 31, 17, 17, 133, 16],
-        #         #   'ADN:C:903': [17, 31, 17, 17, 133, 16],
-        #         #   'ADN:D:904': [17, 31, 17, 17, 133, 16],
-        #         #   'ADN:E:905': [17, 31, 17, 17, 133, 16],
-        #         #   'ADN:F:906': [17, 31, 17, 17, 133, 16]
-        #         # }
-
-        #         for ligand_id in lig_to_frag_masses_chunk:
-        #             # Enforce SMILES filter.  TODO: Distance to receptor, number
-        #             # of heavy atoms, etc.?
-        #             skip = False
-        #             for lig in self.moad[pdb_id].ligands:
-        #                 if (
-        #                     lig.name == ligand_id
-        #                     and lig.smiles not in self.split.smiles
-        #                 ):
-        #                     # You've found the ligand that is not in the split,
-        #                     # so skip it.
-        #                     skip = True
-        #                     break
-
-        #             if skip:
-        #                 continue
-
-        #             frag_masses = lig_to_frag_masses_chunk[ligand_id]
-        #             for frag_idx in range(len(frag_masses)):
-        #                 if frag_masses[frag_idx] != 0:
-        #                     # A fragment with mass, so proceed.
-        #                     internal_index.append(
-        #                         MOADFragmentDataset_entry(
-        #                             pdb_id=pdb_id,
-        #                             lig_to_frag_masses_chunk_idx=lig_to_frag_masses_chunk_idx,
-        #                             ligand_id=ligand_id,
-        #                             frag_idx=frag_idx,
-        #                         )
-        #                     )
-
-        # self._fragment_index_cached = index
-        # self._internal_index_valids_filtered = internal_index
 
     def __len__(self) -> int:
         return len(self._internal_index_valids_filtered)
