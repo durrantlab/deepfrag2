@@ -56,8 +56,6 @@ class MoadVoxelSkeleton(object):
             type=int,
             help="Number of workers for DataLoader",
         )
-        parser.add_argument("--cpu", default=False, action="store_true")
-        parser.add_argument("--wandb_project", required=False, default=None)
         parser.add_argument(
             "--max_voxels_in_memory",
             required=True,
@@ -72,27 +70,6 @@ class MoadVoxelSkeleton(object):
             default=16,
             help="The size of the batch. Defaults to 16.",
         )
-        parser.add_argument(
-            "-m",
-            "--mode",
-            type=str,
-            choices=['train', 'test'],
-            help="Can be train or test. If train, trains the model. If test, runs inference on the test set. Defaults to train.",
-            default="train",
-        )
-        parser.add_argument(
-            "--load_checkpoint",
-            type=str,
-            default=None,
-            help="If specified, the model will be loaded from this checkpoint."
-        )
-        parser.add_argument(
-            "--load_newest_checkpoint",
-            default=False,
-            action='store_true',
-            help="If set, the most recent checkpoint will be loaded."
-        )
-        # TODO: JDD: Load from best validation checkpoint.
         parser.add_argument(
             "--inference_limit",
             default=None,

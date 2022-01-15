@@ -1,6 +1,40 @@
 import argparse
 import json
 
+def _add_generic_params(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    parser = parent_parser.add_argument_group("Common")
+    parser.add_argument("--cpu", default=False, action="store_true")
+    parser.add_argument("--wandb_project", required=False, default=None)
+    parser.add_argument(
+        "-m",
+        "--mode",
+        type=str,
+        choices=['train', 'test'],
+        help="Can be train or test. If train, trains the model. If test, runs inference on the test set. Defaults to train.",
+        default="train",
+    )
+    parser.add_argument(
+        "--load_checkpoint",
+        type=str,
+        default=None,
+        help="If specified, the model will be loaded from this checkpoint."
+    )
+    parser.add_argument(
+        "--load_newest_checkpoint",
+        default=False,
+        action='store_true',
+        help="If set, the most recent checkpoint will be loaded."
+    )
+    # TODO: JDD: Load from best validation checkpoint.
+    parser.add_argument(
+        "--json_params",
+        required=False,
+        default=None,
+        help="Path to a json file with parameters that override those specified at the command line.",
+    )
+
+    return parent_parser
+
 
 def _get_arg_parser(parser_funcs: list, is_pytorch_lightning=False):
     """Constructs an arg parser.
@@ -14,7 +48,7 @@ def _get_arg_parser(parser_funcs: list, is_pytorch_lightning=False):
     Returns:
         argparse.ArgumentParser: A parser with all the arguments added.
     """
-    
+
     # Create the parser
     parent_parser = argparse.ArgumentParser()
 
@@ -23,19 +57,13 @@ def _get_arg_parser(parser_funcs: list, is_pytorch_lightning=False):
         parent_parser = func(parent_parser)
 
     # Add arguments that are common to all apps.
-    parser = parent_parser.add_argument_group("Common")
-    parser.add_argument(
-        "--json_params",
-        required=False,
-        default=None,
-        help="Path to a json file with parameters that override those specified at the command line.",
-    )
+    parent_parser = _add_generic_params(parent_parser)
 
     # Add pytorch lighting parameters if appropriate.
     if is_pytorch_lightning:
         import pytorch_lightning as pl
 
-        parser = pl.Trainer.add_argparse_args(parent_parser)
+        pl.Trainer.add_argparse_args(parent_parser)
 
     return parent_parser
 
@@ -44,10 +72,10 @@ def get_args(parser_funcs: list, is_pytorch_lightning=False) -> argparse.Namespa
     # Get the parser
     parser = _get_arg_parser(parser_funcs, is_pytorch_lightning)
 
-    # Parser the arguments
+    # Parse the arguments
     args = parser.parse_args()
 
-    # Add parameters from JSON file.
+    # Add parameters from JSON file, which override any command-line parameters.
     if args.json_params:
         with open(args.json_params, "rt") as f:
             new_args = json.load(f)
