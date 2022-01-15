@@ -8,38 +8,6 @@ from torch.utils.data import Dataset
 from .cache import CacheItemsToUpdate, build_index_and_filter
 from ... import Mol
 
-
-# def build_frag_index_target(pdb_id):
-#     # Given a pdb_id, gets its ligands and maps those to the massess of all
-#     # associated fragments. Fragments are determined deterministically, so no
-#     # need to store fragment indexes.
-
-#     global MOAD_REF
-
-#     moad_entry_info = MOAD_REF[pdb_id]
-#     ligs_to_frag_masses = []
-
-#     for i in range(len(moad_entry_info)):
-#         lig_to_frag_masses = {}
-
-#         try:
-#             # Unpack info to get ligands
-#             _, ligands = moad_entry_info[i]
-
-#             for lig in ligands:
-#                 try:
-#                     frag_masses = [int(x[1].mass) for x in lig.split_bonds()]
-#                 except:
-#                     frag_masses = []
-#                 lig_to_frag_masses[lig.meta["moad_ligand"].name] = frag_masses
-#         except:
-#             pass
-
-#         ligs_to_frag_masses.append(lig_to_frag_masses)
-
-#     return (pdb_id, ligs_to_frag_masses)
-
-
 @dataclass
 class MOADFragmentDataset_entry(object):
     pdb_id: str
