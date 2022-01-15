@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
 from pathlib import Path
@@ -7,6 +6,7 @@ from torch.utils.data import Dataset
 
 from .cache import CacheItemsToUpdate, build_index_and_filter
 from ... import Mol
+
 
 @dataclass
 class MOADFragmentDataset_entry(object):
@@ -86,7 +86,16 @@ class MOADFragmentDataset(Dataset):
             self.moad,
             self.split,
             make_dataset_entries_func,
-            CacheItemsToUpdate(frag_masses=True),
+            CacheItemsToUpdate(
+                num_heavy_atoms=True,
+                frag_masses=True,
+                frag_dists_to_recep=True,
+                frag_num_heavy_atoms=True,
+                lig_mass=True,
+                frag_smiles=True,  # Good for debugging.
+                murcko_scaffold=True,
+                
+            ),
             cache_file,
             cores,
         )

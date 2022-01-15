@@ -7,6 +7,8 @@ When doing inference, get best validation checkpoint (not last).
 
 I think a lot of my old code is not cruft. Good to do audit.
 
+Check out /mnt/Data/jdurrant/deepfrag2/apps/deepfrag/err.txt . These are ones you couldn't calculate properties for. Why?
+
 # Training goal
 
 And what is the cardinal rule of neural network training? Whenever possible, use
