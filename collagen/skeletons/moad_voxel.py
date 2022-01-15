@@ -28,15 +28,15 @@ def _disable_warnings():
 
 
 class MoadVoxelSkeleton(object):
-
-    # TODO: JDD: @staticmethod ?
     def __init__(self, model_cls: Type[pl.LightningModule], dataset_cls: Type[torch.utils.data.Dataset]):
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
 
-    def build_parser(self) -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser()
-        parser = pl.Trainer.add_argparse_args(parser)
+    @staticmethod
+    def build_parser(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        # parent_parser = argparse.ArgumentParser()
+
+        parser = parent_parser.add_argument_group('Binding MOAD')
 
         parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")
         parser.add_argument(
@@ -48,7 +48,7 @@ class MoadVoxelSkeleton(object):
             required=False,
             default=1,
             type=int,
-            help="Seed for TRAIN/VAL/TEST split.",
+            help="Seed for TRAIN/VAL/TEST split. Defaults to 1.",
         )
         parser.add_argument(
             "--num_dataloader_workers",
@@ -70,7 +70,7 @@ class MoadVoxelSkeleton(object):
             type=int,
             required=False,
             default=16,
-            help="The size of the batch",
+            help="The size of the batch. Defaults to 16.",
         )
         parser.add_argument(
             "-m",
@@ -105,7 +105,7 @@ class MoadVoxelSkeleton(object):
             help="Number of rotations to sample during inference."
         )
 
-        return parser
+        return parent_parser
 
     @staticmethod
     def pre_voxelize(args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:

@@ -5,6 +5,10 @@ Ask Harrison to look over inference code.
 
 When doing inference, get best validation checkpoint (not last).
 
+I think a lot of my old code is not cruft. Good to do audit.
+
+If cache not given, check every.csv.cache.json
+
 # Training goal
 
 And what is the cardinal rule of neural network training? Whenever possible, use

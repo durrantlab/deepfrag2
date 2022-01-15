@@ -16,7 +16,7 @@ parser.add_argument(
     required=False,
     default=1,
     type=int,
-    help="Seed for TRAIN/VAL/TEST split.",
+    help="Seed for TRAIN/VAL/TEST split. Defaults to 1.",
 )
 parser.add_argument(
     "--num_dataloader_workers", default=1, type=int, help="Number of workers for DataLoader"

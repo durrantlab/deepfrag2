@@ -233,7 +233,7 @@ class MOADInterface(object):
             test_smi = (test_smi - (train_smi | val_smi)) | b_test | c_test | d_test
 
         # Save spit and seed to json in working directory if running in docker
-        # container.
+        # container. TODO: JDD: Remove this.
         if os.path.exists("/working/"):
             split_inf = {
                 "seed": seed,

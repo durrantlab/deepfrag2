@@ -300,7 +300,7 @@ def add_args_voxel_to_fp_model():
         required=False,
         default=1,
         type=int,
-        help="Seed for TRAIN/VAL/TEST split.",
+        help="Seed for TRAIN/VAL/TEST split. Defaults to 1.",
     )
     parser.add_argument(
         "--num_dataloader_workers",
@@ -322,7 +322,7 @@ def add_args_voxel_to_fp_model():
         type=int,
         required=False,
         default=16,
-        help="The size of the batch",
+        help="The size of the batch. Defaults to 16.",
     )
     parser.add_argument(
         "-m",
