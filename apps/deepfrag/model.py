@@ -41,8 +41,8 @@ class DeepFragModel(pl.LightningModule):
     @staticmethod
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         parser = parent_parser.add_argument_group('DeepFragModel')
-        parser.add_argument('--voxel_features', type=int, default=10)
-        parser.add_argument('--fp_size', type=int, default=2048)
+        parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
+        parser.add_argument('--fp_size', type=int, help="The size of the output molecular fingerprint. Defaults to 2048.", default=2048)
         return parent_parser
 
     def forward(self, voxel):

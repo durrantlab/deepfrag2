@@ -86,7 +86,7 @@ def inference_voxel_to_fp_model(
 
     # On cpu by default
     if not args.cpu:
-        model.to("cuda:0")  # TODO: Should be hardcoded?
+        model.to("cuda:0")  # TODO: JDD: Should be hardcoded?
 
     interface = InterfaceCls(args.csv, args.data)
     train, val, test = interface.compute_split(seed=args.split_seed)
@@ -114,7 +114,7 @@ def inference_voxel_to_fp_model(
     all_preds = {}
     all_true_fps = {}
 
-    num_rots = 2  # TODO: Should be user-specified parameter
+    num_rots = 2  # TODO: JDD: Should be user-specified parameter
 
     # See
     # https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#inference-in-research
@@ -158,8 +158,8 @@ def inference_voxel_to_fp_model(
             torch.mul(all_preds[label], 1.0 / num_rots, out=all_preds[label])
             # all_preds[label] = all_preds[label] / float(num_rots)
         
-        # TODO: Here, I'm just using the test set as the label set. But you'll
-        # want to make it so this can be customized too.
+        # TODO: JDD: Here, I'm just using the test set as the label set. But
+        # you'll want to make it so this can be customized too.
         keys = all_preds.keys()
 
         for k in keys:

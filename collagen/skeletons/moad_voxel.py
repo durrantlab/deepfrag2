@@ -29,6 +29,7 @@ def _disable_warnings():
 
 class MoadVoxelSkeleton(object):
 
+    # TODO: JDD: @staticmethod ?
     def __init__(self, model_cls: Type[pl.LightningModule], dataset_cls: Type[torch.utils.data.Dataset]):
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
@@ -91,6 +92,7 @@ class MoadVoxelSkeleton(object):
             action='store_true',
             help="If set, the most recent checkpoint will be loaded."
         )
+        # TODO: JDD: Load from best validation checkpoint.
         parser.add_argument(
             "--inference_limit",
             default=None,
@@ -184,13 +186,13 @@ class MoadVoxelSkeleton(object):
             print(f"Restoring from checkpoint: {ckpt}")
 
         if args.mode == 'train':
-            self.run_train(args, ckpt)
+            self._run_train(args, ckpt)
         elif args.mode == 'test':
-            self.run_test(args, ckpt)
+            self._run_test(args, ckpt)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 
-    def run_train(self, args: argparse.Namespace, ckpt: Optional[str]):
+    def _run_train(self, args: argparse.Namespace, ckpt: Optional[str]):
         trainer = self._init_trainer(args)
         model = self._init_model(args, ckpt)
         voxel_params = self._init_voxel_params(args)
@@ -237,7 +239,7 @@ class MoadVoxelSkeleton(object):
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
-    def run_test(self, args: argparse.Namespace, ckpt: Optional[str]):
+    def _run_test(self, args: argparse.Namespace, ckpt: Optional[str]):
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
 

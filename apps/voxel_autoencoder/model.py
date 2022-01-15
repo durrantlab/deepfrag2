@@ -48,7 +48,7 @@ class VoxelAutoencoder(pl.LightningModule):
     @staticmethod
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         parser = parent_parser.add_argument_group('VoxelAutoencoder')
-        parser.add_argument('--voxel_features', type=int, default=10)
+        parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
         parser.add_argument('--latent_size', type=int, default=1024)
         return parent_parser
 

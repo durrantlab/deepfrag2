@@ -45,7 +45,7 @@ class BindingSiteModel(pl.LightningModule):
     @staticmethod
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         parser = parent_parser.add_argument_group('BindingSiteModel')
-        parser.add_argument('--voxel_features', type=int, default=5)
+        parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 5.", default=5)
         return parent_parser
 
     def forward(self, voxel):

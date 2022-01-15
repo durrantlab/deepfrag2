@@ -129,7 +129,8 @@ class MOADFragmentDataset(Dataset):
             entries_to_return = []
             for frag_idx in range(len(frag_masses)):
                 if frag_masses[frag_idx] != 0:
-                    # A fragment with mass, so proceed. TODO: More filters here.
+                    # A fragment with mass, so proceed. TODO: JDD: More filters
+                    # here.
                     entries_to_return.append(
                         MOADFragmentDataset_entry(
                             pdb_id=pdb_id,

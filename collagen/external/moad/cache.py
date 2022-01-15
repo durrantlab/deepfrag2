@@ -20,8 +20,8 @@ class CacheItemsToUpdate(object):
     lig_mass: bool = False
     frag_masses: bool = False
     murcko_scaffold: bool = False
-    num_heavy_atoms: bool = False  # TODO: Test this
-    frag_dist_to_recep: bool = False  # TODO: Test this
+    num_heavy_atoms: bool = False  # TODO: JDD: Test this
+    frag_dist_to_recep: bool = False  # TODO: JDD: Test this
 
     def updatable(self) -> bool:
         # Updatable
@@ -188,7 +188,7 @@ def build_index_and_filter(
         for lig_name in receptor_inf.keys():
             lig_inf = receptor_inf[lig_name]
 
-            # Enforce filters. TODO: Distance to receptor, number of heavy
+            # Enforce filters. TODO: JDD: Distance to receptor, number of heavy
             # atoms, etc.?
             skip = False
             for lig in moad[pdb_id].ligands:
