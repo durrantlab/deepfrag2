@@ -1,4 +1,3 @@
-
 def fix_moad_smiles(smi: str) -> str:
     return (
         smi.replace("+H3", "H3+")

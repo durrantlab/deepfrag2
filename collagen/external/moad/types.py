@@ -2,6 +2,9 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple
 from pathlib import Path
+import textwrap
+from collagen.core.mol import TemplateGeometryMismatchException, UnparsableGeometryException, UnparsableSMILESException
+from rdkit import Chem
 
 import prody
 
@@ -47,7 +50,9 @@ class MOAD_target(object):
         ignore_sels = []
         ligands = []
         for lig in self.ligands:
-            lig_sel = f"chain {lig.chain} and resnum >= {lig.resnum} and resnum < {lig.resnum + lig.reslength}"
+            # Note that "(altloc _ or altloc A)" makes sure only the first
+            # alternate locations are used.
+            lig_sel = f"chain {lig.chain} and resnum >= {lig.resnum} and resnum < {lig.resnum + lig.reslength} and (altloc _ or altloc A)"
 
             if lig.validity != "Part of Protein":
                 ignore_sels.append(lig_sel)
@@ -65,8 +70,40 @@ class MOAD_target(object):
                     )
                     lig_mol.meta["name"] = lig.name
                     lig_mol.meta["moad_ligand"] = lig
-                except Exception:
-                    # Ligand SMILES did not match actual geometry.
+                except UnparsableSMILESException as err:
+                    msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
+                    print(textwrap.fill(msg, subsequent_indent="  "))
+                    continue
+                except UnparsableGeometryException as err:
+                    # Some geometries are particularly bad and just can't be
+                    # parsed. For example, 4P3R:NAP:A:202.
+                    msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
+                    print(textwrap.fill(msg, subsequent_indent="  "))
+                    continue
+                except TemplateGeometryMismatchException as err:
+                    # Note that at least some of the time, this is due to bad
+                    # data from MOAD. See, for example,
+                    # BindingMoad2019/3i4y.bio1, where a ligand is divided
+                    # across models for some reason. Some large ligands are also
+                    # not fully resolved in the crystal structure, so good
+                    # reason not to include them. For example, 5EIV:HYP GLY PRO
+                    # HYP GLY PRO HYP:I:-5. # In other cases, there is
+                    # disagreement about what is a ligand. The PDB entry for
+                    # 6HMG separates out GLC and GDQ as different ligands, even
+                    # though they are covalently bonded to one another. Binding
+                    # MOAD calls this one ligand, "GDQ GLC". I've spot checked a
+                    # number of these, and the ones that are throw out should be
+                    # thrown out.
+                    msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
+                    print(textwrap.fill(msg, subsequent_indent="  "))
+                    continue
+                except Exception as err:
+                    msg = (
+                        "WARNING: Could not process ligand " + 
+                        self.pdb_id + ":" + lig.name + ". " +
+                        "An unknown error occured: " + str(err)
+                    )
+                    print(textwrap.fill(msg, subsequent_indent="  "))
                     continue
 
                 ligands.append(lig_mol)

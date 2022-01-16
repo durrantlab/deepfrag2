@@ -13,6 +13,8 @@ from scipy.spatial.distance import cdist
 
 from .moad_utils import fix_moad_smiles
 
+# prob_ones = ["1vif", "2awu", "2buq", "2fmd", "2oh6", "2yno", "3day", "3e94", "3i4y", "3wa4", "4cpa", "4uag", "4x2v", "5b0w", "5eiv", "5n70", "5vf2", "6qgr"]
+# prob_ones = ["6fyr", "1jao", "4p3r"]
 
 @dataclass
 class CacheItemsToUpdate(object):
@@ -64,127 +66,99 @@ def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
         try:
             # Unpack info to get ligands
             receptor, ligands = moad_entry_info[lig_chunk_idx]
-
-            for lig in ligands:
-                lig_name = lig.meta["moad_ligand"].name
-                lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
-
-                # Updatable
-                if CACHE_ITEMS_TO_UPDATE.lig_mass:
-                    lig_infs[lig_name]["lig_mass"] = _set_molecular_prop(
-                        lambda x: x.mass, lig, 999999
-                    )
-                    # print(lig_infs[lig_name]["lig_mass"])
-                    # try: lig_infs[lig_name]["lig_mass"] = int(lig.mass)
-                    # except: lig_infs[lig_name]["lig_mass"] = 999999
-
-                if CACHE_ITEMS_TO_UPDATE.murcko_scaffold:
-                    try:
-                        smi_fixed = fix_moad_smiles(lig.smiles(True))
-                        scaffold_smi = MurckoScaffoldSmilesFromSmiles(
-                            smi_fixed, includeChirality=True
-                        )
-                        lig_infs[lig_name]["murcko_scaffold"] = scaffold_smi
-                    except:
-                        lig_infs[lig_name]["murcko_scaffold"] = ""
-
-                if CACHE_ITEMS_TO_UPDATE.num_heavy_atoms:
-                    lig_infs[lig_name]["num_heavy_atoms"] = _set_molecular_prop(
-                        lambda x: x.num_heavy_atoms, lig, 999999
-                    )
-
-                    # try: lig_infs[lig_name]["num_heavy_atoms"] = lig.num_heavy_atoms
-                    # except: lig_infs[lig_name]["num_heavy_atoms"] = 999999
-
-                if (
-                    CACHE_ITEMS_TO_UPDATE.frag_masses
-                    or CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms
-                    or CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep
-                    or CACHE_ITEMS_TO_UPDATE.frag_smiles
-                ):
-                    # Get all the fragments
-                    frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
-
-                    # try: frags = lig.split_bonds()
-                    # except: frags = []
-
-                    if CACHE_ITEMS_TO_UPDATE.frag_masses:
-                        # TODO: JDD: Was int(x[1].mass). Why?
-                        lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
-                            lambda f: [x[1].mass for x in f], frags, []
-                        )
-
-                        # try: lig_infs[lig_name]["frag_masses"] = [x[1].mass for x in frags]
-                        # except: lig_infs[lig_name]["frag_masses"] = []
-
-                    if CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms:
-                        lig_infs[lig_name]["frag_num_heavy_atoms"] = _set_molecular_prop(
-                            lambda f: [x[1].num_heavy_atoms for x in f], frags, []
-                        )
-
-                        # try:
-                        #     lig_infs[lig_name]["frag_num_heavy_atoms"] = [
-                        #         x[1].num_heavy_atoms for x in frags
-                        #     ]
-                        # except:
-                        #     lig_infs[lig_name]["frag_num_heavy_atoms"] = []
-
-                    if CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep:
-
-                        # if r_tree is None:
-                        #     r_tree = KDTree(receptor.coords)
-
-                        # lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
-                        #     lambda f: [
-                        #         np.min(r_tree.query(x[1].coords)[0])  # , distance_upper_bound=10.0
-                        #         for x in f
-                        #     ],
-                        #     frags,
-                        #     [],
-                        # )
-
-                        lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
-                            lambda f: [
-                                np.min(cdist(x[1].coords, receptor.coords)) for x in f
-                            ],
-                            frags,
-                            [],
-                        )
-
-                        # try:
-                        #     # lig_infs[lig_name]["frag_dists_to_recep"] = [
-                        #         # np.min(cdist(x[1].coords, receptor.coords)) for x in frags
-                        #     # ]
-                        #     lig_infs[lig_name]["frag_dists_to_recep"] = [
-                        #         recep_kd_tree.query(x[1].coords, distance_upper_bound=10.0) for x in frags
-                        #     ]
-                        # except:
-                        #     lig_infs[lig_name]["frag_dists_to_recep"] = []
-
-                    if CACHE_ITEMS_TO_UPDATE.frag_smiles:
-                        # Helpful for debugging, mostly.
-                        lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
-                            lambda f: [x[1].smiles(True) for x in f], frags, [],
-                        )
-
-                        # try:
-                        #     lig_infs[lig_name]["frag_smiles"] = [
-                        #         x[1].smiles(True) for x in frags
-                        #     ]
-                        # except:
-                        #     lig_infs[lig_name]["frag_smiles"] = []
-
-                # if CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep:
-                #     try:
-                #         min_dist = np.min(cdist(lig.coords, receptor.coords))
-                #         lig_infs[lig_name]["frag_dists_to_recep"] = min_dist
-                #     except:
-                #         lig_infs[lig_name]["frag_dists_to_recep"] = 999999
-
         except:
-            import os
-            os.system("echo " + pdb_id + " >> err.txt")
-            # pass
+            # Note that prody can't parse some PDBs for some reason. Examples:
+            # 1vif
+            continue
+
+        # if pdb_id in ["3e94", "3wa4", "4x2v", "5b0w", "5eiv"]:
+        #     import pdb; pdb.set_trace()
+        # print(pdb_id)
+
+        if len(ligands) == 0:
+            # Strangely, some entries in Binding MOAD don't actually have
+            # non-protein/peptide ligands. For example: 2awu 2yno 5n70
+            continue
+
+            # 3e94 3wa4 4x2v 5b0w 5eiv
+
+        for lig in ligands:
+            lig_name = lig.meta["moad_ligand"].name
+            lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
+
+            # Updatable
+            if CACHE_ITEMS_TO_UPDATE.lig_mass:
+                lig_infs[lig_name]["lig_mass"] = _set_molecular_prop(
+                    lambda x: x.mass, lig, 999999
+                )
+
+            if CACHE_ITEMS_TO_UPDATE.murcko_scaffold:
+                try:
+                    smi_fixed = fix_moad_smiles(lig.smiles(True))
+                    scaffold_smi = MurckoScaffoldSmilesFromSmiles(
+                        smi_fixed, includeChirality=True
+                    )
+                    lig_infs[lig_name]["murcko_scaffold"] = scaffold_smi
+                except:
+                    lig_infs[lig_name]["murcko_scaffold"] = ""
+
+            if CACHE_ITEMS_TO_UPDATE.num_heavy_atoms:
+                lig_infs[lig_name]["num_heavy_atoms"] = _set_molecular_prop(
+                    lambda x: x.num_heavy_atoms, lig, 999999
+                )
+
+            if (
+                CACHE_ITEMS_TO_UPDATE.frag_masses
+                or CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms
+                or CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep
+                or CACHE_ITEMS_TO_UPDATE.frag_smiles
+            ):
+                # Get all the fragments
+                frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
+
+                if CACHE_ITEMS_TO_UPDATE.frag_masses:
+                    # TODO: JDD: Was int(x[1].mass). Why?
+                    lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
+                        lambda f: [x[1].mass for x in f], frags, []
+                    )
+
+                if CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms:
+                    lig_infs[lig_name]["frag_num_heavy_atoms"] = _set_molecular_prop(
+                        lambda f: [x[1].num_heavy_atoms for x in f], frags, []
+                    )
+
+                if CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep:
+
+                    # if r_tree is None:
+                    #     r_tree = KDTree(receptor.coords)
+
+                    # lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
+                    #     lambda f: [
+                    #         np.min(r_tree.query(x[1].coords)[0])  # , distance_upper_bound=10.0
+                    #         for x in f
+                    #     ],
+                    #     frags,
+                    #     [],
+                    # )
+
+                    lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
+                        lambda f: [
+                            np.min(cdist(x[1].coords, receptor.coords)) for x in f
+                        ],
+                        frags,
+                        [],
+                    )
+
+                if CACHE_ITEMS_TO_UPDATE.frag_smiles:
+                    # Helpful for debugging, mostly.
+                    lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
+                        lambda f: [x[1].smiles(True) for x in f], frags, [],
+                    )
+
+        # except:
+        #     import os
+        #     os.system("echo " + pdb_id + " >> err.txt")
+        #     # pass
 
     return (pdb_id, lig_infs)
 
@@ -214,26 +188,35 @@ def _build_moad_cache(
 
     if len(cache.keys()) > 0:
         first_pdb = cache[list(cache.keys())[0]]
-        first_lig = first_pdb[list(first_pdb.keys())[0]]
+        
+        if len(first_pdb.keys()) > 0:
+            first_lig = first_pdb[list(first_pdb.keys())[0]]
 
-        # Updatable
-        if "lig_mass" in first_lig:
-            CACHE_ITEMS_TO_UPDATE.lig_mass = False
-        if "frag_masses" in first_lig:
-            CACHE_ITEMS_TO_UPDATE.frag_masses = False
-        if "murcko_scaffold" in first_lig:
-            CACHE_ITEMS_TO_UPDATE.murcko_scaffold = False
-        if "num_heavy_atoms" in first_lig:
-            CACHE_ITEMS_TO_UPDATE.num_heavy_atoms = False
-        if "frag_num_heavy_atoms" in first_lig:
-            CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms = False
-        if "frag_dists_to_recep" in first_lig:
-            CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep = False
-        if "frag_smiles" in first_lig:
-            CACHE_ITEMS_TO_UPDATE.frag_smiles = False
+            # Updatable
+            if "lig_mass" in first_lig:
+                CACHE_ITEMS_TO_UPDATE.lig_mass = False
+            if "frag_masses" in first_lig:
+                CACHE_ITEMS_TO_UPDATE.frag_masses = False
+            if "murcko_scaffold" in first_lig:
+                CACHE_ITEMS_TO_UPDATE.murcko_scaffold = False
+            if "num_heavy_atoms" in first_lig:
+                CACHE_ITEMS_TO_UPDATE.num_heavy_atoms = False
+            if "frag_num_heavy_atoms" in first_lig:
+                CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms = False
+            if "frag_dists_to_recep" in first_lig:
+                CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep = False
+            if "frag_smiles" in first_lig:
+                CACHE_ITEMS_TO_UPDATE.frag_smiles = False
 
     if CACHE_ITEMS_TO_UPDATE.updatable():
         pdb_ids_queue = MOAD_REF.targets
+
+        # pdb_ids_queue = prob_ones # ["5ifu"] # prob_ones  # for debugging
+        # for pdb_id in pdb_ids_queue:
+        #     pdb_id, lig_infs = _get_info_given_pdb_id(pdb_id)
+        #     print(pdb_id, lig_infs, "\n")
+        # sdfsfdsf
+
         pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
         with multiprocessing.Pool(cores) as p:
             for pdb_id, lig_infs in p.imap_unordered(

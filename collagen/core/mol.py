@@ -15,6 +15,14 @@ from .voxelizer import numba_ptr, mol_gridify
 from .types import AnyAtom
 from ..draw import MolView
 
+class UnparsableSMILESException(Exception):
+    pass
+
+class UnparsableGeometryException(Exception):
+    pass
+
+class TemplateGeometryMismatchException(Exception):
+    pass
 
 class Mol(object):
     meta: Dict[str, Any]
@@ -101,18 +109,45 @@ class Mol(object):
             [12.686 13.87   5.971]
             [12.89  12.509  4.056]]
         """
-        pdb = StringIO()
-        prody.writePDBStream(pdb, atoms)
 
-        rdmol = Chem.MolFromPDBBlock(pdb.getvalue(), sanitize=sanitize)
+        # import pdb; pdb.set_trace()
+        pdb_txt = StringIO()
+        prody.writePDBStream(pdb_txt, atoms)
+
+        rdmol = Chem.MolFromPDBBlock(pdb_txt.getvalue(), sanitize=sanitize)
+
+        if rdmol is None:
+            # See, for example, 4P3R:NAP:A:202
+            raise UnparsableGeometryException(
+                "WARNING: Could not process ligand [LIGAND]. " +
+                "The geometry from the PDB file is not parsable."
+            )
 
         if template != "":
-            ref_mol = Chem.MolFromSmiles(template, sanitize=False)
-            # Remove stereochemistry and explicit hydrogens so AssignBondOrdersFromTemplate works.
-            Chem.RemoveStereochemistry(ref_mol)
-            ref_mol = Chem.RemoveAllHs(ref_mol)
+            try:
+                ref_mol = Chem.MolFromSmiles(template, sanitize=False)
+
+                # Remove stereochemistry and explicit hydrogens so
+                # AssignBondOrdersFromTemplate works.
+                Chem.RemoveStereochemistry(ref_mol)
+                ref_mol = Chem.RemoveAllHs(ref_mol)
+            except:
+                raise UnparsableSMILESException(
+                    "WARNING: Could not process ligand [LIGAND]. " +
+                    "The SMILES is not parsable: " + template
+                )
+
             rdmol.UpdatePropertyCache()
-            rdmol = Chem.AssignBondOrdersFromTemplate(ref_mol, rdmol)
+
+            try:
+                rdmol = Chem.AssignBondOrdersFromTemplate(ref_mol, rdmol)
+            except:
+                raise TemplateGeometryMismatchException(
+                    "WARNING: Could not process ligand [LIGAND]. " +
+                    "The actual ligand geometry doesn't match the SMILES. " + 
+                    "Geometry: " + Chem.MolToSmiles(rdmol) + " . " + 
+                    "SMILES: " + template + " ."
+                )
 
         rdmol.UpdatePropertyCache(strict=False)
         return BackedMol(rdmol=rdmol)
