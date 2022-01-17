@@ -268,7 +268,7 @@ class MoadVoxelSkeleton(object):
                 test_dataset,
                 shuffle=False,
                 num_dataloader_workers=args.num_dataloader_workers,
-                # max_voxels_in_memory=args.max_voxels_in_memory,
+                max_voxels_in_memory=args.max_voxels_in_memory,
             )
             .batch(args.batch_size)
             .map(
