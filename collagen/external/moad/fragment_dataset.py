@@ -5,6 +5,8 @@ from pathlib import Path
 
 from torch.utils.data import Dataset
 
+from collagen.core import args as user_args
+
 from .cache import CacheItemsToUpdate, build_index_and_filter
 from ... import Mol
 
@@ -83,12 +85,20 @@ class MOADFragmentDataset(Dataset):
     ) -> bool:
         if mass < args.min_frag_mass:
             # A fragment with no mass, so skip.
+            if user_args.verbose:
+                print("Fragment rejected; mass too small: " + str(mass))
             return False
         if mass > args.max_frag_mass:
+            if user_args.verbose:
+                print("Fragment rejected; mass too large: " + str(mass))
             return False
         if frag_dist_to_recep > args.max_frag_dist_to_recep:
+            if user_args.verbose:
+                print("Fragment rejected; distance from receptor too large: " + str(frag_dist_to_recep))
             return False
         if frag_num_heavy_atom < args.min_frag_num_heavy_atoms:
+            if user_args.verbose:
+                print("Fragment rejected; has too few heavy atoms: " + str(frag_num_heavy_atom))
             return False
         # print(mass, frag_dist_to_recep, frag_num_heavy_atom)
         return True
