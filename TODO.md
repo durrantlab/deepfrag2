@@ -9,6 +9,9 @@ I think a lot of my old code is not cruft. Good to do audit.
 
 Check out /mnt/Data/jdurrant/deepfrag2/apps/deepfrag/err.txt . These are ones you couldn't calculate properties for. Why?
 
+Is split_seed deterministic? Not specifying, should be set to "1" (default), but
+seeing different counts in progress bar.
+
 # Training goal
 
 And what is the cardinal rule of neural network training? Whenever possible, use

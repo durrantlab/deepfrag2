@@ -32,7 +32,7 @@ class MoadVoxelSkeleton(object):
     def __init__(
         self,
         model_cls: Type[pl.LightningModule],
-        dataset_cls: Type[torch.utils.data.Dataset],
+        dataset_cls: Type[torch.utils.data.Dataset]
     ):
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
@@ -191,8 +191,9 @@ class MoadVoxelSkeleton(object):
 
         return ckpt
 
-    def run(self, args: argparse.Namespace):
+    def run(self, args: argparse.Namespace = None):
         _disable_warnings()
+
         ckpt = self._get_checkpoint(args)
         if ckpt is not None:
             print(f"Restoring from checkpoint: {ckpt}")
@@ -218,6 +219,7 @@ class MoadVoxelSkeleton(object):
             cache_file=args.cache,
             split=train,
             transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
+            args=args
         )
         train_data = (
             MultiLoader(
@@ -235,6 +237,7 @@ class MoadVoxelSkeleton(object):
             cache_file=args.cache,
             split=val,
             transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
+            args=args
         )
         val_data = (
             MultiLoader(
@@ -266,6 +269,7 @@ class MoadVoxelSkeleton(object):
             cache_file=args.cache,
             split=test,
             transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
+            args=args
         )
         test_data = (
             MultiLoader(

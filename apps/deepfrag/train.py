@@ -26,7 +26,7 @@ def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
 class DeepFrag(MoadVoxelSkeleton):
     def __init__(self):
         super().__init__(
-            model_cls=DeepFragModel, dataset_cls=MOADFragmentDataset,
+            model_cls=DeepFragModel, dataset_cls=MOADFragmentDataset
         )
 
     @staticmethod
@@ -76,8 +76,12 @@ class DeepFrag(MoadVoxelSkeleton):
 
 if __name__ == "__main__":
     args = get_args(
-        parser_funcs=[MoadVoxelSkeleton.add_moad_args, DeepFragModel.add_model_args],
-        fix_args_funcs=[MoadVoxelSkeleton.fix_moad_args],
+        parser_funcs=[
+            MoadVoxelSkeleton.add_moad_args, DeepFragModel.add_model_args, 
+            MOADFragmentDataset.add_fragment_args
+        ],
+        post_parse_args_funcs=[MoadVoxelSkeleton.fix_moad_args],
         is_pytorch_lightning=True,
     )
-    DeepFrag().run(args)
+    model = DeepFrag()
+    model.run(args)

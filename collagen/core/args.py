@@ -84,7 +84,7 @@ def _get_arg_parser(
 
 
 def get_args(
-    parser_funcs=[], fix_args_funcs=[], is_pytorch_lightning=False
+    parser_funcs=[], post_parse_args_funcs=[], is_pytorch_lightning=False
 ) -> argparse.Namespace:
     """The function creates a parser and gets the associated parameters.
 
@@ -116,7 +116,7 @@ def get_args(
                 setattr(args, k, new_args[k])
 
     # Fix the arguments.
-    for func in fix_args_funcs:
+    for func in post_parse_args_funcs:
         args = func(args)
 
     # Always print out the arguments to the screen.

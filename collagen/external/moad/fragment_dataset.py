@@ -1,3 +1,4 @@
+import argparse
 from dataclasses import dataclass
 from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
 from pathlib import Path
@@ -50,42 +51,81 @@ class MOADFragmentDataset(Dataset):
         cache_cores: int = 1,
         split: Optional["MOAD_split"] = None,
         transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
+        args: argparse.Namespace = None
     ):
         self.moad = moad
         self.split = split if split is not None else moad.full_split()
         self.transform = transform
+        self.args = args
         self._index(cache_file, cache_cores)
 
-    def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
-        def make_dataset_entries_func(
-            pdb_id: str, lig_name: str, lig_inf: Dict
-        ) -> List[MOADFragmentDataset_entry]:
-            # Here also doing some filtering of the fragments.
-            frag_masses = lig_inf["frag_masses"]
-            entries_to_return = []
-            for frag_idx in range(len(frag_masses)):
-                if frag_masses[frag_idx] != 0:
-                    # A fragment with mass, so proceed. TODO: JDD: More filters
-                    # here.
-                    entries_to_return.append(
-                        MOADFragmentDataset_entry(
-                            pdb_id=pdb_id,
-                            lig_to_frag_masses_chunk_idx=lig_inf["lig_chunk_idx"],
-                            ligand_id=lig_name,
-                            frag_idx=frag_idx,
-                        )
+    @staticmethod
+    def add_fragment_args(
+        parent_parser: argparse.ArgumentParser,
+    ) -> argparse.ArgumentParser:
+        parser = parent_parser.add_argument_group("Fragment Dataset")
+
+        parser.add_argument("--min_frag_mass", required=False, type=float, default=0, help="Consider only fragments with at least this molecular mass. Default is 0 Da.")
+        parser.add_argument("--max_frag_mass", required=False, type=float, default=150, help="Consider only fragments with at most this molecular mass. Default is 150 Da.")
+        parser.add_argument("--max_frag_dist_to_recep", required=False, type=float, default=4, help="Consider only fragments that have at least one atom that comes within this distance of any receptor atom. Default is 4 Å.")
+        parser.add_argument("--min_frag_num_heavy_atoms", required=False, type=int, default=1, help="Consider only fragments that have at least this number of heavy atoms. Default is 1.")
+
+        return parent_parser
+
+    def _lig_filter(self, args: argparse.Namespace, lig: "MOAD_ligand", lig_inf: Dict) -> bool:
+        # There is a filter applied to fragment, but not whole ligand. So
+        # everything passes.
+        return True
+
+    def _frag_filter(
+        self, args: argparse.Namespace, mass: float, frag_dist_to_recep: float, 
+        frag_num_heavy_atom: int
+    ) -> bool:
+        if mass < args.min_frag_mass:
+            # A fragment with no mass, so skip.
+            return False
+        if mass > args.max_frag_mass:
+            return False
+        if frag_dist_to_recep > args.max_frag_dist_to_recep:
+            return False
+        if frag_num_heavy_atom < args.min_frag_num_heavy_atoms:
+            return False
+        # print(mass, frag_dist_to_recep, frag_num_heavy_atom)
+        return True
+
+    def _make_dataset_entries_func(
+        self, args: argparse.Namespace, pdb_id: str, lig_name: str, lig_inf: Dict
+    ) -> List[MOADFragmentDataset_entry]:
+        # Note that lig_inf contains all the data from the cache.
+
+        # Here also doing some filtering of the fragments.
+        frag_masses = lig_inf["frag_masses"]
+        frag_dists_to_recep = lig_inf["frag_dists_to_recep"]
+        frag_num_heavy_atoms = lig_inf["frag_num_heavy_atoms"]
+
+        entries_to_return = []
+        for frag_idx in range(len(frag_masses)):
+            mass = frag_masses[frag_idx]
+            dist_to_recep = frag_dists_to_recep[frag_idx]
+            num_heavy_atom = frag_num_heavy_atoms[frag_idx]
+            if self._frag_filter(args, mass, dist_to_recep, num_heavy_atom):
+                entries_to_return.append(
+                    MOADFragmentDataset_entry(
+                        pdb_id=pdb_id,
+                        lig_to_frag_masses_chunk_idx=lig_inf["lig_chunk_idx"],
+                        ligand_id=lig_name,
+                        frag_idx=frag_idx,
                     )
-            return entries_to_return
+                )
+        return entries_to_return
 
-        def lig_filter(lig: "MOAD_ligand", lig_inf: Dict) -> bool:
-            # Filter applied to fragment, but not whole ligand.
-            return True
-
+    def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
         index, internal_index = build_index_and_filter(
-            lig_filter,
+            self._lig_filter,
             self.moad,
             self.split,
-            make_dataset_entries_func,
+            self.args,
+            self._make_dataset_entries_func,
             CacheItemsToUpdate(
                 num_heavy_atoms=True,
                 frag_masses=True,

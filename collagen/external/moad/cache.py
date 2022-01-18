@@ -1,3 +1,4 @@
+import argparse
 from dataclasses import dataclass
 import json
 import multiprocessing
@@ -256,6 +257,7 @@ def build_index_and_filter(
     lig_filter_func: Any,
     moad: "MOADInterface",
     split: "MOAD_split",
+    args: argparse.Namespace,
     make_dataset_entries_func: Any,
     cache_items_to_update: CacheItemsToUpdate,
     cache_file: Optional[Union[str, Path]] = None,
@@ -286,7 +288,7 @@ def build_index_and_filter(
                         skip = True
                         break
 
-                    if not lig_filter_func(lig, lig_inf):
+                    if not lig_filter_func(args, lig, lig_inf):
                         # You've found the ligand, but it doesn't pass the
                         # filter.
                         skip = True
@@ -295,6 +297,6 @@ def build_index_and_filter(
             if skip:
                 continue
 
-            internal_index.extend(make_dataset_entries_func(pdb_id, lig_name, lig_inf))
+            internal_index.extend(make_dataset_entries_func(args, pdb_id, lig_name, lig_inf))
 
     return index, internal_index
