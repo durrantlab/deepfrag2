@@ -137,13 +137,13 @@ class MOADFragmentDataset(Dataset):
             self.args,
             self._make_dataset_entries_func,
             CacheItemsToUpdate(
-                num_heavy_atoms=True,
+                # num_heavy_atoms=True,
                 frag_masses=True,
                 frag_dists_to_recep=True,
                 frag_num_heavy_atoms=True,
-                lig_mass=True,
+                # lig_mass=True,
                 frag_smiles=True,  # Good for debugging.
-                murcko_scaffold=True,
+                # murcko_scaffold=True,
                 
             ),
             cache_file,
