@@ -30,3 +30,5 @@ projects/checkpoints/**
 projects/data/**
 !projects/data/helpers
 !projects/data/helpers/*
+
+*.old
