@@ -119,6 +119,10 @@ class MoadVoxelSkeleton(object):
     def batch_eval(args: argparse.Namespace, batch: OUT_T):
         pass
 
+    @staticmethod
+    def custom_test(args: argparse.Namespace, predictions):
+        pass
+
     def _init_trainer(self, args: argparse.Namespace) -> pl.Trainer:
         logger = None
         if args.wandb_project:
@@ -181,7 +185,7 @@ class MoadVoxelSkeleton(object):
         if args.load_checkpoint:
             ckpt = args.load_checkpoint
         elif args.load_newest_checkpoint:
-            ckpt = get_last_checkpoint()
+            ckpt = get_last_checkpoint(args)
 
         return ckpt
 
@@ -211,7 +215,7 @@ class MoadVoxelSkeleton(object):
             moad,
             cache_file=args.cache,
             split=train,
-            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry)),
+            transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
         )
         train_data = (
             MultiLoader(
@@ -221,14 +225,14 @@ class MoadVoxelSkeleton(object):
                 max_voxels_in_memory=args.max_voxels_in_memory,
             )
             .batch(args.batch_size)
-            .map(lambda batch: self.voxelize(args, voxel_params, device, batch))
+            .map(lambda batch: self.__class__.voxelize(args, voxel_params, device, batch))
         )
 
         val_dataset = self.dataset_cls(
             moad,
             cache_file=args.cache,
             split=val,
-            transform=(lambda entry: self.pre_voxelize(args, voxel_params, entry)),
+            transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
         )
         val_data = (
             MultiLoader(
@@ -238,7 +242,7 @@ class MoadVoxelSkeleton(object):
                 max_voxels_in_memory=args.max_voxels_in_memory,
             )
             .batch(args.batch_size)
-            .map(lambda batch: self.voxelize(args, voxel_params, device, batch))
+            .map(lambda batch: self.__class__.voxelize(args, voxel_params, device, batch))
         )
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
@@ -259,9 +263,7 @@ class MoadVoxelSkeleton(object):
             moad,
             cache_file=args.cache,
             split=test,
-            transform=partial(
-                self.__class__.pre_voxelize, args=args, voxel_params=voxel_params
-            ),
+            transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
         )
         test_data = (
             MultiLoader(
@@ -271,14 +273,7 @@ class MoadVoxelSkeleton(object):
                 max_voxels_in_memory=args.max_voxels_in_memory,
             )
             .batch(args.batch_size)
-            .map(
-                partial(
-                    self.__class__.voxelize,
-                    args=args,
-                    voxel_params=voxel_params,
-                    device=device,
-                )
-            )
+            .map(lambda batch: self.__class__.voxelize(args, voxel_params, device, batch))
         )
 
         model.eval()

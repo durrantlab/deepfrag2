@@ -5,10 +5,11 @@ import torch
 from torch.utils import data
 
 from collagen import Mol, DelayedMolVoxel, VoxelParams
-from collagen.external.moad import MOADFragmentDataset
+from collagen.external.moad import MOADInterface, MOADFragmentDataset
 from collagen.util import rand_rot
 from collagen.skeletons import MoadVoxelSkeleton
 from collagen.core.args import get_args
+from collagen.metrics import top_k
 
 from model import DeepFragModel
 
@@ -16,6 +17,10 @@ from model import DeepFragModel
 ENTRY_T = Tuple[Mol, Mol, Mol]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]
 OUT_T = Tuple[torch.Tensor, torch.Tensor]
+
+
+def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
+    return torch.tensor(mol.fingerprint("rdk10", args.fp_size))
 
 
 class DeepFrag(MoadVoxelSkeleton):
@@ -33,7 +38,7 @@ class DeepFrag(MoadVoxelSkeleton):
         return (
             rec.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),
             parent.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),
-            torch.tensor(frag.fingerprint("rdk10", args.fp_size)),
+            _fingerprint_fn(args, frag),
         )
 
     @staticmethod
