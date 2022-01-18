@@ -96,6 +96,8 @@ class MoadVoxelSkeleton(object):
 
     @staticmethod
     def fix_moad_args(args: argparse.Namespace) -> argparse.Namespace:
+        # Only works after arguments have been parsed, so in a separate
+        # definition.
         if args.cache is None:
             args.cache = args.csv + ".cache.json"
         return args

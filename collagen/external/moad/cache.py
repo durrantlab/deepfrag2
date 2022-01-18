@@ -186,11 +186,18 @@ def _build_moad_cache(
     global CACHE_ITEMS_TO_UPDATE
     CACHE_ITEMS_TO_UPDATE = cache_items_to_update
 
-    if len(cache.keys()) > 0:
-        first_pdb = cache[list(cache.keys())[0]]
+    pdb_ids_in_cache = list(cache.keys())
+    if len(pdb_ids_in_cache) > 0:
+        # Find the first entry in the existing cache that is not empty. Need to
+        # do this check because sometimes cache entries are {} (not able to
+        # extract ligand, for example).
+        for pdb_id_in_cache in pdb_ids_in_cache:
+            if cache[pdb_id_in_cache] != {}:
+                break
+        ref_pdb_inf = cache[pdb_id_in_cache]
         
-        if len(first_pdb.keys()) > 0:
-            first_lig = first_pdb[list(first_pdb.keys())[0]]
+        if len(ref_pdb_inf.keys()) > 0:
+            first_lig = ref_pdb_inf[list(ref_pdb_inf.keys())[0]]
 
             # Updatable
             if "lig_mass" in first_lig:
@@ -261,6 +268,9 @@ def build_index_and_filter(
     internal_index = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
         pdb_id = pdb_id.lower()
+        if not pdb_id in index.keys():
+            # missing entry in cache. has probably become corrupted.
+            raise Exception("Entry " + pdb_id + " is not present in the index. Has the cache file been corrupted? Try moving/deleting " + str(cache_file) + " and rerunning to regenerate the cache.")
         receptor_inf = index[pdb_id]
         for lig_name in receptor_inf.keys():
             lig_inf = receptor_inf[lig_name]
