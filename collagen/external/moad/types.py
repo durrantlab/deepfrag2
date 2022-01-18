@@ -1,5 +1,6 @@
 
 from dataclasses import dataclass, field
+from collagen.core import args as user_args
 from typing import List, Tuple
 from pathlib import Path
 import textwrap
@@ -10,7 +11,6 @@ import prody
 
 from ... import Mol
 from .moad_utils import fix_moad_smiles
-
 
 @dataclass
 class MOAD_class(object):
@@ -43,12 +43,14 @@ class MOAD_target(object):
 
         Returns a (receptor, ligand) tuple of :class:`atlas.data.mol.Mol` objects.
         """
+        
         f = open(self.files[idx], "r")
         m = prody.parsePDBStream(f)
         f.close()
 
         ignore_sels = []
         ligands = []
+
         for lig in self.ligands:
             # Note that "(altloc _ or altloc A)" makes sure only the first
             # alternate locations are used.
@@ -71,14 +73,16 @@ class MOAD_target(object):
                     lig_mol.meta["name"] = lig.name
                     lig_mol.meta["moad_ligand"] = lig
                 except UnparsableSMILESException as err:
-                    msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
-                    print(textwrap.fill(msg, subsequent_indent="  "))
+                    if user_args.verbose:
+                        msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
+                        print(textwrap.fill(msg, subsequent_indent="  "))
                     continue
                 except UnparsableGeometryException as err:
                     # Some geometries are particularly bad and just can't be
                     # parsed. For example, 4P3R:NAP:A:202.
-                    msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
-                    print(textwrap.fill(msg, subsequent_indent="  "))
+                    if user_args.verbose:
+                        msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
+                        print(textwrap.fill(msg, subsequent_indent="  "))
                     continue
                 except TemplateGeometryMismatchException as err:
                     # Note that at least some of the time, this is due to bad
@@ -94,16 +98,18 @@ class MOAD_target(object):
                     # MOAD calls this one ligand, "GDQ GLC". I've spot checked a
                     # number of these, and the ones that are throw out should be
                     # thrown out.
-                    msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
-                    print(textwrap.fill(msg, subsequent_indent="  "))
+                    if user_args.verbose:
+                        msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
+                        print(textwrap.fill(msg, subsequent_indent="  "))
                     continue
                 except Exception as err:
-                    msg = (
-                        "WARNING: Could not process ligand " + 
-                        self.pdb_id + ":" + lig.name + ". " +
-                        "An unknown error occured: " + str(err)
-                    )
-                    print(textwrap.fill(msg, subsequent_indent="  "))
+                    if user_args.verbose:
+                        msg = (
+                            "WARNING: Could not process ligand " + 
+                            self.pdb_id + ":" + lig.name + ". " +
+                            "An unknown error occured: " + str(err)
+                        )
+                        print(textwrap.fill(msg, subsequent_indent="  "))
                     continue
 
                 ligands.append(lig_mol)

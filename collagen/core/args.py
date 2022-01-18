@@ -1,6 +1,9 @@
 import argparse
 import json
 
+# It would be tedious to get the args to some place in the code (e.g.,
+# MOAD_target). Let's just make some of the variables globally availble here.
+verbose = False
 
 def _add_generic_params(
     parent_parser: argparse.ArgumentParser,
@@ -39,6 +42,12 @@ def _add_generic_params(
         help="If set, the most recent checkpoint will be loaded.",
     )
     # TODO: JDD: Load from best validation checkpoint.
+    parser.add_argument(
+        "--verbose",
+        default=False,
+        action="store_true",
+        help="If set, will output additional information during the run. Useful for debugging.",
+    )
     parser.add_argument(
         "--json_params",
         required=False,
@@ -102,11 +111,16 @@ def get_args(
         argparse.Namespace: The parsed and updated args.
     """
 
+    global verbose
+
     # Get the parser
     parser = _get_arg_parser(parser_funcs, is_pytorch_lightning)
 
     # Parse the arguments
     args = parser.parse_args()
+
+    # Make a few select arguments globally available.
+    verbose = args.verbose
 
     # Add parameters from JSON file, which override any command-line parameters.
     if args.json_params:
