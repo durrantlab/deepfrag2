@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import pytorch_lightning as pl
 
-from collagen.metrics import cos_loss
+from collagen.metrics import cos_loss, top_k
 
 
 class DeepFragModel(pl.LightningModule):
@@ -69,3 +69,26 @@ class DeepFragModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
+
+    def test_step(self, batch, batch_idx):
+        voxel, fp = batch
+        pred = self(voxel)
+
+        loss = cos_loss(pred, fp).mean()
+        self.log("test_loss", loss)
+
+        # Drop (large) voxel input, return the predicted and target fingerprints.
+        return pred, fp
+
+    def test_epoch_end(self, results):
+        predictions = torch.cat([x[0] for x in results])
+        targets = torch.cat([x[1] for x in results])
+
+        fp = targets.unique(dim=0)
+
+        self.log('LBL_TEST_SIZE', len(fp))
+
+        top = top_k(predictions, targets, fp, k=[1,8,16,32,64])
+
+        for k in top:
+            self.log(f'test_top_{k}', top[k])
