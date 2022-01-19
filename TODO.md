@@ -1,16 +1,14 @@
 Re. learning rate, this is great:
 https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
 
-Ask Harrison to look over inference code.
-
 When doing inference, get best validation checkpoint (not last).
 
 I think a lot of my old code is not cruft. Good to do audit.
 
-Check out /mnt/Data/jdurrant/deepfrag2/apps/deepfrag/err.txt . These are ones you couldn't calculate properties for. Why?
-
 Is split_seed deterministic? Not specifying, should be set to "1" (default), but
 seeing different counts in progress bar.
+
+Pickle PDBs? What would be fastest?
 
 # Training goal
 
@@ -33,6 +31,10 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Ask Harrison to look over inference code.
+
+Check out /mnt/Data/jdurrant/deepfrag2/apps/deepfrag/err.txt . These are ones you couldn't calculate properties for. Why?
 
 Create moad cache using multiple processors?
 
