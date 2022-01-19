@@ -277,8 +277,7 @@ def build_index_and_filter(
         for lig_name in receptor_inf.keys():
             lig_inf = receptor_inf[lig_name]
 
-            # Enforce filters. TODO: JDD: Distance to receptor, number of heavy
-            # atoms, etc.?
+            # Enforce filters.
             skip = False
             for lig in moad[pdb_id].ligands:
                 if lig.name == lig_name:
@@ -298,5 +297,8 @@ def build_index_and_filter(
                 continue
 
             internal_index.extend(make_dataset_entries_func(args, pdb_id, lig_name, lig_inf))
+
+    if len(internal_index) == 0:
+        raise Exception("No ligands passed the moad filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Representative ligand info to help with debugging: " + str(lig))
 
     return index, internal_index
