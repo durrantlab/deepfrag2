@@ -92,10 +92,13 @@ def cmd_run(args):
         mounts[str((root / args.data).absolute())] = '/mnt/data'
     if args.checkpoints is not None:
         mounts[str((root / args.checkpoints).absolute())] = '/mnt/checkpoints'
+    if args.extra_dir is not None:
+        mounts[str((root / args.extra_dir).absolute())] = '/mnt/extra'
 
     run_image(
         tag=f'collagen_{args.name}',
         extra=args.extra,
+        cmd=args.cmd,
         mounts=mounts,
         workdir='/mnt/apps',
     )
@@ -140,9 +143,11 @@ if __name__=='__main__':
 
     p_run = subparsers.add_parser('run')
     p_run.add_argument('name', help='Version name.')
-    p_run.add_argument('--apps', default='./apps', help='Path to apps folder, mounted at /mnt/apps')
-    p_run.add_argument('--data', default=None, help='Path to data folder, mounted at /mnt/data')
-    p_run.add_argument('--checkpoints', default=None, help='Path to checkpoints folder, mounted at /mnt/checkpoints')
+    p_run.add_argument('--apps', default='./apps', help='Path to apps folder, mounted at /mnt/apps/.')
+    p_run.add_argument('--data', default=None, help='Path to data folder, mounted at /mnt/data/.')
+    p_run.add_argument('--checkpoints', default=None, help='Path to checkpoints folder, mounted at /mnt/checkpoints/.')
+    p_run.add_argument('--extra_dir', default=None, help='Path to an extra folder, mounted at /mnt/extra/. An easy way to mount a host directory containing misc information within the container.')
+    p_run.add_argument('--cmd', default="/bin/bash", help='The command to run in the docker container on startup. Defaults to /bin/bash')
     p_run.add_argument('--extra', required=False, default='', help='Extra arguments passed directly to `docker run`.')
 
     p_test = subparsers.add_parser('test')
