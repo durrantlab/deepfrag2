@@ -4,11 +4,15 @@ import argparse
 import json
 from datetime import datetime
 import time
+import glob
 
-print("\nThis script serves to simplify use on Durrant-lab computer systems. It may not work on other systems.\n")
+print(
+    "\nThis script serves to simplify use on Durrant-lab computer systems. It may not work on other systems.\n"
+)
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # CUR_APP_DIR = ".cur_app_" + str(time.time()).replace(".", "")
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -51,10 +55,9 @@ def validate(args):
         print("Required file missing: " + args.app_name + "/run.py")
         sys.exit(0)
 
-    # TODO: JDD: Restore
-    # if not os.path.exists(args.app_name + "/defaults.json"):
-    #     print("Required file missing: " + args.app_name + "/defaults.json")
-    #     sys.exit(0)
+    if not os.path.exists(args.app_name + "/defaults.json"):
+        print("Required file missing: " + args.app_name + "/defaults.json")
+        sys.exit(0)
 
     if not os.path.exists(args.working_dir):
         os.system("mkdir " + args.working_dir)
@@ -75,7 +78,6 @@ def compile_parameters(args):
 
     # Hard code some parameters
     params["default_root_dir"] = "/mnt/extra/checkpoints/"
-    # params["cache"] = params["csv"] + ".cache.json"
 
     # Change csv to working dir if exists relative to this script.
     # TODO: JDD: Restore
@@ -99,42 +101,12 @@ def compile_parameters(args):
 
     return params
 
-# TODO: JDD: Restore
-# def make_cur_app_dir(args):
-#     # Copy selected app to common name.
-#     os.system(
-#         "cd "
-#         + SCRIPT_DIR
-#         + "; rm -rf " + CUR_APP_DIR + "; cp -r "
-#         + os.path.basename(args.app_name)
-#         + " " + CUR_APP_DIR
-#     )
-
-#     # Construct commandline
-#     params = compile_parameters(args)
-#     exec = """echo START: $(date)
-#     python run.py """ + " ".join(
-#         ["--" + key + " " + str(params[key]) for key in params]
-#     )
-
-#     with open(SCRIPT_DIR + "/" + CUR_APP_DIR + "/run.sh", "w") as f:
-#         f.write(exec)
-
-#     os.system("cd " + SCRIPT_DIR + ";chmod +x ./" + CUR_APP_DIR + "/run.sh")
-
-#     return params
-
-
 args = get_args()
 validate(args)
 
-# TODO: JDD: Restore
-# params = make_cur_app_dir(args)
 params = compile_parameters(args)
 
 # Save parameters to working directory.
-# date_str = datetime.now().strftime("%b-%d-%Y.%H-%M-%S")
-# with open(args.working_dir + "/params." + date_str + ".json", "w") as f:
 with open(args.working_dir + "/params.json", "w") as f:
     json.dump(params, f, indent=4)
 
@@ -152,42 +124,26 @@ with open(args.working_dir + "/run.sh", "w") as f:
         "--data " + params["data"],
         "--max_voxels_in_memory " + str(params["max_voxels_in_memory"]),
         "--save_params /mnt/extra/params.json",  # So overwrites input
+        "--load_newest_checkpoint" if glob.glob(args.working_dir + "/checkpoints/last.ckpt") else "",
     ]
     f.write("python run.py " + " ".join(parts))
+
 
 def run(cmd):
     print("\n" + cmd + "\n")
     os.system(cmd)
+
 
 # Build the docker image (every time).
 run("cd ../ && ./manager build cu111")
 
 # Run the docker image
 prts = [
-    '--data ' + os.path.abspath("../data/"),
-    '--extra_dir ' + args.working_dir,
+    "--data " + os.path.abspath("../data/"),
+    "--extra_dir " + args.working_dir,
     '--cmd "/bin/bash /mnt/extra/run.sh "',
     # '--cmd "/bin/bash"',
     '--extra="--gpus=1"',
 ]
-cmds = [
-    "cd ../",
-    './manager run ' + " ".join(prts) + ' cu111'
-]
+cmds = ["cd ../", "./manager run " + " ".join(prts) + " cu111"]
 run("&&".join(cmds))
-
-
-# os.system(
-#     """cd """
-#     + SCRIPT_DIR
-#     + """/utils/docker && \
-# docker run --gpus all -it --rm --shm-size="2g" --ipc=host \
-#     -v $(realpath ../../../):/mnt \
-#     -v $(realpath """
-#     + args.working_dir
-#     + """):/working \
-#     jdurrant/deeplig"""
-# )
-
-# # Clean up
-# os.system("rm -rf " + CUR_APP_DIR)

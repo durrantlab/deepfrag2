@@ -162,7 +162,7 @@ class MoadVoxelSkeleton(object):
         self, args: argparse.Namespace, ckpt: Optional[str]
     ) -> pl.LightningModule:
         if ckpt:
-            print(f"Loading model from checkpoint {ckpt}")
+            print(f"\nLoading model from checkpoint {ckpt}\n")
             return self.model_cls.load_from_checkpoint(ckpt)
         else:
             return self.model_cls(**vars(args))
