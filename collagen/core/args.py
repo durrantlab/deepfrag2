@@ -54,7 +54,12 @@ def _add_generic_params(
         default=None,
         help="Path to a json file with parameters that override those specified at the command line.",
     )
-
+    parser.add_argument(
+        "--save_params",
+        required=False,
+        default=None,
+        help="Path to a json file where all parameters will be saved. Useful for debugging.",
+    )
     return parent_parser
 
 
@@ -132,6 +137,11 @@ def get_args(
     # Fix the arguments.
     for func in post_parse_args_funcs:
         args = func(args)
+
+    # Save all arguments to a json file for debugging.
+    if args.save_params is not None:
+        with open(args.save_params, "w") as f:
+            json.dump(vars(args), f, indent=4)
 
     # Always print out the arguments to the screen.
     print("\nPARAMETERS")

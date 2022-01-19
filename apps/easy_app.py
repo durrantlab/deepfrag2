@@ -151,6 +151,7 @@ with open(args.working_dir + "/run.sh", "w") as f:
         "--csv " + params["csv"],
         "--data " + params["data"],
         "--max_voxels_in_memory " + str(params["max_voxels_in_memory"]),
+        "--save_params /mnt/extra/params.json",  # So overwrites input
     ]
     f.write("python run.py " + " ".join(parts))
 
