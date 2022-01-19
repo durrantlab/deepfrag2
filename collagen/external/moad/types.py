@@ -44,8 +44,9 @@ class MOAD_target(object):
         Returns a (receptor, ligand) tuple of :class:`atlas.data.mol.Mol` objects.
         """
         
+        # Load the protein/ligand complex (PDB formatted).
         f = open(self.files[idx], "r")
-        m = prody.parsePDBStream(f)
+        m = prody.parsePDBStream(f, model=1)  # model=1 not necessary, but just in case...
         f.close()
 
         ignore_sels = []
