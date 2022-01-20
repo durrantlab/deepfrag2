@@ -1,7 +1,9 @@
 import argparse
 from functools import partial
 from multiprocessing import Value
-from typing import Type, TypeVar, List, Optional
+from typing import Any, Type, TypeVar, List, Optional
+from collagen.core.loader import DataLambda
+from collagen.external.moad.types import MOAD_split
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.csv_logs import CSVLogger
@@ -205,6 +207,30 @@ class MoadVoxelSkeleton(object):
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 
+    def _create_data_lambda_dataloader(
+        self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
+        voxel_params: VoxelParams, device: Any, shuffle=True
+    ) -> DataLambda:
+        dataset = self.dataset_cls(
+            moad,
+            cache_file=args.cache,
+            split=split,
+            transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
+            args=args
+        )
+        data = (
+            MultiLoader(
+                dataset,
+                shuffle=shuffle,
+                num_dataloader_workers=args.num_dataloader_workers,
+                max_voxels_in_memory=args.max_voxels_in_memory,
+            )
+            .batch(args.batch_size)
+            .map(lambda batch: self.__class__.voxelize(args, voxel_params, device, batch))
+        )
+
+        return data
+
     def _run_train(self, args: argparse.Namespace, ckpt: Optional[str]):
         trainer = self._init_trainer(args)
         model = self._init_model(args, ckpt)
@@ -214,40 +240,12 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(metadata=args.csv, structures=args.data)
         train, val, _ = moad.compute_split(args.split_seed)
 
-        train_dataset = self.dataset_cls(
-            moad,
-            cache_file=args.cache,
-            split=train,
-            transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
-            args=args
-        )
-        train_data = (
-            MultiLoader(
-                train_dataset,
-                shuffle=True,
-                num_dataloader_workers=args.num_dataloader_workers,
-                max_voxels_in_memory=args.max_voxels_in_memory,
-            )
-            .batch(args.batch_size)
-            .map(lambda batch: self.__class__.voxelize(args, voxel_params, device, batch))
+        train_data = self._create_data_lambda_dataloader(
+            args, moad, train, voxel_params, device
         )
 
-        val_dataset = self.dataset_cls(
-            moad,
-            cache_file=args.cache,
-            split=val,
-            transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
-            args=args
-        )
-        val_data = (
-            MultiLoader(
-                val_dataset,
-                shuffle=True,
-                num_dataloader_workers=args.num_dataloader_workers,
-                max_voxels_in_memory=args.max_voxels_in_memory,
-            )
-            .batch(args.batch_size)
-            .map(lambda batch: self.__class__.voxelize(args, voxel_params, device, batch))
+        val_data = self._create_data_lambda_dataloader(
+            args, moad, val, voxel_params, device
         )
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
@@ -264,26 +262,26 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(metadata=args.csv, structures=args.data)
         _, _, test = moad.compute_split(args.split_seed)
 
-        test_dataset = self.dataset_cls(
-            moad,
-            cache_file=args.cache,
-            split=test,
-            transform=(lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)),
-            args=args
-        )
-        test_data = (
-            MultiLoader(
-                test_dataset,
-                shuffle=False,
-                num_dataloader_workers=args.num_dataloader_workers,
-                max_voxels_in_memory=args.max_voxels_in_memory,
-            )
-            .batch(args.batch_size)
-            .map(lambda batch: self.__class__.voxelize(args, voxel_params, device, batch))
+        test_data = self._create_data_lambda_dataloader(
+            args, moad, test, voxel_params, device, shuffle=False
         )
 
+        import pdb; pdb.set_trace()
+
         model.eval()
+
+        # fp = prediction_targets.unique(dim=0)
+        # self.log('LBL_TEST_SIZE', len(fp))
+
+        # top = top_k(predictions, prediction_targets, fp, k=[1,8,16,32,64])
+
+        # for k in top:
+        #     self.log(f'test_top_{k}', top[k])
+
 
         for i in range(args.inference_rotations):
             print(f"Inference rotation {i+1}/{args.inference_rotations}")
             trainer.test(model, test_data, verbose=True)
+
+        import pdb; pdb.set_trace()
+

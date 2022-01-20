@@ -71,6 +71,7 @@ class DeepFragModel(pl.LightningModule):
         return optimizer
 
     def test_step(self, batch, batch_idx):
+        # Runs inferance on a given batch.
         voxel, fp = batch
         pred = self(voxel)
 
@@ -81,14 +82,11 @@ class DeepFragModel(pl.LightningModule):
         return pred, fp
 
     def test_epoch_end(self, results):
+        # This runs after inference has been run on all batches.
         predictions = torch.cat([x[0] for x in results])
-        targets = torch.cat([x[1] for x in results])
+        prediction_targets = torch.cat([x[1] for x in results])
 
-        fp = targets.unique(dim=0)
+        # Save predictions, etc., so they can be accessed outside the model.
+        self.predictions = predictions
+        self.targets = prediction_targets
 
-        self.log('LBL_TEST_SIZE', len(fp))
-
-        top = top_k(predictions, targets, fp, k=[1,8,16,32,64])
-
-        for k in top:
-            self.log(f'test_top_{k}', top[k])
