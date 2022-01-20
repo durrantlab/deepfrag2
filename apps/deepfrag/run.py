@@ -46,8 +46,9 @@ class DeepFrag(MoadVoxelSkeleton):
         args: argparse.Namespace,
         voxel_params: VoxelParams,
         device: torch.device,
-        batch: List[TMP_T],
+        batch: List[TMP_T]
     ) -> OUT_T:
+
         voxels = torch.zeros(
             size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
             device=device,

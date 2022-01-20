@@ -80,7 +80,6 @@ def compile_parameters(args):
     params["default_root_dir"] = "/mnt/extra/checkpoints/"
 
     # Change csv to working dir if exists relative to this script.
-    # TODO: JDD: Restore
     # if os.path.exists(params["csv"]):
     #     bsnm = os.path.basename(params["csv"])
     #     new_csv = args.working_dir + "/" + bsnm
@@ -88,7 +87,6 @@ def compile_parameters(args):
     #     params["csv"] = "/mnt/extra/" + bsnm
 
     # Change cache to working dir if exists relative to this script.
-    # TODO: JDD: Restore
     # if os.path.exists(params["cache"]):
     #     bsnm = os.path.basename(params["cache"])
     #     new_cache = args.working_dir + "/" + bsnm

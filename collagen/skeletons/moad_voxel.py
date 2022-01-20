@@ -3,7 +3,9 @@ from functools import partial
 from multiprocessing import Value
 from typing import Any, Type, TypeVar, List, Optional
 from collagen.core.loader import DataLambda
+from collagen.core.mol import Mol
 from collagen.external.moad.types import MOAD_split
+from tqdm.std import tqdm
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.csv_logs import CSVLogger
@@ -13,6 +15,9 @@ import torch
 from ..checkpoints import MyModelCheckpoint, get_last_checkpoint
 from .. import VoxelParams, VoxelParamsDefault, MultiLoader
 from ..external import MOADInterface
+
+from collagen.metrics import top_k
+
 
 
 ENTRY_T = TypeVar("ENTRY_T")
@@ -250,6 +255,39 @@ class MoadVoxelSkeleton(object):
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
+    def _get_fps_train_val_for_testing(
+        self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
+        voxel_params: VoxelParams, device: Any, label_set: torch.Tensor
+    ):
+        # If you want to include training and validation fingerprints in the
+        # label set for testing.
+
+        if True:
+            # TODO: Harrison: How hard would it be to make it so data below
+            # doesn't voxelize the receptor? Is that adding a lot of time to the
+            # calculation? Just a thought.
+            data = self._create_data_lambda_dataloader(
+                args, moad, split, voxel_params, device, shuffle=False
+            )
+
+            all_fps = []
+            for batch in tqdm(data, desc="Getting fingerprints from " + split.name + " set..."):
+                voxels, fps = batch
+                all_fps.append(fps)
+            all_fps.append(label_set)
+            return torch.cat(all_fps).unique(dim=0)
+        else:
+            # Note: This would only work if considering whole ligand. Perhaps
+            # good for deeplig, but not deepfrag.
+            mols = [Mol.from_smiles(s) for s in split.smiles]
+            fps = [
+                torch.tensor(m.fingerprint("rdk10", args.fp_size), device=device).reshape((1, args.fp_size))
+                for m in mols
+            ]
+            fps.append(label_set)
+            # import pdb; pdb.set_trace()
+            return torch.cat(fps).unique(dim=0)
+
     def _run_test(self, args: argparse.Namespace, ckpt: Optional[str]):
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
@@ -260,28 +298,51 @@ class MoadVoxelSkeleton(object):
         device = self._init_device(args)
 
         moad = MOADInterface(metadata=args.csv, structures=args.data)
-        _, _, test = moad.compute_split(args.split_seed)
+        train, val, test = moad.compute_split(args.split_seed)
 
+        # You'll always need the test data.
         test_data = self._create_data_lambda_dataloader(
             args, moad, test, voxel_params, device, shuffle=False
         )
 
-        import pdb; pdb.set_trace()
-
         model.eval()
 
-        # fp = prediction_targets.unique(dim=0)
-        # self.log('LBL_TEST_SIZE', len(fp))
+        # import pdb; pdb.set_trace()
 
-        # top = top_k(predictions, prediction_targets, fp, k=[1,8,16,32,64])
-
-        # for k in top:
-        #     self.log(f'test_top_{k}', top[k])
-
-
+        summed_predictions = None
         for i in range(args.inference_rotations):
             print(f"Inference rotation {i+1}/{args.inference_rotations}")
             trainer.test(model, test_data, verbose=True)
+            if summed_predictions is None:
+                summed_predictions = model.predictions
+            else:
+                summed_predictions = torch.add(summed_predictions, model.predictions)
+        
+        # TODO: Harrison. I've verified that avg_predictions ==
+        # model.predictions piecewise when args.inference_rotations == 1, Yet
+        # Toggling the two comments changes top-k prediction. Not sure how this
+        # is possible. 
+
+        avg_predictions = torch.div(summed_predictions, 1.0) # args.inference_rotations)
+        # avg_predictions = model.predictions
+
+        # Create the label set. First, get the test targets (must be present for
+        # top_k to make sense).
+        label_set_fingerprints = model.prediction_targets.unique(dim=0)
+
+        label_set_fingerprints = self._get_fps_train_val_for_testing(
+            args, moad, train, voxel_params, device, label_set_fingerprints
+        )
+
+        label_set_fingerprints = self._get_fps_train_val_for_testing(
+            args, moad, val, voxel_params, device, label_set_fingerprints
+        )
+
+        print('Label set size: ' + str(len(label_set_fingerprints)))
+
+        top = top_k(avg_predictions, model.prediction_targets, label_set_fingerprints, k=[1,8,16,32,64])
+
+        for k in top: print(f'test_top_{k}', top[k])
 
         import pdb; pdb.set_trace()
 

@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import pytorch_lightning as pl
 
-from collagen.metrics import cos_loss, top_k
+from collagen.metrics import cos_loss
 
 
 class DeepFragModel(pl.LightningModule):
@@ -88,5 +88,5 @@ class DeepFragModel(pl.LightningModule):
 
         # Save predictions, etc., so they can be accessed outside the model.
         self.predictions = predictions
-        self.targets = prediction_targets
+        self.prediction_targets = prediction_targets
 
