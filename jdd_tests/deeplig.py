@@ -11,13 +11,13 @@ parser.add_argument(
     "--data", required=True, help="Path to MOAD root structure folder"
 )
 parser.add_argument("--cache", required=True, help="Path to MOAD cache.json file")
-parser.add_argument(
-    "--split_seed",
-    required=False,
-    default=1,
-    type=int,
-    help="Seed for TRAIN/VAL/TEST split. Defaults to 1.",
-)
+# parser.add_argument(
+#     "--split_seed",
+#     required=False,
+#     default=1,
+#     type=int,
+#     help="Seed for TRAIN/VAL/TEST split. Defaults to 1.",
+# )
 parser.add_argument(
     "--num_dataloader_workers", default=1, type=int, help="Number of workers for DataLoader"
 )

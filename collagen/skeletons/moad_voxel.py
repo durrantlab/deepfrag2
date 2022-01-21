@@ -68,6 +68,12 @@ class MoadVoxelSkeleton(object):
             help="Seed for TRAIN/VAL/TEST split. Defaults to 1.",
         )
         parser.add_argument(
+            "--save_splits",
+            required=False,
+            default=None,
+            help="Path to a json file where the splits will be saved. Useful for debugging.",
+        )
+        parser.add_argument(
             "--num_dataloader_workers",
             default=1,
             type=int,
@@ -243,7 +249,7 @@ class MoadVoxelSkeleton(object):
         device = self._init_device(args)
 
         moad = MOADInterface(metadata=args.csv, structures=args.data)
-        train, val, _ = moad.compute_split(args.split_seed)
+        train, val, _ = moad.compute_split(args.split_seed, save_splits=args.save_splits)
 
         train_data = self._create_data_lambda_dataloader(
             args, moad, train, voxel_params, device
@@ -298,7 +304,7 @@ class MoadVoxelSkeleton(object):
         device = self._init_device(args)
 
         moad = MOADInterface(metadata=args.csv, structures=args.data)
-        train, val, test = moad.compute_split(args.split_seed)
+        train, val, test = moad.compute_split(args.split_seed, save_splits=args.save_splits)
 
         # You'll always need the test data.
         test_data = self._create_data_lambda_dataloader(

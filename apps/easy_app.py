@@ -123,6 +123,7 @@ with open(args.working_dir + "/run.sh", "w") as f:
         "--max_voxels_in_memory " + str(params["max_voxels_in_memory"]),
         "--save_params /mnt/extra/params.json",  # So overwrites input
         "--load_newest_checkpoint" if glob.glob(args.working_dir + "/checkpoints/last.ckpt") else "",
+        "--save_splits /mnt/extra/splits.json"
     ]
     f.write("python run.py " + " ".join(parts))
 

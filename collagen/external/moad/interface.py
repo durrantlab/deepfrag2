@@ -194,6 +194,7 @@ class MOADInterface(object):
         p_train: float = 0.6,
         p_val: float = 0.5,
         prevent_smiles_overlap: bool = True,
+        save_splits: str = None
     ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
         """Compute a TRAIN/VAL/TEST split.
 
@@ -246,16 +247,15 @@ class MOADInterface(object):
             val_smi = (val_smi - (train_smi | test_smi)) | a_val | b_val | d_val
             test_smi = (test_smi - (train_smi | val_smi)) | b_test | c_test | d_test
 
-        # Save spit and seed to json in working directory if running in docker
-        # container. TODO: JDD: Remove this.
-        if os.path.exists("/working/"):
+        if save_splits is not None:
+            # Save spits and seed to json.
             split_inf = {
                 "seed": seed,
                 "train": train_ids,
                 "val": val_ids,
                 "test": test_ids,
             }
-            json.dump(split_inf, open("/working/moad_split.json", "w"), indent=4)
+            json.dump(split_inf, open(save_splits, "w"), indent=4)
 
         return (
             MOAD_split(name="TRAIN", targets=train_ids, smiles=train_smi),
