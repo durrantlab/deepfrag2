@@ -307,23 +307,29 @@ class MoadVoxelSkeleton(object):
 
         model.eval()
 
-        # import pdb; pdb.set_trace()
-
-        summed_predictions = None
+        # Intentionally keeping all predictions in a list instead of averaging
+        # as you go. To allow for examining each rotations prediction.
+        all_predictions = []
         for i in range(args.inference_rotations):
             print(f"Inference rotation {i+1}/{args.inference_rotations}")
             trainer.test(model, test_data, verbose=True)
-            if summed_predictions is None:
-                summed_predictions = model.predictions
-            else:
-                summed_predictions = torch.add(summed_predictions, model.predictions)
+            all_predictions.append(model.predictions)
+            # if all_predictions is None:
+            #     all_predictions = model.predictions
+            # else:
+            #     all_predictions = torch.add(all_predictions, model.predictions)
         
-        # TODO: Harrison. I've verified that avg_predictions ==
-        # model.predictions piecewise when args.inference_rotations == 1, Yet
-        # Toggling the two comments changes top-k prediction. Not sure how this
-        # is possible. 
+        avg_predictions = torch.zeros(all_predictions[0].shape, device=device)
+        
+        for prediction in all_predictions:
+            torch.add(avg_predictions, prediction, out=avg_predictions)
+        
+        torch.div(
+            avg_predictions, 
+            torch.tensor(args.inference_rotations, device=device),
+            out=avg_predictions
+        )
 
-        avg_predictions = torch.div(summed_predictions, 1.0) # args.inference_rotations)
         # avg_predictions = model.predictions
 
         # Create the label set. First, get the test targets (must be present for

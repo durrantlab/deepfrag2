@@ -35,6 +35,9 @@ class DeepFrag(MoadVoxelSkeleton):
     ) -> TMP_T:
         rec, parent, frag = entry
         rot = rand_rot()
+        
+        print(rot)
+        
         return (
             rec.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),
             parent.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),

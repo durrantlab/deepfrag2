@@ -15,11 +15,14 @@ from .types import (
     MOAD_target
 )
 
+split_rand_num_gen = None
 
 def _split_seq(seq, p):
+    global split_rand_num_gen
     l = list(seq)
     sz = len(l)
-    np.random.shuffle(l)
+    split_rand_num_gen.shuffle(l)
+    # np.random.shuffle(l)
 
     return l[: int(sz * p)], l[int(sz * p) :]
 
@@ -32,19 +35,24 @@ def _flatten(seq):
 
 
 def _div2(seq):
+    global split_rand_num_gen
     l = list(seq)
     sz = len(l)
 
-    np.random.shuffle(l)
+    split_rand_num_gen.shuffle(l)
+    # np.random.shuffle(l)
 
     return (set(l[: sz // 2]), set(l[sz // 2 :]))
 
 
 def _div3(seq):
+    global split_rand_num_gen
+
     l = list(seq)
     sz = len(l)
 
-    np.random.shuffle(l)
+    split_rand_num_gen.shuffle(l)
+    # np.random.shuffle(l)
 
     v = sz // 3
     return (set(l[:v]), set(l[v : v * 2]), set(l[v * 2 :]))
@@ -202,7 +210,13 @@ class MOADInterface(object):
         """
 
         if seed != 0:
-            np.random.seed(seed)
+            global split_rand_num_gen
+            split_rand_num_gen = np.random.default_rng(seed)
+
+            # Note: Below also makes rotations and other randomly determined
+            # aspects of the code deterministic. So using
+            # np.random.default_rng(seed) instead.
+            # np.random.seed(seed)
 
         families: List[List[str]] = []
         # import pdb; pdb.set_trace()
