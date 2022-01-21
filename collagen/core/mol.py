@@ -569,3 +569,19 @@ class MolDataset(Dataset):
 
     def __getitem__(self, idx: int) -> "Mol":
         raise NotImplementedError()
+
+
+def SmilesMolSupplier(filename):
+    # Wrapper around rdkit.Chem.SmilesMolSupplier, but returns Mols. A
+    # generator.
+    for l in open(filename):
+        prts = l.strip().split(maxsplit=2)
+        smi = prts[0]
+        
+        rdmol = Chem.MolFromSmiles(smi, sanitize=True)
+        name = prts[1] if len(prts) > 1 else smi
+        rdmol.SetProp("name", name)
+
+        mol = Mol.from_rdkit(rdmol)
+
+        yield mol

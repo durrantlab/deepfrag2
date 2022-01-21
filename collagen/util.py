@@ -1,9 +1,20 @@
 import numpy as np
-
+import time
 
 def rand_rot():
     """Returns a random uniform quaternion rotation."""
-    q = np.random.normal(size=4)  # sample quaternion from normal distribution
+
+    # Had to do the below to get the rotation to be different on every rotation
+    # during inferance. Note that if two rotations are requested within a
+    # microsecond of each other, will return same rotation. But even that
+    # wouldn't necessarily be problematic.
+    rot_rand_num_gen = np.random.default_rng(
+        int(time.time() * 1000000)
+    )
+
+    q = rot_rand_num_gen.normal(size=4)  # sample quaternion from normal distribution
+    # q = np.random.normal(size=4)
+
     q = q / np.sqrt(np.sum(q ** 2))  # normalize
     return q
 

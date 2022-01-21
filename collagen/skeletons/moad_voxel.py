@@ -3,7 +3,7 @@ from functools import partial
 from multiprocessing import Value
 from typing import Any, Type, TypeVar, List, Optional
 from collagen.core.loader import DataLambda
-from collagen.core.mol import Mol
+from collagen.core.mol import Mol, SmilesMolSupplier
 from collagen.external.moad.types import MOAD_split
 from tqdm.std import tqdm
 
@@ -102,7 +102,13 @@ class MoadVoxelSkeleton(object):
             "--inference_rotations",
             default=1,
             type=int,
-            help="Number of rotations to sample during inference.",
+            help="Number of rotations to sample during inference or testing.",
+        )
+        parser.add_argument(
+            "--inference_label_sets",
+            default="test",
+            type=str,
+            help="A comma-separated list of the label sets to use during inference or testing. If for testing, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file.",
         )
 
         return parent_parser
@@ -218,7 +224,7 @@ class MoadVoxelSkeleton(object):
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 
-    def _create_data_lambda_dataloader(
+    def _get_split_data(
         self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
         voxel_params: VoxelParams, device: Any, shuffle=True
     ) -> DataLambda:
@@ -251,52 +257,107 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(metadata=args.csv, structures=args.data)
         train, val, _ = moad.compute_split(args.split_seed, save_splits=args.save_splits)
 
-        train_data = self._create_data_lambda_dataloader(
+        train_data = self._get_split_data(
             args, moad, train, voxel_params, device
         )
 
-        val_data = self._create_data_lambda_dataloader(
+        val_data = self._get_split_data(
             args, moad, val, voxel_params, device
         )
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
-    def _get_fps_train_val_for_testing(
+    def _add_fingerprints_to_label_set_tensor(
         self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
-        voxel_params: VoxelParams, device: Any, label_set: torch.Tensor
+        voxel_params: VoxelParams, device: Any, existing_label_set: torch.Tensor
     ):
         # If you want to include training and validation fingerprints in the
         # label set for testing.
 
-        if True:
-            # TODO: Harrison: How hard would it be to make it so data below
-            # doesn't voxelize the receptor? Is that adding a lot of time to the
-            # calculation? Just a thought.
-            data = self._create_data_lambda_dataloader(
-                args, moad, split, voxel_params, device, shuffle=False
+        # TODO: Harrison: How hard would it be to make it so data below
+        # doesn't voxelize the receptor? Is that adding a lot of time to the
+        # calculation? Just a thought.
+        data = self._get_split_data(
+            args, moad, split, voxel_params, device, shuffle=False
+        )
+
+        all_fps = []
+        for batch in tqdm(data, desc="Getting fingerprints from " + split.name + " set..."):
+            voxels, fps = batch
+            all_fps.append(fps)
+        all_fps.append(existing_label_set)
+        return torch.cat(all_fps).unique(dim=0)
+
+        # # Note: This would only work if considering whole ligand. Perhaps
+        # # good for deeplig, but not deepfrag.
+        # mols = [Mol.from_smiles(s) for s in split.smiles]
+        # fps = [
+        #     torch.tensor(m.fingerprint("rdk10", args.fp_size), device=device).reshape((1, args.fp_size))
+        #     for m in mols
+        # ]
+        # fps.append(label_set)
+        # return torch.cat(fps).unique(dim=0)
+
+    def _create_label_set_tensor(
+        self, args: argparse.ArgumentParser, device: Any, 
+        existing_label_set: torch.Tensor=None, skip_test_set=False,
+        train: MOAD_split = None, val: MOAD_split = None, 
+        test: MOAD_split = None, moad: MOADInterface = None,
+        voxel_params: VoxelParams = None, lbl_set_codes: List[str] = None
+    ) -> torch.Tensor:
+        # skip_test_set can be true if those fingerprints are already in
+        # existing_label_set
+
+        if lbl_set_codes is None:
+            lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
+
+        if existing_label_set is None:
+            existing_label_set = torch.zeros((0, args.fp_size), device=device)
+
+        # Load from train, valm and test sets.
+        if "train" in lbl_set_codes:
+            existing_label_set = self._add_fingerprints_to_label_set_tensor(
+                args, moad, train, voxel_params, device, existing_label_set
             )
 
-            all_fps = []
-            for batch in tqdm(data, desc="Getting fingerprints from " + split.name + " set..."):
-                voxels, fps = batch
-                all_fps.append(fps)
-            all_fps.append(label_set)
-            return torch.cat(all_fps).unique(dim=0)
-        else:
-            # Note: This would only work if considering whole ligand. Perhaps
-            # good for deeplig, but not deepfrag.
-            mols = [Mol.from_smiles(s) for s in split.smiles]
-            fps = [
-                torch.tensor(m.fingerprint("rdk10", args.fp_size), device=device).reshape((1, args.fp_size))
-                for m in mols
-            ]
-            fps.append(label_set)
-            # import pdb; pdb.set_trace()
-            return torch.cat(fps).unique(dim=0)
+        if "val" in lbl_set_codes:
+            existing_label_set = self._add_fingerprints_to_label_set_tensor(
+                args, moad, val, voxel_params, device, existing_label_set
+            )
+
+        if "test" in lbl_set_codes and not skip_test_set:
+            existing_label_set = self._add_fingerprints_to_label_set_tensor(
+                args, moad, test, voxel_params, device, existing_label_set
+            )
+
+        # Add to that fingerprints from an SMI file.
+        smi_files = [f for f in lbl_set_codes if f not in ["train", "val", "test"]]
+        if len(smi_files) > 0:
+            fp_from_smi_file = []
+            for filename in smi_files:
+                for mol in SmilesMolSupplier(filename):
+                    fp_from_smi_file.append(
+                        torch.tensor(
+                            mol.fingerprint("rdk10", args.fp_size),
+                            device=device
+                        ).reshape((1, args.fp_size))
+                    )
+            fp_from_smi_file.append(existing_label_set)
+            existing_label_set = torch.cat(fp_from_smi_file).unique(dim=0)
+
+        print('Label set size: ' + str(len(existing_label_set)))
+
+        return existing_label_set
+
 
     def _run_test(self, args: argparse.Namespace, ckpt: Optional[str]):
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
+
+        lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
+
+        if not "test" in lbl_set_codes:
+            raise ValueError("To run in test mode, you must include the `test` label set")
 
         trainer = self._init_trainer(args)
         model = self._init_model(args, ckpt)
@@ -304,10 +365,12 @@ class MoadVoxelSkeleton(object):
         device = self._init_device(args)
 
         moad = MOADInterface(metadata=args.csv, structures=args.data)
-        train, val, test = moad.compute_split(args.split_seed, save_splits=args.save_splits)
+        train, val, test = moad.compute_split(
+            args.split_seed, save_splits=args.save_splits
+        )
 
         # You'll always need the test data.
-        test_data = self._create_data_lambda_dataloader(
+        test_data = self._get_split_data(
             args, moad, test, voxel_params, device, shuffle=False
         )
 
@@ -320,41 +383,32 @@ class MoadVoxelSkeleton(object):
             print(f"Inference rotation {i+1}/{args.inference_rotations}")
             trainer.test(model, test_data, verbose=True)
             all_predictions.append(model.predictions)
-            # if all_predictions is None:
-            #     all_predictions = model.predictions
-            # else:
-            #     all_predictions = torch.add(all_predictions, model.predictions)
-        
-        avg_predictions = torch.zeros(all_predictions[0].shape, device=device)
-        
+
+        # Calculate the average predictions
+        predictions = torch.zeros(all_predictions[0].shape, device=device)
         for prediction in all_predictions:
-            torch.add(avg_predictions, prediction, out=avg_predictions)
-        
+            torch.add(predictions, prediction, out=predictions)
         torch.div(
-            avg_predictions, 
+            predictions, 
             torch.tensor(args.inference_rotations, device=device),
-            out=avg_predictions
+            out=predictions
+        )
+
+        # Get the label set to use
+        label_set_fingerprints = self._create_label_set_tensor(
+            args, device, 
+            existing_label_set=model.prediction_targets.unique(dim=0),
+            skip_test_set=True,
+            train=train, val=val, moad=moad, voxel_params=voxel_params,
+            lbl_set_codes=lbl_set_codes
         )
 
         # avg_predictions = model.predictions
 
-        # Create the label set. First, get the test targets (must be present for
-        # top_k to make sense).
-        label_set_fingerprints = model.prediction_targets.unique(dim=0)
-
-        label_set_fingerprints = self._get_fps_train_val_for_testing(
-            args, moad, train, voxel_params, device, label_set_fingerprints
+        top = top_k(
+            predictions, model.prediction_targets, label_set_fingerprints,
+            k=[1,8,16,32,64]
         )
-
-        label_set_fingerprints = self._get_fps_train_val_for_testing(
-            args, moad, val, voxel_params, device, label_set_fingerprints
-        )
-
-        print('Label set size: ' + str(len(label_set_fingerprints)))
-
-        top = top_k(avg_predictions, model.prediction_targets, label_set_fingerprints, k=[1,8,16,32,64])
 
         for k in top: print(f'test_top_{k}', top[k])
-
-        import pdb; pdb.set_trace()
 
