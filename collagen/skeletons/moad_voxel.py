@@ -16,7 +16,7 @@ from ..checkpoints import MyModelCheckpoint, get_last_checkpoint
 from .. import VoxelParams, VoxelParamsDefault, MultiLoader
 from ..external import MOADInterface
 
-from collagen.metrics import top_k
+from collagen.metrics import most_similar_matches, top_k
 
 
 
@@ -478,4 +478,21 @@ class MoadVoxelSkeleton(object):
         )
 
         for k in top: print(f'test_top_{k}', top[k])
+
+        most_similar_idxs, most_similar_dists = most_similar_matches(predictions, label_set_fingerprints, 5)
+        for prediciton_idx in range(most_similar_idxs.shape[0]):
+            print("Correct answer: " + model.prediction_targets_smis[prediciton_idx])
+            dists = most_similar_dists[prediciton_idx]
+            idxs = most_similar_idxs[prediciton_idx]
+            smis = [model.prediction_targets_smis[idx] for idx in idxs]
+            hits = ["    " + s + " : " + str(float(d)) for d, s in list(zip(dists, smis))]
+            # import pdb; pdb.set_trace()
+            # hits = [
+            #     (dist, model.prediction_targets_smis[idx]) 
+            #     for i, dist in enumerate(dists)
+            # ]
+            print("\n".join(hits))
+            print("")
+
+        import pdb; pdb.set_trace()
 

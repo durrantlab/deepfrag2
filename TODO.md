@@ -1,7 +1,7 @@
 Re. learning rate, this is great:
 https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
 
-When doing inference, get best validation checkpoint (not last).
+**** When doing inference, get best validation checkpoint (not last).
 
 I think a lot of my old code is not cruft. Good to do audit.
 
