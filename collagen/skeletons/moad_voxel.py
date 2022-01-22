@@ -1,9 +1,9 @@
 import argparse
 from functools import partial
 from multiprocessing import Value
-from typing import Any, Type, TypeVar, List, Optional
+from typing import Any, Type, TypeVar, List, Optional, Tuple
 from collagen.core.loader import DataLambda
-from collagen.core.mol import Mol, SmilesMolSupplier
+from collagen.core.mol import Mol, mols_from_smi_file
 from collagen.external.moad.types import MOAD_split
 from tqdm.std import tqdm
 
@@ -269,7 +269,8 @@ class MoadVoxelSkeleton(object):
 
     def _add_fingerprints_to_label_set_tensor(
         self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
-        voxel_params: VoxelParams, device: Any, existing_label_set: torch.Tensor
+        voxel_params: VoxelParams, device: Any, existing_label_set_fps: torch.Tensor,
+        existing_label_set_smis: List[str]
     ):
         # If you want to include training and validation fingerprints in the
         # label set for testing.
@@ -282,11 +283,24 @@ class MoadVoxelSkeleton(object):
         )
 
         all_fps = []
+        all_smis = []
         for batch in tqdm(data, desc="Getting fingerprints from " + split.name + " set..."):
-            voxels, fps = batch
-            all_fps.append(fps)
-        all_fps.append(existing_label_set)
-        return torch.cat(all_fps).unique(dim=0)
+            voxels, fps_tnsr, smis = batch
+            all_fps.append(fps_tnsr)
+            all_smis.extend(smis)
+        all_smis.extend(existing_label_set_smis)
+        all_fps.append(existing_label_set_fps)
+        fps_tnsr = torch.cat(all_fps)
+
+        # Remove redundancies.
+        fps_tnsr, all_smis = self._remove_redundant_fingerprints(fps_tnsr, all_smis, device)
+
+        return fps_tnsr, all_smis
+
+        # existing_label_set_fps, existing_label_set_smis = self._remove_redundant_fingerprints(
+        #     existing_label_set_fps, existing_label_set_smis, device=device
+        # )
+
 
         # # Note: This would only work if considering whole ligand. Perhaps
         # # good for deeplig, but not deepfrag.
@@ -300,7 +314,9 @@ class MoadVoxelSkeleton(object):
 
     def _create_label_set_tensor(
         self, args: argparse.ArgumentParser, device: Any, 
-        existing_label_set: torch.Tensor=None, skip_test_set=False,
+        existing_label_set_fps: torch.Tensor=None,
+        existing_label_set_smis: List[str]=None,
+        skip_test_set=False,
         train: MOAD_split = None, val: MOAD_split = None, 
         test: MOAD_split = None, moad: MOADInterface = None,
         voxel_params: VoxelParams = None, lbl_set_codes: List[str] = None
@@ -311,44 +327,93 @@ class MoadVoxelSkeleton(object):
         if lbl_set_codes is None:
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
 
-        if existing_label_set is None:
-            existing_label_set = torch.zeros((0, args.fp_size), device=device)
+        if existing_label_set_fps is None:
+            existing_label_set_fps = torch.zeros((0, args.fp_size), device=device)
+        else:
+            # If you get an existing set of fingerprints, be sure to keep only
+            # the unique ones.
+            existing_label_set_fps, existing_label_set_smis = self._remove_redundant_fingerprints(
+                existing_label_set_fps, existing_label_set_smis, device=device
+            )
 
         # Load from train, valm and test sets.
         if "train" in lbl_set_codes:
-            existing_label_set = self._add_fingerprints_to_label_set_tensor(
-                args, moad, train, voxel_params, device, existing_label_set
+            existing_label_set_fps, existing_label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                args, moad, train, voxel_params, device, existing_label_set_fps,
+                existing_label_set_smis
             )
 
         if "val" in lbl_set_codes:
-            existing_label_set = self._add_fingerprints_to_label_set_tensor(
-                args, moad, val, voxel_params, device, existing_label_set
+            existing_label_set_fps, existing_label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                args, moad, val, voxel_params, device, existing_label_set_fps,
+                existing_label_set_smis
             )
 
         if "test" in lbl_set_codes and not skip_test_set:
-            existing_label_set = self._add_fingerprints_to_label_set_tensor(
-                args, moad, test, voxel_params, device, existing_label_set
+            existing_label_set_fps, existing_label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                args, moad, test, voxel_params, device, existing_label_set_fps,
+                existing_label_set_smis
             )
 
         # Add to that fingerprints from an SMI file.
         smi_files = [f for f in lbl_set_codes if f not in ["train", "val", "test"]]
         if len(smi_files) > 0:
-            fp_from_smi_file = []
+            fp_tnsrs_from_smi_file = [existing_label_set_fps]
             for filename in smi_files:
-                for mol in SmilesMolSupplier(filename):
-                    fp_from_smi_file.append(
+                for smi, mol in mols_from_smi_file(filename):
+                    fp_tnsrs_from_smi_file.append(
                         torch.tensor(
                             mol.fingerprint("rdk10", args.fp_size),
                             device=device
                         ).reshape((1, args.fp_size))
                     )
-            fp_from_smi_file.append(existing_label_set)
-            existing_label_set = torch.cat(fp_from_smi_file).unique(dim=0)
+                    existing_label_set_smis.append(smi)
+            existing_label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
+            
+            # Remove redundancy
+            existing_label_set_fps, existing_label_set_smis = self._remove_redundant_fingerprints(
+                existing_label_set_fps, existing_label_set_smis, device
+            )
 
-        print('Label set size: ' + str(len(existing_label_set)))
+        # self._debug_smis_match_fps(existing_label_set_fps, existing_label_set_smis, device)
 
-        return existing_label_set
+        print('Label set size: ' + str(len(existing_label_set_fps)))
 
+        return existing_label_set_fps, existing_label_set_smis
+
+    def _debug_smis_match_fps(self, fps: torch.Tensor, smis: List[str], device: Any):
+        import rdkit
+        from rdkit import Chem
+        for idx in range(len(smis)):
+            smi = smis[idx]
+            fp1 = fps[idx]
+
+            mol = Mol.from_smiles(smi)
+            fp2 = torch.tensor(mol.fingerprint("rdk10", 2048), device=device, dtype=torch.float32)
+            print((fp1-fp2).max() == (fp1-fp2).min())
+
+        import pdb; pdb.set_trace()
+
+    def _remove_redundant_fingerprints(
+        self, label_set_fps: torch.Tensor, label_set_smis: List[str], device: Any
+    )->Tuple[torch.Tensor, List[str]]:
+        # Removes redundant fingerprints and smis, but maintaing the consistent
+        # order between the two lists.
+        label_set_fps, inverse_indices = label_set_fps.unique(dim=0, return_inverse=True)
+
+        label_set_smis = [
+            inf[1] for inf in sorted([
+                (inverse_idx, label_set_smis[smi_idx]) 
+                for inverse_idx, smi_idx in 
+                {
+                    int(inverse_idx): smi_idx 
+                    for smi_idx, inverse_idx in 
+                    enumerate(inverse_indices)
+                }.items()
+            ])
+        ]
+        
+        return label_set_fps, label_set_smis
 
     def _run_test(self, args: argparse.Namespace, ckpt: Optional[str]):
         if not ckpt:
@@ -395,9 +460,10 @@ class MoadVoxelSkeleton(object):
         )
 
         # Get the label set to use
-        label_set_fingerprints = self._create_label_set_tensor(
+        label_set_fingerprints, prediction_targets_smis = self._create_label_set_tensor(
             args, device, 
-            existing_label_set=model.prediction_targets.unique(dim=0),
+            existing_label_set_fps=model.prediction_targets,
+            existing_label_set_smis=model.prediction_targets_smis,
             skip_test_set=True,
             train=train, val=val, moad=moad, voxel_params=voxel_params,
             lbl_set_codes=lbl_set_codes
@@ -405,6 +471,7 @@ class MoadVoxelSkeleton(object):
 
         # avg_predictions = model.predictions
 
+        # import pdb; pdb.set_trace()
         top = top_k(
             predictions, model.prediction_targets, label_set_fingerprints,
             k=[1,8,16,32,64]

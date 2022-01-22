@@ -49,22 +49,27 @@ class DeepFragModel(pl.LightningModule):
         return self.model(voxel)
 
     def training_step(self, batch, batch_idx):
-        voxel, fp = batch
-        pred = self(voxel)
+        voxels, fps, smis = batch
+        pred = self(voxels)
 
-        loss = cos_loss(pred, fp).mean()
+        loss = cos_loss(pred, fps).mean()
 
-        self.log("loss", loss)
+        # print("training_step")
+        self.log("loss", loss, batch_size=voxels.shape[0])
 
         return loss
 
     def validation_step(self, batch, batch_idx):
-        voxel, fp = batch
-        pred = self(voxel)
+        voxels, fps, smis = batch
 
-        loss = cos_loss(pred, fp).mean()
+        # print("::", voxels.shape, fps.shape, len(smis))
 
-        self.log("val_loss", loss)
+        pred = self(voxels)
+
+        loss = cos_loss(pred, fps).mean()
+
+        # print("validation_step")
+        self.log("val_loss", loss, batch_size=voxels.shape[0])
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
@@ -72,21 +77,28 @@ class DeepFragModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # Runs inferance on a given batch.
-        voxel, fp = batch
-        pred = self(voxel)
+        voxels, fps, smis = batch
+        pred = self(voxels)
 
-        loss = cos_loss(pred, fp).mean()
-        self.log("test_loss", loss)
+        loss = cos_loss(pred, fps).mean()
+
+        # print("test_step")
+        self.log("test_loss", loss, batch_size=voxels.shape[0])
 
         # Drop (large) voxel input, return the predicted and target fingerprints.
-        return pred, fp
+        return pred, fps, smis
 
     def test_epoch_end(self, results):
         # This runs after inference has been run on all batches.
         predictions = torch.cat([x[0] for x in results])
         prediction_targets = torch.cat([x[1] for x in results])
 
+        prediction_targets_smis = []
+        for x in results:
+            prediction_targets_smis.extend(x[2])
+
         # Save predictions, etc., so they can be accessed outside the model.
         self.predictions = predictions
         self.prediction_targets = prediction_targets
+        self.prediction_targets_smis = prediction_targets_smis
 

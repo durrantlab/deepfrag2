@@ -571,9 +571,7 @@ class MolDataset(Dataset):
         raise NotImplementedError()
 
 
-def SmilesMolSupplier(filename):
-    # Wrapper around rdkit.Chem.SmilesMolSupplier, but returns Mols. A
-    # generator.
+def mols_from_smi_file(filename):
     for l in open(filename):
         prts = l.strip().split(maxsplit=2)
         smi = prts[0]
@@ -584,4 +582,4 @@ def SmilesMolSupplier(filename):
 
         mol = Mol.from_rdkit(rdmol)
 
-        yield mol
+        yield smi, mol

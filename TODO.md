@@ -10,6 +10,10 @@ seeing different counts in progress bar.
 
 Pickle PDBs? What would be fastest?
 
+"Training will start from the beginning of the next epoch. This can cause
+unreliable results if further training is done, consider using an end of epoch
+checkpoint."
+
 # Training goal
 
 And what is the cardinal rule of neural network training? Whenever possible, use

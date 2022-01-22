@@ -15,8 +15,8 @@ from model import DeepFragModel
 
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
-TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor]
-OUT_T = Tuple[torch.Tensor, torch.Tensor]
+TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
+OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 
 
 def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
@@ -36,10 +36,13 @@ class DeepFrag(MoadVoxelSkeleton):
         rec, parent, frag = entry
         rot = rand_rot()
 
+        smi = frag.smiles(True)
+
         return (
             rec.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),
             parent.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),
             _fingerprint_fn(args, frag),
+            smi
         )
 
     @staticmethod
@@ -56,9 +59,10 @@ class DeepFrag(MoadVoxelSkeleton):
         )
 
         fingerprints = torch.zeros(size=(len(batch), args.fp_size), device=device)
+        frag_smis = []
 
         for i in range(len(batch)):
-            rec, parent, frag = batch[i]
+            rec, parent, frag, smi = batch[i]
 
             rec.voxelize_into(
                 voxels, batch_idx=i, layer_offset=0, cpu=(device.type == "cpu")
@@ -72,8 +76,9 @@ class DeepFrag(MoadVoxelSkeleton):
             )
 
             fingerprints[i] = frag
+            frag_smis.append(smi)
 
-        return (voxels, fingerprints)
+        return (voxels, fingerprints, frag_smis)
 
 
 if __name__ == "__main__":
