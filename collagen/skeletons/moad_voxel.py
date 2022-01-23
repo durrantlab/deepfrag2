@@ -16,7 +16,7 @@ from ..checkpoints import MyModelCheckpoint, get_last_checkpoint
 from .. import VoxelParams, VoxelParamsDefault, MultiLoader
 from ..external import MOADInterface
 
-from collagen.metrics import most_similar_matches, top_k
+from collagen.metrics import most_similar_matches, project_predictions_onto_label_set_pca_space, top_k
 
 
 
@@ -328,37 +328,38 @@ class MoadVoxelSkeleton(object):
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
 
         if existing_label_set_fps is None:
-            existing_label_set_fps = torch.zeros((0, args.fp_size), device=device)
+            label_set_fps = torch.zeros((0, args.fp_size), device=device)
+            label_set_smis = []
         else:
             # If you get an existing set of fingerprints, be sure to keep only
             # the unique ones.
-            existing_label_set_fps, existing_label_set_smis = self._remove_redundant_fingerprints(
+            label_set_fps, label_set_smis = self._remove_redundant_fingerprints(
                 existing_label_set_fps, existing_label_set_smis, device=device
             )
 
         # Load from train, valm and test sets.
         if "train" in lbl_set_codes:
-            existing_label_set_fps, existing_label_set_smis = self._add_fingerprints_to_label_set_tensor(
-                args, moad, train, voxel_params, device, existing_label_set_fps,
-                existing_label_set_smis
+            label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                args, moad, train, voxel_params, device, label_set_fps,
+                label_set_smis
             )
 
         if "val" in lbl_set_codes:
-            existing_label_set_fps, existing_label_set_smis = self._add_fingerprints_to_label_set_tensor(
-                args, moad, val, voxel_params, device, existing_label_set_fps,
-                existing_label_set_smis
+            label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                args, moad, val, voxel_params, device, label_set_fps,
+                label_set_smis
             )
 
         if "test" in lbl_set_codes and not skip_test_set:
-            existing_label_set_fps, existing_label_set_smis = self._add_fingerprints_to_label_set_tensor(
-                args, moad, test, voxel_params, device, existing_label_set_fps,
-                existing_label_set_smis
+            label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                args, moad, test, voxel_params, device, label_set_fps,
+                label_set_smis
             )
 
         # Add to that fingerprints from an SMI file.
         smi_files = [f for f in lbl_set_codes if f not in ["train", "val", "test"]]
         if len(smi_files) > 0:
-            fp_tnsrs_from_smi_file = [existing_label_set_fps]
+            fp_tnsrs_from_smi_file = [label_set_fps]
             for filename in smi_files:
                 for smi, mol in mols_from_smi_file(filename):
                     fp_tnsrs_from_smi_file.append(
@@ -367,19 +368,19 @@ class MoadVoxelSkeleton(object):
                             device=device
                         ).reshape((1, args.fp_size))
                     )
-                    existing_label_set_smis.append(smi)
-            existing_label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
+                    label_set_smis.append(smi)
+            label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
             
             # Remove redundancy
-            existing_label_set_fps, existing_label_set_smis = self._remove_redundant_fingerprints(
-                existing_label_set_fps, existing_label_set_smis, device
+            label_set_fps, label_set_smis = self._remove_redundant_fingerprints(
+                label_set_fps, label_set_smis, device
             )
 
-        # self._debug_smis_match_fps(existing_label_set_fps, existing_label_set_smis, device)
+        # self._debug_smis_match_fps(label_set_fps, label_set_smis, device)
 
-        print('Label set size: ' + str(len(existing_label_set_fps)))
+        print('Label set size: ' + str(len(label_set_fps)))
 
-        return existing_label_set_fps, existing_label_set_smis
+        return label_set_fps, label_set_smis
 
     def _debug_smis_match_fps(self, fps: torch.Tensor, smis: List[str], device: Any):
         import rdkit
@@ -442,25 +443,47 @@ class MoadVoxelSkeleton(object):
         model.eval()
 
         # Intentionally keeping all predictions in a list instead of averaging
-        # as you go. To allow for examining each rotations prediction.
-        all_predictions = []
+        # as you go. To allow for examining each rotations prediction. Must use
+        # list (not zero tensor) because I don't think I can know the number of
+        # items in test_data beforehand. TODO: Better way to do this?
+        all_predictions_lst = []
         for i in range(args.inference_rotations):
             print(f"Inference rotation {i+1}/{args.inference_rotations}")
             trainer.test(model, test_data, verbose=True)
-            all_predictions.append(model.predictions)
+            all_predictions_lst.append(model.predictions)
+        
+        # Convert the list to a tensor now that you know what the dimensions
+        # must be.
+        all_predictions_tnsr = torch.zeros(
+            (
+                args.inference_rotations, 
+                all_predictions_lst[0].shape[0], 
+                all_predictions_lst[0].shape[1]
+            ),
+            device=device
+        )
+        for i in range(args.inference_rotations):
+            all_predictions_tnsr[i] = all_predictions_lst[i]
 
         # Calculate the average predictions
-        predictions = torch.zeros(all_predictions[0].shape, device=device)
-        for prediction in all_predictions:
-            torch.add(predictions, prediction, out=predictions)
+        predictions_averaged = torch.sum(all_predictions_tnsr, dim=0)
         torch.div(
-            predictions, 
+            predictions_averaged, 
             torch.tensor(args.inference_rotations, device=device),
-            out=predictions
+            out=predictions_averaged
         )
 
+        # predictions = torch.zeros(all_predictions_lst[0].shape, device=device)
+        # for prediction in all_predictions_lst:
+        #     torch.add(predictions, prediction, out=predictions)
+        # torch.div(
+        #     predictions, 
+        #     torch.tensor(args.inference_rotations, device=device),
+        #     out=predictions
+        # )
+
         # Get the label set to use
-        label_set_fingerprints, prediction_targets_smis = self._create_label_set_tensor(
+        label_set_fingerprints, label_set_smis = self._create_label_set_tensor(
             args, device, 
             existing_label_set_fps=model.prediction_targets,
             existing_label_set_smis=model.prediction_targets_smis,
@@ -473,26 +496,25 @@ class MoadVoxelSkeleton(object):
 
         # import pdb; pdb.set_trace()
         top = top_k(
-            predictions, model.prediction_targets, label_set_fingerprints,
+            predictions_averaged, model.prediction_targets, label_set_fingerprints,
             k=[1,8,16,32,64]
         )
 
         for k in top: print(f'test_top_{k}', top[k])
 
-        most_similar_idxs, most_similar_dists = most_similar_matches(predictions, label_set_fingerprints, 5)
+        most_similar_idxs, most_similar_dists = most_similar_matches(predictions_averaged, label_set_fingerprints, 5)
         for prediciton_idx in range(most_similar_idxs.shape[0]):
             print("Correct answer: " + model.prediction_targets_smis[prediciton_idx])
             dists = most_similar_dists[prediciton_idx]
             idxs = most_similar_idxs[prediciton_idx]
-            smis = [model.prediction_targets_smis[idx] for idx in idxs]
+            smis = [label_set_smis[idx] for idx in idxs]
             hits = ["    " + s + " : " + str(float(d)) for d, s in list(zip(dists, smis))]
-            # import pdb; pdb.set_trace()
-            # hits = [
-            #     (dist, model.prediction_targets_smis[idx]) 
-            #     for i, dist in enumerate(dists)
-            # ]
+
             print("\n".join(hits))
             print("")
+
+        all_rotations_onto_pca = project_predictions_onto_label_set_pca_space(all_predictions_tnsr, label_set_fingerprints, 2)
+        # To print out: https://stackoverflow.com/questions/9622163/save-plot-to-image-file-instead-of-displaying-it-using-matplotlib
 
         import pdb; pdb.set_trace()
 
