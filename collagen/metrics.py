@@ -31,7 +31,7 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
 
     Args:
         predictions: NxF tensor containing predicted fingerprints.
-        predicton_targets: NxF tensor containing correct fingerprints.
+        correct_predicton_targets: NxF tensor containing correct fingerprints.
         label_set_fingerprints: DxF tensor containing a fingerprint set.
         k (List[int]): K values to consider.
         ignore_duplicates (bool): If True, ignore duplicate fingerprints when ranking.
@@ -91,7 +91,7 @@ def most_similar_matches(predictions: torch.Tensor, label_set_fingerprints: torc
 
 def project_predictions_onto_label_set_pca_space(
     predictions: torch.Tensor, label_set_fingerprints: torch.Tensor, 
-    n_components: int
+    n_components: int, correct_predicton_targets: torch.Tensor=None
 ) -> List[torch.Tensor]:
     """
     Project the predictions onto the pca space defined by the label-set fingerprints.
@@ -102,6 +102,7 @@ def project_predictions_onto_label_set_pca_space(
             fingerprint.
         label_set_fingerprints: DxF tensor containing a fingerprint set.
         n_components (int): The number of PCA components to consider.
+        correct_predicton_targets: NxF tensor containing correct fingerprints.
     """
 
     # Get all labelset fingerprints, but normalized.
@@ -109,14 +110,28 @@ def project_predictions_onto_label_set_pca_space(
     transformer = Normalizer().fit(lblst_data_nmpy)
     transformer.transform(lblst_data_nmpy, copy=False)
 
+    # Create the label-set PCA space.
     pca = PCA(n_components=n_components)
     pca.fit(lblst_data_nmpy)
+
+    # Get the pca results associated with each rotation.
     all_rotations_onto_pca = []
-    for idx in tqdm(predictions.shape[1], desc='PCA Projections'):
+    for idx in tqdm(range(predictions.shape[1]), desc='PCA Projections'):
         rotations_onto_pca = pca.transform(
             transformer.transform(
                 predictions[:,idx].cpu().numpy()
             )
         )
         all_rotations_onto_pca.append(rotations_onto_pca)
-    return all_rotations_onto_pca
+    
+    # Project correct_predicton_targets into that same space.
+    if correct_predicton_targets is not None:
+        correct_predicton_targets_onto_pca = pca.transform(
+            transformer.transform(
+                correct_predicton_targets.cpu().numpy()
+            )
+        )
+    else:
+        correct_predicton_targets_onto_pca = None
+
+    return all_rotations_onto_pca, correct_predicton_targets_onto_pca

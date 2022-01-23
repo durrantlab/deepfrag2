@@ -18,6 +18,8 @@ from ..external import MOADInterface
 
 from collagen.metrics import most_similar_matches, project_predictions_onto_label_set_pca_space, top_k
 
+import re
+import json
 
 
 ENTRY_T = TypeVar("ENTRY_T")
@@ -493,28 +495,68 @@ class MoadVoxelSkeleton(object):
         )
 
         # avg_predictions = model.predictions
+        num_predictions_per_entry = 5
+        all_test_data = {
+            "top_k": {},
+            "entries": [
+                {
+                    "correct": {}, 
+                    "prediction": {
+                        "closests": [{} for __ in range(num_predictions_per_entry)]
+                    }
+                }
+                for _ in range(predictions_averaged.shape[0])
+            ]
+        }
 
-        # import pdb; pdb.set_trace()
+        # Calculate top_k metric
         top = top_k(
             predictions_averaged, model.prediction_targets, label_set_fingerprints,
             k=[1,8,16,32,64]
         )
+        for k in top:
+            all_test_data["top_k"][f'test_top_{k}'] = float(top[k])
+            print(f'test_top_{k}',top[k])
 
-        for k in top: print(f'test_top_{k}', top[k])
-
+        # Find most similar matches
         most_similar_idxs, most_similar_dists = most_similar_matches(predictions_averaged, label_set_fingerprints, 5)
-        for prediciton_idx in range(most_similar_idxs.shape[0]):
-            print("Correct answer: " + model.prediction_targets_smis[prediciton_idx])
-            dists = most_similar_dists[prediciton_idx]
-            idxs = most_similar_idxs[prediciton_idx]
+        for entry_idx in range(most_similar_idxs.shape[0]):
+            correct_smi = model.prediction_targets_smis[entry_idx]
+            all_test_data["entries"][entry_idx]["correct"]["smiles"] = correct_smi
+            
+            dists = most_similar_dists[entry_idx]
+            idxs = most_similar_idxs[entry_idx]
             smis = [label_set_smis[idx] for idx in idxs]
-            hits = ["    " + s + " : " + str(float(d)) for d, s in list(zip(dists, smis))]
+            
+            hits = []
+            for i, (d, s) in enumerate(zip(dists, smis)):
+                all_test_data["entries"][entry_idx]["prediction"]["closests"][i]["smiles"] = s
+                all_test_data["entries"][entry_idx]["prediction"]["closests"][i]["dist"] = float(d)
+                hits.append("    " + s + " : " + str(float(d)))
 
+            print("Correct answer: " + correct_smi)
             print("\n".join(hits))
             print("")
 
-        all_rotations_onto_pca = project_predictions_onto_label_set_pca_space(all_predictions_tnsr, label_set_fingerprints, 2)
+        all_rotations_onto_pca, correct_predicton_targets_onto_pca = project_predictions_onto_label_set_pca_space(
+            all_predictions_tnsr, label_set_fingerprints, 2,
+            correct_predicton_targets=model.prediction_targets
+        )
         # To print out: https://stackoverflow.com/questions/9622163/save-plot-to-image-file-instead-of-displaying-it-using-matplotlib
+
+        for entry_idx, rotations_onto_pcas in enumerate(all_rotations_onto_pca):
+            all_test_data["entries"][entry_idx]["prediction"]["pca_per_rotations"] = [
+                r.tolist() for r in rotations_onto_pcas
+            ]
+            all_test_data["entries"][entry_idx]["correct"]["pca_per_rotations"] = [
+                r.tolist() for r in correct_predicton_targets_onto_pca[entry_idx]
+            ]
+
+        jsn = json.dumps(all_test_data, indent=4)
+        jsn = re.sub(r"([\-0-9\.]+?,)\n .+?([\-0-9\.])", r"\1 \2", jsn, 0, re.MULTILINE)
+        jsn = re.sub(r"\[\n +?([\-0-9\.]+?), ([\-0-9\.,]+?)\n +?\]", r"[\1, \2]", jsn, 0, re.MULTILINE)
+        jsn = re.sub(r"\n +?\"dist", " \"dist", jsn, 0, re.MULTILINE)
+        
 
         import pdb; pdb.set_trace()
 
