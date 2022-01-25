@@ -73,7 +73,14 @@ class MoadVoxelSkeleton(object):
             "--save_splits",
             required=False,
             default=None,
-            help="Path to a json file where the splits will be saved. Useful for debugging.",
+            help="Path to a json file where the splits will be saved.",
+        )
+        parser.add_argument(
+            "--load_splits",
+            required=False,
+            default=None,
+            type=str,
+            help="Path to a json file (previously saved with --save_splits) describing the splits to use.",
         )
         parser.add_argument(
             "--num_dataloader_workers",
@@ -226,7 +233,7 @@ class MoadVoxelSkeleton(object):
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 
-    def _get_split_data(
+    def _get_data_from_split(
         self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
         voxel_params: VoxelParams, device: Any, shuffle=True
     ) -> DataLambda:
@@ -257,13 +264,16 @@ class MoadVoxelSkeleton(object):
         device = self._init_device(args)
 
         moad = MOADInterface(metadata=args.csv, structures=args.data)
-        train, val, _ = moad.compute_split(args.split_seed, save_splits=args.save_splits)
+        train, val, _ = moad.compute_split(
+            args.split_seed, save_splits=args.save_splits,
+            load_splits=args.load_splits
+        )
 
-        train_data = self._get_split_data(
+        train_data = self._get_data_from_split(
             args, moad, train, voxel_params, device
         )
 
-        val_data = self._get_split_data(
+        val_data = self._get_data_from_split(
             args, moad, val, voxel_params, device
         )
 
@@ -280,7 +290,7 @@ class MoadVoxelSkeleton(object):
         # TODO: Harrison: How hard would it be to make it so data below
         # doesn't voxelize the receptor? Is that adding a lot of time to the
         # calculation? Just a thought.
-        data = self._get_split_data(
+        data = self._get_data_from_split(
             args, moad, split, voxel_params, device, shuffle=False
         )
 
@@ -434,11 +444,12 @@ class MoadVoxelSkeleton(object):
 
         moad = MOADInterface(metadata=args.csv, structures=args.data)
         train, val, test = moad.compute_split(
-            args.split_seed, save_splits=args.save_splits
+            args.split_seed, save_splits=args.save_splits,
+            load_splits=args.load_splits
         )
 
         # You'll always need the test data.
-        test_data = self._get_split_data(
+        test_data = self._get_data_from_split(
             args, moad, test, voxel_params, device, shuffle=False
         )
 

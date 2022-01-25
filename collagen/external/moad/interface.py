@@ -191,10 +191,11 @@ class MOADInterface(object):
     def compute_split(
         self,
         seed: int = 0,
-        p_train: float = 0.6,
-        p_val: float = 0.5,
+        fraction_train: float = 0.6,
+        fraction_val: float = 0.5,
         prevent_smiles_overlap: bool = True,
-        save_splits: str = None
+        save_splits: str = None,
+        load_splits: str = None
     ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
         """Compute a TRAIN/VAL/TEST split.
 
@@ -219,48 +220,82 @@ class MOADInterface(object):
             # np.random.default_rng(seed) instead.
             # np.random.seed(seed)
 
-        families: List[List[str]] = []
-        # import pdb; pdb.set_trace()
-        for c in self.classes:  # [:250]:
-            for f in c.families:
-                families.append([x.pdb_id for x in f.targets])
+        train_pdb_ids = None
+        val_pdb_ids = None
+        test_pdb_ids = None
+        train_smi = None
+        val_smi = None
+        test_smi = None
 
-        train_f, other_f = _split_seq(families, p_train)
-        val_f, test_f = _split_seq(other_f, p_val)
+        if load_splits is None:
+            # Not loading splits, so generate based on random seed.
+            families: List[List[str]] = []
+            # import pdb; pdb.set_trace()
+            for c in self.classes:  # [:250]:
+                for f in c.families:
+                    families.append([x.pdb_id for x in f.targets])
 
-        train_ids = _flatten(train_f)
-        val_ids = _flatten(val_f)
-        test_ids = _flatten(test_f)
+            # These are lists of lists, where each inner list contains all the
+            # members of the corresponding family. Grouped this way so memboers of
+            # same family are spread across train, val, test sets.
+            train_families, other_families = _split_seq(families, fraction_train)
+            val_families, test_families = _split_seq(other_families, fraction_val)
 
-        train_smi = self._smiles_for(train_ids)
-        val_smi = self._smiles_for(val_ids)
-        test_smi = self._smiles_for(test_ids)
+            train_pdb_ids = _flatten(train_families)
+            val_pdb_ids = _flatten(val_families)
+            test_pdb_ids = _flatten(test_families)
 
-        if prevent_smiles_overlap:
-            # Reassign overlapping SMILES.
-            a_train, a_val = _div2((train_smi & val_smi) - test_smi)
-            b_val, b_test = _div2((val_smi & test_smi) - train_smi)
-            c_train, c_test = _div2((train_smi & test_smi) - val_smi)
-            d_train, d_val, d_test = _div3((train_smi & val_smi & test_smi))
+            train_smi = self._smiles_for(train_pdb_ids)
+            val_smi = self._smiles_for(val_pdb_ids)
+            test_smi = self._smiles_for(test_pdb_ids)
 
-            train_smi = (train_smi - (val_smi | test_smi)) | a_train | c_train | d_train
-            val_smi = (val_smi - (train_smi | test_smi)) | a_val | b_val | d_val
-            test_smi = (test_smi - (train_smi | val_smi)) | b_test | c_test | d_test
+            if prevent_smiles_overlap:
+                # Reassign overlapping SMILES.
+                a_train, a_val = _div2((train_smi & val_smi) - test_smi)
+                b_val, b_test = _div2((val_smi & test_smi) - train_smi)
+                c_train, c_test = _div2((train_smi & test_smi) - val_smi)
+                d_train, d_val, d_test = _div3((train_smi & val_smi & test_smi))
+
+                train_smi = (train_smi - (val_smi | test_smi)) | a_train | c_train | d_train
+                val_smi = (val_smi - (train_smi | test_smi)) | a_val | b_val | d_val
+                test_smi = (test_smi - (train_smi | val_smi)) | b_test | c_test | d_test
+
+        else:
+            # Loading splits. Get from the file.
+            split_inf = json.load(open(load_splits))
+            train_pdb_ids = split_inf["train"]["pdbs"]
+            val_pdb_ids = split_inf["val"]["pdbs"]
+            test_pdb_ids = split_inf["test"]["pdbs"]
+            train_smi = set(split_inf["train"]["smiles"])
+            val_smi = set(split_inf["val"]["smiles"])
+            test_smi = set(split_inf["test"]["smiles"])
+
+            # Reset seed just in case you also use save_splits. Not used.
+            seed = split_inf["test"]  
 
         if save_splits is not None:
             # Save spits and seed to json.
             split_inf = {
                 "seed": seed,
-                "train": train_ids,
-                "val": val_ids,
-                "test": test_ids,
+                "train": {
+                    "pdbs": train_pdb_ids,
+                    "smiles": [smi for smi in train_smi]
+                    },
+                "val": {
+                    "pdbs": val_pdb_ids,
+                    "smiles": [smi for smi in val_smi]
+                    },
+                "test": {
+                    "pdbs": test_pdb_ids,
+                    "smiles": [smi for smi in test_smi]
+                    },
             }
             json.dump(split_inf, open(save_splits, "w"), indent=4)
 
         return (
-            MOAD_split(name="TRAIN", targets=train_ids, smiles=train_smi),
-            MOAD_split(name="VAL", targets=val_ids, smiles=val_smi),
-            MOAD_split(name="TEST", targets=test_ids, smiles=test_smi),
+            MOAD_split(name="TRAIN", targets=train_pdb_ids, smiles=train_smi),
+            MOAD_split(name="VAL", targets=val_pdb_ids, smiles=val_smi),
+            MOAD_split(name="TEST", targets=test_pdb_ids, smiles=test_smi),
         )
 
     def full_split(self) -> MOAD_split:
