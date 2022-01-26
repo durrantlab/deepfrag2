@@ -230,8 +230,7 @@ class MOADInterface(object):
         if load_splits is None:
             # Not loading splits, so generate based on random seed.
             families: List[List[str]] = []
-            # import pdb; pdb.set_trace()
-            for c in self.classes:  # [:250]:
+            for c in self.classes:
                 for f in c.families:
                     families.append([x.pdb_id for x in f.targets])
 

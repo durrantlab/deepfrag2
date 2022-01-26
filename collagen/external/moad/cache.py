@@ -118,7 +118,6 @@ def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
                 frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
 
                 if CACHE_ITEMS_TO_UPDATE.frag_masses:
-                    # TODO: Harrison: Was int(x[1].mass). Why?
                     lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
                         lambda f: [x[1].mass for x in f], frags, []
                     )

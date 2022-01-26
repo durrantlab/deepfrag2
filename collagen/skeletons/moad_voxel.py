@@ -237,6 +237,11 @@ class MoadVoxelSkeleton(object):
         self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
         voxel_params: VoxelParams, device: Any, shuffle=True
     ) -> DataLambda:
+        # This is where you do actual dataset construction. The transform
+        # function actually gets the data (voxelizes and creates fingerprint).
+        # TODO: Create separate function .pre_voxelize_with_voxel that just
+        # calculates just fingerprint.
+
         dataset = self.dataset_cls(
             moad,
             cache_file=args.cache,
@@ -289,7 +294,7 @@ class MoadVoxelSkeleton(object):
 
         # TODO: Harrison: How hard would it be to make it so data below
         # doesn't voxelize the receptor? Is that adding a lot of time to the
-        # calculation? Just a thought.
+        # calculation? Just a thought. See other TODO: note about this.
         data = self._get_data_from_split(
             args, moad, split, voxel_params, device, shuffle=False
         )

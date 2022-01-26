@@ -14,6 +14,12 @@ Pickle PDBs? What would be fastest?
 unreliable results if further training is done, consider using an end of epoch
 checkpoint."
 
+Look into /dev/shm ramfs (to speed file load). Disk interface, but all in
+memory. Virtual file system. Each epoch loads file again. Also, each fragment
+loads multiple times. Can do it with docker, but could be tricky (must use host
+/dev/shim). Could give speed up, but not sure.
+
+
 # Training goal
 
 And what is the cardinal rule of neural network training? Whenever possible, use
