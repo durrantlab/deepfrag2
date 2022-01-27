@@ -19,6 +19,13 @@ memory. Virtual file system. Each epoch loads file again. Also, each fragment
 loads multiple times. Can do it with docker, but could be tricky (must use host
 /dev/shim). Could give speed up, but not sure.
 
+Need to also project average vector (across rotations) into pca space. Not same
+as aveaging pcas. And good to check that calculating correctly.
+
+For closest (from average) could also output fingerprints.
+
+Print out PCA variance accounted for by each fragment.
+
 
 # Training goal
 
