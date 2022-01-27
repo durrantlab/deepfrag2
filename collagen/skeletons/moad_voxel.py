@@ -434,6 +434,7 @@ class MoadVoxelSkeleton(object):
         return label_set_fps, label_set_smis
 
     def _run_test(self, args: argparse.Namespace, ckpt: Optional[str]):
+
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
 
