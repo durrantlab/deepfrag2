@@ -1,14 +1,27 @@
 
+from dataclasses import dataclass
 import torch
 from torch import nn
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Any
 from tqdm.auto import tqdm
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import Normalizer
 import numpy as np
 
-_cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+@dataclass
+class PCAProject(object):
+    pca: Any
+    transformer: Any
 
+    def project(self, fingerprints: torch.Tensor) -> List[float]:
+        if len(fingerprints.shape) == 1:
+            np_arr = np.array([fingerprints.cpu().numpy()])
+        else:
+            np_arr = fingerprints.cpu().numpy()
+
+        return self.pca.transform(self.transformer.transform(np_arr)).tolist()
+
+_cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 def cos_loss(yp, yt):
     """Cosine distance as a loss (inverted). Smaller means more similar."""
@@ -64,7 +77,13 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
     return {v: torch.mean((ranks <= v).float()) for v in k}
     # return {v: torch.mean((ranks < v).float()) for v in k}
 
-def most_similar_matches(predictions: torch.Tensor, label_set_fingerprints: torch.Tensor, k: int, ignore_duplicates=False)-> Tuple[torch.Tensor, torch.Tensor]:
+# TODO: Label set could be in a single class that includes both fingerprints and
+# vectors, etc. Would be slick.
+def most_similar_matches(
+    predictions: torch.Tensor, label_set_fingerprints: torch.Tensor,
+    label_set_smis: List[str], k: int, pca_project: PCAProject=None,
+    ignore_duplicates=False
+):  # -> List[List[str, float, List[float]]]:
     """
     Identify most similar entires in fingerprint library.
 
@@ -78,33 +97,39 @@ def most_similar_matches(predictions: torch.Tensor, label_set_fingerprints: torc
     if ignore_duplicates:
         label_set_fingerprints = label_set_fingerprints.unique(dim=0)
     
-    all_sorted_idxs = torch.zeros((len(predictions), k), dtype=torch.long)
-    all_dists = torch.zeros((len(predictions), k))
+    # all_sorted_idxs = torch.zeros((len(predictions), k), dtype=torch.long)
+    # all_dists = torch.zeros((len(predictions), k))
 
-    for i in tqdm(range(len(predictions)), desc='Most Similar Matches'):
-        dists = _broadcast_fn(cos_loss, predictions[i], label_set_fingerprints)
+    all_most_similar = []
+
+    for entry_idx in tqdm(range(len(predictions)), desc='Most Similar Matches'):
+        dists = _broadcast_fn(cos_loss, predictions[entry_idx], label_set_fingerprints)
         sorted_idxs = torch.argsort(dists, dim=-1).narrow(0, 0, k)
-        all_sorted_idxs[i] = sorted_idxs
-        all_dists[i] = torch.index_select(dists, 0, sorted_idxs)
+        sorted_dists = torch.index_select(dists, 0, sorted_idxs)
+        sorted_smis = [label_set_smis[idx] for idx in sorted_idxs]
+        
+        if pca_project is not None:
+            sorted_label_set_fingerprints = torch.index_select(
+                label_set_fingerprints, 0, sorted_idxs
+            )
 
-    return all_sorted_idxs, all_dists
+        most_similar = []
 
-def project_predictions_onto_label_set_pca_space(
-    predictions: torch.Tensor, label_set_fingerprints: torch.Tensor, 
-    n_components: int, correct_predicton_targets: torch.Tensor=None
-) -> List[torch.Tensor]:
-    """
-    Project the predictions onto the pca space defined by the label-set fingerprints.
+        for d, s, fp in zip(
+            sorted_dists[:k], sorted_smis[:k], sorted_label_set_fingerprints[:k]
+        ):
+            to_add = [s, float(d)]
+            if pca_project is not None:
+                to_add.append(pca_project.project(fp))
+            most_similar.append(to_add)
 
-    Args:
-        predictions: SxNxF tensor containing predicted fingerprints. S is the number 
-            of rotations, N is the number of predictions, F is the length of the 
-            fingerprint.
-        label_set_fingerprints: DxF tensor containing a fingerprint set.
-        n_components (int): The number of PCA components to consider.
-        correct_predicton_targets: NxF tensor containing correct fingerprints.
-    """
+        all_most_similar.append(most_similar)
 
+    return all_most_similar
+   
+def make_pca_space_from_label_set_fingerprints(
+    label_set_fingerprints: torch.Tensor, n_components: int
+) -> PCAProject:
     # Get all labelset fingerprints, but normalized.
     lblst_data_nmpy = label_set_fingerprints.cpu().numpy()
     transformer = Normalizer().fit(lblst_data_nmpy)
@@ -114,24 +139,5 @@ def project_predictions_onto_label_set_pca_space(
     pca = PCA(n_components=n_components)
     pca.fit(lblst_data_nmpy)
 
-    # Get the pca results associated with each rotation.
-    all_rotations_onto_pca = []
-    for idx in tqdm(range(predictions.shape[1]), desc='PCA Projections'):
-        rotations_onto_pca = pca.transform(
-            transformer.transform(
-                predictions[:,idx].cpu().numpy()
-            )
-        )
-        all_rotations_onto_pca.append(rotations_onto_pca)
-    
-    # Project correct_predicton_targets into that same space.
-    if correct_predicton_targets is not None:
-        correct_predicton_targets_onto_pca = pca.transform(
-            transformer.transform(
-                correct_predicton_targets.cpu().numpy()
-            )
-        )
-    else:
-        correct_predicton_targets_onto_pca = None
+    return PCAProject(pca, transformer)
 
-    return all_rotations_onto_pca, correct_predicton_targets_onto_pca

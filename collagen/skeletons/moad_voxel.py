@@ -16,7 +16,7 @@ from ..checkpoints import MyModelCheckpoint, get_last_checkpoint
 from .. import VoxelParams, VoxelParamsDefault, MultiLoader
 from ..external import MOADInterface
 
-from collagen.metrics import most_similar_matches, project_predictions_onto_label_set_pca_space, top_k
+from collagen.metrics import PCAProject, make_pca_space_from_label_set_fingerprints, most_similar_matches, top_k
 
 import re
 import json
@@ -513,67 +513,86 @@ class MoadVoxelSkeleton(object):
 
         # avg_predictions = model.predictions
         num_predictions_per_entry = 5
-        all_test_data = {
-            "top_k": {},
-            "entries": [
-                {
-                    "correct": {}, 
-                    "prediction": {
-                        "closests": [{} for __ in range(num_predictions_per_entry)]
-                    }
-                }
-                for _ in range(predictions_averaged.shape[0])
-            ]
-        }
 
         # Calculate top_k metric
-        top = top_k(
+        top_k_results = top_k(
             predictions_averaged, model.prediction_targets, label_set_fingerprints,
             k=[1,8,16,32,64]
         )
-        for k in top:
-            all_test_data["top_k"][f'test_top_{k}'] = float(top[k])
-            print(f'test_top_{k}',top[k])
+
+        # Get a PCA space defined by the label-set fingerprints.
+        pca_project = make_pca_space_from_label_set_fingerprints(
+            label_set_fingerprints, 2
+        )
 
         # Find most similar matches
-        most_similar_idxs, most_similar_dists = most_similar_matches(predictions_averaged, label_set_fingerprints, 5)
-        for entry_idx in range(most_similar_idxs.shape[0]):
-            correct_smi = model.prediction_targets_smis[entry_idx]
-            all_test_data["entries"][entry_idx]["correct"]["smiles"] = correct_smi
-            
-            dists = most_similar_dists[entry_idx]
-            idxs = most_similar_idxs[entry_idx]
-            smis = [label_set_smis[idx] for idx in idxs]
-            
-            hits = []
-            for i, (d, s) in enumerate(zip(dists, smis)):
-                all_test_data["entries"][entry_idx]["prediction"]["closests"][i]["smiles"] = s
-                all_test_data["entries"][entry_idx]["prediction"]["closests"][i]["dist"] = float(d)
-                hits.append("    " + s + " : " + str(float(d)))
-
-            print("Correct answer: " + correct_smi)
-            print("\n".join(hits))
-            print("")
-
-        all_rotations_onto_pca, correct_predicton_targets_onto_pca = project_predictions_onto_label_set_pca_space(
-            all_predictions_tnsr, label_set_fingerprints, 2,
-            correct_predicton_targets=model.prediction_targets
+        most_similar = most_similar_matches(
+            predictions_averaged, label_set_fingerprints, label_set_smis, 
+            num_predictions_per_entry, pca_project
         )
-        # To print out: https://stackoverflow.com/questions/9622163/save-plot-to-image-file-instead-of-displaying-it-using-matplotlib
 
-        for entry_idx, rotations_onto_pcas in enumerate(all_rotations_onto_pca):
-            all_test_data["entries"][entry_idx]["prediction"]["pca_per_rotations"] = [
-                r.tolist() for r in rotations_onto_pcas
-            ]
-            all_test_data["entries"][entry_idx]["correct"]["pca_per_rotations"] = [
-                r.tolist() for r in correct_predicton_targets_onto_pca[entry_idx]
-            ]
+        # Project averaged predictions and correct fingerprints into pca space.
+        correct_fp_pca_projected = pca_project.project(model.prediction_targets)
+        averaged_predicted_fp_pca_projected = pca_project.project(predictions_averaged)
+
+
+        all_test_data = {}
+        all_test_data["topK"] = {
+            f'testTop{k}': float(top_k_results[k])
+            for k in top_k_results
+        }
+
+        all_test_data["pcaPercentVarExplainedByEachComponent"] = [100 * r for r in pca_project.pca.explained_variance_ratio_.tolist()]
+
+        all_test_data["entries"] = []
+        for entry_idx in range(len(predictions_averaged)):
+            entry = {
+                "correct": {
+                    "smiles": model.prediction_targets_smis[entry_idx],
+                    "pcaProjection": correct_fp_pca_projected[entry_idx]
+                },
+                "averagedPrediction": {
+                    "pcaProjection": averaged_predicted_fp_pca_projected[entry_idx],
+                    "closestFromLabelSet": []
+                }
+            }
+
+            for predicted_smi, dist, pca in most_similar[entry_idx]:
+                entry["averagedPrediction"]["closestFromLabelSet"].append({
+                    "smiles": predicted_smi,
+                    "cosineDistToAveraged": dist,
+                    "pcaProjection": pca[0]
+                })
+
+            entry["predictionsPerRotation"] = pca_project.project(
+                all_predictions_tnsr[:,entry_idx]
+            )
+
+            all_test_data["entries"].append(entry)
 
         jsn = json.dumps(all_test_data, indent=4)
-        jsn = re.sub(r"([\-0-9\.]+?,)\n .+?([\-0-9\.])", r"\1 \2", jsn, 0, re.MULTILINE)
+        jsn = re.sub(r"([\-0-9\.]+?,)\n +?([\-0-9\.])", r"\1 \2", jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\[\n +?([\-0-9\.]+?), ([\-0-9\.,]+?)\n +?\]", r"[\1, \2]", jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\n +?\"dist", " \"dist", jsn, 0, re.MULTILINE)
         
+        open("/mnt/extra/tmptmp.json", "w").write(jsn)
+
+        txt = ""
+        for entry in all_test_data["entries"]:
+            txt += "Correct\n"
+            txt += "\t".join([str(e) for e in entry["correct"]["pcaProjection"]]) + "\t" + entry["correct"]["smiles"] + "\n"
+            txt += "averagedPrediction\n"
+            txt += "\t".join([str(e) for e in entry["averagedPrediction"]["pcaProjection"]]) + "\n"
+            txt += "closestFromLabelSet\n"
+            for close in entry["averagedPrediction"]["closestFromLabelSet"]:
+                txt += "\t".join([str(e) for e in close["pcaProjection"]]) + "\t" + close["smiles"] + "\n"
+            txt += "predictionsPerRotation\n"
+            for pred_per_rot in entry["predictionsPerRotation"]:
+                txt += "\t".join([str(e) for e in pred_per_rot]) + "\n"
+            txt = txt + "\n"
+
+        open("/mnt/extra/tmptmp.txt", "w").write(txt)
+
 
         import pdb; pdb.set_trace()
 

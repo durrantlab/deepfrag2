@@ -141,7 +141,7 @@ prts = [
     "--data " + os.path.abspath("../data/"),
     "--extra_dir " + args.working_dir,
     '--cmd "/bin/bash /mnt/extra/run.sh "',
-    # '--cmd "/bin/bash"',
+    #'--cmd "/bin/bash"',
     '--extra="--gpus=1"',
 ]
 cmds = ["cd ../", "./manager run " + " ".join(prts) + " cu111"]
