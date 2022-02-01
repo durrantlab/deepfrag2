@@ -67,15 +67,15 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
 
         # print("");print(dists.sort().values); print(d_target)
 
-        # The rank is the number of label-set distances that are equal to or
-        # better (less) than the distance to the correct answer. TODO: Harrison:
-        # Can you confirm change below ok?
-        ranks[i] = torch.sum(dists <= d_target)
-        # rank[i] = torch.sum(d_target <= dist)
+        # The rank is the number of label-set distances that are better (less)
+        # than the distance to the correct answer.
+        ranks[i] = torch.sum(dists < d_target)
     
-    # TODO: Harrison: Can you confirm below is correct?
-    return {v: torch.mean((ranks <= v).float()) for v in k}
-    # return {v: torch.mean((ranks < v).float()) for v in k}
+    # Rank is 0-indexed, K is 1-indexed
+    # I.e. top-1 means frequency of rank 0
+    #      top-5 means frequency of rank 0,1,2,3,4
+    #      etc...
+    return {v: torch.mean((ranks < v).float()) for v in k}
 
 # TODO: Label set could be in a single class that includes both fingerprints and
 # vectors, etc. Would be slick.
