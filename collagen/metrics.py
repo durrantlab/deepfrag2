@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 import torch
 from torch import nn
@@ -59,23 +58,29 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
         # fingerprints.
         dists = _broadcast_fn(cos_loss, predictions[i], label_set_fingerprints)
         
-        # The distance from this prediction and the correct answer. Keep in mind
-        # that the correct prediction is among those in the label set because
-        # you must include TEST in the label set to calculation top k.
+        # The distance from this prediction and the correct answer. Note that
+        # the correct answer must be among the answers in the label set.
         d_target = cos_loss(
             predictions[i].unsqueeze(0),
             correct_predicton_targets[i].unsqueeze(0)
         )
 
-        # The rank is the number of label-set distances that are equal to or
-        # better (less) than the distance to the correct answer. TODO: Harrison:
-        # Can you confirm change below ok?
-        ranks[i] = torch.sum(dists <= d_target)
-        # rank[i] = torch.sum(d_target <= dist)
+        # Though the correct answer must be in the label set for top k to work,
+        # at times it differs slightly, presumably due to rounding errors. So we
+        # need to find the entry in dists that is closest to d_target (off by at
+        # most only a tiny amount).
+        min_idx = dists.sub(d_target).abs().argmin()
+        d_target = dists[min_idx]
+
+        # The rank is the number of label-set distances that are better (less)
+        # than the distance to the correct answer.
+        ranks[i] = torch.sum(dists < d_target)
     
-    # TODO: Harrison: Can you confirm below is correct?
-    return {v: torch.mean((ranks <= v).float()) for v in k}
-    # return {v: torch.mean((ranks < v).float()) for v in k}
+    # Rank is 0-indexed, K is 1-indexed
+    # I.e. top-1 means frequency of rank 0
+    #      top-5 means frequency of rank 0,1,2,3,4
+    #      etc...
+    return {v: torch.mean((ranks < v).float()) for v in k}
 
 # TODO: Label set could be in a single class that includes both fingerprints and
 # vectors, etc. Would be slick.

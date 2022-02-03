@@ -19,13 +19,18 @@ memory. Virtual file system. Each epoch loads file again. Also, each fragment
 loads multiple times. Can do it with docker, but could be tricky (must use host
 /dev/shim). Could give speed up, but not sure.
 
-Need to also project average vector (across rotations) into pca space. Not same
-as aveaging pcas. And good to check that calculating correctly.
+Figure out how to not voxelize receptor when you just need the fragment smiles
+string. Notes in the code.
 
-For closest (from average) could also output fingerprints.
+Go over top-k metric to understand. I think I now understand. Do a spot check
+where you calculate it from the JSON file to confirm top-K calc is right.
 
-Print out PCA variance accounted for by each fragment.
+Apply May model to high-affinity and high-resolutions sets.
 
+You might need to protonate the fragments before calculating rdkfingerprints.
+For example, does [27*][O-] and [3*]O give the same fingerprint
+
+Also, does connection point (*) matter?
 
 # Training goal
 
@@ -48,6 +53,13 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Need to also project average vector (across rotations) into pca space. Not same
+as aveaging pcas. And good to check that calculating correctly.
+
+For closest (from average) could also output fingerprints.
+
+Print out PCA variance accounted for by each fragment.
 
 Ask Harrison to look over inference code.
 
