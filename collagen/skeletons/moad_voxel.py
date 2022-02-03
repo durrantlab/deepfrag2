@@ -464,7 +464,7 @@ class MoadVoxelSkeleton(object):
         # Intentionally keeping all predictions in a list instead of averaging
         # as you go. To allow for examining each rotations prediction. Must use
         # list (not zero tensor) because I don't think I can know the number of
-        # items in test_data beforehand. TODO: Better way to do this?
+        # items in test_data beforehand.
         all_predictions_lst = []
         for i in range(args.inference_rotations):
             print(f"Inference rotation {i+1}/{args.inference_rotations}")

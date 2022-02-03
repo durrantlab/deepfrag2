@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 import torch
 from torch import nn
@@ -59,7 +58,8 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
         # fingerprints.
         dists = _broadcast_fn(cos_loss, predictions[i], label_set_fingerprints)
         
-        # The distance from this prediction and the correct answer.
+        # The distance from this prediction and the correct answer. Note that
+        # the correct answer must be among the answers in the label set.
         d_target = cos_loss(
             predictions[i].unsqueeze(0),
             correct_predicton_targets[i].unsqueeze(0)
@@ -71,8 +71,6 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
         # most only a tiny amount).
         min_idx = dists.sub(d_target).abs().argmin()
         d_target = dists[min_idx]
-
-        # print("");print(dists.sort().values); print(d_target)
 
         # The rank is the number of label-set distances that are better (less)
         # than the distance to the correct answer.
