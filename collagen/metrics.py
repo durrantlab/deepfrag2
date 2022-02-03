@@ -65,6 +65,13 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
             correct_predicton_targets[i].unsqueeze(0)
         )
 
+        # Though the correct answer must be in the label set for top k to work,
+        # at times it differs slightly, presumably due to rounding errors. So we
+        # need to find the entry in dists that is closest to d_target (off by at
+        # most only a tiny amount).
+        min_idx = dists.sub(d_target).abs().argmin()
+        d_target = dists[min_idx]
+
         # print("");print(dists.sort().values); print(d_target)
 
         # The rank is the number of label-set distances that are better (less)
