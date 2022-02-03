@@ -59,13 +59,13 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
         # fingerprints.
         dists = _broadcast_fn(cos_loss, predictions[i], label_set_fingerprints)
         
-        # The distance from this prediction and the correct answer.
+        # The distance from this prediction and the correct answer. Keep in mind
+        # that the correct prediction is among those in the label set because
+        # you must include TEST in the label set to calculation top k.
         d_target = cos_loss(
             predictions[i].unsqueeze(0),
             correct_predicton_targets[i].unsqueeze(0)
         )
-
-        # print("");print(dists.sort().values); print(d_target)
 
         # The rank is the number of label-set distances that are equal to or
         # better (less) than the distance to the correct answer. TODO: Harrison:
