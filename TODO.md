@@ -22,15 +22,14 @@ loads multiple times. Can do it with docker, but could be tricky (must use host
 Figure out how to not voxelize receptor when you just need the fragment smiles
 string. Notes in the code.
 
-Go over top-k metric to understand. I think I now understand. Do a spot check
-where you calculate it from the JSON file to confirm top-K calc is right.
-
-Apply May model to high-affinity and high-resolutions sets.
-
 You might need to protonate the fragments before calculating rdkfingerprints.
 For example, does [27*][O-] and [3*]O give the same fingerprint
 
 Also, does connection point (*) matter?
+
+SOMETHING TO TRY: Receptor + decorating fragments => Murkoscafold
+
+Still need to set up inferance on user-provided PDB.
 
 # Training goal
 
@@ -53,6 +52,11 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Apply May model to high-affinity and high-resolutions sets.
+
+Go over top-k metric to understand. I think I now understand. Do a spot check
+where you calculate it from the JSON file to confirm top-K calc is right.
 
 Need to also project average vector (across rotations) into pca space. Not same
 as aveaging pcas. And good to check that calculating correctly.
