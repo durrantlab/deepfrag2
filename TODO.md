@@ -1,7 +1,7 @@
 Re. learning rate, this is great:
 https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
 
-**** When doing inference, get best validation checkpoint (not last).
+When doing inference, get best validation checkpoint (not last).
 
 I think a lot of my old code is not cruft. Good to do audit.
 
@@ -22,14 +22,24 @@ loads multiple times. Can do it with docker, but could be tricky (must use host
 Figure out how to not voxelize receptor when you just need the fragment smiles
 string. Notes in the code.
 
-You might need to protonate the fragments before calculating rdkfingerprints.
-For example, does [27*][O-] and [3*]O give the same fingerprint
+Curently model has TOP1 accuracy of 21%, not 58%. Why? Run tests to see if you gete similar value rotating only oonce, using fewer data examples. Need to be able to test things quickly.
 
-Also, does connection point (*) matter?
+Still need to set up inferance on user-provided PDB.
+
+FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
+
+# EASY IDEAS
+
+What about only accepting fragment if it's among those in FDA-approved drugs (or clinical trials)?
 
 SOMETHING TO TRY: Receptor + decorating fragments => Murkoscafold
 
-Still need to set up inferance on user-provided PDB.
+Clustering multiple-rotation outputs.
+
+What about filtering out fragments with more than a certain number of rotatable
+bonds?
+
+I think you could easily use this to come up with a loist of bioististers.
 
 # Training goal
 
@@ -52,6 +62,13 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Also, does connection point (*) matter? NOTE: IT DOES (which is a good thing).
+
+You might need to protonate the fragments before calculating rdkfingerprints.
+For example, does [27*][O-] and [3*]O give the same fingerprint. NOTE: I have
+confirmed that same FP regardless of proton. Also, [27*] vs [3*] doesn't matter
+(number). Note that chirality also doesn't matter.
 
 Apply May model to high-affinity and high-resolutions sets.
 

@@ -110,7 +110,6 @@ class Mol(object):
             [12.89  12.509  4.056]]
         """
 
-        # import pdb; pdb.set_trace()
         pdb_txt = StringIO()
         prody.writePDBStream(pdb_txt, atoms)
 

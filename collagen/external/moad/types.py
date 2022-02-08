@@ -45,10 +45,13 @@ class MOAD_target(object):
         """
         
         # Load the protein/ligand complex (PDB formatted).
-        # import json
-        # json.dump(self.pdb_id, open("/mnt/extra/tmptmp", "w"))
-        # with open("/mnt/extra/tmptmp", "a") as f:
-        #     f.write(self.pdb_id + "\n")
+        import traceback
+        print(traceback.format_exc())
+        sdfsdf
+        # if ()
+        # cache_pdbs
+        # ****
+
         f = open(self.files[idx], "r")
         m = prody.parsePDBStream(f, model=1)  # model=1 not necessary, but just in case...
         f.close()

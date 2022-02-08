@@ -63,6 +63,12 @@ class MoadVoxelSkeleton(object):
             help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--csv`.",
         )
         parser.add_argument(
+            "--cache_pdbs",
+            default=False,
+            action="store_true",
+            help="If given, collagen will convert the PDB fiels to a faster cachable format. Will run slower the first epoch, but faster on subsequent epochs and runs."
+        )
+        parser.add_argument(
             "--split_seed",
             required=False,
             default=1,
@@ -407,6 +413,7 @@ class MoadVoxelSkeleton(object):
             fp1 = fps[idx]
 
             mol = Mol.from_smiles(smi)
+            # TODO: 2048 should be hardcoded here? I think it's a user parameter.
             fp2 = torch.tensor(mol.fingerprint("rdk10", 2048), device=device, dtype=torch.float32)
             print((fp1-fp2).max() == (fp1-fp2).min())
 
