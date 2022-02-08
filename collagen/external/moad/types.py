@@ -6,6 +6,10 @@ from pathlib import Path
 import textwrap
 from collagen.core.mol import TemplateGeometryMismatchException, UnparsableGeometryException, UnparsableSMILESException
 from rdkit import Chem
+import os
+import pickle
+from io import StringIO 
+# from functools import lru_cache
 
 import prody
 
@@ -23,16 +27,18 @@ class MOAD_family(object):
     rep_pdb_id: str
     targets: List["MOAD_target"]
 
-
 @dataclass
 class MOAD_target(object):
     pdb_id: str
     ligands: List["MOAD_ligand"]
     files: List[Path] = field(default_factory=list)
+    cache_pdbs: bool = False
 
     def __len__(self) -> int:
         """Returns the number of on-disk structures."""
         return len(self.files)
+
+    # memory_cache = {}
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
         """
@@ -43,18 +49,49 @@ class MOAD_target(object):
 
         Returns a (receptor, ligand) tuple of :class:`atlas.data.mol.Mol` objects.
         """
+
+        # print(len(self.memory_cache.keys()))
+        # if idx in self.memory_cache:
+        #     print("Getting from cache...")
+        #     return self.memory_cache[idx][0], self.memory_cache[idx][1]  # [receptor, ligands]
         
         # Load the protein/ligand complex (PDB formatted).
-        import traceback
-        print(traceback.format_exc())
-        sdfsdf
-        # if ()
-        # cache_pdbs
-        # ****
+        pkl_filename = str(self.files[idx]) + ".pkl"
+        if self.cache_pdbs and os.path.exists(pkl_filename):
+            # Get if from the pickle.
+            try:
+                with open(pkl_filename, "rb") as f:
+                    payload = pickle.load(f)  # [receptor, ligands]
+                    # print("Loaded from pkl")
+                    # self.memory_cache[idx] = payload
+                    return payload
+            except:
+                # If there's an error loading the pickle file, regenerate the
+                # pickle file
+                # print("Corrupt pkl")
+                pass
 
-        f = open(self.files[idx], "r")
-        m = prody.parsePDBStream(f, model=1)  # model=1 not necessary, but just in case...
-        f.close()
+        # If you get here, either you're not caching PDBs, or there is no
+        # previous cached PDB you can use, or that cached file is corrupted.
+
+        if self.cache_pdbs:
+            # To improve caching, consider only lines that start with ATOM or
+            # HETATM, etc. This makes files smaller and speeds pickling a bit.
+            with open(self.files[idx]) as f:
+                lines = [
+                    l for l in f.readlines() 
+                    if l.startswith("ATOM") or l.startswith("HETATM") or l.startswith("MODEL") or l.startswith("END")
+                ]
+            pdb_txt = "".join(lines)
+
+            # Also, keep only the first model.
+            pdb_txt = pdb_txt.split("ENDMDL")[0]
+            m = prody.parsePDBStream(StringIO(pdb_txt), model=1)
+        else:
+            # Not caching, so just load the file without preprocessing.
+            f = open(self.files[idx], "r")
+            m = prody.parsePDBStream(f, model=1)  # model=1 not necessary, but just in case...
+            f.close()
 
         ignore_sels = []
         ligands = []
@@ -130,6 +167,13 @@ class MOAD_target(object):
             rec_sel = "not water"
         receptor = Mol.from_prody(m.select(rec_sel))
         receptor.meta["name"] = f"Receptor {self.pdb_id.lower()}"
+
+        if self.cache_pdbs:
+            with open(pkl_filename, "wb") as f:
+                # print("Save pickle")
+                pickle.dump([receptor, ligands], f, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # self.memory_cache[idx] = [receptor, ligands]
 
         return receptor, ligands
 

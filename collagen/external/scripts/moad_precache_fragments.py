@@ -15,7 +15,7 @@ prody.confProDy(verbosity="none")
 
 
 def run(args):
-    moad = MOADInterface(args.csv, args.data)
+    moad = MOADInterface(args.csv, args.data, args.cache_pdbs)
     dat = MOADFragmentDataset(moad, cache_file=args.out, cache_cores=args.cores)
     print("Done")
 

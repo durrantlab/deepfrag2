@@ -72,8 +72,8 @@ class MOADInterface(object):
     _lookup: Dict["str", "MOAD_target"] = field(default_factory=dict)
     _all_targets: List["str"] = field(default_factory=list)
 
-    def __init__(self, metadata: Union[str, Path], structures: Union[str, Path]):
-        self.classes = MOADInterface._load_classes(metadata)
+    def __init__(self, metadata: Union[str, Path], structures: Union[str, Path], cache_pdbs: bool):
+        self.classes = MOADInterface._load_classes(metadata, cache_pdbs)
         self._lookup = {}
         self._all_targets = []
 
@@ -85,6 +85,9 @@ class MOADInterface(object):
             for f in c.families:
                 for t in f.targets:
                     self._lookup[t.pdb_id.lower()] = t
+
+        # print("DEBUGGING")
+        # self._lookup = {k: v for k, v in list(self._lookup.items())[:1024]}
 
         self._all_targets = [k for k in self._lookup]
 
@@ -108,7 +111,7 @@ class MOADInterface(object):
         return self._lookup[k]
 
     @staticmethod
-    def _load_classes(path):
+    def _load_classes(path, cache_pdbs):
         with open(path, "r") as f:
             dat = f.read().strip().split("\n")
 
@@ -130,11 +133,11 @@ class MOADInterface(object):
                 if curr_family is not None:
                     curr_class.families.append(curr_family)
                 curr_family = MOAD_family(rep_pdb_id=parts[2], targets=[])
-                curr_target = MOAD_target(pdb_id=parts[2], ligands=[])
+                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs)
             elif parts[2] != "":  # 3: Protein target
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
-                curr_target = MOAD_target(pdb_id=parts[2], ligands=[])
+                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs)
             elif parts[3] != "":  # 4: Ligand
                 curr_target.ligands.append(
                     MOAD_ligand(

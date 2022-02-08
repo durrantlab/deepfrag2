@@ -173,7 +173,7 @@ class MOADFragmentDataset(Dataset):
                 parent, fragment = pairs[entry.frag_idx]
                 break
         else:
-            raise Exception("Ligand not found")
+            raise Exception("Ligand not found: " + str(receptor) + " -- " + str(ligands))
 
         sample = (receptor, parent, fragment)
 

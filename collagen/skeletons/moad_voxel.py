@@ -6,6 +6,9 @@ from collagen.core.loader import DataLambda
 from collagen.core.mol import Mol, mols_from_smi_file
 from collagen.external.moad.types import MOAD_split
 from tqdm.std import tqdm
+import cProfile
+import pstats
+from io import StringIO
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.csv_logs import CSVLogger
@@ -274,7 +277,7 @@ class MoadVoxelSkeleton(object):
         voxel_params = self._init_voxel_params(args)
         device = self._init_device(args)
 
-        moad = MOADInterface(metadata=args.csv, structures=args.data)
+        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs)
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits
@@ -441,6 +444,8 @@ class MoadVoxelSkeleton(object):
         return label_set_fps, label_set_smis
 
     def _run_test(self, args: argparse.Namespace, ckpt: Optional[str]):
+        pr = cProfile.Profile()
+        pr.enable()
 
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
@@ -455,7 +460,7 @@ class MoadVoxelSkeleton(object):
         voxel_params = self._init_voxel_params(args)
         device = self._init_device(args)
 
-        moad = MOADInterface(metadata=args.csv, structures=args.data)
+        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs)
         train, val, test = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits
@@ -599,6 +604,13 @@ class MoadVoxelSkeleton(object):
             txt = txt + "\n"
 
         open("/mnt/extra/tmptmp.txt", "w").write(txt)
+
+        pr.disable()
+        s = StringIO()
+        ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
+        ps.print_stats()
+        with open('/mnt/extra/cProfile.txt', 'w+') as f:
+            f.write(s.getvalue())
 
 
         import pdb; pdb.set_trace()

@@ -125,7 +125,9 @@ with open(args.working_dir + "/run.sh", "w") as f:
         "--load_newest_checkpoint" if glob.glob(args.working_dir + "/checkpoints/last.ckpt") else "",
         "--save_splits /mnt/extra/splits.json"
     ]
-    f.write("python run.py " + " ".join(parts))
+    profiler = "-m cProfile -o cProfile.log"
+    # profiler = ""
+    f.write("python " + profiler + " run.py " + " ".join(parts))
 
 
 def run(cmd):
@@ -134,7 +136,7 @@ def run(cmd):
 
 
 # Build the docker image (every time).
-run("cd ../ && ./manager build cpu")  # cu111")
+run("cd ../ && ./manager build cu111")
 
 # Run the docker image
 prts = [
