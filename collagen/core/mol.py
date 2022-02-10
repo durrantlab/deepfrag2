@@ -11,7 +11,7 @@ import torch
 from torch.utils.data import Dataset
 
 from .fingerprints import fingerprint_for
-from .voxelizer import numba_ptr, mol_gridify
+from .voxelization.voxelizer import numba_ptr, mol_gridify
 from .types import AnyAtom
 from ..draw import MolView
 
@@ -406,6 +406,7 @@ class DelayedMolVoxel(object):
         layer_offset: int = 0,
         cpu: bool = False,
     ):
+        # Convert tensor to format numba can use.
         grid = numba_ptr(tensor, cpu=cpu)
 
         mol_gridify(

@@ -168,7 +168,7 @@ class MultiLoader(object):
 
             # Wait until you've got at least one ready
             while len(self.return_list) == 0:
-                # print("Waiting for a voxel grid to finish... you might try increasing --max_voxels_in_memory")
+                print("Waiting for a voxel grid to finish... If this happens a lot, you might try increasing --max_voxels_in_memory")
                 time.sleep(0.1)
 
             # Yield the data as it is needed
