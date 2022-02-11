@@ -12,7 +12,7 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        print(kwargs)
+        self.learning_rate = kwargs["learning_rate"]
 
         self.model = nn.Sequential(
             nn.BatchNorm3d(voxel_features),
@@ -52,6 +52,7 @@ class DeepFragModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         voxels, fps, smis = batch
+
         pred = self(voxels)
 
         loss = cos_loss(pred, fps).mean()
@@ -77,7 +78,7 @@ class DeepFragModel(pl.LightningModule):
         # https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
         # 3e-4 to 5e-4 are the best learning rates if you're learning the task
         # from scratch
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
     def test_step(self, batch, batch_idx):

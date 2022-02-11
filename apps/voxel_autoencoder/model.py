@@ -12,6 +12,9 @@ class VoxelAutoencoder(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
+        # TODO: kwargs not passed?
+        # self.learning_rate = kwargs["learning_rate"]
+
         N = self.hparams.voxel_features
         self.encoder = nn.Sequential(
             nn.Conv3d(N, 32, kernel_size=3, padding=1),
@@ -66,5 +69,5 @@ class VoxelAutoencoder(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer

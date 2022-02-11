@@ -239,6 +239,8 @@ class MoadVoxelSkeleton(object):
             self._run_train(args, ckpt)
         elif args.mode == "test":
             self._run_test(args, ckpt)
+        elif args.mode == "lr_finder":
+            self._run_lr_finder(args)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 
@@ -270,6 +272,36 @@ class MoadVoxelSkeleton(object):
         )
 
         return data
+
+    def _run_lr_finder(self, args: argparse.Namespace):
+        # Update value of auto_lr_find
+        args = vars(args)
+        args["auto_lr_find"] = True
+        args = argparse.Namespace(**args)
+
+        trainer = self._init_trainer(args)
+        model = self._init_model(args, None)
+        voxel_params = self._init_voxel_params(args)
+        device = self._init_device(args)
+
+        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs)
+        train, val, _ = moad.compute_split(
+            args.split_seed, save_splits=args.save_splits,
+            load_splits=args.load_splits
+        )
+
+        train_data = self._get_data_from_split(
+            args, moad, train, voxel_params, device
+        )
+
+        val_data = self._get_data_from_split(
+            args, moad, val, voxel_params, device
+        )
+
+        lr_finder = trainer.tuner.lr_find(model, train_data, val_data)
+        print("Suggested learning rate:", lr_finder.suggestion())
+
+        # import pdb; pdb.set_trace()
 
     def _run_train(self, args: argparse.Namespace, ckpt: Optional[str]):
         trainer = self._init_trainer(args)

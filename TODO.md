@@ -30,6 +30,11 @@ FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 
 Could this error have something to do with the altered top-k accuracy? "UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 77. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`."
 
+You need to get to the bottom of this:
+
+/miniconda/lib/python3.8/site-packages/pytorch_lightning/utilities/data.py:56: UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 16. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`.
+
+
 # EASY IDEAS
 
 What about only accepting fragment if it's among those in FDA-approved drugs (or clinical trials)?

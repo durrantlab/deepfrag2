@@ -13,7 +13,7 @@ class DeepLigModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.learning_rate = 1e-3
+        self.learning_rate = kwargs["learning_rate"]
 
         self.model = nn.Sequential(
             nn.BatchNorm3d(voxel_features),
@@ -81,7 +81,7 @@ class DeepLigModel(pl.LightningModule):
         return self(batch)
 
     def configure_optimizers(self):
-        # optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        # optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         # print(self.learning_rate)
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer

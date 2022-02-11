@@ -38,6 +38,7 @@ class CustomGraphConv(MessagePassing):
 
         self.latent_size = latent_size
         self.num_layers = num_layers
+        self.learning_rate = kwargs["learning_rate"]
 
         self.weight = nn.Parameter(
             torch.Tensor(num_layers, edge_size, latent_size, latent_size)
@@ -181,7 +182,7 @@ class MolVAE(pl.LightningModule):
         )
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
     def predict_atom_types(self, z_init: Tensor) -> Tensor:

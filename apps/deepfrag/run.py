@@ -10,6 +10,7 @@ from collagen.util import rand_rot
 from collagen.skeletons import MoadVoxelSkeleton
 from collagen.core.args import get_args
 from collagen.metrics import top_k
+import pytorch_lightning as pl
 
 from model import DeepFragModel
 
@@ -82,6 +83,9 @@ class DeepFrag(MoadVoxelSkeleton):
 
 
 if __name__ == "__main__":
+    print("PyTorch", torch.__version__)
+    print("PytorchLightning", pl.__version__)
+
     args = get_args(
         parser_funcs=[
             MoadVoxelSkeleton.add_moad_args, DeepFragModel.add_model_args, 

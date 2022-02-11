@@ -25,8 +25,8 @@ def _add_generic_params(
         "-m",
         "--mode",
         type=str,
-        choices=["train", "test"],
-        help="Can be train or test. If train, trains the model. If test, runs inference on the test set. Defaults to train.",
+        choices=["train", "test", "lr_finder"],
+        help="Can be train, test, or lr_finder. If train, trains the model. If test, runs inference on the test set. If lr_finder, suggests the best learning rate to use. Defaults to train.",
         default="train",
     )
     parser.add_argument(
@@ -59,6 +59,12 @@ def _add_generic_params(
         required=False,
         default=None,
         help="Path to a json file where all parameters will be saved. Useful for debugging.",
+    )
+    parser.add_argument(
+        "--learning_rate",
+        required=False,
+        default=1e-3,
+        help="The learning rate.",
     )
     return parent_parser
 

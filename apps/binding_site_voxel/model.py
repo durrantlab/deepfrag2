@@ -13,6 +13,8 @@ class BindingSiteModel(pl.LightningModule):
     def __init__(self, voxel_features: int = 5, **kwargs):
         super().__init__()
         self.save_hyperparameters()
+        
+        self.learning_rate = kwargs["learning_rate"]
 
         self.model = nn.Sequential(
             nn.BatchNorm3d(voxel_features),
@@ -82,5 +84,5 @@ class BindingSiteModel(pl.LightningModule):
         self.log("val_acc", acc)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
