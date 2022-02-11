@@ -12,6 +12,8 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
+        print(kwargs)
+
         self.model = nn.Sequential(
             nn.BatchNorm3d(voxel_features),
             nn.Conv3d(voxel_features, 64, kernel_size=3),
