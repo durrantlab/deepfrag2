@@ -136,7 +136,7 @@ def run(cmd):
 
 
 # Build the docker image (every time).
-run("cd ../ && ./manager build cu111")
+# run("cd ../ && ./manager build cu111")
 
 # Run the docker image
 prts = [

@@ -136,7 +136,7 @@ def add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y
                 numba.cuda.atomic.max(grid, idx, val)
 
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit()
 def gpu_gridify_cube(
     grid,
     atom_num,
@@ -170,7 +170,7 @@ def gpu_gridify_cube(
         add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
 
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit()
 def gpu_gridify_discrete(
     grid,
     atom_num,
@@ -212,7 +212,7 @@ def gpu_gridify_discrete(
         add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
 
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit()
 def gpu_gridify_exp(
     grid,
     atom_num,
@@ -254,7 +254,7 @@ def gpu_gridify_exp(
         add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
 
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit()
 def gpu_gridify_gaussian(
     grid,
     atom_num,
@@ -301,7 +301,7 @@ def gpu_gridify_gaussian(
         add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
 
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit()
 def gpu_gridify_lj(
     grid,
     atom_num,
@@ -346,7 +346,7 @@ def gpu_gridify_lj(
         add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
 
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit()
 def gpu_gridify_sphere(
     grid,
     atom_num,

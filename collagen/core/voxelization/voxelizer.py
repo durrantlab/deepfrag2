@@ -12,7 +12,8 @@ from collagen.core.voxelization import gen_grid_gpu
 
 from ..featurizer import AtomicNumFeaturizer
 
-GPU_DIM = 8
+# There are max 1024 threads in each block.
+GPU_DIM = 1024 # 32 # 8
 
 
 @dataclass
@@ -463,7 +464,7 @@ def mol_gridify(
             atom_radii,
             layer_offset,
             batch_idx,
-            width,
+            width,  # num grid points in each direction
             res,
             center,
             rot,
@@ -472,43 +473,47 @@ def mol_gridify(
             acc_type,
         )
     else:
-        # import time
-        # t1 = time.time()
-        # for t in range(50):
-        dw = ((width - 1) // GPU_DIM) + 1
+        import time
+        t1 = time.time()
+        for t in range(50):
+            if atom_shape == 0:  # AtomShapeType.EXP
+                gpu_func = gen_grid_gpu.gpu_gridify_exp
+            elif atom_shape == 1:  # AtomShapeType.SPHERE
+                gpu_func = gen_grid_gpu.gpu_gridify_sphere
+            elif atom_shape == 2:  # AtomShapeType.CUBE
+                gpu_func = gen_grid_gpu.gpu_gridify_cube
+            elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
+                gpu_func = gen_grid_gpu.gpu_gridify_gaussian
+            elif atom_shape == 4:  # AtomShapeType.LJ
+                gpu_func = gen_grid_gpu.gpu_gridify_lj
+            elif atom_shape == 5:  # AtomShapeType.DISCRETE
+                gpu_func = gen_grid_gpu.gpu_gridify_discrete
 
-        if atom_shape == 0:  # AtomShapeType.EXP
-            gpu_func = gen_grid_gpu.gpu_gridify_exp
-        elif atom_shape == 1:  # AtomShapeType.SPHERE
-            gpu_func = gen_grid_gpu.gpu_gridify_sphere
-        elif atom_shape == 2:  # AtomShapeType.CUBE
-            gpu_func = gen_grid_gpu.gpu_gridify_cube
-        elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
-            gpu_func = gen_grid_gpu.gpu_gridify_gaussian
-        elif atom_shape == 4:  # AtomShapeType.LJ
-            gpu_func = gen_grid_gpu.gpu_gridify_lj
-        elif atom_shape == 5:  # AtomShapeType.DISCRETE
-            gpu_func = gen_grid_gpu.gpu_gridify_discrete
+            dw = ((width - 1) // GPU_DIM) + 1
 
-        # gpu_gridify[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
-        gpu_func[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
-            grid,
-            len(atom_coords),
-            atom_coords,
-            atom_mask,
-            atom_radii,
-            layer_offset,
-            batch_idx,
-            width,
-            res,
-            center,
-            rot,
-            atom_scale,
-            # atom_shape,
-            acc_type,
-        )
+            # (dw, dw, dw) is blocks per grid, or number of blocks
+            # (GPU_DIM, GPU_DIM, GPU_DIM) is threads per block.
+            # Product of these two gives the total number of threads launched.
 
-        # if len(atom_coords) == 4069:
-        #     print(gpu_func.ptx)
-        #     time_debug = time_debug + time.time() - t1
-        #     print(time_debug)
+            # gpu_gridify[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
+            gpu_func[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
+                grid,
+                len(atom_coords),
+                atom_coords,
+                atom_mask,
+                atom_radii,
+                layer_offset,
+                batch_idx,
+                width,
+                res,
+                center,
+                rot,
+                atom_scale,
+                # atom_shape,
+                acc_type,
+            )
+
+        if len(atom_coords) == 4069:
+            print(gpu_func.ptx)
+            time_debug = time_debug + time.time() - t1
+            print(time_debug)
