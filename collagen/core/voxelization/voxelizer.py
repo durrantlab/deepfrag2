@@ -2,7 +2,7 @@ import ctypes
 from dataclasses import dataclass
 from enum import Enum
 import math
-from typing import List, Any
+from typing import List, Any, Tuple
 
 import torch
 import numba
@@ -11,9 +11,12 @@ import numpy as np
 from collagen.core.voxelization import gen_grid_gpu
 
 from ..featurizer import AtomicNumFeaturizer
+from functools import lru_cache
 
-# There are max 1024 threads in each block.
-GPU_DIM = 1024 # 32 # 8
+# There are max 1024 threads in each block. Found ** 6 ** to be optimal after
+# trial and error. 8 is what Harrison had. Note can't be greater than 10 because
+# 11 * 11 * 11 > 1024.
+GPU_DIM = 8  # Cubic root of threads per block
 
 
 @dataclass
@@ -434,8 +437,29 @@ def cpu_gridify(
                             elif acc_type == 1:  # AccType.MAX
                                 grid[idx] = max(grid[idx], val)
 
+@lru_cache(maxsize=None)
+def _get_num_blocks_and_threads(num_points: int) -> Tuple[int, int]:
+    # Following the helpful guide here:
+    # http://selkie.macalester.edu/csinparallel/modules/CUDAArchitecture/build/html/2-Findings/Findings.html#cuda-best-practices
 
-time_debug = 0
+    gpu = numba.cuda.get_current_device()
+    # print("MAX_THREADS_PER_BLOCK", gpu.MAX_THREADS_PER_BLOCK)  # 1024
+
+    # Try to make the number of threads per block a multiple of 32.
+    threads_per_block = [32 * i for i in range(1, 1 + gpu.MAX_THREADS_PER_BLOCK // 32)]
+
+    # Keep the number of threads per block and the number of blocks as close to equal as you can without violating the first tip.
+    nums_blocks = [math.ceil(num_points / t) for t in threads_per_block]
+    diffs = [math.fabs(t - n) for t, n in zip(threads_per_block, nums_blocks)]
+    idx = np.argmin(diffs)
+
+    thread_per_block = threads_per_block[idx]
+    num_blocks = nums_blocks[idx]
+
+    return num_blocks, thread_per_block
+
+# time_debug = 0
+# cnt = 0
 
 def mol_gridify(
     grid,
@@ -454,7 +478,9 @@ def mol_gridify(
     cpu=False,
 ):
     """Wrapper around cpu_gridify()/gpu_gridify()."""
-    global time_debug
+    # global GPU_DIM
+    # global time_debug, cnt
+
     if cpu:
         cpu_gridify(
             grid,
@@ -473,47 +499,46 @@ def mol_gridify(
             acc_type,
         )
     else:
-        import time
-        t1 = time.time()
-        for t in range(50):
-            if atom_shape == 0:  # AtomShapeType.EXP
-                gpu_func = gen_grid_gpu.gpu_gridify_exp
-            elif atom_shape == 1:  # AtomShapeType.SPHERE
-                gpu_func = gen_grid_gpu.gpu_gridify_sphere
-            elif atom_shape == 2:  # AtomShapeType.CUBE
-                gpu_func = gen_grid_gpu.gpu_gridify_cube
-            elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
-                gpu_func = gen_grid_gpu.gpu_gridify_gaussian
-            elif atom_shape == 4:  # AtomShapeType.LJ
-                gpu_func = gen_grid_gpu.gpu_gridify_lj
-            elif atom_shape == 5:  # AtomShapeType.DISCRETE
-                gpu_func = gen_grid_gpu.gpu_gridify_discrete
+        # import time
+        # t1 = time.time()
+        # for t in range(50):
+        if atom_shape == 0:  # AtomShapeType.EXP
+            gpu_func = gen_grid_gpu.gpu_gridify_exp
+        elif atom_shape == 1:  # AtomShapeType.SPHERE
+            gpu_func = gen_grid_gpu.gpu_gridify_sphere
+        elif atom_shape == 2:  # AtomShapeType.CUBE
+            gpu_func = gen_grid_gpu.gpu_gridify_cube
+        elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
+            gpu_func = gen_grid_gpu.gpu_gridify_gaussian
+        elif atom_shape == 4:  # AtomShapeType.LJ
+            gpu_func = gen_grid_gpu.gpu_gridify_lj
+        elif atom_shape == 5:  # AtomShapeType.DISCRETE
+            gpu_func = gen_grid_gpu.gpu_gridify_discrete
 
-            dw = ((width - 1) // GPU_DIM) + 1
+        # dw = ((width - 1) // GPU_DIM) + 1
 
-            # (dw, dw, dw) is blocks per grid, or number of blocks
-            # (GPU_DIM, GPU_DIM, GPU_DIM) is threads per block.
-            # Product of these two gives the total number of threads launched.
+        num_blocks, thread_per_block = _get_num_blocks_and_threads(grid.shape[-3] * grid.shape[-2] * grid.shape[-1])
 
-            # gpu_gridify[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
-            gpu_func[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
-                grid,
-                len(atom_coords),
-                atom_coords,
-                atom_mask,
-                atom_radii,
-                layer_offset,
-                batch_idx,
-                width,
-                res,
-                center,
-                rot,
-                atom_scale,
-                # atom_shape,
-                acc_type,
-            )
+        # gpu_gridify[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
+        # gpu_func[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
+        gpu_func[num_blocks, thread_per_block](
+            grid,
+            len(atom_coords),
+            atom_coords,
+            atom_mask,
+            atom_radii,
+            layer_offset,
+            batch_idx,
+            width,
+            res,
+            center,
+            rot,
+            atom_scale,
+            # atom_shape,
+            acc_type,
+        )
 
-        if len(atom_coords) == 4069:
-            print(gpu_func.ptx)
-            time_debug = time_debug + time.time() - t1
-            print(time_debug)
+        # cnt = cnt + 1
+        # if cnt < 100:
+        #     time_debug = time_debug + time.time() - t1
+        #     print(cnt, time_debug)

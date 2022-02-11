@@ -14,7 +14,8 @@ idna==2.10
 # numba==0.50.1
 # numba==0.54.1
 numba==0.55.1
-llvmlite==0.37.0
+# llvmlite==0.37.0
+llvmlite
 # numpy==1.21
 # numpy==1.21.2
 nvidia-ml-py3==7.352.0
