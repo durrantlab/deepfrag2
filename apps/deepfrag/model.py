@@ -72,6 +72,9 @@ class DeepFragModel(pl.LightningModule):
         self.log("val_loss", loss, batch_size=voxels.shape[0])
 
     def configure_optimizers(self):
+        # https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
+        # 3e-4 to 5e-4 are the best learning rates if you're learning the task
+        # from scratch
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
