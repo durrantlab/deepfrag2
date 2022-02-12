@@ -16,7 +16,7 @@ from functools import lru_cache
 # There are max 1024 threads in each block. Found ** 6 ** to be optimal after
 # trial and error. 8 is what Harrison had. Note can't be greater than 10 because
 # 11 * 11 * 11 > 1024.
-GPU_DIM = 8  # Cubic root of threads per block
+GPU_DIM = 6  # Cubic root of threads per block
 
 
 @dataclass
@@ -441,6 +441,8 @@ def cpu_gridify(
 def _get_num_blocks_and_threads(num_points: int) -> Tuple[int, int]:
     # Following the helpful guide here:
     # http://selkie.macalester.edu/csinparallel/modules/CUDAArchitecture/build/html/2-Findings/Findings.html#cuda-best-practices
+    # NOTE: Ended up not using this. Important that block size and threads per
+    # block be tuples.
 
     gpu = numba.cuda.get_current_device()
     # print("MAX_THREADS_PER_BLOCK", gpu.MAX_THREADS_PER_BLOCK)  # 1024
@@ -457,6 +459,26 @@ def _get_num_blocks_and_threads(num_points: int) -> Tuple[int, int]:
     num_blocks = nums_blocks[idx]
 
     return num_blocks, thread_per_block
+
+def _debug_grid_to_xyz(grid):
+    grid_cpu = grid.copy_to_host()
+    txt = ""
+    merged = np.sum(grid_cpu[0], axis=0)
+    for x in range(24):
+        for y in range(24):
+            for z in range(24):
+                if merged[x,y,z] > 0:
+                    txt += "X\t" + str(x) + "\t" + str(y) + "\t" + str(z) + "\n"
+
+    count = len(txt.split("\n")) - 1
+    with open("tmp.xyz", "w") as f:
+        f.write(str(count) + "\n")
+        f.write("TITLE\n")
+        f.write(txt)
+
+    print(count)
+
+    import pdb; pdb.set_trace()
 
 # time_debug = 0
 # cnt = 0
@@ -515,13 +537,13 @@ def mol_gridify(
         elif atom_shape == 5:  # AtomShapeType.DISCRETE
             gpu_func = gen_grid_gpu.gpu_gridify_discrete
 
-        # dw = ((width - 1) // GPU_DIM) + 1
+        dw = ((width - 1) // GPU_DIM) + 1
 
-        num_blocks, thread_per_block = _get_num_blocks_and_threads(grid.shape[-3] * grid.shape[-2] * grid.shape[-1])
+        # num_blocks, thread_per_block = _get_num_blocks_and_threads(grid.shape[-3] * grid.shape[-2] * grid.shape[-1])
 
         # gpu_gridify[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
-        # gpu_func[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
-        gpu_func[num_blocks, thread_per_block](
+        gpu_func[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
+        # gpu_func[num_blocks, thread_per_block](
             grid,
             len(atom_coords),
             atom_coords,
@@ -534,7 +556,7 @@ def mol_gridify(
             center,
             rot,
             atom_scale,
-            # atom_shape,
+            # atom_shape,  # commented out for JDD system
             acc_type,
         )
 

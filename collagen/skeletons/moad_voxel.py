@@ -1,6 +1,6 @@
 import argparse
 from functools import partial
-from multiprocessing import Value
+from multiprocessing import Value, cpu_count
 from typing import Any, Type, TypeVar, List, Optional, Tuple
 from collagen.core.loader import DataLambda
 from collagen.core.mol import Mol, mols_from_smi_file
@@ -91,9 +91,10 @@ class MoadVoxelSkeleton(object):
             type=str,
             help="Path to a json file (previously saved with --save_splits) describing the splits to use.",
         )
+
         parser.add_argument(
             "--num_dataloader_workers",
-            default=1,
+            default=cpu_count(),
             type=int,
             help="Number of workers for DataLoader",
         )
