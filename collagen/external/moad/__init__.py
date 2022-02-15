@@ -4,13 +4,13 @@ __all__ = [
 
     "MOADPocketDataset",
     "MOADFragmentDataset",
-    "MOADWholeLigDataset",
-    "MOADMurckoLigDataset",
+    # "MOADWholeLigDataset",
+    # "MOADMurckoLigDataset",
 ]
 
 from .interface import MOADInterface
 
 from .pocket_dataset import MOADPocketDataset
 from .fragment_dataset import MOADFragmentDataset
-from .whole_lig_dataset import MOADWholeLigDataset
-from .murcko_lig_dataset import MOADMurckoLigDataset
+# from .whole_lig_dataset import MOADWholeLigDataset
+# from .murcko_lig_dataset import MOADMurckoLigDataset

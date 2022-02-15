@@ -75,7 +75,7 @@ class MoadVoxelSkeleton(object):
             "--noh",
             default=False,
             action="store_true",
-            help="If given, collagen will not load protein hydrogen atoms, nor will it save them to the cachable files generated with --cache_pdbs. Can speed calculations and free disk space if your model doens't require hydrogen atoms."
+            help="If given, collagen will not use protein hydrogen atoms, nor will it save them to the cachable files generated with --cache_pdbs. Can speed calculations and free disk space if your model doesn't need hydrogens, and if you're using --cache_pdbs."
         )
         parser.add_argument(
             "--split_seed",

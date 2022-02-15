@@ -524,18 +524,32 @@ def mol_gridify(
         # import time
         # t1 = time.time()
         # for t in range(50):
-        if atom_shape == 0:  # AtomShapeType.EXP
-            gpu_func = gen_grid_gpu.gpu_gridify_exp
-        elif atom_shape == 1:  # AtomShapeType.SPHERE
-            gpu_func = gen_grid_gpu.gpu_gridify_sphere
-        elif atom_shape == 2:  # AtomShapeType.CUBE
-            gpu_func = gen_grid_gpu.gpu_gridify_cube
-        elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
-            gpu_func = gen_grid_gpu.gpu_gridify_gaussian
-        elif atom_shape == 4:  # AtomShapeType.LJ
-            gpu_func = gen_grid_gpu.gpu_gridify_lj
-        elif atom_shape == 5:  # AtomShapeType.DISCRETE
-            gpu_func = gen_grid_gpu.gpu_gridify_discrete
+        if acc_type == 0:  # AccType.SUM
+            if atom_shape == 0:  # AtomShapeType.EXP
+                gpu_func = gen_grid_gpu.gpu_gridify_exp_sum
+            elif atom_shape == 1:  # AtomShapeType.SPHERE
+                gpu_func = gen_grid_gpu.gpu_gridify_sphere_sum
+            elif atom_shape == 2:  # AtomShapeType.CUBE
+                gpu_func = gen_grid_gpu.gpu_gridify_cube_sum
+            elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
+                gpu_func = gen_grid_gpu.gpu_gridify_gaussian_sum
+            elif atom_shape == 4:  # AtomShapeType.LJ
+                gpu_func = gen_grid_gpu.gpu_gridify_lj_sum
+            elif atom_shape == 5:  # AtomShapeType.DISCRETE
+                gpu_func = gen_grid_gpu.gpu_gridify_discrete_sum
+        elif acc_type == 1:  # AccType.MAX
+            if atom_shape == 0:  # AtomShapeType.EXP
+                gpu_func = gen_grid_gpu.gpu_gridify_exp_max
+            elif atom_shape == 1:  # AtomShapeType.SPHERE
+                gpu_func = gen_grid_gpu.gpu_gridify_sphere_max
+            elif atom_shape == 2:  # AtomShapeType.CUBE
+                gpu_func = gen_grid_gpu.gpu_gridify_cube_max
+            elif atom_shape == 3:  # AtomShapeType.GAUSSIAN
+                gpu_func = gen_grid_gpu.gpu_gridify_gaussian_max
+            elif atom_shape == 4:  # AtomShapeType.LJ
+                gpu_func = gen_grid_gpu.gpu_gridify_lj_max
+            elif atom_shape == 5:  # AtomShapeType.DISCRETE
+                gpu_func = gen_grid_gpu.gpu_gridify_discrete_max
 
         dw = ((width - 1) // GPU_DIM) + 1
 
@@ -557,7 +571,7 @@ def mol_gridify(
             rot,
             atom_scale,
             # atom_shape,  # commented out for JDD system
-            acc_type,
+            # acc_type,  # commented out for JDD system
         )
 
         # cnt = cnt + 1

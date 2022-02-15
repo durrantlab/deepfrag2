@@ -113,7 +113,7 @@ def get_atom(atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz):
 
 
 @numba.cuda.jit(device=True, inline=True)
-def add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z):
+def add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z):
     # add value to layers
     # ORIG VERISON:
     # for k in range(32):
@@ -124,20 +124,23 @@ def add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y
     #         elif acc_type == 1:  # AccType.MAX
     #             numba.cuda.atomic.max(grid, idx, val)
 
-    if acc_type == 0:  # AccType.SUM
-        for k in range(32):
-            if (mask >> k) & 1:
-                idx = (batch_idx, layer_offset + k, x, y, z)
-                numba.cuda.atomic.add(grid, idx, val)
-    elif acc_type == 1:  # AccType.MAX
-        for k in range(32):
-            if (mask >> k) & 1:
-                idx = (batch_idx, layer_offset + k, x, y, z)
-                numba.cuda.atomic.max(grid, idx, val)
+    # if acc_type == 0:  # AccType.SUM
+    for k in range(32):
+        if (mask >> k) & 1:
+            idx = (batch_idx, layer_offset + k, x, y, z)
+            numba.cuda.atomic.add(grid, idx, val)
+
+@numba.cuda.jit(device=True, inline=True)
+def add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z):
+    # elif acc_type == 1:  # AccType.MAX
+    for k in range(32):
+        if (mask >> k) & 1:
+            idx = (batch_idx, layer_offset + k, x, y, z)
+            numba.cuda.atomic.max(grid, idx, val)
 
 
 @numba.cuda.jit()
-def gpu_gridify_cube(
+def gpu_gridify_cube_sum(
     grid,
     atom_num,
     atom_coords,
@@ -149,8 +152,7 @@ def gpu_gridify_cube(
     res,
     center,
     rot,
-    atom_scale,
-    acc_type,
+    atom_scale
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -167,11 +169,11 @@ def gpu_gridify_cube(
         val = 1
 
         # add value to layers
-        add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
+        add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
 
 
 @numba.cuda.jit()
-def gpu_gridify_discrete(
+def gpu_gridify_discrete_sum(
     grid,
     atom_num,
     atom_coords,
@@ -183,8 +185,7 @@ def gpu_gridify_discrete(
     res,
     center,
     rot,
-    atom_scale,
-    acc_type,
+    atom_scale
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -209,11 +210,11 @@ def gpu_gridify_discrete(
             val = 1
 
         # add value to layers
-        add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
+        add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
 
 
 @numba.cuda.jit()
-def gpu_gridify_exp(
+def gpu_gridify_exp_sum(
     grid,
     atom_num,
     atom_coords,
@@ -225,8 +226,7 @@ def gpu_gridify_exp(
     res,
     center,
     rot,
-    atom_scale,
-    acc_type,
+    atom_scale
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -251,11 +251,11 @@ def gpu_gridify_exp(
         val = math.exp((-2 * d2) / r2)
 
         # add value to layers
-        add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
+        add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
 
 
 @numba.cuda.jit()
-def gpu_gridify_gaussian(
+def gpu_gridify_gaussian_sum(
     grid,
     atom_num,
     atom_coords,
@@ -267,8 +267,7 @@ def gpu_gridify_gaussian(
     res,
     center,
     rot,
-    atom_scale,
-    acc_type,
+    atom_scale
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -298,11 +297,11 @@ def gpu_gridify_gaussian(
             val = math.exp((-2 * d2) / r2)
 
         # add value to layers
-        add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
+        add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
 
 
 @numba.cuda.jit()
-def gpu_gridify_lj(
+def gpu_gridify_lj_sum(
     grid,
     atom_num,
     atom_coords,
@@ -314,8 +313,7 @@ def gpu_gridify_lj(
     res,
     center,
     rot,
-    atom_scale,
-    acc_type,
+    atom_scale
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -343,11 +341,11 @@ def gpu_gridify_lj(
             val = 1 - math.exp(-((r / d) ** 12))
 
         # add value to layers
-        add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
+        add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
 
 
 @numba.cuda.jit()
-def gpu_gridify_sphere(
+def gpu_gridify_sphere_sum(
     grid,
     atom_num,
     atom_coords,
@@ -359,8 +357,7 @@ def gpu_gridify_sphere(
     res,
     center,
     rot,
-    atom_scale,
-    acc_type,
+    atom_scale
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -384,5 +381,249 @@ def gpu_gridify_sphere(
         val = 1
 
         # add value to layers
-        add_value_to_layers(mask, batch_idx, layer_offset, acc_type, grid, val, x, y, z)
+        add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
+
+@numba.cuda.jit()
+def gpu_gridify_cube_max(
+    grid,
+    atom_num,
+    atom_coords,
+    atom_mask,
+    atom_radii,
+    layer_offset,
+    batch_idx,
+    width,
+    res,
+    center,
+    rot,
+    atom_scale
+):
+    x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
+
+    i = 0
+    while i < atom_num:
+        fx, fy, fz, r2, r, mask, valid = get_atom(
+            atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz
+        )
+        i += 1
+        if not valid:
+            continue
+
+        # solid cube fill
+        val = 1
+
+        # add value to layers
+        add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
+
+
+@numba.cuda.jit()
+def gpu_gridify_discrete_max(
+    grid,
+    atom_num,
+    atom_coords,
+    atom_mask,
+    atom_radii,
+    layer_offset,
+    batch_idx,
+    width,
+    res,
+    center,
+    rot,
+    atom_scale
+):
+    x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
+
+    i = 0
+    while i < atom_num:
+        fx, fy, fz, r2, r, mask, valid = get_atom(
+            atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz
+        )
+        i += 1
+        if not valid:
+            continue
+
+        # value to add to this gridpoint
+        val = 0
+        # nearest-gridpoint
+        # L1 distance
+        if (
+            abs(fx - tx) < (res / 2)
+            and abs(fy - ty) < (res / 2)
+            and abs(fz - tz) < (res / 2)
+        ):
+            val = 1
+
+        # add value to layers
+        add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
+
+
+@numba.cuda.jit()
+def gpu_gridify_exp_max(
+    grid,
+    atom_num,
+    atom_coords,
+    atom_mask,
+    atom_radii,
+    layer_offset,
+    batch_idx,
+    width,
+    res,
+    center,
+    rot,
+    atom_scale
+):
+    x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
+
+    i = 0
+    while i < atom_num:
+        fx, fy, fz, r2, r, mask, valid = get_atom(
+            atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz
+        )
+        i += 1
+        if not valid:
+            continue
+
+        # value to add to this gridpoint
+        # val = 0
+        # exponential sphere fill
+        # compute squared distance to atom
+        d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
+        if d2 > r2:
+            continue
+
+        # compute effect
+        val = math.exp((-2 * d2) / r2)
+
+        # add value to layers
+        add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
+
+
+@numba.cuda.jit()
+def gpu_gridify_gaussian_max(
+    grid,
+    atom_num,
+    atom_coords,
+    atom_mask,
+    atom_radii,
+    layer_offset,
+    batch_idx,
+    width,
+    res,
+    center,
+    rot,
+    atom_scale
+):
+    x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
+
+    i = 0
+    while i < atom_num:
+        fx, fy, fz, r2, r, mask, valid = get_atom(
+            atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz
+        )
+        i += 1
+        if not valid:
+            continue
+
+        # value to add to this gridpoint
+        val = 0
+        # (Ragoza, 2016)
+        #
+        # piecewise gaussian sphere fill
+        # compute squared distance to atom
+        d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
+        d = math.sqrt(d2)
+
+        if d > r * 1.5:
+            continue
+        elif d > r:
+            val = math.exp(-2.0) * ((4 * d2 / r2) - (12 * d / r) + 9)
+        else:
+            val = math.exp((-2 * d2) / r2)
+
+        # add value to layers
+        add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
+
+
+@numba.cuda.jit()
+def gpu_gridify_lj_max(
+    grid,
+    atom_num,
+    atom_coords,
+    atom_mask,
+    atom_radii,
+    layer_offset,
+    batch_idx,
+    width,
+    res,
+    center,
+    rot,
+    atom_scale
+):
+    x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
+
+    i = 0
+    while i < atom_num:
+        fx, fy, fz, r2, r, mask, valid = get_atom(
+            atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz
+        )
+        i += 1
+        if not valid:
+            continue
+
+        # value to add to this gridpoint
+        val = 0
+        # (Jimenez, 2017) - DeepSite
+        #
+        # LJ potential
+        # compute squared distance to atom
+        d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
+        d = math.sqrt(d2)
+
+        if d > r * 1.5:
+            continue
+        else:
+            val = 1 - math.exp(-((r / d) ** 12))
+
+        # add value to layers
+        add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
+
+
+@numba.cuda.jit()
+def gpu_gridify_sphere_max(
+    grid,
+    atom_num,
+    atom_coords,
+    atom_mask,
+    atom_radii,
+    layer_offset,
+    batch_idx,
+    width,
+    res,
+    center,
+    rot,
+    atom_scale
+):
+    x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
+
+    i = 0
+    while i < atom_num:
+        fx, fy, fz, r2, r, mask, valid = get_atom(
+            atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz
+        )
+        i += 1
+        if not valid:
+            continue
+
+        # value to add to this gridpoint
+        val = 0
+        # solid sphere fill
+        # compute squared distance to atom
+        d2 = (fx - tx) ** 2 + (fy - ty) ** 2 + (fz - tz) ** 2
+        if d2 > r2:
+            continue
+
+        val = 1
+
+        # add value to layers
+        add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
 
