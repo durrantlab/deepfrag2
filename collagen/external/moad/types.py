@@ -35,6 +35,7 @@ class MOAD_target(object):
     cache_pdbs: bool = False
     grid_width: int = 24  # Number of grid points in each dimension.
     grid_resolution: float = 0.75  # Distance between neighboring grid points in angstroms.
+    noh: bool = False  # If true, discards hydrogen atoms
     
     # DeepFrag requires 3.062500, but a few extra angstroms won't hurt. Note
     # that this is effectively hard coded because never specified elsewhere.
@@ -51,7 +52,9 @@ class MOAD_target(object):
         # Load the protein/ligand complex (PDB formatted).
         
         # pkl_filename = str(self.files[idx]) + ".pkl"
-        pkl_filename = str(self.files[idx]) + "_" + str(self.grid_width) + "_" + str(self.grid_resolution) + ".pkl"
+        pkl_filename = str(self.files[idx]) + "_" + str(self.grid_width) + "_" + str(self.grid_resolution)
+        if self.noh: pkl_filename += "_noh"
+        pkl_filename += ".pkl"
 
         if self.cache_pdbs and os.path.exists(pkl_filename):
             # Get if from the pickle.
@@ -163,7 +166,8 @@ class MOAD_target(object):
         rec_sel = "(" + rec_sel + ") and (exwithin " + str(dist) + " of (" + all_lig_sel + "))"
         # print("NEED TO TEST THIS! VISUALIZE SOME PSEUDO DENSITIES. DOES THIS NEED TO BE CUBIC DIAGNOL?")
 
-        print(self.pdb_id, rec_sel)
+        if self.noh:
+            rec_sel = "not hydrogen and (" + rec_sel + ")"
 
         rec_mol = Mol.from_prody(m.select(rec_sel))
         rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
