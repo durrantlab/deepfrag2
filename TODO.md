@@ -8,8 +8,6 @@ I think a lot of my old code is not cruft. Good to do audit.
 Is split_seed deterministic? Not specifying, should be set to "1" (default), but
 seeing different counts in progress bar.
 
-Pickle PDBs? What would be fastest?
-
 "Training will start from the beginning of the next epoch. This can cause
 unreliable results if further training is done, consider using an end of epoch
 checkpoint."
@@ -22,18 +20,14 @@ loads multiple times. Can do it with docker, but could be tricky (must use host
 Figure out how to not voxelize receptor when you just need the fragment smiles
 string. Notes in the code.
 
-Curently model has TOP1 accuracy of 21%, not 58%. Why? Run tests to see if you gete similar value rotating only oonce, using fewer data examples. Need to be able to test things quickly.
-
 Still need to set up inferance on user-provided PDB.
 
 FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 
-Could this error have something to do with the altered top-k accuracy? "UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 77. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`."
+When pickling, could save only atoms within distance of cutoff (to reduce GPU
+calcs and speed things further).
 
-You need to get to the bottom of this:
-
-/miniconda/lib/python3.8/site-packages/pytorch_lightning/utilities/data.py:56: UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 16. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`.
-
+Also, no branching in numba re. accumulation type.
 
 # EASY IDEAS
 
@@ -69,6 +63,16 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Pickle PDBs? What would be fastest?
+
+Curently model has TOP1 accuracy of 21%, not 58%. Why? Run tests to see if you gete similar value rotating only oonce, using fewer data examples. Need to be able to test things quickly.
+
+Could this error have something to do with the altered top-k accuracy? "UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 77. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`."
+
+You need to get to the bottom of this:
+
+/miniconda/lib/python3.8/site-packages/pytorch_lightning/utilities/data.py:56: UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 16. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`.
 
 Also, does connection point (*) matter? NOTE: IT DOES (which is a good thing).
 

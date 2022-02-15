@@ -19,7 +19,7 @@ from ..checkpoints import MyModelCheckpoint, get_last_checkpoint
 from .. import VoxelParams, VoxelParamsDefault, MultiLoader
 from ..external import MOADInterface
 
-from collagen.metrics import PCAProject, make_pca_space_from_label_set_fingerprints, most_similar_matches, top_k
+from collagen.metrics import make_pca_space_from_label_set_fingerprints, most_similar_matches, top_k
 
 import re
 import json
@@ -285,7 +285,7 @@ class MoadVoxelSkeleton(object):
         voxel_params = self._init_voxel_params(args)
         device = self._init_device(args)
 
-        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs)
+        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs, grid_width=voxel_params.width, resolution=voxel_params.resolution)
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits
@@ -310,7 +310,7 @@ class MoadVoxelSkeleton(object):
         voxel_params = self._init_voxel_params(args)
         device = self._init_device(args)
 
-        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs)
+        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs, grid_width=voxel_params.width, resolution=voxel_params.resolution)
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits
@@ -493,7 +493,7 @@ class MoadVoxelSkeleton(object):
         voxel_params = self._init_voxel_params(args)
         device = self._init_device(args)
 
-        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs)
+        moad = MOADInterface(metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs, grid_width=voxel_params.width, resolution=voxel_params.resolution)
         train, val, test = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits

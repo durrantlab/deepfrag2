@@ -5,7 +5,7 @@ import torch
 from torch.utils import data
 
 from collagen import Mol, DelayedMolVoxel, VoxelParams
-from collagen.external.moad import MOADInterface, MOADFragmentDataset
+from collagen.external.moad import MOADFragmentDataset
 from collagen.util import rand_rot
 from collagen.skeletons import MoadVoxelSkeleton
 from collagen.core.args import get_args
