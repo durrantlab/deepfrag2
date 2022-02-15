@@ -49,7 +49,10 @@ class MOAD_target(object):
 
     def _get_cache_if_available(self, idx):
         # Load the protein/ligand complex (PDB formatted).
-        pkl_filename = str(self.files[idx]) + ".pkl"
+        
+        # pkl_filename = str(self.files[idx]) + ".pkl"
+        pkl_filename = str(self.files[idx]) + "_" + str(self.grid_width) + "_" + str(self.grid_resolution) + ".pkl"
+
         if self.cache_pdbs and os.path.exists(pkl_filename):
             # Get if from the pickle.
             try:
@@ -104,26 +107,24 @@ class MOAD_target(object):
                 print(textwrap.fill(msg, subsequent_indent="  "))
             return None
         except UnparsableGeometryException as err:
-            # Some geometries are particularly bad and just can't be
-            # parsed. For example, 4P3R:NAP:A:202.
+            # Some geometries are particularly bad and just can't be parsed. For
+            # example, 4P3R:NAP:A:202.
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
                 print(textwrap.fill(msg, subsequent_indent="  "))
             return None
         except TemplateGeometryMismatchException as err:
-            # Note that at least some of the time, this is due to bad
-            # data from MOAD. See, for example,
-            # BindingMoad2019/3i4y.bio1, where a ligand is divided
-            # across models for some reason. Some large ligands are also
-            # not fully resolved in the crystal structure, so good
-            # reason not to include them. For example, 5EIV:HYP GLY PRO
-            # HYP GLY PRO HYP:I:-5. # In other cases, there is
-            # disagreement about what is a ligand. The PDB entry for
-            # 6HMG separates out GLC and GDQ as different ligands, even
-            # though they are covalently bonded to one another. Binding
-            # MOAD calls this one ligand, "GDQ GLC". I've spot checked a
-            # number of these, and the ones that are throw out should be
-            # thrown out.
+            # Note that at least some of the time, this is due to bad data from
+            # MOAD. See, for example, BindingMoad2019/3i4y.bio1, where a ligand
+            # is divided across models for some reason. Some large ligands are
+            # also not fully resolved in the crystal structure, so good reason
+            # not to include them. For example, 5EIV:HYP GLY PRO HYP GLY PRO
+            # HYP:I:-5. # In other cases, there is disagreement about what is a
+            # ligand. The PDB entry for 6HMG separates out GLC and GDQ as
+            # different ligands, even though they are covalently bonded to one
+            # another. Binding MOAD calls this one ligand, "GDQ GLC". I've spot
+            # checked a number of these, and the ones that are throw out should
+            # be thrown out.
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", self.pdb_id + ":" + lig.name)
                 print(textwrap.fill(msg, subsequent_indent="  "))
@@ -149,9 +150,20 @@ class MOAD_target(object):
         # Only keep those portions of the receptor that are near some ligand (to
         # speed later calculations).
         all_lig_sel = "(" + ") or (".join(lig_sels) + ")"
-        dist = 0.5 * self.grid_width * self.grid_resolution + self.grid_padding
-        rec_sel = "(" + rec_sel + ") and (exwithin " + dist + " of (" + all_lig_sel + "))"
-        print("NEED TO TEST THIS! VISUALIZE SOME PSEUDO DENSITIES. DOES THIS NEED TO BE CUBIC DIAGNOL?")
+        
+        # Get half distance along axis
+        dist = 0.5 * self.grid_width * self.grid_resolution
+
+        # Need to account for diagnol
+        dist = (3 ** 0.5) * dist
+        
+        # Add padding
+        dist = dist + self.grid_padding
+
+        rec_sel = "(" + rec_sel + ") and (exwithin " + str(dist) + " of (" + all_lig_sel + "))"
+        # print("NEED TO TEST THIS! VISUALIZE SOME PSEUDO DENSITIES. DOES THIS NEED TO BE CUBIC DIAGNOL?")
+
+        print(self.pdb_id, rec_sel)
 
         rec_mol = Mol.from_prody(m.select(rec_sel))
         rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
@@ -178,7 +190,7 @@ class MOAD_target(object):
         # if idx in self.memory_cache:
         #     print("Getting from cache...")
         #     return self.memory_cache[idx][0], self.memory_cache[idx][1]  # [receptor, ligands]
-        
+
         cached_recep_and_ligs, pkl_filename = self._get_cache_if_available(idx)
         if cached_recep_and_ligs is not None:
             return cached_recep_and_ligs
