@@ -122,9 +122,14 @@ with open(args.working_dir + "/run.sh", "w") as f:
         "--data " + params["data"],
         "--max_voxels_in_memory " + str(params["max_voxels_in_memory"]),
         "--save_params /mnt/extra/params.json",  # So overwrites input
-        "--load_newest_checkpoint" if glob.glob(args.working_dir + "/checkpoints/last.ckpt") else "",
         "--save_splits /mnt/extra/splits.json"
     ]
+
+    if "load_checkpoint" not in params:
+        parts.append(
+            "--load_newest_checkpoint" if glob.glob(args.working_dir + "/checkpoints/last.ckpt") else "",
+        )
+
     profiler = "-m cProfile -o cProfile.log"
     # profiler = ""
     f.write("python " + profiler + " run.py " + " ".join(parts))

@@ -158,7 +158,7 @@ class MOAD_target(object):
             # Only keep those portions of the receptor that are near some ligand (to
             # speed later calculations).
 
-            all_lig_sel = "(".join(lig_sels) + ")"
+            all_lig_sel = "(" + ") or (".join(lig_sels) + ")"
             
             # Get half distance along axis
             dist = 0.5 * self.grid_width * self.grid_resolution

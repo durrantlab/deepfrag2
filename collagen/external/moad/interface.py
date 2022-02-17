@@ -135,7 +135,7 @@ class MOADInterface(object):
                 if curr_family is not None:
                     curr_class.families.append(curr_family)
                 curr_family = MOAD_family(rep_pdb_id=parts[2], targets=[])
-                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, no_distant_atom=no_distant_atoms)
+                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, no_distant_atoms=no_distant_atoms)
             elif parts[2] != "":  # 3: Protein target
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
