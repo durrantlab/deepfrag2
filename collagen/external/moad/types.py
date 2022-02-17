@@ -36,6 +36,7 @@ class MOAD_target(object):
     grid_width: int = 24  # Number of grid points in each dimension.
     grid_resolution: float = 0.75  # Distance between neighboring grid points in angstroms.
     noh: bool = False  # If true, discards hydrogen atoms
+    no_distant_atoms: bool = False
     
     # DeepFrag requires 3.062500, but a few extra angstroms won't hurt. Note
     # that this is effectively hard coded because never specified elsewhere.
@@ -52,8 +53,11 @@ class MOAD_target(object):
         # Load the protein/ligand complex (PDB formatted).
         
         # pkl_filename = str(self.files[idx]) + ".pkl"
-        pkl_filename = str(self.files[idx]) + "_" + str(self.grid_width) + "_" + str(self.grid_resolution)
-        if self.noh: pkl_filename += "_noh"
+        pkl_filename = str(self.files[idx])
+        if self.no_distant_atoms: 
+            pkl_filename += "_" + str(self.grid_width) + "_" + str(self.grid_resolution)
+        if self.noh:
+            pkl_filename += "_noh"
         pkl_filename += ".pkl"
 
         if self.cache_pdbs and os.path.exists(pkl_filename):
@@ -150,21 +154,22 @@ class MOAD_target(object):
         else:
             rec_sel = "not water"
 
-        # Only keep those portions of the receptor that are near some ligand (to
-        # speed later calculations).
-        all_lig_sel = "(" + ") or (".join(lig_sels) + ")"
-        
-        # Get half distance along axis
-        dist = 0.5 * self.grid_width * self.grid_resolution
+        if self.no_distant_atoms:
+            # Only keep those portions of the receptor that are near some ligand (to
+            # speed later calculations).
 
-        # Need to account for diagnol
-        dist = (3 ** 0.5) * dist
-        
-        # Add padding
-        dist = dist + self.grid_padding
+            all_lig_sel = "(".join(lig_sels) + ")"
+            
+            # Get half distance along axis
+            dist = 0.5 * self.grid_width * self.grid_resolution
 
-        rec_sel = "(" + rec_sel + ") and (exwithin " + str(dist) + " of (" + all_lig_sel + "))"
-        # print("NEED TO TEST THIS! VISUALIZE SOME PSEUDO DENSITIES. DOES THIS NEED TO BE CUBIC DIAGNOL?")
+            # Need to account for diagnol
+            dist = (3 ** 0.5) * dist
+            
+            # Add padding
+            dist = dist + self.grid_padding
+
+            rec_sel = "(" + rec_sel + ") and (exwithin " + str(dist) + " of (" + all_lig_sel + "))"
 
         if self.noh:
             rec_sel = "not hydrogen and (" + rec_sel + ")"

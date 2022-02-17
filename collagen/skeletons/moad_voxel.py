@@ -78,6 +78,12 @@ class MoadVoxelSkeleton(object):
             help="If given, collagen will not use protein hydrogen atoms, nor will it save them to the cachable files generated with --cache_pdbs. Can speed calculations and free disk space if your model doesn't need hydrogens, and if you're using --cache_pdbs."
         )
         parser.add_argument(
+            "--no_distant_atoms",
+            default=False,
+            action="store_true",
+            help="If given, collagen will not consider atoms that are far from any ligand, nor will it save them to the cachable files generated with --cache_pdbs. Can speed calculations and free disk space if you're using --cache_pdbs."
+        )
+        parser.add_argument(
             "--split_seed",
             required=False,
             default=1,
@@ -294,7 +300,7 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(
             metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs,
             grid_width=voxel_params.width, grid_resolution=voxel_params.resolution,
-            noh=args.noh
+            noh=args.noh, no_distant_atoms=args.no_distant_atoms
         )
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
@@ -323,7 +329,7 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(
             metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs, 
             grid_width=voxel_params.width, grid_resolution=voxel_params.resolution,
-            noh=args.noh
+            noh=args.noh, no_distant_atoms=args.no_distant_atoms
         )
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
@@ -510,7 +516,7 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(
             metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs,
             grid_width=voxel_params.width, grid_resolution=voxel_params.resolution,
-            noh=args.noh
+            noh=args.noh, no_distant_atoms=args.no_distant_atoms
         )
         train, val, test = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,

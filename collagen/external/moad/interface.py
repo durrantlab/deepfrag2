@@ -72,9 +72,9 @@ class MOADInterface(object):
     _lookup: Dict["str", "MOAD_target"] = field(default_factory=dict)
     _all_targets: List["str"] = field(default_factory=list)
 
-    def __init__(self, metadata: Union[str, Path], structures: Union[str, Path], cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool):
+    def __init__(self, metadata: Union[str, Path], structures: Union[str, Path], cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool, no_distant_atoms: bool):
         self.classes = MOADInterface._load_classes(
-            metadata, cache_pdbs, grid_width, grid_resolution, noh
+            metadata, cache_pdbs, grid_width, grid_resolution, noh, no_distant_atoms
         )
         self._lookup = {}
         self._all_targets = []
@@ -113,7 +113,7 @@ class MOADInterface(object):
         return self._lookup[k]
 
     @staticmethod
-    def _load_classes(path, cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool):
+    def _load_classes(path, cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool, no_distant_atoms: bool):
         with open(path, "r") as f:
             dat = f.read().strip().split("\n")
 
@@ -135,11 +135,11 @@ class MOADInterface(object):
                 if curr_family is not None:
                     curr_class.families.append(curr_family)
                 curr_family = MOAD_family(rep_pdb_id=parts[2], targets=[])
-                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh)
+                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, no_distant_atom=no_distant_atoms)
             elif parts[2] != "":  # 3: Protein target
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
-                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh)
+                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, no_distant_atoms=no_distant_atoms)
             elif parts[3] != "":  # 4: Ligand
                 curr_target.ligands.append(
                     MOAD_ligand(
