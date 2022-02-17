@@ -24,10 +24,15 @@ Still need to set up inferance on user-provided PDB.
 
 FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 
-When pickling, could save only atoms within distance of cutoff (to reduce GPU
-calcs and speed things further).
+t-SNE. Method for dimensionality reduction that might work better than PCA.
+Harrison brought up idea of training on that representation, instead of
+RDKfingerprint. The thinking is that it might be "smoother." Something to
+consider in terms of other fingerprint representations. NOTE: Looked into it, I
+think t-SNE might be better for visualizing data too. Preserves local
+neighborness, not global data structure like PCA.
+https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
 
-Also, no branching in numba re. accumulation type.
+What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
 
 # EASY IDEAS
 
@@ -63,6 +68,11 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+When pickling, could save only atoms within distance of cutoff (to reduce GPU
+calcs and speed things further).
+
+Also, no branching in numba re. accumulation type.
 
 Pickle PDBs? What would be fastest?
 
