@@ -4,7 +4,7 @@ from multiprocessing import Value, cpu_count
 from typing import Any, Type, TypeVar, List, Optional, Tuple
 from collagen.core.loader import DataLambda
 from collagen.core.mol import Mol, mols_from_smi_file
-from collagen.external.moad.types import MOAD_split
+from collagen.external.moad.types import Entry_info, MOAD_split
 from tqdm.std import tqdm
 import cProfile
 import pstats
@@ -19,7 +19,7 @@ from ..checkpoints import MyModelCheckpoint, get_last_checkpoint
 from .. import VoxelParams, VoxelParamsDefault, MultiLoader
 from ..external import MOADInterface
 
-from collagen.metrics import make_pca_space_from_label_set_fingerprints, most_similar_matches, top_k
+from collagen.metrics import make_vis_rep_space_from_label_set_fingerprints, most_similar_matches, top_k
 
 import re
 import json
@@ -394,7 +394,7 @@ class MoadVoxelSkeleton(object):
     def _create_label_set_tensor(
         self, args: argparse.ArgumentParser, device: Any, 
         existing_label_set_fps: torch.Tensor=None,
-        existing_label_set_smis: List[str]=None,
+        existing_label_set_entry_infos: List[Entry_info]=None,
         skip_test_set=False,
         train: MOAD_split = None, val: MOAD_split = None, 
         test: MOAD_split = None, moad: MOADInterface = None,
@@ -413,7 +413,7 @@ class MoadVoxelSkeleton(object):
             # If you get an existing set of fingerprints, be sure to keep only
             # the unique ones.
             label_set_fps, label_set_smis = self._remove_redundant_fingerprints(
-                existing_label_set_fps, existing_label_set_smis, device=device
+                existing_label_set_fps, existing_label_set_entry_infos, device=device
             )
 
         # Load from train, valm and test sets.
@@ -534,54 +534,62 @@ class MoadVoxelSkeleton(object):
         # as you go. To allow for examining each rotations prediction. Must use
         # list (not zero tensor) because I don't think I can know the number of
         # items in test_data beforehand.
-        all_predictions_lst = []
+        all_predictions = {}
+        all_entry_infos = {}
         for i in range(args.inference_rotations):
             print(f"Inference rotation {i+1}/{args.inference_rotations}")
             trainer.test(model, test_data, verbose=True)
-            all_predictions_lst.append(model.predictions)
+
+            for entry_inf, prediction in zip(
+                model.prediction_targets_entry_infos, model.predictions
+            ):
+                key = entry_inf.hashable_key()
+                if key not in all_predictions:
+                    all_predictions[key] = prediction
+                    all_entry_infos[key] = entry_inf
+                else:
+                    all_predictions[key] = torch.vstack([all_predictions[key], prediction])
+                # all_predictions_lst.append(model.predictions)
+        
+        all_predictions_keys = [k for k in all_predictions.keys()]
+        all_predictions_vals = [v for v in all_predictions.values()]
         
         # Convert the list to a tensor now that you know what the dimensions
         # must be.
         all_predictions_tnsr = torch.zeros(
             (
-                args.inference_rotations, 
-                all_predictions_lst[0].shape[0], 
-                all_predictions_lst[0].shape[1]
+                len(all_predictions_vals),
+                all_predictions_vals[0].shape[0],
+                all_predictions_vals[0].shape[1]
+                # args.inference_rotations, 
+                # all_predictions_vals[0].shape[0], 
+                # all_predictions_vals[0].shape[1]
             ),
             device=device
         )
-        for i in range(args.inference_rotations):
-            all_predictions_tnsr[i] = all_predictions_lst[i]
+        for i in range(len(all_predictions_vals)):
+            all_predictions_tnsr[i] = all_predictions_vals[i]
 
         # Calculate the average predictions
-        predictions_averaged = torch.sum(all_predictions_tnsr, dim=0)
+        predictions_averaged = torch.sum(all_predictions_tnsr, dim=1)
         torch.div(
             predictions_averaged, 
             torch.tensor(args.inference_rotations, device=device),
             out=predictions_averaged
         )
 
-        # predictions = torch.zeros(all_predictions_lst[0].shape, device=device)
-        # for prediction in all_predictions_lst:
-        #     torch.add(predictions, prediction, out=predictions)
-        # torch.div(
-        #     predictions, 
-        #     torch.tensor(args.inference_rotations, device=device),
-        #     out=predictions
-        # )
-
         # Get the label set to use
-        label_set_fingerprints, label_set_smis = self._create_label_set_tensor(
+        label_set_fingerprints, label_set_entry_infos = self._create_label_set_tensor(
             args, device, 
             existing_label_set_fps=model.prediction_targets,
-            existing_label_set_smis=model.prediction_targets_smis,
+            existing_label_set_entry_infos=model.prediction_targets_entry_infos,
             skip_test_set=True,
             train=train, val=val, moad=moad, voxel_params=voxel_params,
             lbl_set_codes=lbl_set_codes
         )
 
         # avg_predictions = model.predictions
-        num_predictions_per_entry = 5
+        num_most_similar_per_entry = 5
 
         # Calculate top_k metric
         top_k_results = top_k(
@@ -589,21 +597,21 @@ class MoadVoxelSkeleton(object):
             k=[1,8,16,32,64]
         )
 
-        # Get a PCA space defined by the label-set fingerprints.
-        pca_project = make_pca_space_from_label_set_fingerprints(
+        # Get a PCA (or other) space defined by the label-set fingerprints.
+        vis_rep_space = make_vis_rep_space_from_label_set_fingerprints(
             label_set_fingerprints, 2
         )
 
         # Find most similar matches
         most_similar = most_similar_matches(
-            predictions_averaged, label_set_fingerprints, label_set_smis, 
-            num_predictions_per_entry, pca_project
+            predictions_averaged, label_set_fingerprints, label_set_entry_infos, 
+            num_most_similar_per_entry, vis_rep_space
         )
 
-        # Project averaged predictions and correct fingerprints into pca space.
-        correct_fp_pca_projected = pca_project.project(model.prediction_targets)
-        averaged_predicted_fp_pca_projected = pca_project.project(predictions_averaged)
-
+        # Project averaged predictions and correct fingerprints into pca (or
+        # other) space.
+        correct_fp_vis_rep_projected = vis_rep_space.project(model.prediction_targets)
+        averaged_predicted_fp_vis_rep_projected = vis_rep_space.project(predictions_averaged)
 
         all_test_data = {}
         all_test_data["topK"] = {
@@ -611,30 +619,37 @@ class MoadVoxelSkeleton(object):
             for k in top_k_results
         }
 
-        all_test_data["pcaPercentVarExplainedByEachComponent"] = [100 * r for r in pca_project.pca.explained_variance_ratio_.tolist()]
+        all_test_data["pcaPercentVarExplainedByEachComponent"] = [
+            100 * r 
+            for r in vis_rep_space.vis_rep.explained_variance_ratio_.tolist()
+        ]
 
         all_test_data["entries"] = []
         for entry_idx in range(len(predictions_averaged)):
+            entry_inf: Entry_info = model.prediction_targets_entry_infos[entry_idx]
             entry = {
                 "correct": {
-                    "smiles": model.prediction_targets_smis[entry_idx],
-                    "pcaProjection": correct_fp_pca_projected[entry_idx]
+                    "fragmentSmiles": entry_inf.fragment_smiles,
+                    "vizRepProjection": correct_fp_vis_rep_projected[entry_idx],
+                    "parentSmiles": entry_inf.parent_smiles,
+                    "receptor": entry_inf.receptor_name,
+                    "connectionPoint": entry_inf.connection_pt.tolist()
                 },
                 "averagedPrediction": {
-                    "pcaProjection": averaged_predicted_fp_pca_projected[entry_idx],
+                    "vizRepProjection": averaged_predicted_fp_vis_rep_projected[entry_idx],
                     "closestFromLabelSet": []
                 }
             }
 
-            for predicted_smi, dist, pca in most_similar[entry_idx]:
+            for predicted_entry_info, dist, pca in most_similar[entry_idx]:
                 entry["averagedPrediction"]["closestFromLabelSet"].append({
-                    "smiles": predicted_smi,
+                    "smiles": predicted_entry_info.fragment_smiles,
                     "cosineDistToAveraged": dist,
-                    "pcaProjection": pca[0]
+                    "vizRepProjection": pca[0]
                 })
 
-            entry["predictionsPerRotation"] = pca_project.project(
-                all_predictions_tnsr[:,entry_idx]
+            entry["predictionsPerRotation"] = vis_rep_space.project(
+                all_predictions_tnsr[entry_idx]
             )
 
             all_test_data["entries"].append(entry)
@@ -642,6 +657,7 @@ class MoadVoxelSkeleton(object):
         jsn = json.dumps(all_test_data, indent=4)
         jsn = re.sub(r"([\-0-9\.]+?,)\n +?([\-0-9\.])", r"\1 \2", jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\[\n +?([\-0-9\.]+?), ([\-0-9\.,]+?)\n +?\]", r"[\1, \2]", jsn, 0, re.MULTILINE)
+        jsn = re.sub(r"\"Receptor ", r"\"", jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\n +?\"dist", " \"dist", jsn, 0, re.MULTILINE)
         
         open("/mnt/extra/tmptmp.json", "w").write(jsn)
@@ -649,12 +665,12 @@ class MoadVoxelSkeleton(object):
         txt = ""
         for entry in all_test_data["entries"]:
             txt += "Correct\n"
-            txt += "\t".join([str(e) for e in entry["correct"]["pcaProjection"]]) + "\t" + entry["correct"]["smiles"] + "\n"
+            txt += "\t".join([str(e) for e in entry["correct"]["vizRepProjection"]]) + "\t" + entry["correct"]["fragmentSmiles"] + "\n"
             txt += "averagedPrediction\n"
-            txt += "\t".join([str(e) for e in entry["averagedPrediction"]["pcaProjection"]]) + "\n"
+            txt += "\t".join([str(e) for e in entry["averagedPrediction"]["vizRepProjection"]]) + "\n"
             txt += "closestFromLabelSet\n"
             for close in entry["averagedPrediction"]["closestFromLabelSet"]:
-                txt += "\t".join([str(e) for e in close["pcaProjection"]]) + "\t" + close["smiles"] + "\n"
+                txt += "\t".join([str(e) for e in close["vizRepProjection"]]) + "\t" + close["smiles"] + "\n"
             txt += "predictionsPerRotation\n"
             for pred_per_rot in entry["predictionsPerRotation"]:
                 txt += "\t".join([str(e) for e in pred_per_rot]) + "\n"

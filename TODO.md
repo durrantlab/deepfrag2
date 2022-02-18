@@ -34,6 +34,12 @@ https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
 
 What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
 
+When you use a saved split, is the order still randomized? That's important even
+if its saved.
+
+Could it be that it is randomized, and that's why signal degrades on multiple
+rotations?
+
 # EASY IDEAS
 
 What about only accepting fragment if it's among those in FDA-approved drugs (or clinical trials)?

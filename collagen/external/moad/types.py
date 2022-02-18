@@ -271,3 +271,15 @@ class MOAD_split(object):
     name: str
     targets: List[str]
     smiles: List[str]
+
+@dataclass
+class Entry_info(object):
+    fragment_smiles: str
+    parent_smiles: str
+    receptor_name: str
+    connection_pt: List[float]
+
+    def hashable_key(self) -> str:
+        return self.fragment_smiles + "--" + self.parent_smiles + "--" + \
+               self.receptor_name + "--" + str(self.connection_pt[0]) + "," + \
+               str(self.connection_pt[1]) + "," + str(self.connection_pt[2])

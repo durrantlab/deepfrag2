@@ -1,5 +1,7 @@
 import argparse
+from dataclasses import dataclass
 from typing import List, Tuple
+from collagen.external.moad.types import Entry_info
 
 import torch
 from torch.utils import data
@@ -23,7 +25,6 @@ OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
     return torch.tensor(mol.fingerprint("rdk10", args.fp_size))
 
-
 class DeepFrag(MoadVoxelSkeleton):
     def __init__(self):
         super().__init__(
@@ -36,14 +37,20 @@ class DeepFrag(MoadVoxelSkeleton):
     ) -> TMP_T:
         rec, parent, frag = entry
         rot = rand_rot()
+        center = frag.connectors[0]
 
-        smi = frag.smiles(True)
+        payload = Entry_info(
+            fragment_smiles=frag.smiles(True),
+            parent_smiles=parent.smiles(True),
+            receptor_name=rec.meta["name"],
+            connection_pt=center
+        )
 
         return (
-            rec.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),
-            parent.voxelize_delayed(voxel_params, center=frag.connectors[0], rot=rot),
+            rec.voxelize_delayed(voxel_params, center=center, rot=rot),
+            parent.voxelize_delayed(voxel_params, center=center, rot=rot),
             _fingerprint_fn(args, frag),
-            smi
+            payload
         )
 
     @staticmethod

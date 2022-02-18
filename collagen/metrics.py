@@ -4,12 +4,13 @@ from torch import nn
 from typing import List, Dict, Tuple, Any
 from tqdm.auto import tqdm
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 from sklearn.preprocessing import Normalizer
 import numpy as np
 
 @dataclass
-class PCAProject(object):
-    pca: Any
+class VisRepProject(object):
+    vis_rep: Any
     transformer: Any
 
     def project(self, fingerprints: torch.Tensor) -> List[float]:
@@ -18,7 +19,7 @@ class PCAProject(object):
         else:
             np_arr = fingerprints.cpu().numpy()
 
-        return self.pca.transform(self.transformer.transform(np_arr)).tolist()
+        return self.vis_rep.transform(self.transformer.transform(np_arr)).tolist()
 
 _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
@@ -86,7 +87,7 @@ def top_k(predictions: torch.Tensor, correct_predicton_targets: torch.Tensor, la
 # vectors, etc. Would be slick.
 def most_similar_matches(
     predictions: torch.Tensor, label_set_fingerprints: torch.Tensor,
-    label_set_smis: List[str], k: int, pca_project: PCAProject=None,
+    label_set_smis: List[str], k: int, vis_rep_project: VisRepProject=None,
     ignore_duplicates=False
 ):  # -> List[List[str, float, List[float]]]:
     """
@@ -113,7 +114,7 @@ def most_similar_matches(
         sorted_dists = torch.index_select(dists, 0, sorted_idxs)
         sorted_smis = [label_set_smis[idx] for idx in sorted_idxs]
         
-        if pca_project is not None:
+        if vis_rep_project is not None:
             sorted_label_set_fingerprints = torch.index_select(
                 label_set_fingerprints, 0, sorted_idxs
             )
@@ -123,26 +124,28 @@ def most_similar_matches(
         for d, s, fp in zip(
             sorted_dists[:k], sorted_smis[:k], sorted_label_set_fingerprints[:k]
         ):
-            to_add = [s, float(d)]
-            if pca_project is not None:
-                to_add.append(pca_project.project(fp))
-            most_similar.append(to_add)
+            similar_one_to_add = [s, float(d)]
+            if vis_rep_project is not None:
+                similar_one_to_add.append(vis_rep_project.project(fp))
+            most_similar.append(similar_one_to_add)
 
         all_most_similar.append(most_similar)
 
     return all_most_similar
    
-def make_pca_space_from_label_set_fingerprints(
+def make_vis_rep_space_from_label_set_fingerprints(
     label_set_fingerprints: torch.Tensor, n_components: int
-) -> PCAProject:
+) -> VisRepProject:
     # Get all labelset fingerprints, but normalized.
     lblst_data_nmpy = label_set_fingerprints.cpu().numpy()
     transformer = Normalizer().fit(lblst_data_nmpy)
     transformer.transform(lblst_data_nmpy, copy=False)
 
-    # Create the label-set PCA space.
-    pca = PCA(n_components=n_components)
-    pca.fit(lblst_data_nmpy)
+    # Create the label-set PCA (or other) space.
+    vis_rep = PCA(n_components=n_components)
+    # vis_rep = TSNE(n_components=n_components, learning_rate='auto', init='random', n_jobs=16)
 
-    return PCAProject(pca, transformer)
+    vis_rep.fit(lblst_data_nmpy)
+
+    return VisRepProject(vis_rep, transformer)
 
