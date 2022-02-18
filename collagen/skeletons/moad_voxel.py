@@ -9,6 +9,7 @@ from tqdm.std import tqdm
 import cProfile
 import pstats
 from io import StringIO
+import numpy as np
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.csv_logs import CSVLogger
@@ -530,53 +531,22 @@ class MoadVoxelSkeleton(object):
 
         model.eval()
 
-        # Intentionally keeping all predictions in a list instead of averaging
-        # as you go. To allow for examining each rotations prediction. Must use
-        # list (not zero tensor) because I don't think I can know the number of
-        # items in test_data beforehand.
-        all_predictions = {}
-        all_entry_infos = {}
-        for i in range(args.inference_rotations):
-            print(f"Inference rotation {i+1}/{args.inference_rotations}")
-            trainer.test(model, test_data, verbose=True)
 
-            for entry_inf, prediction in zip(
-                model.prediction_targets_entry_infos, model.predictions
-            ):
-                key = entry_inf.hashable_key()
-                if key not in all_predictions:
-                    all_predictions[key] = prediction
-                    all_entry_infos[key] = entry_inf
-                else:
-                    all_predictions[key] = torch.vstack([all_predictions[key], prediction])
-                # all_predictions_lst.append(model.predictions)
-        
-        all_predictions_keys = [k for k in all_predictions.keys()]
-        all_predictions_vals = [v for v in all_predictions.values()]
-        
-        # Convert the list to a tensor now that you know what the dimensions
-        # must be.
-        all_predictions_tnsr = torch.zeros(
-            (
-                len(all_predictions_vals),
-                all_predictions_vals[0].shape[0],
-                all_predictions_vals[0].shape[1]
-                # args.inference_rotations, 
-                # all_predictions_vals[0].shape[0], 
-                # all_predictions_vals[0].shape[1]
-            ),
-            device=device
-        )
-        for i in range(len(all_predictions_vals)):
-            all_predictions_tnsr[i] = all_predictions_vals[i]
+        # Run it one time to get first-rotation predictions but also the number
+        # of entries.
+        print(f"Inference rotation 1/{args.inference_rotations}")
+        trainer.test(model, test_data, verbose=True)
+        num_entries = model.predictions.shape[0]
+        # key_orders.append([i.hashable_key() for i in model.prediction_targets_entry_infos])
 
-        # Calculate the average predictions
-        predictions_averaged = torch.sum(all_predictions_tnsr, dim=1)
-        torch.div(
-            predictions_averaged, 
-            torch.tensor(args.inference_rotations, device=device),
-            out=predictions_averaged
-        )
+        # 
+        # key_orders = {}
+
+
+
+        # Start keeping track of the average predictions. Note that below is
+        # copying the values.
+        predictions_averaged = model.predictions.detach().clone()
 
         # Get the label set to use
         label_set_fingerprints, label_set_entry_infos = self._create_label_set_tensor(
@@ -588,8 +558,84 @@ class MoadVoxelSkeleton(object):
             lbl_set_codes=lbl_set_codes
         )
 
-        # avg_predictions = model.predictions
-        num_most_similar_per_entry = 5
+        # Get a PCA (or other) space defined by the label-set fingerprints.
+        vis_rep_space = make_vis_rep_space_from_label_set_fingerprints(
+            label_set_fingerprints, 2
+        )
+
+        # Get predictionsPerRotation projection (pca)
+        viz_reps_per_rotation = np.zeros([args.inference_rotations, num_entries, 2])
+        viz_reps_per_rotation[0] = vis_rep_space.project(model.predictions)
+
+        # Perform the remaining rotations, adding to predictions_averaged and
+        # filling out viz_reps_per_rotation.
+        for i in range(1, args.inference_rotations):
+            print(f"Inference rotation {i+1}/{args.inference_rotations}")
+            trainer.test(model, test_data, verbose=True)
+            # key_orders.append([i.hashable_key() for i in model.prediction_targets_entry_infos])
+            viz_reps_per_rotation[i] = vis_rep_space.project(model.predictions)
+            torch.add(predictions_averaged, model.predictions,out=predictions_averaged)
+
+        # Divide by number of rotations to get the final average predicitons.
+        torch.div(
+            predictions_averaged, 
+            torch.tensor(args.inference_rotations, device=device),
+            out=predictions_averaged
+        )
+
+        # # for item in test_data:
+        # #     print(item)
+        # # import pdb; pdb.set_trace()
+
+        # # Intentionally keeping all predictions in a list instead of averaging
+        # # as you go. To allow for examining each rotations prediction. Must use
+        # # list (not zero tensor) because I don't think I can know the number of
+        # # items in test_data beforehand.
+        # all_predictions = {}
+        # # all_keys_in_order = []
+        # for i in range(args.inference_rotations):
+        #     print(f"Inference rotation {i+1}/{args.inference_rotations}")
+        #     trainer.test(model, test_data, verbose=True)
+
+        #     for entry_inf, prediction in zip(
+        #         model.prediction_targets_entry_infos, model.predictions
+        #     ):
+        #         key = entry_inf.hashable_key()
+        #         if key not in all_predictions:
+        #             all_predictions[key] = prediction
+        #             # all_entry_infos[key] = entry_inf
+        #             # all_keys_in_order.append(key)
+        #         else:
+        #             all_predictions[key] = torch.vstack([all_predictions[key], prediction])
+        #         # all_predictions_lst.append(model.predictions)
+        
+        # # all_predictions_keys = [k for k in all_predictions.keys()]
+        # # ordered_keys = [k for k in all_predictions.keys()]
+        # all_predictions_vals = [v for v in all_predictions.values()]
+
+        # # Convert the list to a tensor now that you know what the dimensions
+        # # must be.
+        # all_predictions_tnsr = torch.zeros(
+        #     (
+        #         len(all_predictions_vals),
+        #         all_predictions_vals[0].shape[0],
+        #         all_predictions_vals[0].shape[1]
+        #         # args.inference_rotations, 
+        #         # all_predictions_vals[0].shape[0], 
+        #         # all_predictions_vals[0].shape[1]
+        #     ),
+        #     device=device
+        # )
+        # for i in range(len(all_predictions_vals)):
+        #     all_predictions_tnsr[i] = all_predictions_vals[i]
+
+        # # Calculate the average predictions
+        # predictions_averaged = torch.sum(all_predictions_tnsr, dim=1)
+        # torch.div(
+        #     predictions_averaged, 
+        #     torch.tensor(args.inference_rotations, device=device),
+        #     out=predictions_averaged
+        # )
 
         # Calculate top_k metric
         top_k_results = top_k(
@@ -597,10 +643,8 @@ class MoadVoxelSkeleton(object):
             k=[1,8,16,32,64]
         )
 
-        # Get a PCA (or other) space defined by the label-set fingerprints.
-        vis_rep_space = make_vis_rep_space_from_label_set_fingerprints(
-            label_set_fingerprints, 2
-        )
+        # avg_predictions = model.predictions
+        num_most_similar_per_entry = 5
 
         # Find most similar matches
         most_similar = most_similar_matches(
@@ -641,23 +685,27 @@ class MoadVoxelSkeleton(object):
                 }
             }
 
-            for predicted_entry_info, dist, pca in most_similar[entry_idx]:
+            for predicted_entry_info, dist, viz_rep in most_similar[entry_idx]:
                 entry["averagedPrediction"]["closestFromLabelSet"].append({
                     "smiles": predicted_entry_info.fragment_smiles,
                     "cosineDistToAveraged": dist,
-                    "vizRepProjection": pca[0]
+                    "vizRepProjection": viz_rep[0]
                 })
 
-            entry["predictionsPerRotation"] = vis_rep_space.project(
-                all_predictions_tnsr[entry_idx]
-            )
+            entry["predictionsPerRotation"] = [
+                viz_reps_per_rotation[i][entry_idx].tolist()
+                for i in range(args.inference_rotations)
+            ]
+            # vis_rep_space.project(
+            #     all_predictions_tnsr[entry_idx]
+            # )
 
             all_test_data["entries"].append(entry)
 
         jsn = json.dumps(all_test_data, indent=4)
         jsn = re.sub(r"([\-0-9\.]+?,)\n +?([\-0-9\.])", r"\1 \2", jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\[\n +?([\-0-9\.]+?), ([\-0-9\.,]+?)\n +?\]", r"[\1, \2]", jsn, 0, re.MULTILINE)
-        jsn = re.sub(r"\"Receptor ", r"\"", jsn, 0, re.MULTILINE)
+        jsn = re.sub(r"\"Receptor ", '"', jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\n +?\"dist", " \"dist", jsn, 0, re.MULTILINE)
         
         open("/mnt/extra/tmptmp.json", "w").write(jsn)

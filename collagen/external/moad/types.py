@@ -275,7 +275,7 @@ class MOAD_split(object):
 @dataclass
 class Entry_info(object):
     fragment_smiles: str
-    parent_smiles: str
+    parent_smiles: str  # TODO: Really need to calculate this? Not sure how long it takes, but not really needed.
     receptor_name: str
     connection_pt: List[float]
 

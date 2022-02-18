@@ -15,7 +15,11 @@ def rand_rot():
     q = rot_rand_num_gen.normal(size=4)  # sample quaternion from normal distribution
     # q = np.random.normal(size=4)
 
+    # For debugging, if you want a consistent (non-random) rotation.
+    # q = np.array([0.5, 0.234, 0.9234, 0.21])
+
     q = q / np.sqrt(np.sum(q ** 2))  # normalize
+
     return q
 
 

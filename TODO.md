@@ -37,8 +37,8 @@ What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtr
 When you use a saved split, is the order still randomized? That's important even
 if its saved.
 
-Could it be that it is randomized, and that's why signal degrades on multiple
-rotations?
+Also, connection point seems to be repeated een though it never shoul dbe.
+(STILL A PROBLEM)
 
 # EASY IDEAS
 
@@ -74,6 +74,11 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Could it be that it is randomized, and that's why signal degrades on multiple
+rotations?
+
+Even when you fix the rotations, after a while predictionsPerRotation gives different vectors. Should always be giing the same vecotr (like it does at the start). There's something up there.
 
 When pickling, could save only atoms within distance of cutoff (to reduce GPU
 calcs and speed things further).

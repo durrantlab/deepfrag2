@@ -88,11 +88,6 @@ class DeepFragModel(pl.LightningModule):
 
         loss = cos_loss(pred, fps).mean()
 
-        # TODO: Debugging
-        # if batch_idx == 1:
-        #     means = fps.mean(axis=1).cpu().numpy()
-        #     print(means)
-
         # print("test_step")
         self.log("test_loss", loss, batch_size=voxels.shape[0])
 
@@ -101,12 +96,39 @@ class DeepFragModel(pl.LightningModule):
 
     def test_epoch_end(self, results):
         # This runs after inference has been run on all batches.
+
         predictions = torch.cat([x[0] for x in results])
         prediction_targets = torch.cat([x[1] for x in results])
 
         prediction_targets_entry_infos = []
         for x in results:
             prediction_targets_entry_infos.extend(x[2])
+
+        # Sort so that order is always the same (for multiple rotations).
+        keys_and_idxs_sorted = sorted(
+            [
+                (e.hashable_key(), i) 
+                for i, e in enumerate(prediction_targets_entry_infos)
+            ], 
+            key=lambda x: x[0]
+        )
+        argsort_idx = [i for _, i in keys_and_idxs_sorted]
+
+        prediction_targets_entry_infos = [
+            prediction_targets_entry_infos[i] for i in argsort_idx
+        ]
+
+        argsort_idx_tnsr = torch.tensor(argsort_idx, device=predictions.device)
+
+        torch.index_select(
+            predictions.clone(), 0, argsort_idx_tnsr,
+            out=predictions
+        )
+
+        torch.index_select(
+            prediction_targets.clone(), 0, argsort_idx_tnsr,
+            out=prediction_targets
+        )
 
         # Save predictions, etc., so they can be accessed outside the model.
         self.predictions = predictions
