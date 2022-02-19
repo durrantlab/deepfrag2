@@ -24,14 +24,6 @@ Still need to set up inferance on user-provided PDB.
 
 FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 
-t-SNE. Method for dimensionality reduction that might work better than PCA.
-Harrison brought up idea of training on that representation, instead of
-RDKfingerprint. The thinking is that it might be "smoother." Something to
-consider in terms of other fingerprint representations. NOTE: Looked into it, I
-think t-SNE might be better for visualizing data too. Preserves local
-neighborness, not global data structure like PCA.
-https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
-
 What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
 
 When you use a saved split, is the order still randomized? That's important even
@@ -39,6 +31,13 @@ if its saved.
 
 Also, connection point seems to be repeated een though it never shoul dbe.
 (STILL A PROBLEM)
+
+What about weighting loss by prevelance of fragment (so OH not overrepresented)?
+
+Need to redo high-res and high-affinity with new system.
+
+When finding most simiar, you could find most similar to any of rotation
+outputs. Maybe weighted by appearing in multiple lists?
 
 # EASY IDEAS
 
@@ -75,6 +74,17 @@ to go up again.
 
 # DONE
 
+Note: confirmed optimization (ignore dist atoms, etc.) doesn't impact accuracy
+(top-k within 1 or 2 / 10000 when rot fixed = likely rounding error)
+
+t-SNE. Method for dimensionality reduction that might work better than PCA.
+Harrison brought up idea of training on that representation, instead of
+RDKfingerprint. The thinking is that it might be "smoother." Something to
+consider in terms of other fingerprint representations. NOTE: Looked into it, I
+think t-SNE might be better for visualizing data too. Preserves local
+neighborness, not global data structure like PCA.
+https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
+
 Could it be that it is randomized, and that's why signal degrades on multiple
 rotations?
 
@@ -87,7 +97,9 @@ Also, no branching in numba re. accumulation type.
 
 Pickle PDBs? What would be fastest?
 
-Curently model has TOP1 accuracy of 21%, not 58%. Why? Run tests to see if you gete similar value rotating only oonce, using fewer data examples. Need to be able to test things quickly.
+Curently model has TOP1 accuracy of 21%, not 58%. Why? Run tests to see if you
+gete similar value rotating only oonce, using fewer data examples. Need to be
+able to test things quickly. (Fixed bug found in evaluation code.)
 
 Could this error have something to do with the altered top-k accuracy? "UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 77. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`."
 

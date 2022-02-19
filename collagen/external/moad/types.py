@@ -59,6 +59,7 @@ class MOAD_target(object):
         if self.noh:
             pkl_filename += "_noh"
         pkl_filename += ".pkl"
+        # print(pkl_filename)
 
         if self.cache_pdbs and os.path.exists(pkl_filename):
             # Get if from the pickle.
