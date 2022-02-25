@@ -107,7 +107,7 @@ class MoadVoxelSkeleton(object):
             help="Path to a json file (previously saved with --save_splits) describing the splits to use.",
         )
         parser.add_argument(
-            "--max_pdbs_to_use",
+            "--max_pdbs_to_use_per_split",
             required=False,
             default=None,
             type=int,
@@ -315,7 +315,7 @@ class MoadVoxelSkeleton(object):
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits,
-            max_pdbs_to_use=args.max_pdbs_to_use
+            max_pdbs_to_use_per_split=args.max_pdbs_to_use_per_split
         )
 
         train_data = self._get_data_from_split(
@@ -345,7 +345,7 @@ class MoadVoxelSkeleton(object):
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits,
-            max_pdbs_to_use=args.max_pdbs_to_use
+            max_pdbs_to_use_per_split=args.max_pdbs_to_use_per_split
         )
 
         train_data = self._get_data_from_split(
@@ -533,7 +533,7 @@ class MoadVoxelSkeleton(object):
         train, val, test = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
             load_splits=args.load_splits,
-            max_pdbs_to_use=args.max_pdbs_to_use
+            max_pdbs_to_use_per_split=args.max_pdbs_to_use_per_split
         )
 
         # You'll always need the test data.

@@ -201,7 +201,7 @@ class MOADInterface(object):
         prevent_smiles_overlap: bool = True,
         save_splits: str = None,
         load_splits: str = None,
-        max_pdbs_to_use: int = None
+        max_pdbs_to_use_per_split: int = None
     ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
         """Compute a TRAIN/VAL/TEST split.
 
@@ -251,7 +251,7 @@ class MOADInterface(object):
             test_pdb_ids = _flatten(test_families)
 
             train_pdb_ids, val_pdb_ids, test_pdb_ids = self._limit_split_pdb_size(
-                max_pdbs_to_use, train_pdb_ids, val_pdb_ids, test_pdb_ids
+                max_pdbs_to_use_per_split, train_pdb_ids, val_pdb_ids, test_pdb_ids
             )
 
             train_smi = self._smiles_for(train_pdb_ids)
@@ -277,7 +277,7 @@ class MOADInterface(object):
             val_pdb_ids = split_inf["val"]["pdbs"]
             test_pdb_ids = split_inf["test"]["pdbs"]
 
-            if max_pdbs_to_use is None:
+            if max_pdbs_to_use_per_split is None:
                 # Load from cache
                 train_smi = set(split_inf["train"]["smiles"])
                 val_smi = set(split_inf["val"]["smiles"])
@@ -286,7 +286,7 @@ class MOADInterface(object):
                 # Limiting number of pdbs, so also don't get the smiles from the
                 # cache.
                 train_pdb_ids, val_pdb_ids, test_pdb_ids = self._limit_split_pdb_size(
-                    max_pdbs_to_use, train_pdb_ids, val_pdb_ids, test_pdb_ids
+                    max_pdbs_to_use_per_split, train_pdb_ids, val_pdb_ids, test_pdb_ids
                 )
 
                 train_smi = self._smiles_for(train_pdb_ids)
@@ -330,15 +330,15 @@ class MOADInterface(object):
         )
 
     def _limit_split_pdb_size(
-        self, max_pdbs_to_use: int, train_pdb_ids: List, val_pdb_ids: List, 
+        self, max_pdbs_to_use_per_split: int, train_pdb_ids: List, val_pdb_ids: List, 
         test_pdb_ids: List
     ) -> Tuple[List, List, List]:
-        if max_pdbs_to_use is not None:
-            if len(train_pdb_ids) > max_pdbs_to_use:
-                train_pdb_ids = train_pdb_ids[:max_pdbs_to_use]
-            if len(val_pdb_ids) > max_pdbs_to_use:
-                val_pdb_ids = val_pdb_ids[:max_pdbs_to_use]
-            if len(test_pdb_ids) > max_pdbs_to_use:
-                test_pdb_ids = test_pdb_ids[:max_pdbs_to_use]
+        if max_pdbs_to_use_per_split is not None:
+            if len(train_pdb_ids) > max_pdbs_to_use_per_split:
+                train_pdb_ids = train_pdb_ids[:max_pdbs_to_use_per_split]
+            if len(val_pdb_ids) > max_pdbs_to_use_per_split:
+                val_pdb_ids = val_pdb_ids[:max_pdbs_to_use_per_split]
+            if len(test_pdb_ids) > max_pdbs_to_use_per_split:
+                test_pdb_ids = test_pdb_ids[:max_pdbs_to_use_per_split]
         return train_pdb_ids, val_pdb_ids, test_pdb_ids
 
