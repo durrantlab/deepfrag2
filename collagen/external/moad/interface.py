@@ -72,9 +72,9 @@ class MOADInterface(object):
     _lookup: Dict["str", "MOAD_target"] = field(default_factory=dict)
     _all_targets: List["str"] = field(default_factory=list)
 
-    def __init__(self, metadata: Union[str, Path], structures: Union[str, Path], cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool, no_distant_atoms: bool):
+    def __init__(self, metadata: Union[str, Path], structures: Union[str, Path], cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool, discard_distant_atoms: bool):
         self.classes = MOADInterface._load_classes(
-            metadata, cache_pdbs, grid_width, grid_resolution, noh, no_distant_atoms
+            metadata, cache_pdbs, grid_width, grid_resolution, noh, discard_distant_atoms
         )
         self._lookup = {}
         self._all_targets = []
@@ -113,7 +113,7 @@ class MOADInterface(object):
         return self._lookup[k]
 
     @staticmethod
-    def _load_classes(path, cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool, no_distant_atoms: bool):
+    def _load_classes(path, cache_pdbs: bool, grid_width: int, grid_resolution: float, noh: bool, discard_distant_atoms: bool):
         with open(path, "r") as f:
             dat = f.read().strip().split("\n")
 
@@ -135,11 +135,11 @@ class MOADInterface(object):
                 if curr_family is not None:
                     curr_class.families.append(curr_family)
                 curr_family = MOAD_family(rep_pdb_id=parts[2], targets=[])
-                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, no_distant_atoms=no_distant_atoms)
+                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, discard_distant_atoms=discard_distant_atoms)
             elif parts[2] != "":  # 3: Protein target
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
-                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, no_distant_atoms=no_distant_atoms)
+                curr_target = MOAD_target(pdb_id=parts[2], ligands=[], cache_pdbs=cache_pdbs, grid_width=grid_width, grid_resolution=grid_resolution, noh=noh, discard_distant_atoms=discard_distant_atoms)
             elif parts[3] != "":  # 4: Ligand
                 curr_target.ligands.append(
                     MOAD_ligand(
@@ -200,7 +200,8 @@ class MOADInterface(object):
         fraction_val: float = 0.5,
         prevent_smiles_overlap: bool = True,
         save_splits: str = None,
-        load_splits: str = None
+        load_splits: str = None,
+        max_pdbs_to_use: int = None
     ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
         """Compute a TRAIN/VAL/TEST split.
 
@@ -249,6 +250,10 @@ class MOADInterface(object):
             val_pdb_ids = _flatten(val_families)
             test_pdb_ids = _flatten(test_families)
 
+            train_pdb_ids, val_pdb_ids, test_pdb_ids = self._limit_split_pdb_size(
+                max_pdbs_to_use, train_pdb_ids, val_pdb_ids, test_pdb_ids
+            )
+
             train_smi = self._smiles_for(train_pdb_ids)
             val_smi = self._smiles_for(val_pdb_ids)
             test_smi = self._smiles_for(test_pdb_ids)
@@ -267,12 +272,26 @@ class MOADInterface(object):
         else:
             # Loading splits. Get from the file.
             split_inf = json.load(open(load_splits))
+
             train_pdb_ids = split_inf["train"]["pdbs"]
             val_pdb_ids = split_inf["val"]["pdbs"]
             test_pdb_ids = split_inf["test"]["pdbs"]
-            train_smi = set(split_inf["train"]["smiles"])
-            val_smi = set(split_inf["val"]["smiles"])
-            test_smi = set(split_inf["test"]["smiles"])
+
+            if max_pdbs_to_use is None:
+                # Load from cache
+                train_smi = set(split_inf["train"]["smiles"])
+                val_smi = set(split_inf["val"]["smiles"])
+                test_smi = set(split_inf["test"]["smiles"])
+            else:
+                # Limiting number of pdbs, so also don't get the smiles from the
+                # cache.
+                train_pdb_ids, val_pdb_ids, test_pdb_ids = self._limit_split_pdb_size(
+                    max_pdbs_to_use, train_pdb_ids, val_pdb_ids, test_pdb_ids
+                )
+
+                train_smi = self._smiles_for(train_pdb_ids)
+                val_smi = self._smiles_for(val_pdb_ids)
+                test_smi = self._smiles_for(test_pdb_ids)
 
             # Reset seed just in case you also use save_splits. Not used.
             seed = split_inf["test"]  
@@ -309,3 +328,17 @@ class MOADInterface(object):
             targets=self.targets,
             smiles=list(self._smiles_for(self.targets)),
         )
+
+    def _limit_split_pdb_size(
+        self, max_pdbs_to_use: int, train_pdb_ids: List, val_pdb_ids: List, 
+        test_pdb_ids: List
+    ) -> Tuple[List, List, List]:
+        if max_pdbs_to_use is not None:
+            if len(train_pdb_ids) > max_pdbs_to_use:
+                train_pdb_ids = train_pdb_ids[:max_pdbs_to_use]
+            if len(val_pdb_ids) > max_pdbs_to_use:
+                val_pdb_ids = val_pdb_ids[:max_pdbs_to_use]
+            if len(test_pdb_ids) > max_pdbs_to_use:
+                test_pdb_ids = test_pdb_ids[:max_pdbs_to_use]
+        return train_pdb_ids, val_pdb_ids, test_pdb_ids
+

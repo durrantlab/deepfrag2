@@ -81,7 +81,7 @@ class MoadVoxelSkeleton(object):
             help="If given, collagen will not use protein hydrogen atoms, nor will it save them to the cachable files generated with --cache_pdbs. Can speed calculations and free disk space if your model doesn't need hydrogens, and if you're using --cache_pdbs."
         )
         parser.add_argument(
-            "--no_distant_atoms",
+            "--discard_distant_atoms",
             default=False,
             action="store_true",
             help="If given, collagen will not consider atoms that are far from any ligand, nor will it save them to the cachable files generated with --cache_pdbs. Can speed calculations and free disk space if you're using --cache_pdbs."
@@ -105,6 +105,13 @@ class MoadVoxelSkeleton(object):
             default=None,
             type=str,
             help="Path to a json file (previously saved with --save_splits) describing the splits to use.",
+        )
+        parser.add_argument(
+            "--max_pdbs_to_use",
+            required=False,
+            default=None,
+            type=int,
+            help="If given, the max number of PDBs used to generate examples in any *******",
         )
 
         parser.add_argument(
@@ -303,11 +310,12 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(
             metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs,
             grid_width=voxel_params.width, grid_resolution=voxel_params.resolution,
-            noh=args.noh, no_distant_atoms=args.no_distant_atoms
+            noh=args.noh, discard_distant_atoms=args.discard_distant_atoms
         )
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
-            load_splits=args.load_splits
+            load_splits=args.load_splits,
+            max_pdbs_to_use=args.max_pdbs_to_use
         )
 
         train_data = self._get_data_from_split(
@@ -332,11 +340,12 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(
             metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs, 
             grid_width=voxel_params.width, grid_resolution=voxel_params.resolution,
-            noh=args.noh, no_distant_atoms=args.no_distant_atoms
+            noh=args.noh, discard_distant_atoms=args.discard_distant_atoms
         )
         train, val, _ = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
-            load_splits=args.load_splits
+            load_splits=args.load_splits,
+            max_pdbs_to_use=args.max_pdbs_to_use
         )
 
         train_data = self._get_data_from_split(
@@ -519,11 +528,12 @@ class MoadVoxelSkeleton(object):
         moad = MOADInterface(
             metadata=args.csv, structures=args.data, cache_pdbs=args.cache_pdbs,
             grid_width=voxel_params.width, grid_resolution=voxel_params.resolution,
-            noh=args.noh, no_distant_atoms=args.no_distant_atoms
+            noh=args.noh, discard_distant_atoms=args.discard_distant_atoms
         )
         train, val, test = moad.compute_split(
             args.split_seed, save_splits=args.save_splits,
-            load_splits=args.load_splits
+            load_splits=args.load_splits,
+            max_pdbs_to_use=args.max_pdbs_to_use
         )
 
         # You'll always need the test data.

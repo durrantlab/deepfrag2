@@ -36,7 +36,7 @@ class MOAD_target(object):
     grid_width: int = 24  # Number of grid points in each dimension.
     grid_resolution: float = 0.75  # Distance between neighboring grid points in angstroms.
     noh: bool = False  # If true, discards hydrogen atoms
-    no_distant_atoms: bool = False
+    discard_distant_atoms: bool = False
     
     # DeepFrag requires 3.062500, but a few extra angstroms won't hurt. Note
     # that this is effectively hard coded because never specified elsewhere.
@@ -54,7 +54,7 @@ class MOAD_target(object):
         
         # pkl_filename = str(self.files[idx]) + ".pkl"
         pkl_filename = str(self.files[idx])
-        if self.no_distant_atoms: 
+        if self.discard_distant_atoms: 
             pkl_filename += "_" + str(self.grid_width) + "_" + str(self.grid_resolution)
         if self.noh:
             pkl_filename += "_noh"
@@ -155,7 +155,7 @@ class MOAD_target(object):
         else:
             rec_sel = "not water"
 
-        if self.no_distant_atoms:
+        if self.discard_distant_atoms:
             # Only keep those portions of the receptor that are near some ligand (to
             # speed later calculations).
 
