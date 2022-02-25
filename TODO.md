@@ -41,16 +41,23 @@ outputs. Maybe weighted by appearing in multiple lists?
 
 # EASY IDEAS
 
-What about only accepting fragment if it's among those in FDA-approved drugs (or clinical trials)?
-
 SOMETHING TO TRY: Receptor + decorating fragments => Murkoscafold
-
-Clustering multiple-rotation outputs.
 
 What about filtering out fragments with more than a certain number of rotatable
 bonds?
 
 I think you could easily use this to come up with a loist of bioististers.
+
+Instead of also predicting density (autoencode), could just output pharmacophore
+on scaleup step.
+
+Could train models with big molecualr weihght cutoff and smaller. Two different
+versions. Lower limit on weight cutoff especially good. Usually not going to
+want to add simple hydroxyl for example. (But sometimes yes, so include.)
+
+Method to artifactually limit numer of PDBs used for training, to facilitate
+comparisons. For example, does low-affinity model fail because not enoguh data?
+What if trained on full model, but on same number of PDBs?
 
 # Training goal
 
@@ -73,6 +80,11 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+What about only accepting fragment if it's among those in FDA-approved drugs (or
+clinical trials)? Too limiting, per Pfizer.
+
+Clustering multiple-rotation outputs. Not as impactful as you thought.
 
 Note: confirmed optimization (ignore dist atoms, etc.) doesn't impact accuracy
 (top-k within 1 or 2 / 10000 when rot fixed = likely rounding error)
