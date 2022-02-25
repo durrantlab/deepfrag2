@@ -29,12 +29,7 @@ What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtr
 When you use a saved split, is the order still randomized? That's important even
 if its saved.
 
-Also, connection point seems to be repeated een though it never shoul dbe.
-(STILL A PROBLEM)
-
 What about weighting loss by prevelance of fragment (so OH not overrepresented)?
-
-Need to redo high-res and high-affinity with new system.
 
 When finding most simiar, you could find most similar to any of rotation
 outputs. Maybe weighted by appearing in multiple lists?
@@ -80,6 +75,11 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Also, connection point seems to be repeated een though it never shoul dbe.
+(STILL A PROBLEM)
+
+Need to redo high-res and high-affinity with new system.
 
 What about only accepting fragment if it's among those in FDA-approved drugs (or
 clinical trials)? Too limiting, per Pfizer.
