@@ -29,12 +29,7 @@ What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtr
 When you use a saved split, is the order still randomized? That's important even
 if its saved.
 
-Also, connection point seems to be repeated een though it never shoul dbe.
-(STILL A PROBLEM)
-
 What about weighting loss by prevelance of fragment (so OH not overrepresented)?
-
-Need to redo high-res and high-affinity with new system.
 
 When finding most simiar, you could find most similar to any of rotation
 outputs. Maybe weighted by appearing in multiple lists?
@@ -44,8 +39,6 @@ outputs. Maybe weighted by appearing in multiple lists?
 What about only accepting fragment if it's among those in FDA-approved drugs (or clinical trials)?
 
 SOMETHING TO TRY: Receptor + decorating fragments => Murkoscafold
-
-Clustering multiple-rotation outputs.
 
 What about filtering out fragments with more than a certain number of rotatable
 bonds?
@@ -73,6 +66,13 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Also, connection point seems to be repeated een though it never shoul dbe.
+(STILL A PROBLEM)
+
+Clustering multiple-rotation outputs.
+
+Need to redo high-res and high-affinity with new system.
 
 Note: confirmed optimization (ignore dist atoms, etc.) doesn't impact accuracy
 (top-k within 1 or 2 / 10000 when rot fixed = likely rounding error)
