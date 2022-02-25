@@ -111,7 +111,7 @@ class MoadVoxelSkeleton(object):
             required=False,
             default=None,
             type=int,
-            help="If given, the max number of PDBs used to generate examples in any *******",
+            help="If given, the max number of PDBs used to generate examples in the train, val, and test sets. If any of these sets contains more than `max_pdbs_to_use_per_split` PDBs, the PDBs will be removed.",
         )
 
         parser.add_argument(
