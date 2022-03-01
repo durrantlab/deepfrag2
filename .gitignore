@@ -4,6 +4,7 @@
 
 data/**
 !data/README.md
+!data/download_moad.sh
 
 .DS_Store
 
