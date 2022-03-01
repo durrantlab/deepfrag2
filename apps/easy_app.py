@@ -141,15 +141,15 @@ def run(cmd):
 
 
 # Build the docker image (every time).
-run("cd ../ && ./manager build cu111")
+run("cd " + SCRIPT_DIR + "/../ && ./manager build cu111")
 
 # Run the docker image
 prts = [
-    "--data " + os.path.abspath("../data/"),
+    "--data " + os.path.abspath(SCRIPT_DIR + "/../data/"),
     "--extra_dir " + args.working_dir,
     '--cmd "/bin/bash /mnt/extra/run.sh "',
     # '--cmd "/bin/bash"',
     '--extra="--gpus=1"',
 ]
-cmds = ["cd ../", "./manager run " + " ".join(prts) + " cu111"]
+cmds = ["cd " + SCRIPT_DIR + "/../", "./manager run " + " ".join(prts) + " cu111"]
 run("&&".join(cmds))
