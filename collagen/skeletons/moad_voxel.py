@@ -32,6 +32,8 @@ ENTRY_T = TypeVar("ENTRY_T")
 TMP_T = TypeVar("TMP_T")
 OUT_T = TypeVar("OUT_T")
 
+NUM_MOST_SIMILAR_PER_ENTRY = 5
+
 
 def _disable_warnings():
     from rdkit import RDLogger
@@ -538,8 +540,6 @@ class MoadVoxelSkeleton(object):
         if not "test" in lbl_set_codes:
             raise ValueError("To run in test mode, you must include the `test` label set")
 
-        trainer = self._init_trainer(args)
-        model = self._init_model(args, ckpt)
         voxel_params = self._init_voxel_params(args)
         device = self._init_device(args)
 
@@ -561,114 +561,131 @@ class MoadVoxelSkeleton(object):
             args, moad, test, voxel_params, device, shuffle=False
         )
 
-        model.eval()
+        trainer = self._init_trainer(args)
 
-        # Run it one time to get first-rotation predictions but also the number
-        # of entries.
-        print(f"Inference rotation 1/{args.inference_rotations}")
-        trainer.test(model, test_data, verbose=True)
-
-        # Start keeping track of the average predictions. Note that below is
-        # copying the values.
-        predictions_ensembled = ensemble_helper.create_initial_prediction_tensor(
-            model, args.inference_rotations, device
-        )
-
-        # Get the label set to use
-        label_set_fingerprints, label_set_entry_infos = self._create_label_set_tensor(
-            args, device, 
-            existing_label_set_fps=model.prediction_targets,
-            existing_label_set_entry_infos=model.prediction_targets_entry_infos,
-            skip_test_set=True,
-            train=train, val=val, moad=moad, voxel_params=voxel_params,
-            lbl_set_codes=lbl_set_codes
-        )
-
-        # Get a PCA (or other) space defined by the label-set fingerprints.
-        vis_rep_space = make_vis_rep_space_from_label_set_fingerprints(
-            label_set_fingerprints, 2
-        )
-
-        # Get predictionsPerRotation projection (pca).
-        # model.predictions.shape[0] = number of entries
-        viz_reps_per_rotation = np.zeros([args.inference_rotations, model.predictions.shape[0], 2])
-        viz_reps_per_rotation[0] = vis_rep_space.project(model.predictions)
-
-        # Perform the remaining rotations, adding to predictions_averaged and
-        # filling out viz_reps_per_rotation.
-        for i in range(1, args.inference_rotations):
-            print(f"Inference rotation {i+1}/{args.inference_rotations}")
-            trainer.test(model, test_data, verbose=True)
-            viz_reps_per_rotation[i] = vis_rep_space.project(model.predictions)
-            # torch.add(predictions_ensembled, model.predictions, out=predictions_ensembled)
-            ensemble_helper.udpate_prediction_tensor(predictions_ensembled, model.predictions, i)
-
-        new_vec = ensemble_helper.finalize_prediction_tensor(predictions_ensembled, args.inference_rotations, device)       
-        if new_vec is not None:
-            # Must not have used in-place operations
-            predictions_ensembled = new_vec
-
-        # Calculate top_k metric
-        top_k_results = top_k(
-            predictions_ensembled, model.prediction_targets, label_set_fingerprints,
-            k=[1,8,16,32,64]
-        )
-
-        # avg_predictions = model.predictions
-        num_most_similar_per_entry = 5
-
-        # Find most similar matches
-        most_similar = most_similar_matches(
-            predictions_ensembled, label_set_fingerprints, label_set_entry_infos, 
-            num_most_similar_per_entry, vis_rep_space
-        )
-
-        # Project averaged predictions and correct fingerprints into pca (or
-        # other) space.
-        correct_fp_vis_rep_projected = vis_rep_space.project(model.prediction_targets)
-        averaged_predicted_fp_vis_rep_projected = vis_rep_space.project(predictions_ensembled)
-
-        all_test_data = {}
-        all_test_data["topK"] = {
-            f'testTop{k}': float(top_k_results[k])
-            for k in top_k_results
+        ckpts = [c.strip() for c in ckpt.split(",")]       
+        all_test_data = {
+            "checkpoints": [{"name": c, "order": i + 1} for i, c in enumerate(ckpts)],
+            "entries": []
         }
+        for ckpt_idx, ckpt in enumerate(ckpts):
+            model = self._init_model(args, ckpt)
+            model.eval()
 
-        all_test_data["pcaPercentVarExplainedByEachComponent"] = [
-            100 * r 
-            for r in vis_rep_space.vis_rep.explained_variance_ratio_.tolist()
-        ]
+            predictions_per_rot = ensemble_helper.AveragedEnsembled(
+                trainer, model, test_data, args.inference_rotations, device, ckpt
+            )
 
-        all_test_data["entries"] = []
-        for entry_idx in range(len(predictions_ensembled)):
-            entry_inf: Entry_info = model.prediction_targets_entry_infos[entry_idx]
-            entry = {
-                "correct": {
-                    "fragmentSmiles": entry_inf.fragment_smiles,
-                    "vizRepProjection": correct_fp_vis_rep_projected[entry_idx],
-                    "parentSmiles": entry_inf.parent_smiles,
-                    "receptor": entry_inf.receptor_name,
-                    "connectionPoint": entry_inf.connection_pt.tolist()
-                },
-                "averagedPrediction": {
-                    "vizRepProjection": averaged_predicted_fp_vis_rep_projected[entry_idx],
-                    "closestFromLabelSet": []
-                }
+            if ckpt_idx == 0:
+                # Get the label set to use. Note that it only does this once
+                # (for the first-checkpoint model), but I need model so I'm
+                # leaving it in the loop.
+                label_set_fingerprints, label_set_entry_infos = self._create_label_set_tensor(
+                    args, device, 
+                    existing_label_set_fps=predictions_per_rot.model.prediction_targets,
+                    existing_label_set_entry_infos=predictions_per_rot.model.prediction_targets_entry_infos,
+                    skip_test_set=True,
+                    train=train, val=val, moad=moad, voxel_params=voxel_params,
+                    lbl_set_codes=lbl_set_codes
+                )
+
+                # Get a PCA (or other) space defined by the label-set fingerprints.
+                vis_rep_space = make_vis_rep_space_from_label_set_fingerprints(
+                    label_set_fingerprints, 2
+                )
+
+                all_test_data["pcaPercentVarExplainedByEachComponent"] = [
+                    100 * r 
+                    for r in vis_rep_space.vis_rep.explained_variance_ratio_.tolist()
+                ]
+
+                avg_over_ckpts_of_avgs = torch.zeros(model.prediction_targets.shape, device=device)
+
+            predictions_per_rot.finish(vis_rep_space)
+            model, predictions_ensembled = predictions_per_rot.unpack()
+            torch.add(avg_over_ckpts_of_avgs, predictions_ensembled, out=avg_over_ckpts_of_avgs)
+
+            if ckpt_idx == 0:
+                # Add in correct answers for all entries
+                all_test_data["entries"] = [
+                    {
+                        "correct": predictions_per_rot.get_correct_answer_info(i),
+                        "perCheckpoint": []
+                    }
+                    for i in range(predictions_per_rot.predictions_ensembled.shape[0])
+                ]
+
+            # Calculate top_k metric for this checkpoint
+            top_k_results = top_k(
+                predictions_ensembled, model.prediction_targets, label_set_fingerprints,
+                k=[1,8,16,32,64]
+            )
+            all_test_data["checkpoints"][ckpt_idx]["topK"] = {
+                f'testTop{k}': float(top_k_results[k])
+                for k in top_k_results
             }
 
+            # Add info about the per-rotation predictions
+            for entry_idx in range(len(predictions_ensembled)):
+                entry = predictions_per_rot.get_predictions_info(entry_idx)
+                all_test_data["entries"][entry_idx]["perCheckpoint"].append(entry)
+
+            # Find most similar matches
+            most_similar = most_similar_matches(
+                predictions_ensembled, label_set_fingerprints, label_set_entry_infos, 
+                NUM_MOST_SIMILAR_PER_ENTRY, vis_rep_space
+            )
+            for entry_idx in range(len(predictions_ensembled)):
+                # Add closest compounds from label set.
+                for predicted_entry_info, dist, viz_rep in most_similar[entry_idx]:
+                    all_test_data["entries"][entry_idx]["perCheckpoint"][-1]["averagedPrediction"]["closestFromLabelSet"].append({
+                        "smiles": predicted_entry_info.fragment_smiles,
+                        "cosineDistToAveraged": dist,
+                        "vizRepProjection": viz_rep[0]
+                    })
+
+        # Get the average of averages (across all checkpoints)
+        torch.div(
+            avg_over_ckpts_of_avgs, 
+            torch.tensor(len(ckpts), device=device),
+            out=avg_over_ckpts_of_avgs
+        )
+
+        # Calculate top-k metric of that average of averages
+        top_k_results = top_k(
+            avg_over_ckpts_of_avgs, model.prediction_targets, label_set_fingerprints,
+            k=[1,8,16,32,64]
+        )
+        all_test_data["checkpoints"].append({
+            "name": "Using average fingerprint over all checkpoints",
+            "topK": {
+                f'testTop{k}': float(top_k_results[k])
+                for k in top_k_results
+            }
+        })
+
+        # Get the fingerprints of the average of average outputs.
+        avg_over_ckpts_of_avgs_viz = vis_rep_space.project(avg_over_ckpts_of_avgs)
+
+        # For average of averages, Find most similar matches
+        most_similar = most_similar_matches(
+            avg_over_ckpts_of_avgs, label_set_fingerprints, label_set_entry_infos, 
+            NUM_MOST_SIMILAR_PER_ENTRY, vis_rep_space
+        )
+        for entry_idx in range(len(avg_over_ckpts_of_avgs)):
+            # Add closest compounds from label set.
+            all_test_data["entries"][entry_idx]["avgOfCheckpoints"] = {
+                "vizRepProjection": avg_over_ckpts_of_avgs_viz[entry_idx],
+                "closestFromLabelSet": []
+            }
             for predicted_entry_info, dist, viz_rep in most_similar[entry_idx]:
-                entry["averagedPrediction"]["closestFromLabelSet"].append({
+                all_test_data["entries"][entry_idx]["avgOfCheckpoints"]["closestFromLabelSet"].append({
                     "smiles": predicted_entry_info.fragment_smiles,
                     "cosineDistToAveraged": dist,
                     "vizRepProjection": viz_rep[0]
                 })
 
-            entry["predictionsPerRotation"] = [
-                viz_reps_per_rotation[i][entry_idx].tolist()
-                for i in range(args.inference_rotations)
-            ]
-
-            all_test_data["entries"].append(entry)
+        # import pdb; pdb.set_trace()
 
         jsn = json.dumps(all_test_data, indent=4)
         jsn = re.sub(r"([\-0-9\.]+?,)\n +?([\-0-9\.])", r"\1 \2", jsn, 0, re.MULTILINE)
@@ -678,21 +695,21 @@ class MoadVoxelSkeleton(object):
         
         open("/mnt/extra/tmptmp.json", "w").write(jsn)
 
-        txt = ""
-        for entry in all_test_data["entries"]:
-            txt += "Correct\n"
-            txt += "\t".join([str(e) for e in entry["correct"]["vizRepProjection"]]) + "\t" + entry["correct"]["fragmentSmiles"] + "\n"
-            txt += "averagedPrediction\n"
-            txt += "\t".join([str(e) for e in entry["averagedPrediction"]["vizRepProjection"]]) + "\n"
-            txt += "closestFromLabelSet\n"
-            for close in entry["averagedPrediction"]["closestFromLabelSet"]:
-                txt += "\t".join([str(e) for e in close["vizRepProjection"]]) + "\t" + close["smiles"] + "\n"
-            txt += "predictionsPerRotation\n"
-            for pred_per_rot in entry["predictionsPerRotation"]:
-                txt += "\t".join([str(e) for e in pred_per_rot]) + "\n"
-            txt = txt + "\n"
+        # txt = ""
+        # for entry in all_test_data["entries"]:
+        #     txt += "Correct\n"
+        #     txt += "\t".join([str(e) for e in entry["correct"]["vizRepProjection"]]) + "\t" + entry["correct"]["fragmentSmiles"] + "\n"
+        #     txt += "averagedPrediction\n"
+        #     txt += "\t".join([str(e) for e in entry["averagedPrediction"]["vizRepProjection"]]) + "\n"
+        #     txt += "closestFromLabelSet\n"
+        #     for close in entry["averagedPrediction"]["closestFromLabelSet"]:
+        #         txt += "\t".join([str(e) for e in close["vizRepProjection"]]) + "\t" + close["smiles"] + "\n"
+        #     txt += "predictionsPerRotation\n"
+        #     for pred_per_rot in entry["predictionsPerRotation"]:
+        #         txt += "\t".join([str(e) for e in pred_per_rot]) + "\n"
+        #     txt = txt + "\n"
 
-        open("/mnt/extra/tmptmp.txt", "w").write(txt)
+        # open("/mnt/extra/tmptmp.txt", "w").write(txt)
 
         pr.disable()
         s = StringIO()

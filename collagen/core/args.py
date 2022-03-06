@@ -33,7 +33,7 @@ def _add_generic_params(
         "--load_checkpoint",
         type=str,
         default=None,
-        help="If specified, the model will be loaded from this checkpoint.",
+        help="If specified, the model will be loaded from this checkpoint. You can list multiple checkpoints (separated by commas) for testing/inference.",
     )
     parser.add_argument(
         "--load_newest_checkpoint",
