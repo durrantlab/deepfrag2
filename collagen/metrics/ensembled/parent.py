@@ -14,6 +14,8 @@ class ParentEnsembled(ABC):
         self.trainer = trainer
         self.test_data = test_data
         self.ckpt_name = ckpt_name
+        self.correct_fp_vis_rep_projected = None
+        self.averaged_predicted_fp_vis_rep_projected = None
         
         # Run it one time to get first-rotation predictions but also the number
         # of entries.
@@ -47,7 +49,8 @@ class ParentEnsembled(ABC):
 
     def get_correct_answer_info(self, entry_idx: int):
         # Project correct fingerprints into pca (or other) space.
-        self.correct_fp_vis_rep_projected = self.vis_rep_space.project(self.model.prediction_targets)
+        if self.correct_fp_vis_rep_projected is None:
+            self.correct_fp_vis_rep_projected = self.vis_rep_space.project(self.model.prediction_targets)
 
         entry_inf: Entry_info = self.model.prediction_targets_entry_infos[entry_idx]
         return {
@@ -60,7 +63,8 @@ class ParentEnsembled(ABC):
 
     def get_predictions_info(self, entry_idx: int):
         # Project averaged predictions into pca (or other) space.
-        self.averaged_predicted_fp_vis_rep_projected = self.vis_rep_space.project(self.predictions_ensembled)
+        if self.averaged_predicted_fp_vis_rep_projected is None:
+            self.averaged_predicted_fp_vis_rep_projected = self.vis_rep_space.project(self.predictions_ensembled)
 
         entry = {
             "averagedPrediction": {

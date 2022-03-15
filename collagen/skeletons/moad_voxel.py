@@ -606,14 +606,13 @@ class MoadVoxelSkeleton(object):
             torch.add(avg_over_ckpts_of_avgs, predictions_ensembled, out=avg_over_ckpts_of_avgs)
 
             if ckpt_idx == 0:
-                # Add in correct answers for all entries
-                all_test_data["entries"] = [
-                    {
-                        "correct": predictions_per_rot.get_correct_answer_info(i),
+                for i in range(predictions_per_rot.predictions_ensembled.shape[0]):
+                    # Add in correct answers for all entries
+                    correct_answer = predictions_per_rot.get_correct_answer_info(i)
+                    all_test_data["entries"].append({
+                        "correct": correct_answer,
                         "perCheckpoint": []
-                    }
-                    for i in range(predictions_per_rot.predictions_ensembled.shape[0])
-                ]
+                    })
 
             # Calculate top_k metric for this checkpoint
             top_k_results = top_k(

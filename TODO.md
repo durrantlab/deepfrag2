@@ -29,10 +29,7 @@ What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtr
 When you use a saved split, is the order still randomized? That's important even
 if its saved.
 
-What about weighting loss by prevelance of fragment (so OH not overrepresented)?
-
-When finding most simiar, you could find most similar to any of rotation
-outputs. Maybe weighted by appearing in multiple lists?
+Different TOP-K every time you run? Need to check. When you averaged three, got different answers.
 
 # EASY IDEAS
 
@@ -49,10 +46,6 @@ on scaleup step.
 Could train models with big molecualr weihght cutoff and smaller. Two different
 versions. Lower limit on weight cutoff especially good. Usually not going to
 want to add simple hydroxyl for example. (But sometimes yes, so include.)
-
-Method to artifactually limit numer of PDBs used for training, to facilitate
-comparisons. For example, does low-affinity model fail because not enoguh data?
-What if trained on full model, but on same number of PDBs?
 
 # Training goal
 
@@ -75,6 +68,15 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+What about weighting loss by prevelance of fragment (so OH not overrepresented)?
+
+When finding most simiar, you could find most similar to any of rotation
+outputs. Maybe weighted by appearing in multiple lists?
+
+Method to artifactually limit numer of PDBs used for training, to facilitate
+comparisons. For example, does low-affinity model fail because not enoguh data?
+What if trained on full model, but on same number of PDBs?
 
 Also, connection point seems to be repeated een though it never shoul dbe.
 (STILL A PROBLEM)
