@@ -519,6 +519,7 @@ class BackedMol(Mol):
 
         pairs = []
         for i in range(self.rdmol.GetNumBonds()):
+
             # Filter single bonds.
             if (
                 only_single_bonds
@@ -549,6 +550,9 @@ class BackedMol(Mol):
                 continue
 
             pairs.append((parent, frag))
+
+            # with open("/mnt/extra/frags.txt", "a") as f:
+            #     f.write(self.meta["name"] + "\t" + parent.smiles() + "\t" + frag.smiles() + "\n")
 
         return pairs
 

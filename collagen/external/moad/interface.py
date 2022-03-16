@@ -6,14 +6,15 @@ from typing import Dict, List, Set, Tuple, Union
 
 import numpy as np
 
+from collagen.util import sorted_list
+
 from .types import MOAD_split, MOAD_family, MOAD_class, MOAD_ligand, MOAD_target
 
 split_rand_num_gen = None
 
-
 def _split_seq(seq, p):
     global split_rand_num_gen
-    l = list(seq)
+    l = sorted_list(seq)
     sz = len(l)
     split_rand_num_gen.shuffle(l)
     # np.random.shuffle(l)
@@ -30,10 +31,11 @@ def _flatten(seq):
 
 def _div2(seq):
     global split_rand_num_gen
-    l = list(seq)
+    l = sorted_list(seq)
     sz = len(l)
 
     split_rand_num_gen.shuffle(l)
+
     # np.random.shuffle(l)
 
     return (set(l[: sz // 2]), set(l[sz // 2 :]))
@@ -42,7 +44,7 @@ def _div2(seq):
 def _div3(seq):
     global split_rand_num_gen
 
-    l = list(seq)
+    l = sorted_list(seq)
     sz = len(l)
 
     split_rand_num_gen.shuffle(l)
@@ -366,7 +368,7 @@ class MOADInterface(object):
         return MOAD_split(
             name="Full",
             targets=self.targets,
-            smiles=list(self._smiles_for(self.targets)),
+            smiles=sorted_list(self._smiles_for(self.targets)),
         )
 
     def _limit_split_pdb_size(

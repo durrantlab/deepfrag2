@@ -29,7 +29,14 @@ What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtr
 When you use a saved split, is the order still randomized? That's important even
 if its saved.
 
+
+
+
+
+
 Different TOP-K every time you run? Need to check. When you averaged three, got different answers.
+
+Look at tmptmp files. There are a lot of repeated fragments there, even though they couldn't exist given the original ligands. Something's up. NOTE: Not a problem. It's the multiple chains.
 
 # EASY IDEAS
 

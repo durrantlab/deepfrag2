@@ -128,19 +128,6 @@ def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
                     )
 
                 if CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep:
-
-                    # if r_tree is None:
-                    #     r_tree = KDTree(receptor.coords)
-
-                    # lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
-                    #     lambda f: [
-                    #         np.min(r_tree.query(x[1].coords)[0])  # , distance_upper_bound=10.0
-                    #         for x in f
-                    #     ],
-                    #     frags,
-                    #     [],
-                    # )
-
                     lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
                         lambda f: [
                             np.min(cdist(x[1].coords, receptor.coords)) for x in f

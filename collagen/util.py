@@ -1,5 +1,6 @@
 import numpy as np
 import time
+from typing import List
 
 def rand_rot():
     """Returns a random uniform quaternion rotation."""
@@ -136,3 +137,8 @@ def get_vdw_radius(num: int) -> float:
         return VDW_RADIUS_BY_NUM[num]
     else:
         return 0
+
+def sorted_list(st: set) -> List:
+    lst = list(st)
+    lst.sort()
+    return lst

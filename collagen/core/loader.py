@@ -3,6 +3,7 @@ from torch import multiprocessing
 import time
 import os
 import traceback
+from datetime import datetime
 
 DATA = None
 COLLATE = None
@@ -24,6 +25,16 @@ def _process2(batch_of_batches, return_list, id):
         try:
             return_list.append(COLLATE([DATA[x] for x in batch]))
         except Exception as e:
+            # TODO: No hardcode dir
+            if os.path.exists("/mnt/extra/"):
+                now = datetime.now()
+                with open("/mnt/extra/loader_errs.log", "a") as f:
+                    # print( "EXCEPTION TRACE PRINT:\n{}".format( "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                    f.write('{}: {}: {}'.format(
+                        now.strftime("%m/%d/%Y, %H:%M:%S"), 
+                        type(e).__name__, 
+                        e
+                    ) + "\n")
             print("FAILED", id, batch)
             traceback.print_exc(e)
 

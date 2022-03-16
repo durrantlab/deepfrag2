@@ -553,13 +553,33 @@ class MoadVoxelSkeleton(object):
             load_splits=args.load_splits,
             max_pdbs_to_use_in_train=args.max_pdbs_to_use_in_train,
             max_pdbs_to_use_in_val=args.max_pdbs_to_use_in_val,
-            max_pdbs_to_use_in_test=args.max_pdbs_to_use_in_test
+            max_pdbs_to_use_in_test=args.max_pdbs_to_use_in_test,
+            prevent_smiles_overlap=False  # DEBUG
         )
 
         # You'll always need the test data.
         test_data = self._get_data_from_split(
             args, moad, test, voxel_params, device, shuffle=False
         )
+
+        all_pairs = []
+        cnt = 0
+        for batch in tqdm(test_data):
+            if cnt > 200:
+                break
+            for b in batch[2]:
+                all_pairs.append([b.receptor_name, b.fragment_smiles])
+                # print(b)
+            cnt = cnt + 1
+        all_pairs.sort()
+        import json
+        import time
+        with open("/mnt/extra/tmptmp." + str(int(time.time())) + ".txt", "w") as f:
+            # f.write(json.dumps(all_pairs, indent=2))
+            f.write(json.dumps(all_pairs).replace('["Receptor ', "\n").replace('", "', "\t").replace('"],', ""))
+            # f.write("\n".join([a[0] for a in all_pairs]))
+        print(len(all_pairs))
+        import pdb; pdb.set_trace()
 
         trainer = self._init_trainer(args)
 

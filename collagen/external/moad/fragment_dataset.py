@@ -164,6 +164,10 @@ class MOADFragmentDataset(Dataset):
 
         receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
 
+        with open("/mnt/extra/fragz2.txt", "a") as f:
+            f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
+
+
         # This chunk has many ligands. You need to look up the one that matches
         # entry.ligand_id (the one that actually corresponds to this entry).
         # Once you find it, actually do the fragmenting.
@@ -176,6 +180,9 @@ class MOADFragmentDataset(Dataset):
             raise Exception("Ligand not found: " + str(receptor) + " -- " + str(ligands))
 
         sample = (receptor, parent, fragment)
+
+        # with open("/mnt/extra/fragz.txt", "a") as f:
+        #     f.write(receptor.meta["name"] + "\t" + parent.smiles() + "\t" + fragment.smiles() + "\n")
 
         if self.transform:
             # Actually performs voxelization and fingerprinting.
