@@ -265,6 +265,8 @@ class DataBatch(MultiLoader):
         n = 0
         batch = []
         for item in self.data:
+            # if item[3].receptor_name == "Receptor 2v0u":
+            #     print(["4", item[3].receptor_name, item[3].fragment_smiles])
             n += 1
             batch.append(item)
 

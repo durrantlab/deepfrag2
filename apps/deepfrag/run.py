@@ -46,6 +46,9 @@ class DeepFrag(MoadVoxelSkeleton):
             connection_pt=center
         )
 
+        # if rec.meta["name"] == "Receptor 2v0u":
+        #     print(["2", rec.meta["name"], frag.smiles()])
+
         return (
             rec.voxelize_delayed(voxel_params, center=center, rot=rot),
             parent.voxelize_delayed(voxel_params, center=center, rot=rot),

@@ -164,9 +164,8 @@ class MOADFragmentDataset(Dataset):
 
         receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
 
-        with open("/mnt/extra/fragz2.txt", "a") as f:
-            f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
-
+        # with open("/mnt/extra/fragz2.txt", "a") as f:
+        #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
 
         # This chunk has many ligands. You need to look up the one that matches
         # entry.ligand_id (the one that actually corresponds to this entry).
@@ -181,11 +180,17 @@ class MOADFragmentDataset(Dataset):
 
         sample = (receptor, parent, fragment)
 
+        # if receptor.meta["name"] == "Receptor 2v0u":
+        #     print(["1", receptor.meta["name"], fragment.smiles()])
+
         # with open("/mnt/extra/fragz.txt", "a") as f:
         #     f.write(receptor.meta["name"] + "\t" + parent.smiles() + "\t" + fragment.smiles() + "\n")
 
         if self.transform:
             # Actually performs voxelization and fingerprinting.
-            return self.transform(sample)
+            tmp = self.transform(sample)
+            # if tmp[3].receptor_name == "Receptor 2v0u":
+            #     print(["3", tmp[3].receptor_name, tmp[3].fragment_smiles])
+            return tmp
         else:
             return sample
