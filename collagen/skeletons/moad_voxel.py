@@ -16,6 +16,7 @@ from collagen.metrics.ensembled import averaged as ensemble_helper
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.csv_logs import CSVLogger
 from pytorch_lightning.loggers.wandb import WandbLogger
+from pytorch_lightning.loggers import TensorBoardLogger
 import torch
 
 from ..checkpoints import MyModelCheckpoint, get_last_checkpoint
@@ -206,11 +207,12 @@ class MoadVoxelSkeleton(object):
         if args.wandb_project:
             logger = WandbLogger(project=args.wandb_project)
         else:
-            logger = CSVLogger(
-                "logs",
-                name="my_exp_name",
-                flush_logs_every_n_steps=args.log_every_n_steps,
-            )
+            # logger = CSVLogger(
+            #     "logs",
+            #     name="my_exp_name",
+            #     flush_logs_every_n_steps=args.log_every_n_steps,
+            # )
+            logger = TensorBoardLogger("tb_logs", "my_model_run_name")
 
         trainer = pl.Trainer.from_argparse_args(
             args,
