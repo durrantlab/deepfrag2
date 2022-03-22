@@ -351,6 +351,20 @@ class MOADInterface(object):
             # Save spits and seed to json.
             split_inf = {
                 "seed": seed,
+                "unique_counts": {
+                    "train": {
+                        "pdbs": len(set(train_pdb_ids)),
+                        "frags": len(set(train_smi))
+                    }, 
+                    "val": {
+                        "pdbs": len(str(val_pdb_ids)), 
+                        "frags": len(set(val_smi))
+                    }, 
+                    "test": {
+                        "pdbs": len(set(test_pdb_ids)), 
+                        "frags": len(set(test_smi))
+                    }
+                },
                 "train": {"pdbs": train_pdb_ids, "smiles": [smi for smi in train_smi]},
                 "val": {"pdbs": val_pdb_ids, "smiles": [smi for smi in val_smi]},
                 "test": {"pdbs": test_pdb_ids, "smiles": [smi for smi in test_smi]},

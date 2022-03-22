@@ -14,6 +14,7 @@ from rdkit.Chem import Draw
 from rdkit.Chem.Draw import rdMolDraw2D
 import re
 import random
+import json
 
 pattern = re.compile("<\?xml.*\?>")
 
@@ -64,7 +65,16 @@ def toHTMLTable(list_of_smi):
     return table_row
 
 
-lines = open("correct_and_closest.txt").readlines()
+data = json.load(open("test_results.json"))
+lines = []
+for entry in data["entries"]:
+    correct = entry["correct"]["fragmentSmiles"]
+    # Consider only first checkpoint
+    ckpt = entry["perCheckpoint"][0]["averagedPrediction"]
+    closest = [e["smiles"] for e in ckpt["closestFromLabelSet"]]
+    lines.append(correct + " " + " ".join(closest))
+
+#lines = open("correct_and_closest.txt").readlines()
 random.shuffle(lines)
 print("<table>")
 for l in lines[:100]:
