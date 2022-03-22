@@ -11,6 +11,7 @@ import pstats
 from io import StringIO
 import numpy as np
 from collagen.metrics.ensembled import averaged as ensemble_helper
+import os
 # from collagen.metrics.ensembled import clustered as ensemble_helper
 
 import pytorch_lightning as pl
@@ -586,7 +587,7 @@ class MoadVoxelSkeleton(object):
         # all_pairs.sort()
         # import json
         # import time
-        # with open("/mnt/extra/tmptmp." + str(int(time.time())) + ".txt", "w") as f:
+        # with open("/mnt/extra/test_results." + str(int(time.time())) + ".txt", "w") as f:
         #     # f.write(json.dumps(all_pairs, indent=2))
         #     f.write(json.dumps(all_pairs).replace('["Receptor ', "\n").replace('", "', "\t").replace('"],', ""))
         #     # f.write("\n".join([a[0] for a in all_pairs]))
@@ -724,7 +725,10 @@ class MoadVoxelSkeleton(object):
         jsn = re.sub(r"\"Receptor ", '"', jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\n +?\"dist", " \"dist", jsn, 0, re.MULTILINE)
         
-        open("/mnt/extra/tmptmp.json", "w").write(jsn)
+        if os.path.exists("/mnt/extra/"):
+            open("/mnt/extra/test_results.json", "w").write(jsn)
+        else:
+            open("test_results.json", "w").write(jsn)
 
         # txt = ""
         # for entry in all_test_data["entries"]:
@@ -740,7 +744,7 @@ class MoadVoxelSkeleton(object):
         #         txt += "\t".join([str(e) for e in pred_per_rot]) + "\n"
         #     txt = txt + "\n"
 
-        # open("/mnt/extra/tmptmp.txt", "w").write(txt)
+        # open("/mnt/extra/test_results.txt", "w").write(txt)
 
         pr.disable()
         s = StringIO()

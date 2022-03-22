@@ -3,10 +3,7 @@ https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-m
 
 When doing inference, get best validation checkpoint (not last).
 
-I think a lot of my old code is not cruft. Good to do audit.
-
-Is split_seed deterministic? Not specifying, should be set to "1" (default), but
-seeing different counts in progress bar.
+I think a lot of my old code is now cruft. Good to do audit.
 
 "Training will start from the beginning of the next epoch. This can cause
 unreliable results if further training is done, consider using an end of epoch
@@ -26,17 +23,16 @@ FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 
 What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
 
-When you use a saved split, is the order still randomized? That's important even
-if its saved.
+Would be nice to log size of splits.
 
+Would be nice to have "--name" parameter (optional) that would controll logging
+name. To distinguish between test and train.
 
+Mesage saying that inference_rotations doesn't matter if training (if user sets
+it). Save with inference_label_sets. And learning_rate if in testing mode.
 
-
-
-
-Different TOP-K every time you run? Need to check. When you averaged three, got different answers.
-
-Look at tmptmp files. There are a lot of repeated fragments there, even though they couldn't exist given the original ligands. Something's up. NOTE: Not a problem. It's the multiple chains.
+Might be nice to save different test_results.json files as rotations build up.
+To see progress on that front in one fell swoop.
 
 # EASY IDEAS
 
@@ -75,6 +71,18 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+Is split_seed deterministic? Not specifying, should be set to "1" (default), but
+seeing different counts in progress bar.
+
+When you use a saved split, is the order still randomized? That's important even
+if its saved.
+
+Different TOP-K every time you run? Need to check. When you averaged three, got different answers.
+
+Look at test_results files. There are a lot of repeated fragments there, even
+though they couldn't exist given the original ligands. Something's up. NOTE: Not
+a problem. It's the multiple chains.
 
 What about weighting loss by prevelance of fragment (so OH not overrepresented)?
 

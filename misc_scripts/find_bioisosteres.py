@@ -1,4 +1,4 @@
-# Given the json output file (tmptmp.json), find candidate bioisosteres.
+# Given the json output file (test_results.json), find candidate bioisosteres.
 
 import json
 import sys
