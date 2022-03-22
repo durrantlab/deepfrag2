@@ -23,7 +23,8 @@ FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 
 What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
 
-Would be nice to log size of splits.
+Would be nice to log size of splits. Also, JSON of ones actually used
+(considering filters). Number of fragments and PDBs.
 
 Would be nice to have "--name" parameter (optional) that would controll logging
 name. To distinguish between test and train.

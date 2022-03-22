@@ -14,6 +14,12 @@ class DeepFragModel(pl.LightningModule):
 
         self.learning_rate = kwargs["learning_rate"]
 
+        self.examples_used = {
+            "train": {},
+            "val": {},
+            "test": {}
+        }
+
         self.model = nn.Sequential(
             nn.BatchNorm3d(voxel_features),
             nn.Conv3d(voxel_features, 64, kernel_size=3),
@@ -56,6 +62,8 @@ class DeepFragModel(pl.LightningModule):
         pred = self(voxels)
 
         loss = cos_loss(pred, fps).mean()
+
+        print(entry_infos)
 
         # print("training_step")
         self.log("loss", loss, batch_size=voxels.shape[0])
