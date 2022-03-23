@@ -89,12 +89,18 @@ class DeepFragModel(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
+    
+
     def test_step(self, batch, batch_idx):
         # Runs inferance on a given batch.
         voxels, fps, entry_infos = batch
         pred = self(voxels)
 
         loss = cos_loss(pred, fps).mean()
+
+        if entry_infos is not None:
+            for entry_info in entry_infos:
+                print(entry_info.fragment_smiles, entry_info.receptor_name)
 
         # print("test_step")
         self.log("test_loss", loss, batch_size=voxels.shape[0])
