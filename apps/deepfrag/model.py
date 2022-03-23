@@ -63,7 +63,7 @@ class DeepFragModel(pl.LightningModule):
 
         loss = cos_loss(pred, fps).mean()
 
-        print(entry_infos.fragment_smiles, entry_infos.receptor_name)
+        self._mark_example_used("train", entry_infos)
 
         # print("training_step")
         self.log("loss", loss, batch_size=voxels.shape[0])
@@ -79,6 +79,8 @@ class DeepFragModel(pl.LightningModule):
 
         loss = cos_loss(pred, fps).mean()
 
+        self._mark_example_used("val", entry_infos)
+
         # print("validation_step")
         self.log("val_loss", loss, batch_size=voxels.shape[0])
 
@@ -89,7 +91,12 @@ class DeepFragModel(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
-    
+    def _mark_example_used(self, lbl: str, entry_infos):
+        if entry_infos is not None:
+            for entry_info in entry_infos:
+                if entry_info.receptor_name not in self.examples_used[lbl]:
+                    self.examples_used[lbl][entry_info.receptor_name] = set([])
+                self.examples_used[lbl][entry_info.receptor_name].add(entry_info.fragment_smiles)
 
     def test_step(self, batch, batch_idx):
         # Runs inferance on a given batch.
@@ -98,9 +105,7 @@ class DeepFragModel(pl.LightningModule):
 
         loss = cos_loss(pred, fps).mean()
 
-        if entry_infos is not None:
-            for entry_info in entry_infos:
-                print(entry_info.fragment_smiles, entry_info.receptor_name)
+        self._mark_example_used("test", entry_infos)
 
         # print("test_step")
         self.log("test_loss", loss, batch_size=voxels.shape[0])
