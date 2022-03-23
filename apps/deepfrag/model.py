@@ -63,7 +63,7 @@ class DeepFragModel(pl.LightningModule):
 
         loss = cos_loss(pred, fps).mean()
 
-        print(entry_infos)
+        print(entry_infos.fragment_smiles, entry_infos.receptor_name)
 
         # print("training_step")
         self.log("loss", loss, batch_size=voxels.shape[0])
