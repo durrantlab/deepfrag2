@@ -14,7 +14,7 @@ class DeepFragModel(pl.LightningModule):
 
         self.learning_rate = kwargs["learning_rate"]
 
-        self.examples_used = {
+        self._examples_used = {
             "train": {},
             "val": {},
             "test": {}
@@ -94,9 +94,21 @@ class DeepFragModel(pl.LightningModule):
     def _mark_example_used(self, lbl: str, entry_infos):
         if entry_infos is not None:
             for entry_info in entry_infos:
-                if entry_info.receptor_name not in self.examples_used[lbl]:
-                    self.examples_used[lbl][entry_info.receptor_name] = set([])
-                self.examples_used[lbl][entry_info.receptor_name].add(entry_info.fragment_smiles)
+                if entry_info.receptor_name not in self._examples_used[lbl]:
+                    self._examples_used[lbl][entry_info.receptor_name] = set([])
+                self._examples_used[lbl][entry_info.receptor_name].add(entry_info.fragment_smiles)
+
+    def get_examples_used(self):
+        to_return = {"counts": {}}
+        for split in self._examples_used:
+            to_return[split] = {}
+            frags_together = set([])
+            for recep in self._examples_used[split].keys():
+                frags = self._examples_used[split][recep]
+                frags_together.update(frags)
+                to_return[split][recep] = list(frags)
+            to_return["counts"][split] = {"receptors": len(self._examples_used[split].keys()), "fragments": len(frags_together)}
+        return to_return
 
     def test_step(self, batch, batch_idx):
         # Runs inferance on a given batch.

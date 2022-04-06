@@ -381,6 +381,8 @@ class MoadVoxelSkeleton(object):
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
+        self._save_used(model, args)
+
     def _add_fingerprints_to_label_set_tensor(
         self, args: argparse.Namespace, moad: MOADInterface, split: MOAD_split, 
         voxel_params: VoxelParams, device: Any, existing_label_set_fps: torch.Tensor,
@@ -724,11 +726,17 @@ class MoadVoxelSkeleton(object):
         jsn = re.sub(r"\[\n +?([\-0-9\.]+?), ([\-0-9\.,]+?)\n +?\]", r"[\1, \2]", jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\"Receptor ", '"', jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\n +?\"dist", " \"dist", jsn, 0, re.MULTILINE)
+
+        pr.disable()
+        s = StringIO()
+        ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
+        ps.print_stats()
+
+        pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
         
-        if os.path.exists("/mnt/extra/"):
-            open("/mnt/extra/test_results.json", "w").write(jsn)
-        else:
-            open("test_results.json", "w").write(jsn)
+        open(pth + "test_results.json", "w").write(jsn)
+        open(pth + 'cProfile.txt', 'w+').write(s.getvalue())
+        self._save_used(model, args)
 
         # txt = ""
         # for entry in all_test_data["entries"]:
@@ -746,13 +754,26 @@ class MoadVoxelSkeleton(object):
 
         # open("/mnt/extra/test_results.txt", "w").write(txt)
 
-        pr.disable()
-        s = StringIO()
-        ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
-        ps.print_stats()
-        with open('/mnt/extra/cProfile.txt', 'w+') as f:
-            f.write(s.getvalue())
+        #pr.disable()
+        #s = StringIO()
+        #ps = pstats.Stats(pr, stream=s).sort_stats('tottime')
+        #ps.print_stats()
+        #with open('/mnt/extra/cProfile.txt', 'w+') as f:
+        #    f.write(s.getvalue())
 
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
+
+    def _save_used(self, model, args):
+        pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
+        examples_used = model.get_examples_used()
+        out_name = pth + os.path.basename(args.save_splits) + ".actually_used.json"
+        # print(examples_used)
+        # print(out_name)
+        json.dump(
+            examples_used,
+            open(out_name, "w"),
+            indent=4
+        )
+
 

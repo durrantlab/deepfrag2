@@ -215,6 +215,9 @@ class MOAD_target(object):
             # Note that "(altloc _ or altloc A)" makes sure only the first
             # alternate locations are used.
             lig_sel = f"chain {lig.chain} and resnum >= {lig.resnum} and resnum < {lig.resnum + lig.reslength} and (altloc _ or altloc A)"
+            with open("/home/durraj/workspace/deepfrag_models/active/work_dir_pfizer_data_full/tmptmp.txt", "a") as f:
+                f.write(self.pdb_id + "\t" + lig_sel + "\n")
+            print(self.pdb_id + "\t" + lig_sel)
 
             if lig.validity != "Part of Protein":
                 ignore_sels.append(lig_sel)
