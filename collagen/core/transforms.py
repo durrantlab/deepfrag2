@@ -2,7 +2,8 @@ import torch
 
 from collagen.core import Mol, VoxelParams
 
-
+# Note that this class is only used by the autoencoder app, currently in
+# development. Probably not a function you need to look at for now.
 class Voxelize(object):
     def __init__(
         self, params: VoxelParams, cpu: bool = False, keep_batch: bool = False

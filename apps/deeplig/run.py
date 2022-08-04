@@ -12,7 +12,7 @@ from collagen.external.moad import MOADInterface
 from collagen.external.moad.moad_utils import fix_moad_smiles
 from collagen.external.moad import MOADMurckoLigDataset
 from collagen.util import rand_rot
-from collagen.skeletons import MoadVoxelSkeleton
+from collagen.model_parents import MoadVoxelModelParent
 
 from model import DeepLigModel
 
@@ -22,7 +22,7 @@ TMP_T = Tuple[DelayedMolVoxel, torch.Tensor, str, str] # (delayed_voxel, fingerp
 OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str], List[str]] # (voxels, fingerprints, rec_names, lig_names)
 
 
-class DeepLig(MoadVoxelSkeleton):
+class DeepLig(MoadVoxelModelParent):
     def __init__(self):
         super().__init__(
             model_cls=DeepLigModel,

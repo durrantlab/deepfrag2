@@ -1,63 +1,17 @@
 from dataclasses import field
-import json
-import os
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Union
-
-import numpy as np
-
-from collagen.util import sorted_list
-
-from .types import MOAD_split, MOAD_family, MOAD_class, MOAD_ligand, MOAD_target
-
-split_rand_num_gen = None
-
-def _split_seq(seq, p):
-    global split_rand_num_gen
-    l = sorted_list(seq)
-    sz = len(l)
-    split_rand_num_gen.shuffle(l)
-    # np.random.shuffle(l)
-
-    return l[: int(sz * p)], l[int(sz * p) :]
-
-
-def _flatten(seq):
-    a = []
-    for s in seq:
-        a += s
-    return a
-
-
-def _div2(seq):
-    global split_rand_num_gen
-    l = sorted_list(seq)
-    sz = len(l)
-
-    split_rand_num_gen.shuffle(l)
-
-    # np.random.shuffle(l)
-
-    return (set(l[: sz // 2]), set(l[sz // 2 :]))
-
-
-def _div3(seq):
-    global split_rand_num_gen
-
-    l = sorted_list(seq)
-    sz = len(l)
-
-    split_rand_num_gen.shuffle(l)
-    # np.random.shuffle(l)
-
-    v = sz // 3
-    return (set(l[:v]), set(l[v : v * 2]), set(l[v * 2 :]))
-
+from typing import Dict, List, Union
+from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target
 
 class MOADInterface(object):
     """
-    Base class for interacting with Binding MOAD data. Initialize by passing the path to
-    "every.csv" and the path to a folder containing structure files (can be nested).
+    Base class for interacting with Binding MOAD data. Initialize by passing the
+    path to "every.csv" and the path to a folder containing structure files (can
+    be nested).
+
+    NOTE: This just interfaces with the BindingMOAD on disk. It doesn't
+    fragment those ligands (see fragment_dataset.py). It doesn't calculate the
+    properties of the ligands/fragments or filter them (see cache_filter.py).
 
     Args:
         metadata: Path to the metadata "every.csv" file.
@@ -65,22 +19,24 @@ class MOADInterface(object):
     """
 
     classes: List["MOAD_class"]
-    _lookup: Dict["str", "MOAD_target"] = field(default_factory=dict)
     _all_targets: List["str"] = field(default_factory=list)
+
+    # Maps PDB ID to target. No classes or families (BindingMOAD heirarchy)
+    _lookup: Dict["str", "MOAD_target"] = field(default_factory=dict)
 
     def __init__(
         self,
         metadata: Union[str, Path],
         structures: Union[str, Path],
-        cache_pdbs: bool,
+        cache_pdbs_to_disk: bool,
         grid_width: int,
         grid_resolution: float,
         noh: bool,
         discard_distant_atoms: bool,
     ):
-        self.classes = MOADInterface._load_classes(
+        self.classes = MOADInterface._load_classes_families_targets_ligands(
             metadata,
-            cache_pdbs,
+            cache_pdbs_to_disk,
             grid_width,
             grid_resolution,
             noh,
@@ -93,13 +49,14 @@ class MOADInterface(object):
         self._resolve_paths(structures)
 
     def _init_lookup(self):
+        # BindingMOAD is divided into clasess of proteins. These are dividied
+        # into families, which contain the individual targets. This iterates
+        # through this hierarchy and just maps the pdb id to the target.
+
         for c in self.classes:
             for f in c.families:
                 for t in f.targets:
                     self._lookup[t.pdb_id.lower()] = t
-
-        # print("DEBUGGING")
-        # self._lookup = {k: v for k, v in list(self._lookup.items())[:1024]}
 
         self._all_targets = [k for k in self._lookup]
 
@@ -107,7 +64,7 @@ class MOADInterface(object):
     def targets(self) -> List["str"]:
         return self._all_targets
 
-    def __getitem__(self, key: str) -> "MOAD_target":
+    def __getitem__(self, pdb_id: str) -> "MOAD_target":
         """
         Fetch a specific target by PDB ID.
 
@@ -117,21 +74,30 @@ class MOADInterface(object):
         Returns:
             MOAD_target: a MOAD_target object if found.
         """
-        assert type(key) is str, f"PDB ID must be a str (got {type(key)})"
-        k = key.lower()
+
+        assert type(pdb_id) is str, f"PDB ID must be a str (got {type(pdb_id)})"
+        k = pdb_id.lower()
         assert k in self._lookup, f'Target "{k}" not found.'
         return self._lookup[k]
 
     @staticmethod
-    def _load_classes(
-        path,
-        cache_pdbs: bool,
+    def _load_classes_families_targets_ligands(
+        every_csv_path,
+        cache_pdbs_to_disk: bool,
         grid_width: int,
         grid_resolution: float,
         noh: bool,
         discard_distant_atoms: bool,
     ):
-        with open(path, "r") as f:
+        # Note that the output of this function gets put in self.classes.
+
+        # BindingMOAD data is loaded into protein classes, which contain
+        # families, which contain the individual targets, which are associated
+        # with ligands. This function sets up a heirarchical data structure that
+        # preserves these relationships. The structure is comprised of nested
+        # MOAD_class, MOAD_family, MOAD_target, and MOAD_ligand dataclasses.
+
+        with open(every_csv_path, "r") as f:
             dat = f.read().strip().split("\n")
 
         classes = []
@@ -155,7 +121,7 @@ class MOADInterface(object):
                 curr_target = MOAD_target(
                     pdb_id=parts[2],
                     ligands=[],
-                    cache_pdbs=cache_pdbs,
+                    cache_pdbs_to_disk=cache_pdbs_to_disk,
                     grid_width=grid_width,
                     grid_resolution=grid_resolution,
                     noh=noh,
@@ -164,10 +130,15 @@ class MOADInterface(object):
             elif parts[2] != "":  # 3: Protein target
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
+
+                # if "-" in parts[2]:
+                    # print(parts[2], "+++++")
+                # logit(f"Loading {parts[2]}", "~/work_dir/make_moad_target.txt")
+
                 curr_target = MOAD_target(
                     pdb_id=parts[2],
                     ligands=[],
-                    cache_pdbs=cache_pdbs,
+                    cache_pdbs_to_disk=cache_pdbs_to_disk,
                     grid_width=grid_width,
                     grid_resolution=grid_resolution,
                     noh=noh,
@@ -197,219 +168,31 @@ class MOADInterface(object):
     def _resolve_paths(self, path: Union[str, Path]):
         path = Path(path)
 
+        # Map the pdb to the file on disk.
         files = {}
-        for f in path.glob("./**/*.bio*"):
-            pdbid = f.stem
-            if not pdbid in files:
+        for fam in path.glob("./**/*.bio*"):
+            if str(fam).endswith(".pkl"):
+                continue
+            pdbid = fam.stem  # Removes extension (.bio?)
+            if pdbid not in files:
                 files[pdbid] = []
-            files[pdbid].append(f)
+            files[pdbid].append(fam)
 
-        for c in self.classes:
-            for f in c.families:
-                for t in f.targets:
-                    k = t.pdb_id.lower()
+        # Associate the filename with each target in the class=>family=>target
+        # hierarchy.
+        for cls in self.classes:
+            for fam in cls.families:
+                for targ in fam.targets:
+                    # Assume lower case
+                    k = targ.pdb_id.lower()
+
+                    # Added this to accomodate filenames that are not all lower
+                    # case. For custom MOAD-like data.
+                    if k not in files:
+                        k = targ.pdb_id
+
                     if k in files:
-                        t.files = sorted(files[k])
+                        targ.files = sorted(files[k])
                     else:
                         # No structures for this pdb id!
-                        pass
-
-    def _smiles_for(self, targets: List[str]) -> Set[str]:
-        """Return all the SMILES strings contained in the selected targets."""
-        smiles = set()
-
-        for target in targets:
-            for ligand in self[target].ligands:
-                smi = ligand.smiles
-                if ligand.is_valid and smi not in ["n/a", "NULL"]:
-                    smiles.add(smi)
-
-        return smiles
-
-    def compute_split(
-        self,
-        seed: int = 0,
-        fraction_train: float = 0.6,
-        fraction_val: float = 0.5,
-        prevent_smiles_overlap: bool = True,
-        save_splits: str = None,
-        load_splits: str = None,
-        max_pdbs_to_use_in_train: int = None,
-        max_pdbs_to_use_in_val: int = None,
-        max_pdbs_to_use_in_test: int = None,
-    ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
-        """Compute a TRAIN/VAL/TEST split.
-
-        Targets are first assigned to a TRAIN set with `p_train` probability. The remaining targets are assigned to a VAL set with
-        `p_val` probability. The unused targets are assigned to the TEST set.
-
-        Args:
-            seed (int, optional): If set to a nonzero number, compute_split will always return the same split.
-            p_train (float, optional): Percentage of targets to use in the TRAIN set.
-            p_val (float, optional): Percentage of (non-train) targets to use in the VAL set.
-
-        Returns:
-            Tuple[MOAD_split, MOAD_split, MOAD_split]: train/val/test sets
-        """
-
-        if seed != 0:
-            global split_rand_num_gen
-            split_rand_num_gen = np.random.default_rng(seed)
-
-            # Note: Below also makes rotations and other randomly determined
-            # aspects of the code deterministic. So using
-            # np.random.default_rng(seed) instead.
-            # np.random.seed(seed)
-
-        train_pdb_ids = None
-        val_pdb_ids = None
-        test_pdb_ids = None
-        train_smi = None
-        val_smi = None
-        test_smi = None
-
-        if load_splits is None:
-            # Not loading splits, so generate based on random seed.
-            families: List[List[str]] = []
-            for c in self.classes:
-                for f in c.families:
-                    families.append([x.pdb_id for x in f.targets])
-
-            # These are lists of lists, where each inner list contains all the
-            # members of the corresponding family. Grouped this way so memboers of
-            # same family are spread across train, val, test sets.
-            train_families, other_families = _split_seq(families, fraction_train)
-            val_families, test_families = _split_seq(other_families, fraction_val)
-
-            train_pdb_ids = _flatten(train_families)
-            val_pdb_ids = _flatten(val_families)
-            test_pdb_ids = _flatten(test_families)
-
-            train_pdb_ids, val_pdb_ids, test_pdb_ids = self._limit_split_pdb_size(
-                max_pdbs_to_use_in_train,
-                max_pdbs_to_use_in_val,
-                max_pdbs_to_use_in_test,
-                train_pdb_ids,
-                val_pdb_ids,
-                test_pdb_ids,
-            )
-
-            train_smi = self._smiles_for(train_pdb_ids)
-            val_smi = self._smiles_for(val_pdb_ids)
-            test_smi = self._smiles_for(test_pdb_ids)
-
-            if prevent_smiles_overlap:
-                # Reassign overlapping SMILES.
-                a_train, a_val = _div2((train_smi & val_smi) - test_smi)
-                b_val, b_test = _div2((val_smi & test_smi) - train_smi)
-                c_train, c_test = _div2((train_smi & test_smi) - val_smi)
-                d_train, d_val, d_test = _div3((train_smi & val_smi & test_smi))
-
-                train_smi = (
-                    (train_smi - (val_smi | test_smi)) | a_train | c_train | d_train
-                )
-                val_smi = (val_smi - (train_smi | test_smi)) | a_val | b_val | d_val
-                test_smi = (test_smi - (train_smi | val_smi)) | b_test | c_test | d_test
-
-        else:
-            # Loading splits. Get from the file.
-            split_inf = json.load(open(load_splits))
-
-            train_pdb_ids = split_inf["train"]["pdbs"]
-            val_pdb_ids = split_inf["val"]["pdbs"]
-            test_pdb_ids = split_inf["test"]["pdbs"]
-
-            if (
-                max_pdbs_to_use_in_train is None
-                and max_pdbs_to_use_in_val is None
-                and max_pdbs_to_use_in_test is None
-            ):
-                # Load from cache
-                train_smi = set(split_inf["train"]["smiles"])
-                val_smi = set(split_inf["val"]["smiles"])
-                test_smi = set(split_inf["test"]["smiles"])
-            else:
-                # Limiting number of pdbs, so also don't get the smiles from the
-                # cache.
-                train_pdb_ids, val_pdb_ids, test_pdb_ids = self._limit_split_pdb_size(
-                    max_pdbs_to_use_in_train,
-                    max_pdbs_to_use_in_val,
-                    max_pdbs_to_use_in_test,
-                    train_pdb_ids,
-                    val_pdb_ids,
-                    test_pdb_ids,
-                )
-
-                train_smi = self._smiles_for(train_pdb_ids)
-                val_smi = self._smiles_for(val_pdb_ids)
-                test_smi = self._smiles_for(test_pdb_ids)
-
-            # Reset seed just in case you also use save_splits. Not used.
-            seed = split_inf["test"]
-
-        if save_splits is not None:
-            # Save spits and seed to json.
-            split_inf = {
-                "seed": seed,
-                "unique_counts": {
-                    "train": {
-                        "pdbs": len(set(train_pdb_ids)),
-                        "frags": len(set(train_smi))
-                    }, 
-                    "val": {
-                        "pdbs": len(str(val_pdb_ids)), 
-                        "frags": len(set(val_smi))
-                    }, 
-                    "test": {
-                        "pdbs": len(set(test_pdb_ids)), 
-                        "frags": len(set(test_smi))
-                    }
-                },
-                "train": {"pdbs": train_pdb_ids, "smiles": [smi for smi in train_smi]},
-                "val": {"pdbs": val_pdb_ids, "smiles": [smi for smi in val_smi]},
-                "test": {"pdbs": test_pdb_ids, "smiles": [smi for smi in test_smi]},
-            }
-            json.dump(split_inf, open(save_splits, "w"), indent=4)
-
-        return (
-            MOAD_split(name="TRAIN", targets=train_pdb_ids, smiles=train_smi),
-            MOAD_split(name="VAL", targets=val_pdb_ids, smiles=val_smi),
-            MOAD_split(name="TEST", targets=test_pdb_ids, smiles=test_smi),
-        )
-
-    def full_split(self) -> MOAD_split:
-        """Returns a split containing all targets and smiles strings."""
-        return MOAD_split(
-            name="Full",
-            targets=self.targets,
-            smiles=sorted_list(self._smiles_for(self.targets)),
-        )
-
-    def _limit_split_pdb_size(
-        self,
-        max_pdbs_to_use_in_train: int,
-        max_pdbs_to_use_in_val: int,
-        max_pdbs_to_use_in_test: int,
-        train_pdb_ids: List,
-        val_pdb_ids: List,
-        test_pdb_ids: List,
-    ) -> Tuple[List, List, List]:
-        if (
-            max_pdbs_to_use_in_train is not None
-            and len(train_pdb_ids) > max_pdbs_to_use_in_train
-        ):
-            train_pdb_ids = train_pdb_ids[:max_pdbs_to_use_in_train]
-
-        if (
-            max_pdbs_to_use_in_val is not None
-            and len(val_pdb_ids) > max_pdbs_to_use_in_val
-        ):
-            val_pdb_ids = val_pdb_ids[:max_pdbs_to_use_in_val]
-
-        if (
-            max_pdbs_to_use_in_test is not None
-            and len(test_pdb_ids) > max_pdbs_to_use_in_test
-        ):
-            test_pdb_ids = test_pdb_ids[:max_pdbs_to_use_in_test]
-
-        return train_pdb_ids, val_pdb_ids, test_pdb_ids
+                        print(f"No structures for {k}")

@@ -39,7 +39,7 @@ def get_args():
 
     args = parser.parse_args()
     args.name = args.app_name.replace("/", "")
-    args.app_name = SCRIPT_DIR + "/" + args.app_name
+    args.app_name = f'{SCRIPT_DIR}/{args.app_name}'
     args.working_dir = os.path.realpath(args.working_dir)
 
     return args
@@ -48,24 +48,24 @@ def get_args():
 def validate(args):
     # Do some validation
     if not os.path.exists(args.app_name):
-        print("No app found at " + args.app_name)
+        print(f"No app found at {args.app_name}")
         sys.exit(0)
 
-    if not os.path.exists(args.app_name + "/run.py"):
-        print("Required file missing: " + args.app_name + "/run.py")
+    if not os.path.exists(f'{args.app_name}/run.py'):
+        print(f"Required file missing: {args.app_name}/run.py")
         sys.exit(0)
 
-    if not os.path.exists(args.app_name + "/defaults.json"):
-        print("Required file missing: " + args.app_name + "/defaults.json")
+    if not os.path.exists(f'{args.app_name}/defaults.json'):
+        print(f"Required file missing: {args.app_name}/defaults.json")
         sys.exit(0)
 
     if not os.path.exists(args.working_dir):
-        os.system("mkdir " + args.working_dir)
+        os.system(f"mkdir {args.working_dir}")
 
 
 def compile_parameters(args):
     # Get defaults
-    params = json.load(open(SCRIPT_DIR + "/" + args.name + "/defaults.json"))
+    params = json.load(open(f'{SCRIPT_DIR}/{args.name}/defaults.json'))
 
     # Merge in user specified
     if args.params_json is not None:
@@ -105,15 +105,15 @@ validate(args)
 params = compile_parameters(args)
 
 # Save parameters to working directory.
-with open(args.working_dir + "/params.json", "w") as f:
+with open(f'{args.working_dir}/params.json', "w") as f:
     json.dump(params, f, indent=4)
 
 # Save record of the .cur_app_* dirname being used
-with open(args.working_dir + "/app_name.txt", "w") as f:
+with open(f'{args.working_dir}/app_name.txt', "w") as f:
     f.write(args.name)
 
 # Write the file to run in docker container.
-with open(args.working_dir + "/run.sh", "w") as f:
+with open(f'{args.working_dir}/run.sh', "w") as f:
     f.write("cd deepfrag\n")
     parts = [
         "--gpus 1",
@@ -132,7 +132,7 @@ with open(args.working_dir + "/run.sh", "w") as f:
 
     profiler = "-m cProfile -o cProfile.log"
     # profiler = ""
-    f.write("python " + profiler + " run.py " + " ".join(parts))
+    f.write(f"python {profiler} run.py " + " ".join(parts))
 
 
 def run(cmd):
@@ -141,7 +141,7 @@ def run(cmd):
 
 
 # Build the docker image (every time).
-run("cd " + SCRIPT_DIR + "/../ && ./manager build cu111")
+run(f"cd {SCRIPT_DIR}/../ && ./manager build cu111")
 
 # Run the docker image
 prts = [
@@ -151,5 +151,5 @@ prts = [
     # '--cmd "/bin/bash"',
     '--extra="--gpus=1"',
 ]
-cmds = ["cd " + SCRIPT_DIR + "/../", "./manager run " + " ".join(prts) + " cu111"]
+cmds = [f"cd {SCRIPT_DIR}/../", "./manager run " + " ".join(prts) + " cu111"]
 run("&&".join(cmds))

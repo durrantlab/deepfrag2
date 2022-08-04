@@ -2,13 +2,11 @@ import argparse
 from dataclasses import dataclass
 from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
 from pathlib import Path
-
 from torch.utils.data import Dataset
-
 from collagen.core import args as user_args
-
-from .cache import CacheItemsToUpdate, build_index_and_filter
-from ... import Mol
+from collagen.external.moad.split import full_moad_split
+from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
+from .... import Mol
 
 
 @dataclass
@@ -21,29 +19,39 @@ class MOADFragmentDataset_entry(object):
 
 class MOADFragmentDataset(Dataset):
     """
-    A Dataset that provides (receptor, parent, fragment) tuples by splitting ligands on single bonds.
+    A Dataset that provides (receptor, parent, fragment) tuples by splitting
+    ligands on single bonds. Used in DeepFrag, for example.
 
     Args:
         moad (MOADInterface): An initialized MOADInterface object.
-        cache_file (str, optional): Path to a cache file to store or load fragment metadata.
-        cache_cores (int, optional): If a cache file is not found, use this many cores to compute a new cache.
-        split (MOAD_split, optional): An optional split to constrain the space of examples.
-        transform (Callable[[Mol, Mol, Mol], Any], optional): An optional transformation function to invoke before returning samples.
-            Takes the arguments (receptor, parent, fragment) as Mol objects.
+        cache_file (str, optional): Path to a cache file to store or load
+            fragment metadata.
+        cache_cores (int, optional): If a cache file is not found, use this
+            many cores to compute a new cache.
+        split (MOAD_split, optional): An optional split to constrain the space
+            of examples.
+        transform (Callable[[Mol, Mol, Mol], Any], optional): An optional
+            transformation function to invoke before returning samples. Takes
+            the arguments (receptor, parent, fragment) as Mol objects.
     """
 
     moad: "MOADInterface"
     split: "MOAD_split"
+
+    # function that performs voxelization and fingerprinting
     transform: Optional[Callable[[Mol, Mol, Mol], Any]]
 
-    # A cache-able index listing every fragment size for every ligand/target in the dataset.
+    # A cache-able index listing every fragment size for every ligand/target in
+    # the dataset.
     #
-    # See MOADFragmentDataset._build_index for structure. This index only needs to be updated
-    # for new structure files.
-    _fragment_index_cached: Optional[dict]
+    # See MOADFragmentDataset._build_index for structure. This index only needs
+    # to be updated for new structure files. TODO: Is _fragment_index_cached
+    # even used?
+    # _fragment_index_cached: Optional[dict]
 
-    # The internal listing of every valid fragment example. This index is generated on each
-    # run based on the runtime filters: (targets, smiles, fragment_size).
+    # The internal listing of every valid fragment example. This index is
+    # generated on each run based on the runtime filters: (targets, smiles,
+    # fragment_size).
     _internal_index_valids_filtered: List[MOADFragmentDataset_entry]
 
     def __init__(
@@ -53,10 +61,10 @@ class MOADFragmentDataset(Dataset):
         cache_cores: int = 1,
         split: Optional["MOAD_split"] = None,
         transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
-        args: argparse.Namespace = None
+        args: argparse.Namespace = None,
     ):
         self.moad = moad
-        self.split = split if split is not None else moad.full_split()
+        self.split = split if split is not None else full_moad_split(moad)
         self.transform = transform
         self.args = args
         self._index(cache_file, cache_cores)
@@ -65,47 +73,90 @@ class MOADFragmentDataset(Dataset):
     def add_fragment_args(
         parent_parser: argparse.ArgumentParser,
     ) -> argparse.ArgumentParser:
+        # Adds user arguments so user can control how fragments are generated.
+
         parser = parent_parser.add_argument_group("Fragment Dataset")
 
-        parser.add_argument("--min_frag_mass", required=False, type=float, default=0, help="Consider only fragments with at least this molecular mass. Default is 0 Da.")
-        parser.add_argument("--max_frag_mass", required=False, type=float, default=150, help="Consider only fragments with at most this molecular mass. Default is 150 Da.")
-        parser.add_argument("--max_frag_dist_to_recep", required=False, type=float, default=4, help="Consider only fragments that have at least one atom that comes within this distance of any receptor atom. Default is 4 Å.")
-        parser.add_argument("--min_frag_num_heavy_atoms", required=False, type=int, default=1, help="Consider only fragments that have at least this number of heavy atoms. Default is 1.")
+        parser.add_argument(
+            "--min_frag_mass",
+            required=False,
+            type=float,
+            default=0,
+            help="Consider only fragments with at least this molecular mass. Default is 0 Da.",
+        )
+        parser.add_argument(
+            "--max_frag_mass",
+            required=False,
+            type=float,
+            default=150,
+            help="Consider only fragments with at most this molecular mass. Default is 150 Da.",
+        )
+        parser.add_argument(
+            "--max_frag_dist_to_recep",
+            required=False,
+            type=float,
+            default=4,
+            help="Consider only fragments that have at least one atom that comes within this distance of any receptor atom. Default is 4 Å.",
+        )
+        parser.add_argument(
+            "--min_frag_num_heavy_atoms",
+            required=False,
+            type=int,
+            default=1,
+            help="Consider only fragments that have at least this number of heavy atoms. Default is 1.",
+        )
 
         return parent_parser
 
-    def _lig_filter(self, args: argparse.Namespace, lig: "MOAD_ligand", lig_inf: Dict) -> bool:
-        # There is a filter applied to fragment, but not whole ligand. So
-        # everything passes.
+    def _lig_filter(
+        self, args: argparse.Namespace, lig: "MOAD_ligand", lig_inf: Dict
+    ) -> bool:
+        # In the case of the fragment dataset, there is a filter applied to
+        # fragments, but not whole ligands. So everything passes. This is what
+        # is passed to cache_filter.load_cache_and_filter as the lig_filter_func
+        # parameter.
         return True
 
     def _frag_filter(
-        self, args: argparse.Namespace, mass: float, frag_dist_to_recep: float, 
-        frag_num_heavy_atom: int
+        self,
+        args: argparse.Namespace,
+        mass: float,
+        frag_dist_to_recep: float,
+        frag_num_heavy_atom: int,
     ) -> bool:
+        # This filter is passed to cache_filter.load_cache_and_filter via the
+        # make_dataset_entries_func parameter.
+
         if mass < args.min_frag_mass:
             # A fragment with no mass, so skip.
             if user_args.verbose:
-                print("Fragment rejected; mass too small: " + str(mass))
+                print(f"Fragment rejected; mass too small: {mass}")
             return False
         if mass > args.max_frag_mass:
             if user_args.verbose:
-                print("Fragment rejected; mass too large: " + str(mass))
+                print(f"Fragment rejected; mass too large: {mass}")
             return False
         if frag_dist_to_recep > args.max_frag_dist_to_recep:
             if user_args.verbose:
-                print("Fragment rejected; distance from receptor too large: " + str(frag_dist_to_recep))
+                print(
+                    f"Fragment rejected; distance from receptor too large: {frag_dist_to_recep}"
+                )
+
             return False
         if frag_num_heavy_atom < args.min_frag_num_heavy_atoms:
             if user_args.verbose:
-                print("Fragment rejected; has too few heavy atoms: " + str(frag_num_heavy_atom))
+                print(
+                    f"Fragment rejected; has too few heavy atoms: {frag_num_heavy_atom}"
+                )
             return False
-        # print(mass, frag_dist_to_recep, frag_num_heavy_atom)
         return True
 
     def _make_dataset_entries_func(
         self, args: argparse.Namespace, pdb_id: str, lig_name: str, lig_inf: Dict
     ) -> List[MOADFragmentDataset_entry]:
+        # This filter is passed to cache_filter.load_cache_and_filter as the
+        # make_dataset_entries_func parameter.
+
         # Note that lig_inf contains all the data from the cache.
 
         # Here also doing some filtering of the fragments.
@@ -130,7 +181,9 @@ class MOADFragmentDataset(Dataset):
         return entries_to_return
 
     def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
-        index, internal_index = build_index_and_filter(
+        # Creates the cache and filtered cache, here referred to as an index.
+
+        cache, filtered_cache = load_cache_and_filter(
             self._lig_filter,
             self.moad,
             self.split,
@@ -144,14 +197,13 @@ class MOADFragmentDataset(Dataset):
                 # lig_mass=True,
                 frag_smiles=True,  # Good for debugging.
                 # murcko_scaffold=True,
-                
             ),
             cache_file,
             cores,
         )
 
-        self._ligand_index_cached = index
-        self._internal_index_valids_filtered = internal_index
+        self._ligand_index_cached = cache
+        self._internal_index_valids_filtered = filtered_cache
 
     def __len__(self) -> int:
         return len(self._internal_index_valids_filtered)
@@ -176,21 +228,15 @@ class MOADFragmentDataset(Dataset):
                 parent, fragment = pairs[entry.frag_idx]
                 break
         else:
-            raise Exception("Ligand not found: " + str(receptor) + " -- " + str(ligands))
+            raise Exception(
+                "Ligand not found: " + str(receptor) + " -- " + str(ligands)
+            )
 
         sample = (receptor, parent, fragment)
-
-        # if receptor.meta["name"] == "Receptor 2v0u":
-        #     print(["1", receptor.meta["name"], fragment.smiles()])
-
-        # with open("/mnt/extra/fragz.txt", "a") as f:
-        #     f.write(receptor.meta["name"] + "\t" + parent.smiles() + "\t" + fragment.smiles() + "\n")
 
         if self.transform:
             # Actually performs voxelization and fingerprinting.
             tmp = self.transform(sample)
-            # if tmp[3].receptor_name == "Receptor 2v0u":
-            #     print(["3", tmp[3].receptor_name, tmp[3].fragment_smiles])
             return tmp
         else:
             return sample

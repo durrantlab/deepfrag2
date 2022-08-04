@@ -23,9 +23,6 @@ FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 
 What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
 
-Would be nice to log size of splits. Also, JSON of ones actually used
-(considering filters). Number of fragments and PDBs.
-
 Would be nice to have "--name" parameter (optional) that would controll logging
 name. To distinguish between test and train.
 
@@ -34,6 +31,20 @@ it). Save with inference_label_sets. And learning_rate if in testing mode.
 
 Might be nice to save different test_results.json files as rotations build up.
 To see progress on that front in one fell swoop.
+
+Re. weighted training
+
+- What about trying faster learning rates?
+- What about training without weigts, then refinement with weights?
+
+Revisit resolution and affinity deepfrag filter
+
+
+How does general model perform on ligands of various masses? Compare that to
+mass-specific model. Good to have.
+
+What about filtering fragments further, requiring specific interactions?
+(Hydrogen bonds).
 
 # EASY IDEAS
 
@@ -72,6 +83,17 @@ Try overfitting on a dataset of only a few examples. Loss goes to 0, val starts
 to go up again.
 
 # DONE
+
+I wonder if bigger batch sizes would be good with weighted loss.
+
+Would like to normalize training (weight but frequency of appearance.) You'll
+likely need to standardize SMILES.
+
+What about just getting frequency weights from cache file tht must be loaded
+anyway? Having a hard time getting it to work as crrently implemented.
+
+Would be nice to log size of splits. Also, JSON of ones actually used
+(considering filters). Number of fragments and PDBs.
 
 Is split_seed deterministic? Not specifying, should be set to "1" (default), but
 seeing different counts in progress bar.

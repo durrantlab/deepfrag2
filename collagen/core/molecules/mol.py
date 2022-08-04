@@ -4,6 +4,7 @@ from typing import List, Tuple, Iterator, Any, Dict, Optional
 import warnings
 
 import numpy as np
+from collagen.core.molecules.smiles_utils import standardize_smiles
 import prody
 import rdkit.Chem.AllChem as Chem
 from rdkit.Chem.Descriptors import ExactMolWt
@@ -11,9 +12,9 @@ import torch
 from torch.utils.data import Dataset
 
 from .fingerprints import fingerprint_for
-from .voxelization.voxelizer import numba_ptr, mol_gridify
-from .types import AnyAtom
-from ..draw import MolView
+from ..voxelization.voxelizer import numba_ptr, mol_gridify
+from ..types import AnyAtom
+from ...draw import MolView
 
 class UnparsableSMILESException(Exception):
     pass
@@ -25,15 +26,16 @@ class TemplateGeometryMismatchException(Exception):
     pass
 
 class Mol(object):
+    # This class wraps around rdkit and prody molecules. Also includes other
+    # functins to voxelize, fragment, etc. Some functions not implemented, so
+    # other classes (e.g., BackedMol) should inherit from this one.
+
     meta: Dict[str, Any]
 
     _KW_MOL_NAME = "name"
 
     def __init__(self, meta: dict = None):
-        if meta is None:
-            self.meta = {}
-        else:
-            self.meta = meta
+        self.meta = {} if meta is None else meta
 
     def __repr__(self):
         _cls = type(self).__name__
@@ -44,20 +46,22 @@ class Mol(object):
 
     @staticmethod
     def from_smiles(
-        smiles: str, sanitize: bool = False, make_3D: bool = False
+        smiles: str, sanitize: bool = False, make_3d: bool = False
     ) -> "BackedMol":
         """Construct a Mol from a SMILES string.
 
         Notes:
-            By default, the molecule does not have 3D coordinate information. Set ``make_3D=True`` to generate a 3D embedding with RDKit.
+            By default, the molecule does not have 3D coordinate information.
+            Set ``make_3d=True`` to generate a 3D embedding with RDKit.
 
         Args:
             smiles (str): A SMILES string.
-            sanitize (bool, optional): If True, attempt to sanitize the internal RDKit molecule.
-            make_3D (bool, optional): If True, generate 3D coordinates.
+            sanitize (bool, optional): If True, attempt to sanitize the
+                internal RDKit molecule.
+            make_3d (bool, optional): If True, generate 3D coordinates.
 
         Returns:
-            collagen.core.mol.BackedMol: A new Mol object.
+            collagen.core.molecules.mol.BackedMol: A new Mol object.
 
         Examples:
             Load aspirin from a SMILES string:
@@ -67,7 +71,7 @@ class Mol(object):
         """
         rdmol = Chem.MolFromSmiles(smiles, sanitize=sanitize)
         rdmol.UpdatePropertyCache()
-        if make_3D:
+        if make_3d:
             Chem.EmbedMolecule(rdmol)
 
         return BackedMol(rdmol=rdmol)
@@ -86,7 +90,7 @@ class Mol(object):
             sanitize (bool, optional): If True, attempt to sanitize the internal RDKit molecule.
 
         Returns:
-            collagen.core.mol.BackedMol: A new Mol object.
+            collagen.core.molecules.mol.BackedMol: A new Mol object.
 
         Examples:
             Extract the aspirin ligand from the 1OXR PDB structure:
@@ -159,7 +163,7 @@ class Mol(object):
             rdmol (rdkit.Chem.rdchem.Mol): An existing RDKit Mol.
 
         Returns:
-            collagen.core.mol.BackedMol: A new Mol object.
+            collagen.core.molecules.mol.BackedMol: A new Mol object.
         """
         rdmol.UpdatePropertyCache(strict=strict)
         return BackedMol(rdmol=rdmol)
@@ -253,7 +257,7 @@ class Mol(object):
         Convert a Mol to a voxelized tensor.
 
         Example:
-            >>> m = Mol.from_smiles('CN1C=NC2=C1C(=O)N(C(=O)N2C)C', make_3D=True)
+            >>> m = Mol.from_smiles('CN1C=NC2=C1C(=O)N(C(=O)N2C)C', make_3d=True)
             >>> vp = VoxelParams(
             ...     resolution=0.75,
             ...     width=24,
@@ -301,7 +305,7 @@ class Mol(object):
             ...     'CCCCC',
             ...     'C1=CC=CC=C1'
             ... ]
-            >>> mols = [Mol.from_smiles(x, make_3D=True) for x in smi]
+            >>> mols = [Mol.from_smiles(x, make_3d=True) for x in smi]
             >>> vp = VoxelParams(
             ...     resolution=0.75,
             ...     width=24,
@@ -458,9 +462,14 @@ class BackedMol(Mol):
         """Convert the internal rdmol to a SMILES string.
 
         Note:
-            This version returns a non-isomeric SMILES.
+            This version returns a non-isomeric SMILES, even if isomeric = True
+            (because standardize_smiles removes chirality). I believe
+            rdkfingerprint does not account for chirality, so shouldn't matter.
         """
-        return Chem.MolToSmiles(self.rdmol, isomericSmiles=isomeric)
+
+        smi = Chem.MolToSmiles(self.rdmol, isomericSmiles=isomeric)
+        smi = standardize_smiles(smi)
+        return smi
 
     @property
     def coords(self) -> "numpy.ndarray":
@@ -562,7 +571,8 @@ class BackedMol(Mol):
 
 class MolDataset(Dataset):
     """
-    Abstract interface for a MolDataset object.
+    Abstract interface for a MolDataset object. Other classes should inherit
+    this, BUT I DON'T BELIEVE CURRENTLY USED ANYWHERE.
 
     Subclasses should implement __len__ and __getitem__ to support enumeration
     over the data.
@@ -576,6 +586,7 @@ class MolDataset(Dataset):
 
 
 def mols_from_smi_file(filename):
+    # Serve up mols from a file with smiles.
     for l in open(filename):
         prts = l.strip().split(maxsplit=2)
         smi = prts[0]

@@ -2,8 +2,10 @@
 
 from typing import Any
 import torch
-
 from collagen.metrics.ensembled.parent import ParentEnsembled
+
+# Given multiple predictions, this class can be used to average them. Much of
+# the "meat" is in ParentEnsembled.
 
 class AveragedEnsembled(ParentEnsembled):
     def _create_initial_prediction_tensor(self) -> torch.Tensor:

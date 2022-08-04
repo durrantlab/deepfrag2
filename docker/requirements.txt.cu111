@@ -51,3 +51,4 @@ py3Dmol==1.7.0
 # torch-spline-conv==1.2.1
 # torch-geometric==2.0.3
 scikit-learn==1.0.2
+torchinfo

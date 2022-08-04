@@ -78,16 +78,16 @@ def compile_parameters(args):
     # Change csv to working dir if exists relative to this script.
     if os.path.exists(params["csv"]):
         bsnm = os.path.basename(params["csv"])
-        new_csv = args.working_dir + "/" + bsnm
+        new_csv = f'{args.working_dir}/{bsnm}'
         os.system("cp " + params["csv"] + " " + new_csv)
-        params["csv"] = "/working/" + bsnm
+        params["csv"] = f"/working/{bsnm}"
 
     # Change cache to working dir if exists relative to this script.
     if os.path.exists(params["cache"]):
         bsnm = os.path.basename(params["cache"])
-        new_cache = args.working_dir + "/" + bsnm
+        new_cache = f'{args.working_dir}/{bsnm}'
         os.system("cp " + params["cache"] + " " + new_cache)
-        params["cache"] = "/working/" + bsnm
+        params["cache"] = f"/working/{bsnm}"
     else:
         # cache file doesn't exist. Update to be same as new csv file.
         # params["cache"] = params["csv"] + "." + args.name + ".cache.json"

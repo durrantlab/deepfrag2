@@ -7,7 +7,7 @@ import torch
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.external.moad import MOADPocketDataset
 from collagen.util import rand_rot
-from collagen.skeletons import MoadVoxelSkeleton
+from collagen.model_parents import MoadVoxelModelParent
 
 from model import BindingSiteModel
 
@@ -17,7 +17,7 @@ TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel] # (pos_voxel, neg_voxel)
 OUT_T = Tuple[torch.Tensor, torch.Tensor] # (voxels, targets)
 
 
-class BindingSiteVoxel(MoadVoxelSkeleton):
+class BindingSiteVoxel(MoadVoxelModelParent):
     def __init__(self):
         super().__init__(
             model_cls=BindingSiteModel,

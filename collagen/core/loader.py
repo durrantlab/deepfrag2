@@ -30,11 +30,8 @@ def _process2(batch_of_batches, return_list, id):
                 now = datetime.now()
                 with open("/mnt/extra/loader_errs.log", "a") as f:
                     # print( "EXCEPTION TRACE PRINT:\n{}".format( "".join(traceback.format_exception(type(e), e, e.__traceback__))
-                    f.write('{}: {}: {}'.format(
-                        now.strftime("%m/%d/%Y, %H:%M:%S"), 
-                        type(e).__name__, 
-                        e
-                    ) + "\n")
+                    f.write((f'{now.strftime("%m/%d/%Y, %H:%M:%S")}: {type(e).__name__}: {e}' + "\n"))
+
             print("FAILED", id, batch)
             traceback.print_exc(e)
 
@@ -44,6 +41,8 @@ def _collate_none(x):
 
 
 class MultiLoader(object):
+    # This class serves up the data for training and testing. An iterator.
+
     def __init__(
         self,
         data,
@@ -53,6 +52,8 @@ class MultiLoader(object):
         collate_fn=_collate_none,
         max_voxels_in_memory=80,
     ):
+
+        # Save parameters to class variables.
         self.data = data
         self.num_dataloader_workers = num_dataloader_workers
         self.batch_size = batch_size
@@ -73,6 +74,9 @@ class MultiLoader(object):
             return (len(self.data) // self.batch_size) + 1
 
     def _add_procs(self, id):
+        # Adds processors to the pool used to serve up the data. Kill any stale
+        # ones.
+
         global TIMEOUT
 
         if len(self.return_list) >= self.max_voxels_in_memory:
@@ -87,7 +91,7 @@ class MultiLoader(object):
             if p.is_alive():
                 if cur_time - timestamp > TIMEOUT:
                     # It's been running for too long
-                    print("timed out, killing a process: " + p.name)
+                    print(f"timed out, killing a process: {p.name}")
                     p.terminate()
                     self.procs[i] = None
             else:
@@ -102,15 +106,15 @@ class MultiLoader(object):
         # Keep adding new procs until you reach the limit
         while (
             len(self.procs) < self.num_dataloader_workers
-            and len(self.batches_of_batches) > 0
+            and len(self.groups_of_batches) > 0
         ):
-            batch = self.batches_of_batches.pop(0)
+            batch = self.groups_of_batches.pop(0)
 
             p = multiprocessing.Process(
-                target=_process2,
-                args=(batch, self.return_list, id),
-                name=("process_" + str(self.name_idx + 1)),
+                target=_process2, args=(batch, self.return_list, id), 
+                name=f"process_{str(self.name_idx + 1)}"
             )
+
             self.name_idx = self.name_idx + 1
             p.start()
             self.procs.append((p, cur_time))
@@ -123,7 +127,7 @@ class MultiLoader(object):
         COLLATE = self.collate_fn
 
         # id is for debugging. Not critical.
-        id = str(time.time())
+        iden = str(time.time())
 
         # Avoiding multiprocessing.Pool because I want to terminate threads if
         # they take too long.
@@ -137,7 +141,7 @@ class MultiLoader(object):
         for i in range(0, num_data, self.batch_size):
             batches_idxs.append(data_idxs[i : i + self.batch_size])
         
-        # Batch the batches. Each of these uber batches goes to its own
+        # Group the batches. Each of these groups of batches goes to its own
         # processor.
         batches_to_process_per_proc = (
             self.max_voxels_in_memory // self.num_dataloader_workers
@@ -146,13 +150,13 @@ class MultiLoader(object):
             1 if batches_to_process_per_proc == 0 else batches_to_process_per_proc
         )
 
-        self.batches_of_batches = []
+        self.groups_of_batches = []
         for j in range(1 + len(batches_idxs) // batches_to_process_per_proc):
-            batch_of_batches = batches_idxs[
+            group_of_batches = batches_idxs[
                 j * batches_to_process_per_proc : (j + 1) * batches_to_process_per_proc
             ]
-            if len(batch_of_batches) > 0:
-                self.batches_of_batches.append(batch_of_batches)
+            if len(group_of_batches) > 0:
+                self.groups_of_batches.append(group_of_batches)
 
         # For debugging...
         # should be "file_system"
@@ -174,8 +178,8 @@ class MultiLoader(object):
         # time.sleep(15)
 
         count = 0
-        while len(self.batches_of_batches) > 0:
-            self._add_procs(id)
+        while len(self.groups_of_batches) > 0:
+            self._add_procs(iden)
 
             # Wait until you've got at least one ready
             while len(self.return_list) == 0:
@@ -192,10 +196,12 @@ class MultiLoader(object):
 
                 if len(self.return_list) < self.max_voxels_in_memory * 0.1:
                     # Getting low on voxels...
-                    self._add_procs(id)
+                    self._add_procs(iden)
 
                 count = count + 1
                 # print(count)
+
+                # import pdb; pdb.set_trace()
 
                 yield item
 

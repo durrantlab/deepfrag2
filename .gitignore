@@ -34,3 +34,7 @@ projects/data/**
 
 *.old
 old
+
+tmp.zip
+tmp/
+tmp_sync_pf.sh

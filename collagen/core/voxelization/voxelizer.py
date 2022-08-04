@@ -10,7 +10,7 @@ import numba.cuda
 import numpy as np
 from collagen.core.voxelization import gen_grid_gpu
 
-from ..featurizer import AtomicNumFeaturizer
+from ..molecules.atom_featurizer import AtomicNumFeaturizer
 from functools import lru_cache
 
 # There are max 1024 threads in each block. Found ** 6 ** to be optimal after
@@ -50,7 +50,9 @@ class VoxelParams(object):
     atom_scale: float = 1
     atom_shape: AtomShapeType = AtomShapeType.EXP
     acc_type: AccType = AccType.SUM
-    atom_featurizer: "collagen.core.featurizer.AtomFeaturizer" = None
+    atom_featurizer: "collagen.core.molecules.atom_featurizer.AtomFeaturizer" = None
+    calc_voxels: bool = True
+    calc_fps: bool = True
 
     def validate(self):
         assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"

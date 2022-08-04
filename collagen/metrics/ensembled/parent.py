@@ -4,7 +4,10 @@ import numpy as np
 import torch
 from collagen.core.loader import DataLambda
 from collagen.external.moad.types import Entry_info
-from collagen.metrics.metrics import VisRepProject
+from collagen.metrics.metrics import PCAProject
+
+# A parent class for combining multiple predictions (ensembles of predictions)
+# into one that's hopefully more accurate.
 
 class ParentEnsembled(ABC):
     def __init__(self, trainer: Any, model: Any, test_data: DataLambda, num_rotations: int, device: Any, ckpt_name: str):
@@ -14,8 +17,8 @@ class ParentEnsembled(ABC):
         self.trainer = trainer
         self.test_data = test_data
         self.ckpt_name = ckpt_name
-        self.correct_fp_vis_rep_projected = None
-        self.averaged_predicted_fp_vis_rep_projected = None
+        self.correct_fp_pca_projected = None
+        self.averaged_predicted_fp_pca_projected = None
         
         # Run it one time to get first-rotation predictions but also the number
         # of entries.
@@ -23,22 +26,22 @@ class ParentEnsembled(ABC):
         trainer.test(self.model, test_data, verbose=True)
         self.predictions_ensembled = self._create_initial_prediction_tensor()
 
-    def finish(self, vis_rep_space: VisRepProject):
-        # Pick up here once you've defined the vis_rep_space and label set.
+    def finish(self, pca_space: PCAProject):
+        # Pick up here once you've defined the pca_space and label set.
 
-        self.vis_rep_space = vis_rep_space
+        self.pca_space = pca_space
 
         # Get predictionsPerRotation projection (pca).
         # model.predictions.shape[0] = number of entries
-        self.viz_reps_per_rotation = np.zeros([self.num_rotations, self.model.predictions.shape[0], 2])
-        self.viz_reps_per_rotation[0] = vis_rep_space.project(self.model.predictions)
+        self.pcas_per_rotation = np.zeros([self.num_rotations, self.model.predictions.shape[0], 2])
+        self.pcas_per_rotation[0] = pca_space.project(self.model.predictions)
 
         # Perform the remaining rotations, adding to predictions_averaged and
-        # filling out self.viz_reps_per_rotation.
+        # filling out self.pcas_per_rotation.
         for i in range(1, self.num_rotations):
             print(f"{self.ckpt_name}: Inference rotation {i+1}/{self.num_rotations}")
             self.trainer.test(self.model, self.test_data, verbose=True)
-            self.viz_reps_per_rotation[i] = vis_rep_space.project(self.model.predictions)
+            self.pcas_per_rotation[i] = pca_space.project(self.model.predictions)
             # torch.add(predictions_ensembled, self.model.predictions, out=predictions_ensembled)
             self._udpate_prediction_tensor(self.model.predictions, i)
 
@@ -49,13 +52,13 @@ class ParentEnsembled(ABC):
 
     def get_correct_answer_info(self, entry_idx: int):
         # Project correct fingerprints into pca (or other) space.
-        if self.correct_fp_vis_rep_projected is None:
-            self.correct_fp_vis_rep_projected = self.vis_rep_space.project(self.model.prediction_targets)
+        if self.correct_fp_pca_projected is None:
+            self.correct_fp_pca_projected = self.pca_space.project(self.model.prediction_targets)
 
         entry_inf: Entry_info = self.model.prediction_targets_entry_infos[entry_idx]
         return {
             "fragmentSmiles": entry_inf.fragment_smiles,
-            "vizRepProjection": self.correct_fp_vis_rep_projected[entry_idx],
+            "pcaProjection": self.correct_fp_pca_projected[entry_idx],
             "parentSmiles": entry_inf.parent_smiles,
             "receptor": entry_inf.receptor_name,
             "connectionPoint": entry_inf.connection_pt.tolist()
@@ -63,16 +66,16 @@ class ParentEnsembled(ABC):
 
     def get_predictions_info(self, entry_idx: int):
         # Project averaged predictions into pca (or other) space.
-        if self.averaged_predicted_fp_vis_rep_projected is None:
-            self.averaged_predicted_fp_vis_rep_projected = self.vis_rep_space.project(self.predictions_ensembled)
+        if self.averaged_predicted_fp_pca_projected is None:
+            self.averaged_predicted_fp_pca_projected = self.pca_space.project(self.predictions_ensembled)
 
         entry = {
             "averagedPrediction": {
-                "vizRepProjection": self.averaged_predicted_fp_vis_rep_projected[entry_idx],
+                "pcaProjection": self.averaged_predicted_fp_pca_projected[entry_idx],
                 "closestFromLabelSet": []
             },
             "predictionsPerRotation": [
-                self.viz_reps_per_rotation[i][entry_idx].tolist()
+                self.pcas_per_rotation[i][entry_idx].tolist()
                 for i in range(self.num_rotations)
             ]
         }

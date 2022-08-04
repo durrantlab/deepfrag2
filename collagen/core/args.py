@@ -1,8 +1,11 @@
 import argparse
 import json
 
-# It would be tedious to get the args to some place in the code (e.g.,
+# It would be tedious to get the user args to some places in the code (e.g.,
 # MOAD_target). Let's just make some of the variables globally availble here.
+# There arguments are broadly applicable, so it makes sense to separate them
+# anyway.
+
 verbose = False
 
 def _add_generic_params(
@@ -103,9 +106,7 @@ def _get_arg_parser(
     return parent_parser
 
 
-def get_args(
-    parser_funcs=[], post_parse_args_funcs=[], is_pytorch_lightning=False
-) -> argparse.Namespace:
+def get_args(parser_funcs = None, post_parse_args_funcs = None, is_pytorch_lightning=False) -> argparse.Namespace:
     """The function creates a parser and gets the associated parameters.
 
     Args:
@@ -121,6 +122,11 @@ def get_args(
     Returns:
         argparse.Namespace: The parsed and updated args.
     """
+
+    if parser_funcs is None:
+        parser_funcs = []
+    if post_parse_args_funcs is None:
+        post_parse_args_funcs = []
 
     global verbose
 
@@ -153,7 +159,7 @@ def get_args(
     print("\nPARAMETERS")
     print("-----------\n")
     for k, v in vars(args).items():
-        print(k.rjust(35) + " : " + str(v))
+        print(f"{k.rjust(35)} : {str(v)}")
     print("")
 
     return args

@@ -4,7 +4,7 @@ from typing import Any, List, Tuple
 import numpy as np
 
 from .mol import Mol
-from .types import AnyAtom
+from ..types import AnyAtom
 
 
 @dataclass
@@ -24,7 +24,10 @@ class AbstractMol(Mol):
     _atoms: List[AbstractAtom]
     _bonds: List[AbstractBond]
 
-    def __init__(self, meta: dict = {}):
+    def __init__(self, meta: dict = None):
+        if meta is None:
+            meta = {}
+
         super(AbstractMol, self).__init__(meta=meta)
         self._atoms = []
         self._bonds = []

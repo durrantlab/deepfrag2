@@ -29,6 +29,9 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
 
 
 def get_last_checkpoint(args) -> str:
+    # Automatically looks for the most recently saved checkpoint. Good for
+    # resuming training.
+
     saved_checkpoints = glob.glob(
         args.default_root_dir + os.sep + "**" + os.sep + "last.ckpt", recursive=True
     )

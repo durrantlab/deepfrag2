@@ -3,14 +3,15 @@ import argparse
 import torch
 from torch import nn
 import pytorch_lightning as pl
-
 from collagen.metrics import cos_loss
 
-
 class DeepFragModel(pl.LightningModule):
-    def __init__(self, voxel_features: int = 10, fp_size: int = 2048, **kwargs):
+    def __init__(self, num_voxel_features: int = 10, fp_size: int = 2048, frag_counts = None, **kwargs):
         super().__init__()
+            
         self.save_hyperparameters()
+
+        self.frag_counts = frag_counts
 
         self.learning_rate = kwargs["learning_rate"]
 
@@ -20,29 +21,146 @@ class DeepFragModel(pl.LightningModule):
             "test": {}
         }
 
-        self.model = nn.Sequential(
-            nn.BatchNorm3d(voxel_features),
-            nn.Conv3d(voxel_features, 64, kernel_size=3),
+        # self.first_epoch = True
+
+        self.encoder = nn.Sequential(
+            # Rescale data (mean = 0, stdev = 1), per batch.
+            nn.BatchNorm3d(num_voxel_features),
+
+            # 3D convolution #1. Output has 64 channels. Each filter is 3x3.
+            nn.Conv3d(num_voxel_features, 64, kernel_size=3),
+
+            # Activation function. Output 0 if negative, same if positive.
             nn.ReLU(),
+
+            # 3D convolution #2. Input/output: 64 channels. Each filter is 3x3.
             nn.Conv3d(64, 64, kernel_size=3),
+
+            # Activation function. Output 0 if negative, same if positive.
             nn.ReLU(),
+
+            # 3D convolution #3. Input/output: 64 channels. Each filter is 3x3.
             nn.Conv3d(64, 64, kernel_size=3),
+
+            # Activation function. Output 0 if negative, same if positive.
             nn.ReLU(),
+
+            # Takes max value for each 2x2 field.
             nn.MaxPool3d(kernel_size=2),
+
+            # Rescale data (mean = 0, stdev = 1), per batch.
             nn.BatchNorm3d(64),
+
+            # 3D convolution #4. Input/output: 64 channels. Each filter is 3x3.
             nn.Conv3d(64, 64, kernel_size=3),
+
+            # Activation function. Output 0 if negative, same if positive.
             nn.ReLU(),
+
+            # 3D convolution #5. Input/output: 64 channels. Each filter is 3x3.
             nn.Conv3d(64, 64, kernel_size=3),
+
+            # Activation function. Output 0 if negative, same if positive.
             nn.ReLU(),
+
+            # 3D convolution #6. Input/output: 64 channels. Each filter is 3x3.
             nn.Conv3d(64, 64, kernel_size=3),
+
+            # Activation function. Output 0 if negative, same if positive.
             nn.ReLU(),
+
+            # Calculate the average value of patches to get 1x1x1 output size.
             nn.AdaptiveAvgPool3d((1, 1, 1)),
+
+            # The dimension of the tensor here is (16, 64, 1, 1, 1)
+
+            # Make the output a vector.
             nn.Flatten(),
+
+            # Randomly zero some values
             nn.Dropout(),
+
+            # Linear transform (fully connected). Increases features to 512.
             nn.Linear(64, 512),
+
+            # Activation function. Output 0 if negative, same if positive.
             nn.ReLU(),
+
+            # Here's your latent space?
+        )
+
+        self.decoder = nn.Sequential(
+            # Linear transform (fully connected). Increases features to 512.
+            nn.Linear(512, 64),
+
+            # Activation function. Output 0 if negative, same if positive.
+            nn.ReLU(),
+
+            # Reshapes vector to tensor.
+            nn.Unflatten(1, (64, 1, 1, 1)),
+
+            # TODO: Linear layer somewhere here to get it into fragment space?
+            # Or ReLU?
+
+            # Deconvolution #1
+            nn.ConvTranspose3d(
+                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+            ),
+            nn.ReLU(),
+
+            # Deconvolution #2
+            nn.ConvTranspose3d(
+                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+            ),
+            nn.ReLU(),
+
+            # Deconvolution #3
+            nn.ConvTranspose3d(
+                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+            ),
+            nn.ReLU(),
+
+            # Deconvolution #4
+            nn.ConvTranspose3d(
+                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+            ),
+            nn.ReLU(),
+
+            # nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+            nn.Upsample(scale_factor=2, mode='nearest'),
+
+            # Deconvolution #5
+            nn.ConvTranspose3d(
+                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+            ),
+            nn.ReLU(),
+
+            # Deconvolution #6
+            nn.ConvTranspose3d(
+                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+            ),
+            nn.ReLU(),
+
+            # Deconvolution #7
+            nn.ConvTranspose3d(
+                64, num_voxel_features, kernel_size=3, stride=1, # padding=1, output_padding=1
+            ),
+            nn.ReLU(),
+
+            # TODO: num_voxel_features includes receptor + ligand features. Not
+            # the right one here. Needs to match however you calculate voxel
+            # fragment.
+        )
+
+        self.deepfrag_after_encoder = nn.Sequential(
+            # Randomly zero some values
             nn.Dropout(),
+
+            # Linear transform (fully connected). Increases features to 512.
             nn.Linear(512, fp_size),
+
+            # Applies sigmoid activation function. See
+            # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
             nn.Sigmoid(),
         )
 
@@ -54,21 +172,87 @@ class DeepFragModel(pl.LightningModule):
         return parent_parser
 
     def forward(self, voxel):
-        return self.model(voxel)
+        latent_space = self.encoder(voxel)
+        fps = self.deepfrag_after_encoder(latent_space)
+        # frag_voxel = self.decoder(latent_space)
+        return fps
+        # return self.model(voxel)
+
+    def loss(self, pred, fps, entry_infos, batch_size):
+        # if self.frag_counts is None:
+        return cos_loss(pred, fps).mean()
+
+        # # Get fragment smiles from entry_infos
+        # fragment_smiles = [entry_info.fragment_smiles for entry_info in entry_infos]
+
+        # # Get the fragment counts for the current batch
+        # fragment_weights = [
+        #     1.0 / self.frag_counts[fragment_smile] 
+        #     for fragment_smile in fragment_smiles
+        # ]
+
+        # fragment_weights = torch.tensor(fragment_weights).to(pred.device)
+
+        # # Calculate the weighted loss
+        # weighted_loss = cos_loss(pred, fps)
+        # weighted_loss = weighted_loss * fragment_weights
+        # weighted_loss = weighted_loss.sum() / fragment_weights.sum()
+
+        # total_loss = weighted_loss
+
+        # # # Calculate the average loss (not weighted)
+        # # avg_loss = weighted_loss.mean()
+
+        # # self.log("weighted_loss", weighted_loss, batch_size=batch_size)
+        # # self.log("avg_loss", avg_loss, batch_size=batch_size)
+
+        # # total_loss = 0.5 * (avg_loss + weighted_loss)
+
+        # return total_loss
 
     def training_step(self, batch, batch_idx):
         voxels, fps, entry_infos = batch
 
         pred = self(voxels)
 
-        loss = cos_loss(pred, fps).mean()
+        batch_size = voxels.shape[0]
+
+        loss = self.loss(pred, fps, entry_infos, batch_size)
+
+        # print("shape", cos_loss(pred, fps).shape)
 
         self._mark_example_used("train", entry_infos)
 
         # print("training_step")
-        self.log("loss", loss, batch_size=voxels.shape[0])
+        self.log("loss", loss, batch_size=batch_size)
 
         return loss
+
+    # def on_train_epoch_end(self):
+    #     if not self.first_epoch:
+    #         return
+
+    #     print("\nEnd first epoch. Saving fragment counts...\n")
+
+    #     # Get the fragment counts from what's currently in self._examples_used
+    #     for recep_name in self._examples_used["train"].keys():
+    #         for frag in self._examples_used["train"][recep_name]:
+    #             if frag not in self.fragment_counts_for_training:
+    #                 self.fragment_counts_for_training[frag] = 0
+    #             self.fragment_counts_for_training[frag] += 1
+        
+    #     # Convert self.fragment_counts_for_training to a list of tuples sorted
+    #     # in descending order by second element
+    #     fragment_counts_for_training_srted = sorted(
+    #         self.fragment_counts_for_training.items(), 
+    #         key=lambda x: x[1], 
+    #         reverse=True
+    #     )
+
+    #     with open("fragment_counts_for_training.json", "w") as f:
+    #         json.dump(fragment_counts_for_training_srted, f, indent=4)
+
+    #     self.first_epoch = False
 
     def validation_step(self, batch, batch_idx):
         voxels, fps, entry_infos = batch
@@ -77,37 +261,47 @@ class DeepFragModel(pl.LightningModule):
 
         pred = self(voxels)
 
-        loss = cos_loss(pred, fps).mean()
+        batch_size = voxels.shape[0]
+
+        # loss = cos_loss(pred, fps).mean()
+        loss = self.loss(pred, fps, entry_infos, batch_size)
 
         self._mark_example_used("val", entry_infos)
 
         # print("validation_step")
-        self.log("val_loss", loss, batch_size=voxels.shape[0])
+        self.log("val_loss", loss, batch_size=batch_size)
 
     def configure_optimizers(self):
         # https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
         # 3e-4 to 5e-4 are the best learning rates if you're learning the task
         # from scratch
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
 
     def _mark_example_used(self, lbl: str, entry_infos):
         if entry_infos is not None:
             for entry_info in entry_infos:
                 if entry_info.receptor_name not in self._examples_used[lbl]:
-                    self._examples_used[lbl][entry_info.receptor_name] = set([])
-                self._examples_used[lbl][entry_info.receptor_name].add(entry_info.fragment_smiles)
+                    # Don't use set here. If one ligand has multiple identical
+                    # fragments, I want them all listed.
+                    self._examples_used[lbl][entry_info.receptor_name] = []
+                self._examples_used[lbl][entry_info.receptor_name].append(entry_info.fragment_smiles)
 
     def get_examples_used(self):
         to_return = {"counts": {}}
         for split in self._examples_used:
             to_return[split] = {}
-            frags_together = set([])
+            frags_together = []
             for recep in self._examples_used[split].keys():
                 frags = self._examples_used[split][recep]
-                frags_together.update(frags)
+                frags_together.extend(frags)
                 to_return[split][recep] = list(frags)
-            to_return["counts"][split] = {"receptors": len(self._examples_used[split].keys()), "fragments": len(frags_together)}
+            to_return["counts"][split] = {
+                "receptors": len(self._examples_used[split].keys()), 
+                "fragments": {
+                    "total": len(frags_together),
+                    "unique": len(set(frags_together))
+                }
+            }
         return to_return
 
     def test_step(self, batch, batch_idx):
@@ -115,12 +309,15 @@ class DeepFragModel(pl.LightningModule):
         voxels, fps, entry_infos = batch
         pred = self(voxels)
 
-        loss = cos_loss(pred, fps).mean()
+        batch_size = voxels.shape[0]
+
+        # loss = cos_loss(pred, fps).mean()
+        loss = self.loss(pred, fps, entry_infos, batch_size)
 
         self._mark_example_used("test", entry_infos)
 
         # print("test_step")
-        self.log("test_loss", loss, batch_size=voxels.shape[0])
+        self.log("test_loss", loss, batch_size=batch_size)
 
         # Drop (large) voxel input, return the predicted and target fingerprints.
         return pred, fps, entry_infos

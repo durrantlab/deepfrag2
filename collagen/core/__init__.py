@@ -14,15 +14,15 @@ __all__ = [
     "GraphMol",
 ]
 
-from .mol import Mol, BackedMol, DelayedMolVoxel
-from .abstract_mol import AbstractMol, AbstractAtom, AbstractBond
+from .molecules.mol import Mol, BackedMol, DelayedMolVoxel
+from .molecules.abstract_mol import AbstractMol, AbstractAtom, AbstractBond
 from .voxelization.voxelizer import VoxelParams, VoxelParamsDefault
-from .featurizer import AtomFeaturizer, AtomicNumFeaturizer
+from .molecules.atom_featurizer import AtomFeaturizer, AtomicNumFeaturizer
 from .types import AnyAtom
 from .loader import MultiLoader
 
 try:
-    from .graph_mol import GraphMol
+    from .molecules.graph_mol import GraphMol
 except:
     GraphMol = None
     print("collagen.GraphMol requires torch_geometric!")

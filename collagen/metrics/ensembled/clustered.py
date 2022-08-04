@@ -9,6 +9,9 @@ from scipy import stats
 from scipy.spatial.distance import cdist
 import math
 
+# NOT USED. Part of early efforts to improve accuracy by filtering out outlier
+# predictions. Never got it to work. Might be worth revisiting.
+
 def create_initial_prediction_tensor(model_after_first_rotation: Any, num_rotations: int, device: Any) -> torch.Tensor:
     num_entries = model_after_first_rotation.predictions.shape[0]
     fp_size = model_after_first_rotation.predictions.shape[1]

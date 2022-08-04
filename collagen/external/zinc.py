@@ -4,8 +4,9 @@ from typing import List, Dict
 import h5py
 from tqdm import tqdm
 
-from ..core.mol import Mol
+from ..core.molecules.mol import Mol
 
+# NOT CURRENTLY USED
 
 class ZINCDataset(object):
     """

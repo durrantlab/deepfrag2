@@ -4,14 +4,16 @@ import warnings
 import numpy as np
 import rdkit
 
-from .types import AnyAtom
+from ..types import AnyAtom
 
 
 class AtomFeaturizer(object):
-    """Abstract AtomFeaturizer class. Invokes once per atom in a Mol."""
+    """Abstract AtomFeaturizer class. Other classes inherit this one. Invokes
+    once per atom in a Mol."""
 
     def featurize_mol(self, mol: "Mol") -> Tuple["numpy.ndarray", "numpy.ndarray"]:
         """Featurize a Mol, returns (atom_mask, atom_radii)."""
+        
         ft = [self.featurize(a) for a in mol.atoms]
         atom_mask = np.array([x[0] for x in ft], dtype=np.int32)
         atom_radii = np.array([x[1] for x in ft], dtype=np.float32)
@@ -27,21 +29,25 @@ class AtomFeaturizer(object):
         Returns:
             Tuple[int, float]: (bitmask, atom_radius)
         """
+
         raise NotImplementedError()
 
     def size(self) -> int:
         """Returns the total number of layers."""
+
         raise NotImplementedError()
 
 
 class AtomicNumFeaturizer(AtomFeaturizer):
     """
-    A featurizer that assigns each atomic number to a layer. By default, atomic radii are set to 1 however
-    you can provide a radii argument of the same length as layers to assign separate atomic radii.
+    A featurizer that assigns each atomic number to a layer. By default, atomic
+    radii are set to 1 however you can provide a radii argument of the same
+    length as layers to assign separate atomic radii.
 
     Args:
         layers (List[int]): A list of atomic numbers.
-        radii (List[float], optional): An optional list of atomic radii to use (of the same length as layers).
+        radii (List[float], optional): An optional list of atomic radii to use
+            (of the same length as layers).
     """
 
     def __init__(self, layers: List[int], radii: Optional[List[float]] = None):
@@ -54,6 +60,7 @@ class AtomicNumFeaturizer(AtomFeaturizer):
             ), "Must provide an equal number of radii as layers"
             self.radii = radii
         else:
+            # Radii not provided, so assign radius 1 to all atoms.
             self.radii = [1] * len(self.layers)
 
     def featurize(self, atom: Any) -> int:
