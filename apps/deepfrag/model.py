@@ -6,12 +6,10 @@ import pytorch_lightning as pl
 from collagen.metrics import cos_loss
 
 class DeepFragModel(pl.LightningModule):
-    def __init__(self, num_voxel_features: int = 10, fp_size: int = 2048, frag_counts = None, **kwargs):
+    def __init__(self, num_voxel_features: int = 10, fp_size: int = 2048, **kwargs):
         super().__init__()
             
         self.save_hyperparameters()
-
-        self.frag_counts = frag_counts
 
         self.learning_rate = kwargs["learning_rate"]
 
@@ -179,36 +177,7 @@ class DeepFragModel(pl.LightningModule):
         # return self.model(voxel)
 
     def loss(self, pred, fps, entry_infos, batch_size):
-        # if self.frag_counts is None:
         return cos_loss(pred, fps).mean()
-
-        # # Get fragment smiles from entry_infos
-        # fragment_smiles = [entry_info.fragment_smiles for entry_info in entry_infos]
-
-        # # Get the fragment counts for the current batch
-        # fragment_weights = [
-        #     1.0 / self.frag_counts[fragment_smile] 
-        #     for fragment_smile in fragment_smiles
-        # ]
-
-        # fragment_weights = torch.tensor(fragment_weights).to(pred.device)
-
-        # # Calculate the weighted loss
-        # weighted_loss = cos_loss(pred, fps)
-        # weighted_loss = weighted_loss * fragment_weights
-        # weighted_loss = weighted_loss.sum() / fragment_weights.sum()
-
-        # total_loss = weighted_loss
-
-        # # # Calculate the average loss (not weighted)
-        # # avg_loss = weighted_loss.mean()
-
-        # # self.log("weighted_loss", weighted_loss, batch_size=batch_size)
-        # # self.log("avg_loss", avg_loss, batch_size=batch_size)
-
-        # # total_loss = 0.5 * (avg_loss + weighted_loss)
-
-        # return total_loss
 
     def training_step(self, batch, batch_idx):
         voxels, fps, entry_infos = batch

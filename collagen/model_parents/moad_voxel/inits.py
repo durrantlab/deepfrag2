@@ -41,15 +41,13 @@ class MoadVoxelModelInits(object):
     def init_model(
         self: "MoadVoxelModelParent",
         args: Namespace,
-        ckpt: Optional[str],
-        frag_counts: Optional[Dict[str, int]],
+        ckpt: Optional[str]
     ) -> pl.LightningModule:
         if ckpt:
             print(f"\nLoading model from checkpoint {ckpt}\n")
             return self.model_cls.load_from_checkpoint(ckpt)
         else:
-            frag_counts = frag_counts or {}
-            return self.model_cls(frag_counts=frag_counts, **vars(args))
+            return self.model_cls(**vars(args))
 
     def init_voxel_params(self, args: Namespace) -> VoxelParams:
         # Sets things like voxel resolution, dimensions, etc. TODO: make

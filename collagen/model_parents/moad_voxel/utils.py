@@ -26,10 +26,11 @@ class MoadVoxelModelUtils(object):
         device: Any,
         shuffle=True,
     ) -> DataLambda:
-        # This is where you do actual dataset construction. The transform function
-        # actually gets the data (voxelizes and creates fingerprint). TODO: Create
-        # separate function .pre_voxelize_with_voxel that just calculates just
-        # fingerprint.
+        # This is where you do actual dataset construction. The transform
+        # function actually gets the data (voxelizes and creates fingerprint).
+        # Note also call to self.dataset_cls should create the .json.cache file.
+        # TODO: Create separate function .pre_voxelize_with_voxel that just
+        # calculates just fingerprint.
 
         dataset = self.dataset_cls(
             moad,
