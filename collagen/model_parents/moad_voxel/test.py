@@ -512,4 +512,4 @@ class MoadVoxelModelTest(object):
         ps.print_stats()
 
         self._save_test_results_to_json(all_test_data, s)
-        self._save_used(model, args)
+        self._save_examples_used(model, args)

@@ -54,4 +54,4 @@ class MoadVoxelModelTrain(object):
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
-        self._save_used(model, args)
+        self._save_examples_used(model, args)
