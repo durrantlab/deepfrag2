@@ -430,7 +430,7 @@ class MoadVoxelModelTest(object):
             # You're iterating through multiple checkpoints. This allows output
             # from multiple trained models to be averaged.
 
-            model = self.init_model(args, ckpt, None)
+            model = self.init_model(args, ckpt)
             model.eval()
 
             payload = self._run_test_on_checkpoint(
