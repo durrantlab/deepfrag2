@@ -1,17 +1,13 @@
 import argparse
-from dataclasses import dataclass
 from typing import List, Tuple
 from collagen.external.moad.types import Entry_info
 
 import torch
-from torch.utils import data
-
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.external.moad import MOADFragmentDataset
 from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
-from collagen.metrics import top_k
 import pytorch_lightning as pl
 
 from model import DeepFragModel
@@ -23,6 +19,7 @@ OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 
 def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
     return torch.tensor(mol.fingerprint("rdk10", args.fp_size))
+
 
 class DeepFrag(MoadVoxelModelParent):
     def __init__(self):
@@ -94,7 +91,7 @@ class DeepFrag(MoadVoxelModelParent):
             
             frag_smis.append(smi)
 
-        return (voxels, fingerprints, frag_smis)
+        return voxels, fingerprints, frag_smis
 
 
 if __name__ == "__main__":

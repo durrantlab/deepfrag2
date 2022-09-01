@@ -6,6 +6,7 @@ from tqdm.std import tqdm
 from collagen.external import MOADInterface
 from collagen.external.moad.split import compute_moad_split
 
+
 class MoadVoxelModelTrain(object):
     def run_train(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]):
         # Runs training.

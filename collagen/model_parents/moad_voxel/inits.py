@@ -10,8 +10,11 @@ import torch
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
 
+
 class MoadVoxelModelInits(object):
-    def init_trainer(self, args: Namespace) -> pl.Trainer:
+
+    @staticmethod
+    def init_trainer(args: Namespace) -> pl.Trainer:
         logger = None
         if args.wandb_project:
             logger = WandbLogger(project=args.wandb_project)
@@ -49,10 +52,12 @@ class MoadVoxelModelInits(object):
         else:
             return self.model_cls(**vars(args))
 
-    def init_voxel_params(self, args: Namespace) -> VoxelParams:
+    @staticmethod
+    def init_voxel_params(args: Namespace) -> VoxelParams:
         # Sets things like voxel resolution, dimensions, etc. TODO: make
         # configurable via argparse. Currently hard coded.
         return VoxelParamsDefault.DeepFrag
 
-    def init_device(self, args: Namespace) -> torch.device:
+    @staticmethod
+    def init_device(args: Namespace) -> torch.device:
         return torch.device("cpu") if args.cpu else torch.device("cuda")

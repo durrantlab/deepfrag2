@@ -3,14 +3,18 @@ import argparse
 import torch
 from torch import nn
 import pytorch_lightning as pl
+from AggregationOperators import Operator
+from AggregationOperators import Aggregate1DTensor
+from apps.deepfrag.AggregationOperators import Aggregate3x3Patches
 from collagen.metrics import cos_loss
+
 
 class DeepFragModel(pl.LightningModule):
     def __init__(self, num_voxel_features: int = 10, fp_size: int = 2048, **kwargs):
         super().__init__()
             
         self.save_hyperparameters()
-
+        self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
 
         self._examples_used = {
@@ -68,7 +72,8 @@ class DeepFragModel(pl.LightningModule):
             nn.ReLU(),
 
             # Calculate the average value of patches to get 1x1x1 output size.
-            nn.AdaptiveAvgPool3d((1, 1, 1)),
+            # nn.AdaptiveAvgPool3d((1, 1, 1)),
+            Aggregate3x3Patches(operator=kwargs["aggregation_3x3_patches"], output_size=(1, 1, 1)),
 
             # The dimension of the tensor here is (16, 64, 1, 1, 1)
 
@@ -167,6 +172,8 @@ class DeepFragModel(pl.LightningModule):
         parser = parent_parser.add_argument_group('DeepFragModel')
         parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
         parser.add_argument('--fp_size', type=int, help="The size of the output molecular fingerprint. Defaults to 2048.", default=2048)
+        parser.add_argument('--aggregation_3x3_patches', required=False, type=Operator, help="The aggregation operator to be used. Defaults to Mean.", default=Operator.MEAN)
+        parser.add_argument('--aggregation_loss_vector', required=False, type=Operator, help="The aggregation operator to be used. Defaults to Mean.", default=Operator.MEAN)
         return parent_parser
 
     def forward(self, voxel):
@@ -177,7 +184,7 @@ class DeepFragModel(pl.LightningModule):
         # return self.model(voxel)
 
     def loss(self, pred, fps, entry_infos, batch_size):
-        return cos_loss(pred, fps).mean()
+        return self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
 
     def training_step(self, batch, batch_idx):
         voxels, fps, entry_infos = batch
@@ -331,4 +338,3 @@ class DeepFragModel(pl.LightningModule):
         self.predictions = predictions
         self.prediction_targets = prediction_targets
         self.prediction_targets_entry_infos = prediction_targets_entry_infos
-

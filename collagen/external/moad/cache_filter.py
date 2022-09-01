@@ -46,28 +46,27 @@ class CacheItemsToUpdate(object):
         )
 
 
-MOAD_REF: "MOADInterface"
+# MOAD_REF: "MOADInterface"
 CACHE_ITEMS_TO_UPDATE = CacheItemsToUpdate()
 
 
 def _set_molecular_prop(func, func_input, default_if_error):
     # Provides a way to provide a default value if function fails.
-
     try:
         return func(func_input)
     except Exception:
         return default_if_error
 
 
-def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
+def _get_info_given_pdb_id(pdb_id: str, moad_entry_info, cache_items_to_update) -> Tuple[str, dict]:
     # Given a PDB ID, looks up the PDB in BindingMOAD, and calculates the
     # molecular properties specified in CACHE_ITEMS_TO_UPDATE. Returns a tuple
     # with the pdb id and a dictionary with the associated information.
 
-    global MOAD_REF
-    global CACHE_ITEMS_TO_UPDATE
+    # global MOAD_REF
+    # global CACHE_ITEMS_TO_UPDATE
 
-    moad_entry_info = MOAD_REF[pdb_id]
+    # moad_entry_info = moad[pdb_id]
 
     lig_infs = {}
     for lig_chunk_idx in range(len(moad_entry_info)):
@@ -89,12 +88,12 @@ def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
             lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
 
             # Updatable
-            if CACHE_ITEMS_TO_UPDATE.lig_mass:
+            if cache_items_to_update.lig_mass:
                 lig_infs[lig_name]["lig_mass"] = _set_molecular_prop(
                     lambda x: x.mass, lig, 999999
                 )
 
-            if CACHE_ITEMS_TO_UPDATE.murcko_scaffold:
+            if cache_items_to_update.murcko_scaffold:
                 try:
                     smi_fixed = fix_moad_smiles(lig.smiles(True))
                     scaffold_smi = MurckoScaffoldSmilesFromSmiles(
@@ -104,31 +103,31 @@ def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
                 except Exception:
                     lig_infs[lig_name]["murcko_scaffold"] = ""
 
-            if CACHE_ITEMS_TO_UPDATE.num_heavy_atoms:
+            if cache_items_to_update.num_heavy_atoms:
                 lig_infs[lig_name]["num_heavy_atoms"] = _set_molecular_prop(
                     lambda x: x.num_heavy_atoms, lig, 999999
                 )
 
             if (
-                CACHE_ITEMS_TO_UPDATE.frag_masses
-                or CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms
-                or CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep
-                or CACHE_ITEMS_TO_UPDATE.frag_smiles
+                    cache_items_to_update.frag_masses
+                    or cache_items_to_update.frag_num_heavy_atoms
+                    or cache_items_to_update.frag_dists_to_recep
+                    or cache_items_to_update.frag_smiles
             ):
                 # Get all the fragments
                 frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
 
-                if CACHE_ITEMS_TO_UPDATE.frag_masses:
+                if cache_items_to_update.frag_masses:
                     lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
                         lambda f: [x[1].mass for x in f], frags, []
                     )
 
-                if CACHE_ITEMS_TO_UPDATE.frag_num_heavy_atoms:
+                if cache_items_to_update.frag_num_heavy_atoms:
                     lig_infs[lig_name]["frag_num_heavy_atoms"] = _set_molecular_prop(
                         lambda f: [x[1].num_heavy_atoms for x in f], frags, []
                     )
 
-                if CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep:
+                if cache_items_to_update.frag_dists_to_recep:
                     lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
                         lambda f: [
                             np.min(cdist(x[1].coords, receptor.coords)) for x in f
@@ -137,7 +136,7 @@ def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
                         [],
                     )
 
-                if CACHE_ITEMS_TO_UPDATE.frag_smiles:
+                if cache_items_to_update.frag_smiles:
                     # Helpful for debugging, mostly.
                     lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
                         lambda f: [x[1].smiles(True) for x in f],
@@ -145,7 +144,7 @@ def _get_info_given_pdb_id(pdb_id: str) -> Tuple[str, dict]:
                         [],
                     )
 
-    return (pdb_id, lig_infs)
+    return pdb_id, lig_infs
 
 
 def _set_cache_params_to_update(cache):
@@ -170,6 +169,7 @@ def _set_cache_params_to_update(cache):
     first_lig = ref_pdb_inf[list(ref_pdb_inf.keys())[0]]
 
     # Updatable
+    global CACHE_ITEMS_TO_UPDATE
     if "lig_mass" in first_lig:
         CACHE_ITEMS_TO_UPDATE.lig_mass = False
     if "frag_masses" in first_lig:
@@ -187,18 +187,15 @@ def _set_cache_params_to_update(cache):
 
 
 def _build_moad_cache_file(
-    filename: str,
-    moad: "MOADInterface",
-    cache_items_to_update: CacheItemsToUpdate,
-    cores: int = None,
+        filename: str,
+        moad: "MOADInterface",
+        cache_items_to_update: CacheItemsToUpdate,
+        cores: int = None,
 ):
     # This builds/updates the whole BindingMOAD cache (on disk).
 
     # TODO: hard coding to use all cores
     cores = None
-
-    global MOAD_REF
-    MOAD_REF = moad
 
     # Load existing cache if it exists. So you can add to it.
     if os.path.exists(filename):
@@ -218,11 +215,17 @@ def _build_moad_cache_file(
         # Nothing to update
         return cache
 
-    pdb_ids_queue = MOAD_REF.targets
+    # global MOAD_REF
+    # MOAD_REF = moad
+
+    pdb_ids_queue = moad.targets
+    list_ids_moad = []
+    for pdb_id in moad.targets:
+        list_ids_moad.append((pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE))
 
     pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
     with multiprocessing.Pool(cores) as p:
-        for pdb_id, lig_infs in p.imap_unordered(_get_info_given_pdb_id, pdb_ids_queue):
+        for pdb_id, lig_infs in p.starmap(_get_info_given_pdb_id, list_ids_moad):
             pdb_id = pdb_id.lower()
 
             if pdb_id not in cache:
@@ -248,16 +251,15 @@ def _build_moad_cache_file(
 
 
 def load_cache_and_filter(
-    lig_filter_func: Any,  # The function used to filter the ligands
-    moad: "MOADInterface",
-    split: "MOAD_split",
-    args: argparse.Namespace,
-    make_dataset_entries_func: Any,
-    cache_items_to_update: CacheItemsToUpdate,
-    cache_file: Optional[Union[str, Path]] = None,
-    cores: int = 1,
+        lig_filter_func: Any,  # The function used to filter the ligands
+        moad: "MOADInterface",
+        split: "MOAD_split",
+        args: argparse.Namespace,
+        make_dataset_entries_func: Any,
+        cache_items_to_update: CacheItemsToUpdate,
+        cache_file: Optional[Union[str, Path]] = None,
+        cores: int = 1,
 ):
-
     # This not only builds/gets the cache, but also filters the properties to
     # retain only those BindingMOAD entries for training. For example, could
     # filter by ligand mass.

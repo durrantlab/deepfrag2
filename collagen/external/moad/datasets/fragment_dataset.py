@@ -190,13 +190,13 @@ class MOADFragmentDataset(Dataset):
             self.args,
             self._make_dataset_entries_func,
             CacheItemsToUpdate(
-                # num_heavy_atoms=True,
+                lig_mass=True,
+                murcko_scaffold=True,
+                num_heavy_atoms=True,
                 frag_masses=True,
-                frag_dists_to_recep=True,
                 frag_num_heavy_atoms=True,
-                # lig_mass=True,
+                frag_dists_to_recep=True,
                 frag_smiles=True,  # Good for debugging.
-                # murcko_scaffold=True,
             ),
             cache_file,
             cores,
@@ -210,7 +210,7 @@ class MOADFragmentDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
         """Returns (receptor, parent, fragment)"""
-        assert idx >= 0 and idx <= len(self), "Index out of bounds"
+        assert 0 <= idx <= len(self), "Index out of bounds"
 
         entry = self._internal_index_valids_filtered[idx]
 

@@ -1,7 +1,6 @@
 from argparse import ArgumentParser, Namespace
 import json
-from typing import Any, Type, TypeVar, List, Optional, Tuple, Dict
-from collagen.core.molecules.mol import Mol
+from typing import Type, TypeVar, List
 from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
 from collagen.model_parents.moad_voxel.lr_finder import MoadVoxelModelLRFinder
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
@@ -9,8 +8,6 @@ from collagen.model_parents.moad_voxel.train import MoadVoxelModelTrain
 from collagen.model_parents.moad_voxel import arguments
 import os
 from collagen.model_parents.moad_voxel.utils import MoadVoxelModelUtils
-
-# from collagen.metrics.ensembled import clustered as ensemble_helper
 
 import pytorch_lightning as pl
 import torch
@@ -115,8 +112,10 @@ class MoadVoxelModelParent(
     #             frag_counts[entry_info.fragment_smiles] += 1
     #     return frag_counts
 
-    def _save_examples_used(self, model, args):
-        pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
-        examples_used = model.get_examples_used()
-        out_name = pth + os.path.basename(args.save_splits) + ".actually_used.json"
-        json.dump(examples_used, open(out_name, "w"), indent=4)
+    @staticmethod
+    def _save_examples_used(model, args):
+        if args.save_splits is not None:
+            pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
+            examples_used = model.get_examples_used()
+            out_name = pth + os.path.basename(args.save_splits) + ".actually_used.json"
+            json.dump(examples_used, open(out_name, "w"), indent=4)

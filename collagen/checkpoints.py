@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 import glob
 import os
 
-from torch._C import Value
 
 # see  https://github.com/PyTorchLightning/pytorch-lightning/issues/4911 Saves
 # and loads checkpoints in a way that respects previously saved checkpoints.

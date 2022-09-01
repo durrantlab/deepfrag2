@@ -10,7 +10,9 @@ from collagen.external.moad.types import MOAD_split
 
 
 class MoadVoxelModelUtils(object):
-    def disable_warnings(self):
+
+    @staticmethod
+    def disable_warnings():
         from rdkit import RDLogger
         import prody
 
@@ -56,8 +58,8 @@ class MoadVoxelModelUtils(object):
 
         return data
 
-
-    def get_checkpoint(self, args: Namespace) -> Optional[str]:
+    @staticmethod
+    def get_checkpoint(args: Namespace) -> Optional[str]:
         if args.load_checkpoint and args.load_newest_checkpoint:
             raise ValueError(
                 "Can specify 'load_checkpoint=xyz' or 'load_newest_checkpoint' but not both."
@@ -71,7 +73,8 @@ class MoadVoxelModelUtils(object):
 
         return ckpt
 
-    def debug_smis_match_fps(self, fps: torch.Tensor, smis: List[str], device: Any):
+    @staticmethod
+    def debug_smis_match_fps(fps: torch.Tensor, smis: List[str], device: Any):
         import rdkit
         from rdkit import Chem
 

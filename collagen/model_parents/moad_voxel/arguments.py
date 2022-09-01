@@ -1,6 +1,7 @@
 from argparse import Namespace, ArgumentParser
 from multiprocessing import cpu_count
 
+
 def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     # Add user-defined command-line parameters to control how the MOAD data is
     # processed.
