@@ -7,6 +7,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.loggers.csv_logs import CSVLogger
 from ...checkpoints import MyModelCheckpoint
 import torch
+import os
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
 
@@ -18,6 +19,8 @@ class MoadVoxelModelInits(object):
         logger = None
         if args.wandb_project:
             logger = WandbLogger(project=args.wandb_project)
+        elif args.default_root_dir is not None:
+            logger = TensorBoardLogger(args.default_root_dir + os.sep + "tb_logs", "my_model_run_name")
         else:
             logger = TensorBoardLogger("tb_logs", "my_model_run_name")
 

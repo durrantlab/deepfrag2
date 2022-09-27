@@ -115,7 +115,7 @@ class MoadVoxelModelParent(
     @staticmethod
     def _save_examples_used(model, args):
         if args.save_splits is not None:
-            pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
+            pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else args.default_root_dir
             examples_used = model.get_examples_used()
             out_name = pth + os.path.basename(args.save_splits) + ".actually_used.json"
             json.dump(examples_used, open(out_name, "w"), indent=4)

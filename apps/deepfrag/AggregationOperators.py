@@ -12,6 +12,24 @@ class Operator(Enum):
     OWA1 = "owa1"
     OWA2 = "owa2"
     OWA3 = "owa3"
+    OWA_ExpSmooth1_01 = "owa_ExpSmooth1_01"
+    OWA_ExpSmooth1_02 = "owa_ExpSmooth1_02"
+    OWA_ExpSmooth1_03 = "owa_ExpSmooth1_03"
+    OWA_ExpSmooth1_04 = "owa_ExpSmooth1_04"
+    OWA_ExpSmooth1_05 = "owa_ExpSmooth1_05"
+    OWA_ExpSmooth1_06 = "owa_ExpSmooth1_06"
+    OWA_ExpSmooth1_07 = "owa_ExpSmooth1_07"
+    OWA_ExpSmooth1_08 = "owa_ExpSmooth1_08"
+    OWA_ExpSmooth1_09 = "owa_ExpSmooth1_09"
+    OWA_ExpSmooth2_01 = "owa_ExpSmooth2_01"
+    OWA_ExpSmooth2_02 = "owa_ExpSmooth2_02"
+    OWA_ExpSmooth2_03 = "owa_ExpSmooth2_03"
+    OWA_ExpSmooth2_04 = "owa_ExpSmooth2_04"
+    OWA_ExpSmooth2_05 = "owa_ExpSmooth2_05"
+    OWA_ExpSmooth2_06 = "owa_ExpSmooth2_06"
+    OWA_ExpSmooth2_07 = "owa_ExpSmooth2_07"
+    OWA_ExpSmooth2_08 = "owa_ExpSmooth2_08"
+    OWA_ExpSmooth2_09 = "owa_ExpSmooth2_09"
     CHOQUET_CF = "choquet_integral_CF"
     CHOQUET_SYM = "choquet_integral_symmetric"
     SUGENO = "sugeno_fuzzy_integral"
@@ -22,6 +40,8 @@ class Aggregate1DTensor:
     def __init__(self, operator: Operator):
 
         self.function = None
+        self.weight_function = None
+        self.weight_function_alfa = None
         self.operator = operator
 
         if self.operator.value == Operator.OWA1.value:
@@ -30,33 +50,74 @@ class Aggregate1DTensor:
             self.function = owas.OWA2
         elif self.operator.value == Operator.OWA3.value:
             self.function = owas.OWA3
+        elif self.operator.value.startswith("owa_ExpSmooth1"):
+            self.function = owas.owa
+            self.weight_function = self._exponential_smoothing_weights_1
+            self.weight_function_alfa = float("0." + self.operator.value.rsplit("owa_ExpSmooth1_0")[1])
+        elif self.operator.value.startswith("owa_ExpSmooth2"):
+            self.function = owas.owa
+            self.weight_function = self._exponential_smoothing_weights_2
+            self.weight_function_alfa = float("0." + self.operator.value.rsplit("owa_ExpSmooth2_0")[1])
         elif self.operator.value == Operator.CHOQUET_CF.value:
             self.function = integrals.choquet_integral_CF
         elif self.operator.value == Operator.CHOQUET_SYM.value:
             self.function = integrals.choquet_integral_symmetric
         elif self.operator.value == Operator.SUGENO.value:
             self.function = integrals.sugeno_fuzzy_integral
+        elif self.operator.value != Operator.MEAN.value:
+            raise "Aggregation operator is not valid"
 
     def aggregate_on_pytorch_tensor(self, tensor: Tensor):
-        # m1 = tensor.mean()
-        # o1 = owas.OWA1(tensor.detach().numpy())
-        # o2 = owas.OWA2(tensor.detach().numpy())
-        # o3 = owas.OWA3(tensor.detach().numpy())
-        # c1 = integrals.choquet_integral_CF(tensor.detach().numpy())
-        # c2 = integrals.choquet_integral_symmetric(tensor.detach().numpy())
-        # s1 = integrals.sugeno_fuzzy_integral(tensor.detach().numpy())
         if self.operator.value == Operator.MEAN.value:
             return tensor.mean()
         elif self.function is not None:
-            return torch.tensor(self.function(tensor.detach().numpy())[0], dtype=torch.float32, requires_grad=True)
+            if self.weight_function is None:
+                return torch.tensor(self.function(tensor.cpu().detach().numpy())[0], dtype=torch.float32, requires_grad=True)
+            else:
+                numpy_array = tensor.cpu().detach().numpy()
+                value = self.function(numpy_array, self.weight_function(len(numpy_array), self.weight_function_alfa))
+                return torch.tensor(value, dtype=torch.float32, requires_grad=True)
         return None
 
     def aggregate_on_numpy_array(self, numpy_array):
         if self.operator.value == Operator.MEAN.value:
             return np.average(numpy_array)
         elif self.function is not None:
-            return self.function(numpy_array)[0]
+            if self.weight_function is None:
+                return self.function(numpy_array)[0]
+            else:
+                return self.function(numpy_array, self.weight_function(len(numpy_array), self.weight_function_alfa))
         return None
+
+    @staticmethod
+    def _exponential_smoothing_weights_1(dim, alfa):
+        if dim <= 0:
+            raise "The dimension of the weight vector must be greater than 0"
+        if alfa < 0 or alfa > 1:
+            raise "The alfa value must be between 0 and 1"
+
+        weights = np.zeros(dim)
+        weights[0] = alfa
+        for i in range(2, dim):
+            weights[i - 1] = weights[i - 2] * (1 - alfa)
+        weights[dim - 1] = (1.0 - alfa) ** (dim - 1)
+
+        return weights
+
+    @staticmethod
+    def _exponential_smoothing_weights_2(dim, alfa):
+        if dim <= 0:
+            raise "The dimension of the weight vector must be greater than 0"
+        if alfa < 0 or alfa > 1:
+            raise "The alfa value must be between 0 and 1"
+
+        weights = np.zeros(dim)
+        weights[dim - 1] = 1.0 - alfa
+        for i in range(dim - 1, 1, -1):
+            weights[i - 1] = weights[i] * (1 - weights[dim - 1])
+        weights[0] = alfa ** (dim - 1)
+
+        return weights
 
 
 class Aggregate3x3Patches(Aggregate1DTensor, AdaptiveAvgPool3d):
@@ -75,7 +136,7 @@ class Aggregate3x3Patches(Aggregate1DTensor, AdaptiveAvgPool3d):
             idx_channel = 0
             for channel in patch:
                 values_in_matrix3d = []
-                for value in np.nditer(channel.detach().numpy()):
+                for value in np.nditer(channel.cpu().detach().numpy()):
                     values_in_matrix3d.append(value.item())
                 tensor_resp[idx_patch][idx_channel] = self.aggregate_on_numpy_array(np.array(values_in_matrix3d))
                 idx_channel = idx_channel + 1

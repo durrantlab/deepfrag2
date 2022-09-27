@@ -24,11 +24,13 @@ from collagen.metrics.metrics import (
 
 
 class MoadVoxelModelTest(object):
+
+    @staticmethod
     def _remove_redundant_fingerprints(
-        self, label_set_fps: torch.Tensor, label_set_smis: List[str], device: Any
+            label_set_fps: torch.Tensor, label_set_smis: List[str], device: Any
     ) -> Tuple[torch.Tensor, List[str]]:
         # Given ordered lists of fingerprints and smiles strings, removes
-        # redundant fingerprints and smis while maintaing the consistent order
+        # redundant fingerprints and smis while maintaining the consistent order
         # between the two lists.
         label_set_fps, inverse_indices = label_set_fps.unique(
             dim=0, return_inverse=True
@@ -243,7 +245,7 @@ class MoadVoxelModelTest(object):
         device = self.init_device(args)
 
         predictions_per_rot = ensemble_helper.AveragedEnsembled(
-            trainer, model, test_data, args.inference_rotations, device, ckpt
+            trainer, model, test_data, args.inference_rotations, device, ckpt, args.aggregation_rotations
         )
 
         if ckpt_idx == 0:
@@ -330,7 +332,8 @@ class MoadVoxelModelTest(object):
         else:
             return None
 
-    def _save_test_results_to_json(self, all_test_data, s):
+    @staticmethod
+    def _save_test_results_to_json(all_test_data, s, pth=None):
         # Save the test results to a carefully formatted JSON file.
 
         jsn = json.dumps(all_test_data, indent=4)
@@ -345,7 +348,10 @@ class MoadVoxelModelTest(object):
         jsn = re.sub(r"\"Receptor ", '"', jsn, 0, re.MULTILINE)
         jsn = re.sub(r"\n +?\"dist", ' "dist', jsn, 0, re.MULTILINE)
 
-        pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
+        if pth is None:
+            pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
+        else:
+            pth = pth + os.sep
 
         open(f"{pth}test_results.json", "w").write(jsn)
         open(f"{pth}cProfile.txt", "w+").write(s.getvalue())
@@ -511,5 +517,5 @@ class MoadVoxelModelTest(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        self._save_test_results_to_json(all_test_data, s)
+        self._save_test_results_to_json(all_test_data, s, args.default_root_dir)
         self._save_examples_used(model, args)

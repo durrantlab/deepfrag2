@@ -172,8 +172,9 @@ class DeepFragModel(pl.LightningModule):
         parser = parent_parser.add_argument_group('DeepFragModel')
         parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
         parser.add_argument('--fp_size', type=int, help="The size of the output molecular fingerprint. Defaults to 2048.", default=2048)
-        parser.add_argument('--aggregation_3x3_patches', required=False, type=Operator, help="The aggregation operator to be used. Defaults to Mean.", default=Operator.MEAN)
-        parser.add_argument('--aggregation_loss_vector', required=False, type=Operator, help="The aggregation operator to be used. Defaults to Mean.", default=Operator.MEAN)
+        parser.add_argument('--aggregation_3x3_patches', required=False, type=Operator, help="The aggregation operator to be used to aggregate 3x3 patches. Defaults to Mean.", default=Operator.MEAN)
+        parser.add_argument('--aggregation_loss_vector', required=False, type=Operator, help="The aggregation operator to be used to aggregate loss values. Defaults to Mean.", default=Operator.MEAN)
+        parser.add_argument('--aggregation_rotations', required=False, type=Operator, help="The aggregation operator to be used to aggregate rotations. Defaults to Mean.", default=Operator.MEAN)
         return parent_parser
 
     def forward(self, voxel):

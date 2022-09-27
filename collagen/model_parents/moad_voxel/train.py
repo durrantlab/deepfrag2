@@ -1,8 +1,6 @@
 from argparse import Namespace
-from typing import Any, Type, TypeVar, List, Optional, Tuple, Dict
+from typing import Optional
 from torchinfo import summary
-import json
-from tqdm.std import tqdm
 from collagen.external import MOADInterface
 from collagen.external.moad.split import compute_moad_split
 

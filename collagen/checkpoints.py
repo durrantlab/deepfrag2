@@ -32,7 +32,8 @@ def get_last_checkpoint(args) -> str:
     # resuming training.
 
     saved_checkpoints = glob.glob(
-        args.default_root_dir + os.sep + "**" + os.sep + "last.ckpt", recursive=True
+        args.default_root_dir + os.sep + "last.ckpt", recursive=True
+        # args.default_root_dir + os.sep + "**" + os.sep + "last.ckpt", recursive=True
     )
 
     if len(saved_checkpoints) == 0:

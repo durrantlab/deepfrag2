@@ -1,7 +1,7 @@
 import argparse
 from typing import List, Tuple
 from collagen.external.moad.types import Entry_info
-
+from AggregationOperators import Operator
 import torch
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.external.moad import MOADFragmentDataset
@@ -106,6 +106,19 @@ if __name__ == "__main__":
         post_parse_args_funcs=[MoadVoxelModelParent.fix_moad_args],
         is_pytorch_lightning=True,
     )
+    # args.__setattr__("mode", "test")
+    # args.__setattr__("load_newest_checkpoint", True)
+    #
+    # args.__setattr__("cpu", True)
+    # args.__setattr__("max_epochs", 1)
+    # args.__setattr__("--csv", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\every.csv")
+    # args.__setattr__("--data", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\BindingMOAD_2020")
+    # args.__setattr__("--max_voxels_in_memory", 512)
+    # args.__setattr__("save_splits", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\splits.json")
+    # args.__setattr__("default_root_dir", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets")
+    # args.__setattr__("aggregation_3x3_patches", Operator.OWA_ExpSmooth2_02)
+    # args.__setattr__("aggregation_loss_vector", Operator.MEAN)
+    # args.__setattr__("aggregation_rotations", Operator.MEAN)
+    # args.__setattr__("inference_rotations", 2)
     model = DeepFrag()
     model.run(args)
-
