@@ -108,17 +108,18 @@ if __name__ == "__main__":
     )
     # args.__setattr__("mode", "test")
     # args.__setattr__("load_newest_checkpoint", True)
-    #
+
     # args.__setattr__("cpu", True)
-    # args.__setattr__("max_epochs", 1)
-    # args.__setattr__("--csv", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\every.csv")
-    # args.__setattr__("--data", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\BindingMOAD_2020")
-    # args.__setattr__("--max_voxels_in_memory", 512)
     # args.__setattr__("save_splits", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\splits.json")
     # args.__setattr__("default_root_dir", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets")
-    # args.__setattr__("aggregation_3x3_patches", Operator.OWA_ExpSmooth2_02)
-    # args.__setattr__("aggregation_loss_vector", Operator.MEAN)
-    # args.__setattr__("aggregation_rotations", Operator.MEAN)
-    # args.__setattr__("inference_rotations", 2)
+
+    args.__setattr__("save_splits", "/home/crg93/Data/crg93/output_deepfrag2/splits.json")
+    args.__setattr__("default_root_dir", "/home/crg93/Data/crg93/output_deepfrag2/")
+
+    args.__setattr__("max_epochs", 30)
+    args.__setattr__("aggregation_3x3_patches", Operator.MEAN)
+    args.__setattr__("aggregation_loss_vector", Operator.MEAN)
+    args.__setattr__("aggregation_rotations", Operator.MEAN)
+    args.__setattr__("inference_rotations", 8)
     model = DeepFrag()
     model.run(args)

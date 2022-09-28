@@ -8,9 +8,19 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 
     parser = parent_parser.add_argument_group("Binding MOAD")
 
-    parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")
     parser.add_argument(
-        "--data", required=True, help="Path to MOAD root structure folder"
+        "--csv",
+        required=False,
+        default="/home/crg93/Data/crg93/moad/every.csv",
+        # default="D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\every.csv",
+        help="Path to MOAD every.csv"
+    )
+    parser.add_argument(
+        "--data",
+        required=False,
+        default="/home/crg93/Data/crg93/moad/BindingMoad2019/",
+        # default="D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\BindingMOAD_2020",
+        help="Path to MOAD root structure folder"
     )
     parser.add_argument(
         "--cache",
@@ -26,13 +36,13 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--noh",
-        default=False,
+        default=True,
         action="store_true",
         help="If given, collagen will not use protein hydrogen atoms, nor will it save them to the cachable files generated with --cache_pdbs_to_disk. Can speed calculations and free disk space if your model doesn't need hydrogens, and if you're using --cache_pdbs_to_disk.",
     )
     parser.add_argument(
         "--discard_distant_atoms",
-        default=False,
+        default=True,
         action="store_true",
         help="If given, collagen will not consider atoms that are far from any ligand, nor will it save them to the cachable files generated with --cache_pdbs_to_disk. Can speed calculations and free disk space if you're using --cache_pdbs_to_disk.",
     )
@@ -77,7 +87,6 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         type=int,
         help="If given, the max number of PDBs used to generate examples in the test set. If this set contains more than `max_pdbs_test` PDBs, extra PDBs will be removed.",
     )
-
     parser.add_argument(
         "--num_dataloader_workers",
         default=cpu_count(),
@@ -86,8 +95,8 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--max_voxels_in_memory",
-        required=True,
-        default=80,
+        required=False,
+        default=512,
         type=int,
         help="The data loader will store no more than this number of voxel in memory at once.",
     )
@@ -105,7 +114,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--inference_rotations",
-        default=1,
+        default=8,
         type=int,
         help="Number of rotations to sample during inference or testing.",
     )
