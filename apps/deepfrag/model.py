@@ -1,11 +1,8 @@
 import argparse
 
-import torch
 from torch import nn
 import pytorch_lightning as pl
-from AggregationOperators import Operator
-from AggregationOperators import Aggregate1DTensor
-from apps.deepfrag.AggregationOperators import Aggregate3x3Patches
+from apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
 
 

@@ -1,16 +1,16 @@
 import argparse
+import torch
+import pytorch_lightning as pl
+
 from typing import List, Tuple
 from collagen.external.moad.types import Entry_info
-from AggregationOperators import Operator
-import torch
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.external.moad import MOADFragmentDataset
 from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
-import pytorch_lightning as pl
-
-from model import DeepFragModel
+from apps.deepfrag.model import DeepFragModel
+from apps.deepfrag.AggregationOperators import Operator
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
@@ -94,7 +94,7 @@ class DeepFrag(MoadVoxelModelParent):
         return voxels, fingerprints, frag_smis
 
 
-if __name__ == "__main__":
+def function_2run_deepfrag():
     print("PyTorch", torch.__version__)
     print("PytorchLightning", pl.__version__)
 
@@ -123,3 +123,7 @@ if __name__ == "__main__":
     args.__setattr__("inference_rotations", 8)
     model = DeepFrag()
     model.run(args)
+
+
+if __name__ == "__main__":
+    function_2run_deepfrag()
