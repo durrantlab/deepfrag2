@@ -113,6 +113,8 @@ def function_2run_deepfrag():
     # args.__setattr__("save_splits", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\splits.json")
     # args.__setattr__("default_root_dir", "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets")
 
+    args.__setattr__("accelerator", "gpu")
+    args.__setattr__("devices", 1)
     args.__setattr__("save_splits", "/home/crg93/Data/crg93/output_deepfrag2/splits.json")
     args.__setattr__("default_root_dir", "/home/crg93/Data/crg93/output_deepfrag2/")
 
