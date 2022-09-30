@@ -123,7 +123,7 @@ class MultiLoader(object):
     #         self.procs.append((p, cur_time))
 
     def __iter__(self):
-        with multiprocessing.Pool() as p:
+        with multiprocessing.Pool(self.num_dataloader_workers) as p:
             for result in p.imap_unordered(return_value_data, iterable=self.data, chunksize=1):
                 try:
                     yield self.collate_fn([result])
