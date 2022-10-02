@@ -17,10 +17,12 @@ from io import StringIO
 import prody
 from ... import Mol
 from .moad_utils import fix_moad_smiles
+import sys
 
 # Simple dataclasses like MOAD_class, MOAD_family, MOAD_target, etc. Note that
 # MOAD_target has some complexity to it (to load/save PDB files, including
 # caching), but let's leave it here.
+
 
 @dataclass
 class MOAD_class(object):
@@ -73,10 +75,10 @@ class MOAD_target(object):
                     payload = pickle.load(f)  # [receptor, ligands]
                     # self.memory_cache[idx] = payload
                     return payload, pkl_filename
-            except Exception:
+            except Exception as e:
                 # If there's an error loading the pickle file, regenerate the
                 # pickle file
-                # print("Corrupt pkl")
+                print("Corrupt pkl: " + str(e), file=sys.stderr)
                 pass
 
         return None, pkl_filename
@@ -131,22 +133,22 @@ class MOAD_target(object):
         except UnparsableSMILESException as err:
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", f"{self.pdb_id}:{lig.name}")
-                print(textwrap.fill(msg, subsequent_indent="  "))
+                print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except UnparsableGeometryException as err:
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", f"{self.pdb_id}:{lig.name}")
-                print(textwrap.fill(msg, subsequent_indent="  "))
+                print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except TemplateGeometryMismatchException as err:
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", f"{self.pdb_id}:{lig.name}")
-                print(textwrap.fill(msg, subsequent_indent="  "))
+                print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except Exception as err:
             if user_args.verbose:
                 msg = f"WARNING: Could not process ligand {self.pdb_id}:{lig.name}. An unknown error occured: {str(err)}"
-                print(textwrap.fill(msg, subsequent_indent="  "))
+                print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
 
     def _get_rec_from_prody_mol(
