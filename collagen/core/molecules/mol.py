@@ -15,15 +15,20 @@ from .fingerprints import fingerprint_for
 from ..voxelization.voxelizer import numba_ptr, mol_gridify
 from ..types import AnyAtom
 from ...draw import MolView
+import sys
+
 
 class UnparsableSMILESException(Exception):
     pass
 
+
 class UnparsableGeometryException(Exception):
     pass
 
+
 class TemplateGeometryMismatchException(Exception):
     pass
+
 
 class Mol(object):
     # This class wraps around rdkit and prody molecules. Also includes other
@@ -115,7 +120,11 @@ class Mol(object):
         """
 
         pdb_txt = StringIO()
-        prody.writePDBStream(pdb_txt, atoms)
+        try:
+            prody.writePDBStream(pdb_txt, atoms)
+        except TypeError as e:
+            print(e, file=sys.stderr)
+            return None
 
         rdmol = Chem.MolFromPDBBlock(pdb_txt.getvalue(), sanitize=sanitize)
 

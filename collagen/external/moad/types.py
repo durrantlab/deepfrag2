@@ -120,8 +120,10 @@ class MOAD_target(object):
             lig_mol = Mol.from_prody(
                 lig_atoms, fix_moad_smiles(lig.smiles), sanitize=True
             )
-            lig_mol.meta["name"] = lig.name
-            lig_mol.meta["moad_ligand"] = lig
+
+            if lig_mol is not None:
+                lig_mol.meta["name"] = lig.name
+                lig_mol.meta["moad_ligand"] = lig
 
             return lig_mol
 
