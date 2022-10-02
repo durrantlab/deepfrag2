@@ -122,7 +122,7 @@ class Mol(object):
         pdb_txt = StringIO()
         try:
             prody.writePDBStream(pdb_txt, atoms)
-        except TypeError as e:
+        except Exception as e:
             print(e, file=sys.stderr)
             return None
 
