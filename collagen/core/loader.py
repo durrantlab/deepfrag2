@@ -126,7 +126,8 @@ class MultiLoader(object):
         with multiprocessing.Pool(self.num_dataloader_workers) as p:
             for result in p.imap_unordered(return_value_data, iterable=self.data, chunksize=1):
                 try:
-                    yield self.collate_fn([result])
+                    if result is not None:
+                        yield self.collate_fn([result])
                 except Exception as e:
                     traceback.print_exc(e)
 

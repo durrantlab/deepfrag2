@@ -242,4 +242,5 @@ class MOADFragmentDataset(Dataset):
             else:
                 return sample
         except Exception as e:
-            print("Error __getitem__ fragment_data: " + str(e), file=sys.stderr)
+            print("Method __getitem__ fragment_data: " + str(e), file=sys.stderr)
+            return None
