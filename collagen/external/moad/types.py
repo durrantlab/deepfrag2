@@ -126,8 +126,9 @@ class MOAD_target(object):
             if lig_mol is not None:
                 lig_mol.meta["name"] = lig.name
                 lig_mol.meta["moad_ligand"] = lig
-
-            return lig_mol
+                return lig_mol
+            else:
+                return None
 
         # Catch a whole bunch of errors.
         except UnparsableSMILESException as err:
