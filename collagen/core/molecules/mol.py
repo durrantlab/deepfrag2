@@ -123,7 +123,7 @@ class Mol(object):
         try:
             prody.writePDBStream(pdb_txt, atoms)
         except Exception as e:
-            print("Method from_prody" + str(e), file=sys.stderr)
+            print("Method from_prody " + str(e), file=sys.stderr)
             return None
 
         rdmol = Chem.MolFromPDBBlock(pdb_txt.getvalue(), sanitize=sanitize)
