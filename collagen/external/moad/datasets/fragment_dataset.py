@@ -8,6 +8,7 @@ from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
 from .... import Mol
 import sys
+import traceback
 
 
 @dataclass
@@ -242,5 +243,5 @@ class MOADFragmentDataset(Dataset):
             else:
                 return sample
         except Exception as e:
-            print("Method __getitem__ fragment_data: " + str(e), file=sys.stderr)
+            traceback.print_exception(f"Method __getitem__ in 'fragment_dataset.py':  {str(e)}", file=sys.stderr)
             return None
