@@ -123,13 +123,10 @@ class MOAD_target(object):
                 lig_atoms, fix_moad_smiles(lig.smiles), sanitize=True
             )
 
-            if lig_mol is not None:
-                lig_mol.meta["name"] = lig.name
-                lig_mol.meta["moad_ligand"] = lig
-                return lig_mol
-            else:
-                print("WARNING Method _get_lig_from_prody_mol --- returning None instead of a lig_mol object", file=sys.stderr)
-                return None
+            lig_mol.meta["name"] = lig.name
+            lig_mol.meta["moad_ligand"] = lig
+
+            return lig_mol
 
         # Catch a whole bunch of errors.
         except UnparsableSMILESException as err:
