@@ -132,21 +132,25 @@ class MOAD_target(object):
         except UnparsableSMILESException as err:
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", f"{self.pdb_id}:{lig.name}")
+                print("\n", file=sys.stderr)
                 print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except UnparsableGeometryException as err:
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", f"{self.pdb_id}:{lig.name}")
+                print("\n", file=sys.stderr)
                 print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except TemplateGeometryMismatchException as err:
             if user_args.verbose:
                 msg = str(err).replace("[LIGAND]", f"{self.pdb_id}:{lig.name}")
+                print("\n", file=sys.stderr)
                 print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except Exception as err:
             if user_args.verbose:
-                msg = f"WARNING: Could not process ligand {self.pdb_id}:{lig.name}. An unknown error occured: {str(err)}"
+                msg = f"WARNING: Could not process ligand {self.pdb_id}:{lig.name}. An unknown error occurred: {str(err)}"
+                print("\n", file=sys.stderr)
                 print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
 

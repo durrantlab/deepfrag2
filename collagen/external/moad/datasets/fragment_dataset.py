@@ -8,7 +8,6 @@ from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
 from .... import Mol
 import sys
-import traceback
 
 
 @dataclass
@@ -213,6 +212,7 @@ class MOADFragmentDataset(Dataset):
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
         """Returns (receptor, parent, fragment)"""
         assert 0 <= idx <= len(self), "Index out of bounds"
+        entry = None
         try:
             entry = self._internal_index_valids_filtered[idx]
 
@@ -243,6 +243,8 @@ class MOADFragmentDataset(Dataset):
             else:
                 return sample
         except Exception as e:
-            print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in {entry.pdb_id}:{entry.name}", file=sys.stderr)
-            traceback.print_exc(e)
+            if entry is not None:
+                print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
+            else:
+                print(f"\nMethod __getitem__ in 'fragment_dataset.py'.\n {str(e)}", file=sys.stderr)
             raise e

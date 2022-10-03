@@ -8,6 +8,7 @@ import json
 
 verbose = False
 
+
 def _add_generic_params(
     parent_parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
@@ -47,7 +48,7 @@ def _add_generic_params(
     # TODO: JDD: Load from best validation checkpoint.
     parser.add_argument(
         "--verbose",
-        default=False,
+        default=True,
         action="store_true",
         help="If set, will output additional information during the run. Useful for debugging.",
     )
