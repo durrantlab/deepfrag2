@@ -124,6 +124,7 @@ def function_2run_deepfrag():
     args.__setattr__("aggregation_loss_vector", Operator.MEAN)
     args.__setattr__("aggregation_rotations", Operator.MEAN)
     args.__setattr__("inference_rotations", 8)
+
     model = DeepFrag()
     model.run(args)
 

@@ -154,8 +154,8 @@ class Mol(object):
                 raise TemplateGeometryMismatchException(
                     "WARNING: Could not process ligand [LIGAND]. " +
                     "The actual ligand geometry doesn't match the SMILES. " + 
-                    "Geometry: " + Chem.MolToSmiles(rdmol) + " . " + 
-                    "SMILES: " + template + " ."
+                    "Actual geometry: " + Chem.MolToSmiles(rdmol) + " . " + 
+                    "SMILES template: " + template + " ."
                 )
 
         rdmol.UpdatePropertyCache(strict=False)

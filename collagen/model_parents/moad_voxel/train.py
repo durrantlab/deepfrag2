@@ -45,6 +45,14 @@ class MoadVoxelModelTrain(object):
         train_data = self.get_data_from_split(args, moad, train, voxel_params, device)
         val_data = self.get_data_from_split(args, moad, val, voxel_params, device)
 
+        # Below is helpful for debugging
+        # for batch in train_data:
+        #     receptors = [e.receptor_name.replace("Receptor ", "") for e in batch[2]]
+        #     print(receptors)
+        #     # print(batch)
+        #     # import pdb; pdb.set_trace()
+        #     continue
+
         model = self.init_model(args, ckpt)
 
         model_stats = summary(model, (16, 10, 24, 24, 24), verbose=0)

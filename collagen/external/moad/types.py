@@ -13,6 +13,7 @@ from rdkit import Chem
 import os
 import pickle
 from io import StringIO
+
 # from functools import lru_cache
 import prody
 from ... import Mol
@@ -155,11 +156,18 @@ class MOAD_target(object):
             return None
 
     def _get_rec_from_prody_mol(
-        self, m: Any, ignore_sels: List[str], lig_sels: List[str]
+        self,
+        m: Any,
+        not_part_of_protein_sels: List[str],
+        lig_sels: List[str],
+        # debug=False,
     ):
-        if ignore_sels:
+        # not_protein_sels contains the selections of ligands that are not
+        # considered part of the receptor (such as cofactors). These shouldn't
+        # be included in the protein selection.
+        if not_part_of_protein_sels:
             rec_sel = "not water and not (%s)" % " or ".join(
-                f"({x})" for x in ignore_sels
+                f"({x})" for x in not_part_of_protein_sels
             )
         else:
             rec_sel = "not water"
@@ -186,6 +194,16 @@ class MOAD_target(object):
             # calculations.
             rec_sel = f"not hydrogen and ({rec_sel})"
 
+        # if debug:
+        #     print("1", "rec_sel", rec_sel)
+        #     # print("2", m.select(rec_sel))
+        #     # print("3", Mol.from_prody(m.select(rec_sel)))
+
+        # Note that "(altloc _ or altloc A)" makes sure only the first alternate
+        # locations are used.
+        rec_sel = f"({rec_sel}) and (altloc _ or altloc A)"
+
+        print(len(rec_sel))
         rec_mol = Mol.from_prody(m.select(rec_sel))
         rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
 
@@ -216,20 +234,36 @@ class MOAD_target(object):
         # Loading from cache didn't work. Load from PDB file instead (slower).
         m = self._load_pdb(idx)
 
-        ignore_sels = []
+        not_part_of_protein_sels = []
         lig_sels = []
-        ligands = []
+        lig_mols = []
 
         for lig in self.ligands:
-            # Note that "(altloc _ or altloc A)" makes sure only the first
-            # alternate locations are used.
-            lig_sel = f"chain {lig.chain} and resnum >= {lig.resnum} and resnum < {lig.resnum + lig.reslength} and (altloc _ or altloc A)"
+            # Get the selection of the ligand. Accounts for multi-residue
+            # ligands (>=, <).
+            lig_sel = f"chain {lig.chain} and "
+            lig_sel += (
+                f"resnum {lig.resnum}"
+                if lig.reslength <= 1
+                else f"resnum >= {lig.resnum} and resnum < {lig.resnum + lig.reslength}"
+            )
+            # lig_sel += " and (altloc _ or altloc A)"
 
+            # Save a list of those ligand selections that are not considered
+            # part of the protein (e.g., cofactors, metals). You'll use these
+            # later when you're getting the receptor atoms.
             if lig.validity != "Part of Protein":
-                ignore_sels.append(lig_sel)
+                not_part_of_protein_sels.append(lig_sel)
 
+            # If it's a valid ligand, make a prody mol from it.
             if lig.is_valid:
-                lig_atoms = m.select(lig_sel)
+                # Always add the selection. This is used to get the protein
+                # around all ligands.
+                lig_sels.append(lig_sel)
+
+                # Note that "(altloc _ or altloc A)" makes sure only the first
+                # alternate locations are used.
+                lig_atoms = m.select(f"({lig_sel}) and (altloc _ or altloc A)")
 
                 # Ligand may not be present in this biological assembly.
                 if lig_atoms is None:
@@ -240,14 +274,19 @@ class MOAD_target(object):
                 if lig_mol is None:
                     continue
 
-                ligands.append(lig_mol)
-                lig_sels.append(lig_sel)
+                lig_mols.append(lig_mol)
+                # lig_sels.append(lig_sel)
 
-        rec_mol = self._get_rec_from_prody_mol(m, ignore_sels, lig_sels)
+        # Sort the selection lists to help with debugging
+        # lig_sels.sort()
+        # not_part_of_protein_sels.sort()
 
-        self._save_to_file_cache(pkl_filename, rec_mol, ligands)
+        # Now make a prody mol for the receptor.
+        rec_mol = self._get_rec_from_prody_mol(m, not_part_of_protein_sels, lig_sels)
 
-        return rec_mol, ligands
+        self._save_to_file_cache(pkl_filename, rec_mol, lig_mols)
+
+        return rec_mol, lig_mols
 
 
 @dataclass

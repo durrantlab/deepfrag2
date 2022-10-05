@@ -55,7 +55,6 @@ class MultiLoader(object):
         collate_fn=_collate_none,
         max_voxels_in_memory=80,
     ):
-
         # Save parameters to class variables.
         self.data = data
         self.num_dataloader_workers = num_dataloader_workers

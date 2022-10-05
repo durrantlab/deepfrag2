@@ -8,6 +8,7 @@ from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
 from .... import Mol
 import sys
+import prody
 
 
 @dataclass
@@ -230,6 +231,8 @@ class MOADFragmentDataset(Dataset):
                     parent, fragment = pairs[entry.frag_idx]
                     break
             else:
+                print("moooooo")
+                import pdb; pdb.set_trace()
                 raise Exception(
                     "Ligand not found: " + str(receptor) + " -- " + str(ligands)
                 )
@@ -242,7 +245,22 @@ class MOADFragmentDataset(Dataset):
                 return tmp
             else:
                 return sample
+
+        except prody.atomic.select.SelectionError as e:
+            print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
+
+            import pdb; pdb.set_trace()
+            # ****
+            mol = prody.parsePDB(entry.pdb_id)
+            sel = str(e).split("\n")[1].replace("'", "")
+            mol = mol.select(sel)
+
+            raise e
+
         except Exception as e:
+            print("HERE")
+            print(type(e))
+            import pdb; pdb.set_trace()
             if entry is not None:
                 print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
             else:
