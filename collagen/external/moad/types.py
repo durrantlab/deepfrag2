@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from collagen.core import args as user_args
-from typing import List, Tuple, Any
+from typing import List, OrderedDict, Tuple, Any
 from pathlib import Path
 import textwrap
 from collagen.core.debug import logit
@@ -13,6 +13,7 @@ from rdkit import Chem
 import os
 import pickle
 from io import StringIO
+from copy import deepcopy
 
 # from functools import lru_cache
 import prody
@@ -55,6 +56,8 @@ class MOAD_target(object):
     # Should be from max((atom_radii[i] * atom_scale)**2)
     grid_padding: float = 6.0
 
+    recent_pickle_contents = OrderedDict()
+
     def __len__(self) -> int:
         """Returns the number of on-disk structures."""
         return len(self.files)
@@ -70,12 +73,28 @@ class MOAD_target(object):
         pkl_filename += ".pkl"
 
         if self.cache_pdbs_to_disk and os.path.exists(pkl_filename):
-            # Get if from the pickle.
+            # Check if it's been loaded recently. If so, no need to reload.
+            # print(self.recent_pickle_contents.keys())
+            if pkl_filename in self.recent_pickle_contents:  #  and self.recent_pickle_contents[pkl_filename] is not None:
+                payload = self.recent_pickle_contents[pkl_filename]
+
+                # If more than 100 recent pickles in memory, remove the oldest one.
+                # print(len(self.recent_pickle_contents))
+                while len(self.recent_pickle_contents) > 10:
+                    self.recent_pickle_contents.popitem(last=False)
+
+                return payload, pkl_filename
+
+            # Get it from the pickle.
             try:
-                with open(pkl_filename, "rb") as f:
-                    payload = pickle.load(f)  # [receptor, ligands]
-                    # self.memory_cache[idx] = payload
-                    return payload, pkl_filename
+                # print("Open: ", pkl_filename)
+                f = open(pkl_filename, "rb")
+                payload = pickle.load(f)  # [receptor, ligands]
+                f.close()
+                self.recent_pickle_contents[pkl_filename] = payload
+                # print("Close: ", pkl_filename)
+                # self.memory_cache[idx] = payload
+                return payload, pkl_filename
             except Exception as e:
                 # If there's an error loading the pickle file, regenerate the
                 # pickle file
@@ -97,7 +116,7 @@ class MOAD_target(object):
             with open(self.files[idx]) as f:
                 lines = [
                     l
-                    for l in f.readlines()
+                    for l in f
                     if l.startswith("ATOM")
                     or l.startswith("HETATM")
                     or l.startswith("MODEL")
@@ -187,12 +206,12 @@ class MOAD_target(object):
             # Add padding
             dist = dist + self.grid_padding
 
-            rec_sel = f"({rec_sel}) and (exwithin {str(dist)} of ({all_lig_sel}))"
+            rec_sel = f"{rec_sel} and exwithin {str(dist)} of ({all_lig_sel})"
 
         if self.noh:
             # Removing hydrogen atoms (when not needed) also speeds the
             # calculations.
-            rec_sel = f"not hydrogen and ({rec_sel})"
+            rec_sel = f"not hydrogen and {rec_sel}"
 
         # if debug:
         #     print("1", "rec_sel", rec_sel)
@@ -201,16 +220,31 @@ class MOAD_target(object):
 
         # Note that "(altloc _ or altloc A)" makes sure only the first alternate
         # locations are used.
-        rec_sel = f"({rec_sel}) and (altloc _ or altloc A)"
+        rec_sel = f"{rec_sel} and (altloc _ or altloc A)"
 
-        print(len(rec_sel))
-        rec_mol = Mol.from_prody(m.select(rec_sel))
+        try:
+            # So strange. Sometimes prody can't parse perfectly valid selection
+            # strings, but if you just try a second time, it works. I don't know
+            # why.
+            prody_mol = m.select(rec_sel)
+        except Exception as e:
+            print(type(e))  # Would be good to catch the specific exception here
+            prody_mol = m.select(rec_sel)
+            # import pdb; pdb.set_trace()
+
+        # Print numer of atoms in selection
+        # if prody_mol is None:
+            # print(rec_sel)
+        # print("Number of atoms in selection:", prody_mol.numAtoms())
+        rec_mol = Mol.from_prody(prody_mol)
         rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
 
         return rec_mol
 
     def _save_to_file_cache(self, pkl_filename: str, rec_mol: Any, ligands: Any):
         if self.cache_pdbs_to_disk:
+            if os.path.exists(pkl_filename):
+                print("PROB!", pkl_filename)
             with open(pkl_filename, "wb") as f:
                 # print("Save pickle")
                 pickle.dump([rec_mol, ligands], f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -263,7 +297,14 @@ class MOAD_target(object):
 
                 # Note that "(altloc _ or altloc A)" makes sure only the first
                 # alternate locations are used.
-                lig_atoms = m.select(f"({lig_sel}) and (altloc _ or altloc A)")
+                try:
+                    lig_atoms = m.select(f"{lig_sel} and (altloc _ or altloc A)")
+                except Exception as e:
+                    # So strange. Sometimes prody can't parse perfectly valid
+                    # selection strings, but if you just try a second time, it
+                    # works. I don't know why.
+                    print(type(e))  # Would be good to catch the specific exception here
+                    lig_atoms = m.select(f"{lig_sel} and (altloc _ or altloc A)")
 
                 # Ligand may not be present in this biological assembly.
                 if lig_atoms is None:
@@ -284,6 +325,7 @@ class MOAD_target(object):
         # Now make a prody mol for the receptor.
         rec_mol = self._get_rec_from_prody_mol(m, not_part_of_protein_sels, lig_sels)
 
+        # print(pkl_filename)
         self._save_to_file_cache(pkl_filename, rec_mol, lig_mols)
 
         return rec_mol, lig_mols

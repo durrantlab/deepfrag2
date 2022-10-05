@@ -201,7 +201,8 @@ def _load_splits_from_disk(
     max_pdbs_test: int = None,
 ):
     # User has asked to load splits from file on disk. Get from the file.
-    split_inf = json.load(open(load_splits))
+    with open(load_splits) as f:
+        split_inf = json.load(f)
 
     pdb_ids = MOAD_splits_pdb_ids(
         train=split_inf["train"]["pdbs"],
@@ -271,7 +272,8 @@ def _save_split(
         "val": {"pdbs": pdb_ids.val, "smiles": [smi for smi in all_smis.val]},
         "test": {"pdbs": pdb_ids.test, "smiles": [smi for smi in all_smis.test]},
     }
-    json.dump(split_inf, open(save_splits, "w"), indent=4)
+    with open(save_splits, "w") as f:
+        json.dump(split_inf, f, indent=4)
 
 
 def compute_moad_split(

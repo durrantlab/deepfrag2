@@ -144,8 +144,8 @@ def get_args(parser_funcs = None, post_parse_args_funcs = None, is_pytorch_light
     if args.json_params:
         with open(args.json_params, "rt") as f:
             new_args = json.load(f)
-            for k in new_args.keys():
-                setattr(args, k, new_args[k])
+        for k in new_args.keys():
+            setattr(args, k, new_args[k])
 
     # Fix the arguments.
     for func in post_parse_args_funcs:

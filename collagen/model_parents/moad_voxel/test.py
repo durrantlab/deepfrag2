@@ -353,8 +353,10 @@ class MoadVoxelModelTest(object):
         else:
             pth = pth + os.sep
 
-        open(f"{pth}test_results.json", "w").write(jsn)
-        open(f"{pth}cProfile.txt", "w+").write(s.getvalue())
+        with open(f"{pth}test_results.json", "w") as f:
+            f.write(jsn)
+        with open(f"{pth}cProfile.txt", "w+") as f:
+            f.write(s.getvalue())
 
         # txt = ""
         # for entry in all_test_data["entries"]:

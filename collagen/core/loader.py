@@ -66,7 +66,8 @@ class MultiLoader(object):
         # JDD added below based on
         # https://github.com/pytorch/pytorch/issues/67844 See also
         # https://pytorch.org/docs/stable/multiprocessing.html#multiprocessing-cuda-sharing-details
-        # JDD NO: multiprocessing.set_sharing_strategy("file_system")
+        # JDD NO: 
+        multiprocessing.set_sharing_strategy("file_system")
 
     def __len__(self) -> int:
         """Returns number of batches."""

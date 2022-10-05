@@ -151,6 +151,9 @@ class Mol(object):
             try:
                 rdmol = Chem.AssignBondOrdersFromTemplate(ref_mol, rdmol)
             except:
+                # Below is a warning (not an error) because this specific kind
+                # of error (TemplateGeometryMismatchException) will be caught in
+                # types.py.
                 raise TemplateGeometryMismatchException(
                     "WARNING: Could not process ligand [LIGAND]. " +
                     "The actual ligand geometry doesn't match the SMILES. " + 
@@ -593,7 +596,9 @@ class MolDataset(Dataset):
 
 def mols_from_smi_file(filename):
     # Serve up mols from a file with smiles.
-    for l in open(filename):
+    with open(filename) as fl:
+        lines = fl.readlines()
+    for l in lines:
         prts = l.strip().split(maxsplit=2)
         smi = prts[0]
         

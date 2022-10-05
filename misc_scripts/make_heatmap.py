@@ -29,9 +29,9 @@ y = []
 
 with open('coors.txt', 'r') as f:
     reader = csv.reader(f, delimiter='\t')
-    for row in reader:
-        x.append(float(row[0]))
-        y.append(float(row[1]))
+for row in reader:
+    x.append(float(row[0]))
+    y.append(float(row[1]))
 
 heatmap, xedges, yedges = np.histogram2d(x, y, bins=50)
 extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
