@@ -128,6 +128,9 @@ def function_2run_deepfrag():
     # args.__setattr__("cache_pdbs_to_disk", True)
     args.__setattr__("csv", "/mnt/Data/crg93/moad.updated/every.csv")
     args.__setattr__("data", "/mnt/Data/crg93/moad.updated/BindingMOAD_2020/")
+    args.__setattr__("cache", "/mnt/Data/crg93/moad.updated/every.csv.cache.json")
+
+    import pdb; pdb.set_trace()
 
     model = DeepFrag()
     model.run(args)
