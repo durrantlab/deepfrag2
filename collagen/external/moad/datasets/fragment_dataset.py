@@ -8,6 +8,8 @@ from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
 from .... import Mol
 import sys
+import prody
+
 
 @dataclass
 class MOADFragmentDataset_entry(object):
@@ -217,12 +219,16 @@ class MOADFragmentDataset(Dataset):
 
             receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
 
+        except prody.atomic.select.SelectionError as e:
+            print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
+            raise e
+
         except Exception as e:
             if entry is not None:
-                print(f"\nError in __getitem__ in fragment_dataset.py. PDB ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n" + str(e), file=sys.stderr)
+                print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
             else:
-                print("\nError in __getitem__ in fragment_dataset.py.", file=sys.stderr)
-            raise
+                print(f"\nMethod __getitem__ in 'fragment_dataset.py'.\n {str(e)}", file=sys.stderr)
+            raise e
 
         # with open("/mnt/extra/fragz2.txt", "a") as f:
         #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
