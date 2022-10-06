@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from collagen.core import args as user_args
-from typing import List, OrderedDict, Tuple, Any
+from typing import List, Tuple, Any
+from collections import OrderedDict
 from pathlib import Path
 import textwrap
 from collagen.core.debug import logit
@@ -75,7 +76,7 @@ class MOAD_target(object):
         if self.cache_pdbs_to_disk and os.path.exists(pkl_filename):
             # Check if it's been loaded recently. If so, no need to reload.
             # print(self.recent_pickle_contents.keys())
-            if pkl_filename in self.recent_pickle_contents:  #  and self.recent_pickle_contents[pkl_filename] is not None:
+            if pkl_filename in self.recent_pickle_contents:  # and self.recent_pickle_contents[pkl_filename] is not None:
                 payload = self.recent_pickle_contents[pkl_filename]
 
                 # If more than 100 recent pickles in memory, remove the oldest one.
@@ -168,10 +169,8 @@ class MOAD_target(object):
                 print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except Exception as err:
-            if user_args.verbose:
-                msg = f"WARNING: Could not process ligand {self.pdb_id}:{lig.name}. An unknown error occurred: {str(err)}"
-                print("\n", file=sys.stderr)
-                print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
+            msg = f"\nWARNING: Could not process ligand {self.pdb_id}:{lig.name}. An unknown error occurred: {str(err)}"
+            print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
 
     def _get_rec_from_prody_mol(

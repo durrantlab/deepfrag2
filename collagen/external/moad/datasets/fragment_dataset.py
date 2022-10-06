@@ -8,7 +8,6 @@ from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
 from .... import Mol
 import sys
-import prody
 
 
 @dataclass
@@ -219,9 +218,10 @@ class MOADFragmentDataset(Dataset):
 
             receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
 
-        except prody.atomic.select.SelectionError as e:
-            print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
-            raise e
+        # This catch block is unnecessary because if it contains the same source code than the another one
+        # except prody.atomic.select.SelectionError as e:
+        #     print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
+        #     raise e
 
         except Exception as e:
             if entry is not None:

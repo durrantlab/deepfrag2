@@ -48,7 +48,7 @@ def _add_generic_params(
     # TODO: JDD: Load from best validation checkpoint.
     parser.add_argument(
         "--verbose",
-        default=True,
+        default=False,
         action="store_true",
         help="If set, will output additional information during the run. Useful for debugging.",
     )
