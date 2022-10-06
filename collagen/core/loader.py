@@ -55,6 +55,7 @@ class MultiLoader(object):
         collate_fn=_collate_none,
         max_voxels_in_memory=80,
     ):
+
         # Save parameters to class variables.
         self.data = data
         self.num_dataloader_workers = num_dataloader_workers
@@ -66,7 +67,7 @@ class MultiLoader(object):
         # JDD added below based on
         # https://github.com/pytorch/pytorch/issues/67844 See also
         # https://pytorch.org/docs/stable/multiprocessing.html#multiprocessing-cuda-sharing-details
-        # JDD NO: 
+        # JDD NO:
         multiprocessing.set_sharing_strategy("file_system")
 
     def __len__(self) -> int:
@@ -123,11 +124,10 @@ class MultiLoader(object):
     #         self.procs.append((p, cur_time))
 
     def __iter__(self):
-        with multiprocessing.Pool(self.num_dataloader_workers) as p:
+        with multiprocessing.Pool() as p:
             for result in p.imap_unordered(return_value_data, iterable=self.data, chunksize=1):
                 try:
-                    if result is not None:
-                        yield self.collate_fn([result])
+                    yield self.collate_fn([result])
                 except Exception as e:
                     traceback.print_exc(e)
 
