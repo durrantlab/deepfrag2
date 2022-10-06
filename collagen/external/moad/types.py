@@ -227,8 +227,7 @@ class MOAD_target(object):
             # strings, but if you just try a second time, it works. I don't know
             # why.
             prody_mol = m.select(rec_sel)
-        except Exception as e:
-            print(type(e))  # Would be good to catch the specific exception here
+        except prody.atomic.select.SelectionError as e:
             prody_mol = m.select(rec_sel)
             # import pdb; pdb.set_trace()
 
@@ -299,11 +298,11 @@ class MOAD_target(object):
                 # alternate locations are used.
                 try:
                     lig_atoms = m.select(f"{lig_sel} and (altloc _ or altloc A)")
-                except Exception as e:
+                except prody.atomic.select.SelectionError as e:
                     # So strange. Sometimes prody can't parse perfectly valid
                     # selection strings, but if you just try a second time, it
-                    # works. I don't know why.
-                    print(type(e))  # Would be good to catch the specific exception here
+                    # works. I don't know why. Related to Cesar multiprocessing
+                    # method somehow (unsure)?
                     lig_atoms = m.select(f"{lig_sel} and (altloc _ or altloc A)")
 
                 # Ligand may not be present in this biological assembly.
