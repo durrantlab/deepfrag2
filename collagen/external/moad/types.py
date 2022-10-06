@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from collagen.core import args as user_args
-from typing import List, Tuple, Any
+from typing import List, OrderedDict, Tuple, Any
 from pathlib import Path
 import textwrap
 from collagen.core.debug import logit
@@ -13,6 +13,7 @@ from rdkit import Chem
 import os
 import pickle
 from io import StringIO
+from copy import deepcopy
 # from functools import lru_cache
 import prody
 from ... import Mol
