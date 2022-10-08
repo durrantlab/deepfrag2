@@ -11,14 +11,14 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--csv",
         required=False,  # TODO: REVERT TO TRUE IN PRODUCTION.
-        # default="/mnt/Data/crg93/moad.updated/every.csv",
+        default="/mnt/Data/crg93/moad.updated/every.csv",
         # default="D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\every.csv",
         help="Path to MOAD every.csv"
     )
     parser.add_argument(
         "--data",
         required=False,  # TODO: REVERT TO TRUE IN PRODUCTION.
-        # default="/mnt/Data/crg93/moad.updated/BindingMOAD_2020/",
+        default="/mnt/Data/crg93/moad.updated/BindingMOAD_2020/",
         # default="D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets\\BindingMOAD_2020",
         help="Path to MOAD root structure folder"
     )
