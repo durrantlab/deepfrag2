@@ -124,7 +124,6 @@ def function_2run_deepfrag():
     args.__setattr__("aggregation_3x3_patches", Operator.MEAN)
     args.__setattr__("aggregation_loss_vector", Operator.MEAN)
     args.__setattr__("aggregation_rotations", Operator.MEAN)
-    args.__setattr__("inference_rotations", 8)
     # args.__setattr__("cache_pdbs_to_disk", True)
     args.__setattr__("csv", "/mnt/Data/crg93/moad.updated/every.csv")
     args.__setattr__("data", "/mnt/Data/crg93/moad.updated/BindingMOAD_2020/")

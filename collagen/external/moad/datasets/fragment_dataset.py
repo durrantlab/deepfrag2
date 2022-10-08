@@ -218,40 +218,35 @@ class MOADFragmentDataset(Dataset):
 
             receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
 
-        # CESAR:
-        # This catch block is unnecessary because if it contains the same source code than the another one
-        # except prody.atomic.select.SelectionError as e:
-        #     print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
-        #     raise e
+            # with open("/mnt/extra/fragz2.txt", "a") as f:
+            #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
 
+            # This chunk has many ligands. You need to look up the one that matches
+            # entry.ligand_id (the one that actually corresponds to this entry).
+            # Once you find it, actually do the fragmenting.
+            for ligand in ligands:
+                if ligand.meta["moad_ligand"].name == entry.ligand_id:
+                    pairs = ligand.split_bonds()
+                    parent, fragment = pairs[entry.frag_idx]
+                    break
+            else:
+                raise Exception(
+                    "Ligand not found: " + str(receptor) + " -- " + str(ligands)
+                )
+
+            sample = (receptor, parent, fragment)
+
+            if self.transform:
+                # Actually performs voxelization and fingerprinting.
+                tmp = self.transform(sample)
+                return tmp
+            else:
+                return sample
+
+        # Only for debugging purposes
         except Exception as e:
             if entry is not None:
                 print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
             else:
                 print(f"\nMethod __getitem__ in 'fragment_dataset.py'.\n {str(e)}", file=sys.stderr)
-            raise e
-
-        # with open("/mnt/extra/fragz2.txt", "a") as f:
-        #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
-
-        # This chunk has many ligands. You need to look up the one that matches
-        # entry.ligand_id (the one that actually corresponds to this entry).
-        # Once you find it, actually do the fragmenting.
-        for ligand in ligands:
-            if ligand.meta["moad_ligand"].name == entry.ligand_id:
-                pairs = ligand.split_bonds()
-                parent, fragment = pairs[entry.frag_idx]
-                break
-        else:
-            raise Exception(
-                "Ligand not found: " + str(receptor) + " -- " + str(ligands)
-            )
-
-        sample = (receptor, parent, fragment)
-
-        if self.transform:
-            # Actually performs voxelization and fingerprinting.
-            tmp = self.transform(sample)
-            return tmp
-        else:
-            return sample
+            raise

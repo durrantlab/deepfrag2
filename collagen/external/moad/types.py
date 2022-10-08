@@ -117,7 +117,8 @@ class MOAD_target(object):
             with open(self.files[idx]) as f:
                 lines = [
                     l
-                    for l in f
+                    # Seems being that readLines() is necessary to run on Windows
+                    for l in f.readlines()
                     if l.startswith("ATOM")
                     or l.startswith("HETATM")
                     or l.startswith("MODEL")
