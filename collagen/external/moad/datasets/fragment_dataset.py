@@ -213,40 +213,52 @@ class MOADFragmentDataset(Dataset):
         """Returns (receptor, parent, fragment)"""
         assert 0 <= idx <= len(self), "Index out of bounds"
         entry = None
-        try:
-            entry = self._internal_index_valids_filtered[idx]
+        counter = 1
+        max_counter = 3
+        # For some reason, id we repeat this code more than 1 times,
+        # then we avoid 'a ligand not found' or 'atoms do not have coordinates' exceptions
+        # Is this only for Windows platforms due to the multiprocessing implemented in the loader.py file? I don't know
+        # Can this occur on Unix-type platforms with the fork multiprocessing implemented in the loader.py file? I don't know, if required to experiment
+        while counter <= max_counter:
+            try:
+                entry = self._internal_index_valids_filtered[idx]
 
-            receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
+                receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
 
-            # with open("/mnt/extra/fragz2.txt", "a") as f:
-            #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
+                # with open("/mnt/extra/fragz2.txt", "a") as f:
+                #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
 
-            # This chunk has many ligands. You need to look up the one that matches
-            # entry.ligand_id (the one that actually corresponds to this entry).
-            # Once you find it, actually do the fragmenting.
-            for ligand in ligands:
-                if ligand.meta["moad_ligand"].name == entry.ligand_id:
-                    pairs = ligand.split_bonds()
-                    parent, fragment = pairs[entry.frag_idx]
-                    break
-            else:
-                raise Exception(
-                    "Ligand not found: " + str(receptor) + " -- " + str(ligands)
-                )
+                # This chunk has many ligands. You need to look up the one that matches
+                # entry.ligand_id (the one that actually corresponds to this entry).
+                # Once you find it, actually do the fragmenting.
+                for ligand in ligands:
+                    if ligand.meta["moad_ligand"].name == entry.ligand_id:
+                        pairs = ligand.split_bonds()
+                        parent, fragment = pairs[entry.frag_idx]
+                        break
+                else:
+                    raise Exception(
+                        "Ligand not found: " + str(receptor) + " -- " + str(ligands)
+                    )
 
-            sample = (receptor, parent, fragment)
+                sample = (receptor, parent, fragment)
 
-            if self.transform:
-                # Actually performs voxelization and fingerprinting.
-                tmp = self.transform(sample)
-                return tmp
-            else:
-                return sample
+                if self.transform:
+                    # Actually performs voxelization and fingerprinting.
+                    tmp = self.transform(sample)
+                    return tmp
+                else:
+                    return sample
 
-        # Only for debugging purposes
-        except Exception as e:
-            if entry is not None:
-                print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {str(e)}", file=sys.stderr)
-            else:
-                print(f"\nMethod __getitem__ in 'fragment_dataset.py'.\n {str(e)}", file=sys.stderr)
-            raise
+            # Only for debugging purposes
+            except Exception as e:
+                if entry is not None:
+                    print(f"\nMethod __getitem__ in 'fragment_dataset.py'. Error in pdb ID: {entry.pdb_id}; Ligand ID: {entry.ligand_id}\n {counter} times: {str(e)}", file=sys.stderr)
+                else:
+                    print(f"\nMethod __getitem__ in 'fragment_dataset.py'.\n {counter} times: {str(e)}", file=sys.stderr)
+                    counter = max_counter
+
+                if counter == max_counter:
+                    raise
+                else:
+                    counter = counter + 1

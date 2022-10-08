@@ -170,8 +170,9 @@ class MOAD_target(object):
                 print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
         except Exception as err:
-            msg = f"\nWARNING: Could not process ligand {self.pdb_id}:{lig.name}. An unknown error occurred: {str(err)}"
-            print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
+            if user_args.verbose:
+                msg = f"\nWARNING: Could not process ligand {self.pdb_id}:{lig.name}. An unknown error occurred: {str(err)}"
+                print(textwrap.fill(msg, subsequent_indent="  "), file=sys.stderr)
             return None
 
     def _get_rec_from_prody_mol(
