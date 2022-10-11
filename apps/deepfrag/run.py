@@ -116,8 +116,8 @@ def function_2run_deepfrag():
 
     args.__setattr__("accelerator", "gpu")
     args.__setattr__("devices", 1)
-    args.__setattr__("save_splits", "/mnt/crg93/Data/crg93/output_deepfrag2/splits.json")
-    args.__setattr__("default_root_dir", "/mnt/crg93/Data/crg93/output_deepfrag2/")
+    args.__setattr__("save_splits", "~/Data/crg93/output_deepfrag2/splits.json")
+    args.__setattr__("default_root_dir", "~/Data/crg93/output_deepfrag2/")
 
     args.__setattr__("max_epochs", 30)
     args.__setattr__("aggregation_3x3_patches", Operator.MEAN)
