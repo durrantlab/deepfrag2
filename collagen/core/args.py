@@ -23,8 +23,16 @@ def _add_generic_params(
     """
 
     parser = parent_parser.add_argument_group("Common")
-    parser.add_argument("--cpu", default=False, action="store_true")
-    parser.add_argument("--wandb_project", required=False, default=None)
+    parser.add_argument(
+        "--cpu",
+        default=False,
+        # action="store_true"
+    )
+    parser.add_argument(
+        "--wandb_project",
+        required=False,
+        default=None
+    )
     parser.add_argument(
         "-m",
         "--mode",
@@ -42,14 +50,14 @@ def _add_generic_params(
     parser.add_argument(
         "--load_newest_checkpoint",
         default=False,
-        action="store_true",
+        # action="store_true",
         help="If set, the most recent checkpoint will be loaded.",
     )
     # TODO: JDD: Load from best validation checkpoint.
     parser.add_argument(
         "--verbose",
         default=False,
-        action="store_true",
+        # action="store_true",
         help="If set, will output additional information during the run. Useful for debugging.",
     )
     parser.add_argument(
