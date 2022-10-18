@@ -12,63 +12,63 @@ class Operator(Enum):
     OWA1 = "owa1"
     OWA2 = "owa2"
     OWA3 = "owa3"
-    OWA_ExpSmooth1_01 = "owa_ExpSmooth1_01"
-    OWA_ExpSmooth1_02 = "owa_ExpSmooth1_02"
-    OWA_ExpSmooth1_03 = "owa_ExpSmooth1_03"
-    OWA_ExpSmooth1_04 = "owa_ExpSmooth1_04"
-    OWA_ExpSmooth1_05 = "owa_ExpSmooth1_05"
-    OWA_ExpSmooth1_06 = "owa_ExpSmooth1_06"
-    OWA_ExpSmooth1_07 = "owa_ExpSmooth1_07"
-    OWA_ExpSmooth1_08 = "owa_ExpSmooth1_08"
-    OWA_ExpSmooth1_09 = "owa_ExpSmooth1_09"
-    OWA_ExpSmooth2_01 = "owa_ExpSmooth2_01"
-    OWA_ExpSmooth2_02 = "owa_ExpSmooth2_02"
-    OWA_ExpSmooth2_03 = "owa_ExpSmooth2_03"
-    OWA_ExpSmooth2_04 = "owa_ExpSmooth2_04"
-    OWA_ExpSmooth2_05 = "owa_ExpSmooth2_05"
-    OWA_ExpSmooth2_06 = "owa_ExpSmooth2_06"
-    OWA_ExpSmooth2_07 = "owa_ExpSmooth2_07"
-    OWA_ExpSmooth2_08 = "owa_ExpSmooth2_08"
-    OWA_ExpSmooth2_09 = "owa_ExpSmooth2_09"
-    CHOQUET_CF = "choquet_integral_CF"
+    OWA_ExpSmooth1_01 = "owa_exp_smooth1_01"
+    OWA_ExpSmooth1_02 = "owa_exp_smooth1_02"
+    OWA_ExpSmooth1_03 = "owa_exp_smooth1_03"
+    OWA_ExpSmooth1_04 = "owa_exp_smooth1_04"
+    OWA_ExpSmooth1_05 = "owa_exp_smooth1_05"
+    OWA_ExpSmooth1_06 = "owa_exp_smooth1_06"
+    OWA_ExpSmooth1_07 = "owa_exp_smooth1_07"
+    OWA_ExpSmooth1_08 = "owa_exp_smooth1_08"
+    OWA_ExpSmooth1_09 = "owa_exp_smooth1_09"
+    OWA_ExpSmooth2_01 = "owa_exp_smooth2_01"
+    OWA_ExpSmooth2_02 = "owa_exp_smooth2_02"
+    OWA_ExpSmooth2_03 = "owa_exp_smooth2_03"
+    OWA_ExpSmooth2_04 = "owa_exp_smooth2_04"
+    OWA_ExpSmooth2_05 = "owa_exp_smooth2_05"
+    OWA_ExpSmooth2_06 = "owa_exp_smooth2_06"
+    OWA_ExpSmooth2_07 = "owa_exp_smooth2_07"
+    OWA_ExpSmooth2_08 = "owa_exp_smooth2_08"
+    OWA_ExpSmooth2_09 = "owa_exp_smooth2_09"
+    CHOQUET_CF = "choquet_integral_cf"
     CHOQUET_SYM = "choquet_integral_symmetric"
     SUGENO = "sugeno_fuzzy_integral"
 
 
 class Aggregate1DTensor:
 
-    def __init__(self, operator: Operator):
+    def __init__(self, operator):
 
         self.function = None
         self.weight_function = None
         self.weight_function_alfa = None
         self.operator = operator
 
-        if self.operator.value == Operator.OWA1.value:
+        if self.operator == Operator.OWA1.value:
             self.function = owas.OWA1
-        elif self.operator.value == Operator.OWA2.value:
+        elif self.operator == Operator.OWA2.value:
             self.function = owas.OWA2
-        elif self.operator.value == Operator.OWA3.value:
+        elif self.operator == Operator.OWA3.value:
             self.function = owas.OWA3
-        elif self.operator.value.startswith("owa_ExpSmooth1"):
+        elif self.operator.startswith("owa_exp_smooth1"):
             self.function = owas.owa
             self.weight_function = self._exponential_smoothing_weights_1
-            self.weight_function_alfa = float("0." + self.operator.value.rsplit("owa_ExpSmooth1_0")[1])
-        elif self.operator.value.startswith("owa_ExpSmooth2"):
+            self.weight_function_alfa = float("0." + self.operator.rsplit("owa_exp_smooth1_0")[1])
+        elif self.operator.startswith("owa_exp_smooth2"):
             self.function = owas.owa
             self.weight_function = self._exponential_smoothing_weights_2
-            self.weight_function_alfa = float("0." + self.operator.value.rsplit("owa_ExpSmooth2_0")[1])
-        elif self.operator.value == Operator.CHOQUET_CF.value:
+            self.weight_function_alfa = float("0." + self.operator.rsplit("owa_exp_smooth2_0")[1])
+        elif self.operator == Operator.CHOQUET_CF.value:
             self.function = integrals.choquet_integral_CF
-        elif self.operator.value == Operator.CHOQUET_SYM.value:
+        elif self.operator == Operator.CHOQUET_SYM.value:
             self.function = integrals.choquet_integral_symmetric
-        elif self.operator.value == Operator.SUGENO.value:
+        elif self.operator == Operator.SUGENO.value:
             self.function = integrals.sugeno_fuzzy_integral
-        elif self.operator.value != Operator.MEAN.value:
+        elif self.operator != Operator.MEAN.value:
             raise "Aggregation operator is not valid"
 
     def aggregate_on_pytorch_tensor(self, tensor: Tensor):
-        if self.operator.value == Operator.MEAN.value:
+        if self.operator == Operator.MEAN.value:
             return tensor.mean()
         elif self.function is not None:
             if self.weight_function is None:
@@ -80,7 +80,7 @@ class Aggregate1DTensor:
         return None
 
     def aggregate_on_numpy_array(self, numpy_array):
-        if self.operator.value == Operator.MEAN.value:
+        if self.operator == Operator.MEAN.value:
             return np.average(numpy_array)
         elif self.function is not None:
             if self.weight_function is None:
@@ -127,7 +127,7 @@ class Aggregate3x3Patches(Aggregate1DTensor, AdaptiveAvgPool3d):
         AdaptiveAvgPool3d.__init__(self, output_size)
 
     def forward(self, tensor: Tensor) -> Tensor:
-        if self.operator.value == Operator.MEAN.value:
+        if self.operator == Operator.MEAN.value:
             return AdaptiveAvgPool3d.forward(self, tensor)
 
         tensor_resp = np.zeros(shape=(len(tensor), len(tensor[0]), 1, 1, 1))

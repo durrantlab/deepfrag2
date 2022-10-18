@@ -18,7 +18,7 @@ class AveragedEnsembled(ParentEnsembled):
         if aggregation_function.__str__() != Operator.MEAN.__str__() and num_rotations == 1:
             raise "Use more than one rotation to use an aggregation function other than Mean (average) function"
 
-        if aggregation_function.value != Operator.MEAN.value:
+        if aggregation_function != Operator.MEAN.value:
             self.aggregation = Aggregate1DTensor(operator=aggregation_function)
 
         ParentEnsembled.__init__(self, trainer, model, test_data, num_rotations, device, ckpt_name)
