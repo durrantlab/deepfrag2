@@ -89,68 +89,68 @@ class DeepFragModel(pl.LightningModule):
             # Here's your latent space?
         )
 
-        self.decoder = nn.Sequential(
-            # Linear transform (fully connected). Increases features to 512.
-            nn.Linear(512, 64),
-
-            # Activation function. Output 0 if negative, same if positive.
-            nn.ReLU(),
-
-            # Reshapes vector to tensor.
-            nn.Unflatten(1, (64, 1, 1, 1)),
-
-            # TODO: Linear layer somewhere here to get it into fragment space?
-            # Or ReLU?
-
-            # Deconvolution #1
-            nn.ConvTranspose3d(
-                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
-            ),
-            nn.ReLU(),
-
-            # Deconvolution #2
-            nn.ConvTranspose3d(
-                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
-            ),
-            nn.ReLU(),
-
-            # Deconvolution #3
-            nn.ConvTranspose3d(
-                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
-            ),
-            nn.ReLU(),
-
-            # Deconvolution #4
-            nn.ConvTranspose3d(
-                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
-            ),
-            nn.ReLU(),
-
-            # nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
-            nn.Upsample(scale_factor=2, mode='nearest'),
-
-            # Deconvolution #5
-            nn.ConvTranspose3d(
-                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
-            ),
-            nn.ReLU(),
-
-            # Deconvolution #6
-            nn.ConvTranspose3d(
-                64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
-            ),
-            nn.ReLU(),
-
-            # Deconvolution #7
-            nn.ConvTranspose3d(
-                64, num_voxel_features, kernel_size=3, stride=1, # padding=1, output_padding=1
-            ),
-            nn.ReLU(),
-
-            # TODO: num_voxel_features includes receptor + ligand features. Not
-            # the right one here. Needs to match however you calculate voxel
-            # fragment.
-        )
+        # self.decoder = nn.Sequential(
+        #     # Linear transform (fully connected). Increases features to 512.
+        #     nn.Linear(512, 64),
+        #
+        #     # Activation function. Output 0 if negative, same if positive.
+        #     nn.ReLU(),
+        #
+        #     # Reshapes vector to tensor.
+        #     nn.Unflatten(1, (64, 1, 1, 1)),
+        #
+        #     # TODO: Linear layer somewhere here to get it into fragment space?
+        #     # Or ReLU?
+        #
+        #     # Deconvolution #1
+        #     nn.ConvTranspose3d(
+        #         64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+        #     ),
+        #     nn.ReLU(),
+        #
+        #     # Deconvolution #2
+        #     nn.ConvTranspose3d(
+        #         64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+        #     ),
+        #     nn.ReLU(),
+        #
+        #     # Deconvolution #3
+        #     nn.ConvTranspose3d(
+        #         64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+        #     ),
+        #     nn.ReLU(),
+        #
+        #     # Deconvolution #4
+        #     nn.ConvTranspose3d(
+        #         64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+        #     ),
+        #     nn.ReLU(),
+        #
+        #     # nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+        #     nn.Upsample(scale_factor=2, mode='nearest'),
+        #
+        #     # Deconvolution #5
+        #     nn.ConvTranspose3d(
+        #         64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+        #     ),
+        #     nn.ReLU(),
+        #
+        #     # Deconvolution #6
+        #     nn.ConvTranspose3d(
+        #         64, 64, kernel_size=3, stride=1, # padding=1, output_padding=1
+        #     ),
+        #     nn.ReLU(),
+        #
+        #     # Deconvolution #7
+        #     nn.ConvTranspose3d(
+        #         64, num_voxel_features, kernel_size=3, stride=1, # padding=1, output_padding=1
+        #     ),
+        #     nn.ReLU(),
+        #
+        #     # TODO: num_voxel_features includes receptor + ligand features. Not
+        #     # the right one here. Needs to match however you calculate voxel
+        #     # fragment.
+        # )
 
         self.deepfrag_after_encoder = nn.Sequential(
             # Randomly zero some values
@@ -169,9 +169,9 @@ class DeepFragModel(pl.LightningModule):
         parser = parent_parser.add_argument_group('DeepFragModel')
         parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
         parser.add_argument('--fp_size', type=int, help="The size of the output molecular fingerprint. Defaults to 2048.", default=2048)
-        parser.add_argument('--aggregation_3x3_patches', required=False, type=Operator, help="The aggregation operator to be used to aggregate 3x3 patches. Defaults to Mean.", default=Operator.MEAN)
-        parser.add_argument('--aggregation_loss_vector', required=False, type=Operator, help="The aggregation operator to be used to aggregate loss values. Defaults to Mean.", default=Operator.MEAN)
-        parser.add_argument('--aggregation_rotations', required=False, type=Operator, help="The aggregation operator to be used to aggregate rotations. Defaults to Mean.", default=Operator.MEAN)
+        parser.add_argument('--aggregation_3x3_patches', required=False, type=str, help="The aggregation operator to be used to aggregate 3x3 patches. Defaults to Mean.", default=Operator.MEAN.value)
+        parser.add_argument('--aggregation_loss_vector', required=False, type=str, help="The aggregation operator to be used to aggregate loss values. Defaults to Mean.", default=Operator.MEAN.value)
+        parser.add_argument('--aggregation_rotations', required=False, type=str, help="The aggregation operator to be used to aggregate rotations. Defaults to Mean.", default=Operator.MEAN.value)
         return parent_parser
 
     def forward(self, voxel):

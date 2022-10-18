@@ -4,6 +4,8 @@ import time
 import os
 import traceback
 from datetime import datetime
+import sys
+import platform
 
 DATA = None
 COLLATE = None
@@ -128,6 +130,7 @@ class MultiLoader(object):
                 try:
                     yield self.collate_fn([result])
                 except Exception as e:
+                    print("Error in method __iter__ with cesar_version()", file=sys.stderr)
                     traceback.print_exc(e)
 
     def jdd_version(self):
@@ -217,13 +220,20 @@ class MultiLoader(object):
                 yield item
 
     def __iter__(self):
-        # return self.cesar_version()
 
-        # JDD Version runs MUCH faster, and seems to be less error prone. Does
-        # prody play nice with multiprocessing?
-        return self.jdd_version()
-
-
+        # Windows platform does not support fork multiprocessing
+        if platform.system().lower() != "windows":
+            # JDD Version runs MUCH faster, and seems to be less error prone. Does
+            # prody play nice with multiprocessing?
+            return self.jdd_version()
+        else:
+            # CESAR:
+            # JDD Version cannot be faster because it is algorithmically more complex.
+            # The scheduling (workload per processor) implemented in JDD version never will be more efficient than the multiprocessing API.
+            # The faster execution time of this version of DeepFrag is not related to the use of JDD version, but to the improvements done in other parts of the code.
+            # Cesar Version is more clair to understand (only 7 code lines vs. 50 code lines).
+            # Cesar version is not error prone.
+            return self.cesar_version()
 
         # ===== WORKS BUT IF ERROR ON ANY THREAD, HANGS WHOLE PROGRAM ====
         # with multiprocessing.Pool(self.num_dataloader_workers) as p:
