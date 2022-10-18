@@ -116,8 +116,8 @@ def function_2run_deepfrag():
 
     args.__setattr__("accelerator", "gpu")
     args.__setattr__("devices", 1)
-    args.__setattr__("save_splits", "/home/crg93/Data/crg93/output_deepfrag2/splits.json")
-    args.__setattr__("default_root_dir", "/home/crg93/Data/crg93/output_deepfrag2/")
+    args.__setattr__("save_splits", "/bgfs/jdurrant/durrantj/deepfrags/output_deepfrag2/splits.json")
+    args.__setattr__("default_root_dir", "/bgfs/jdurrant/durrantj/deepfrags/output_deepfrag2/")
 
     args.__setattr__("verbose", True)
     args.__setattr__("max_epochs", 30)
@@ -126,9 +126,9 @@ def function_2run_deepfrag():
     args.__setattr__("aggregation_rotations", Operator.MEAN)
     args.__setattr__("inference_rotations", 8)
     # args.__setattr__("cache_pdbs_to_disk", True)
-    args.__setattr__("csv", "/mnt/Data/crg93/moad.updated/every.csv")
-    args.__setattr__("data", "/mnt/Data/crg93/moad.updated/BindingMOAD_2020/")
-    args.__setattr__("cache", "/mnt/Data/crg93/moad.updated/every.csv.cache.json")
+    args.__setattr__("csv", "/bgfs/jdurrant/durrantj/deepfrags/deepfrag2_post_cesar/data/moad/every.csv")
+    args.__setattr__("data", "/bgfs/jdurrant/durrantj/deepfrags/deepfrag2_post_cesar/data/moad/BindingMOAD_2020/")
+    args.__setattr__("cache", "/bgfs/jdurrant/durrantj/deepfrags/deepfrag2_post_cesar/data/moad/every.csv.cache.json")
 
     model = DeepFrag()
     model.run(args)
