@@ -4,19 +4,14 @@ from typing import List, Tuple, Any
 from collections import OrderedDict
 from pathlib import Path
 import textwrap
-from collagen.core.debug import logit
 from collagen.core.molecules.mol import (
     TemplateGeometryMismatchException,
     UnparsableGeometryException,
     UnparsableSMILESException,
 )
-from rdkit import Chem
 import os
 import pickle
 from io import StringIO
-from copy import deepcopy
-
-# from functools import lru_cache
 import prody
 from ... import Mol
 from .moad_utils import fix_moad_smiles
@@ -332,6 +327,28 @@ class MOAD_target(object):
 
 
 @dataclass
+class Pfizer_target(MOAD_target):
+
+    def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
+        """
+        The 'idx' is never used because the ligand is not obtained from a pdb file
+        """
+
+        lig_mols = []
+
+        for lig in self.ligands:
+            lig_mol = Mol.from_rdkit(lig.rdmol, strict=False)
+            lig_mol.meta["name"] = lig.name
+            lig_mol.meta["moad_ligand"] = lig
+            lig_mols.append(lig_mol)
+
+        rec_mol = lig_mols[0]
+        rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
+
+        return rec_mol, lig_mols
+
+
+@dataclass
 class MOAD_ligand(object):
     name: str
     validity: str
@@ -355,6 +372,11 @@ class MOAD_ligand(object):
     @property
     def is_valid(self) -> bool:
         return self.validity == "valid"
+
+
+@dataclass
+class Pfizer_ligand(MOAD_ligand):
+    rdmol: Any
 
 
 @dataclass

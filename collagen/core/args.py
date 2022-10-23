@@ -37,8 +37,12 @@ def _add_generic_params(
         "-m",
         "--mode",
         type=str,
-        choices=["train", "test", "lr_finder"],
-        help="Can be train, test, or lr_finder. If train, trains the model. If test, runs inference on the test set. If lr_finder, suggests the best learning rate to use. Defaults to train.",
+        choices=["train", "warm_starting", "test", "lr_finder"],
+        help="Can be train, warm_starting, test, or lr_finder. " +
+             "If train, trains the model. " +
+             "If warm_starting, runs an incremental learning on a new dataset. " +
+             "If test, runs inference on the test set. " +
+             "If lr_finder, suggests the best learning rate to use. Defaults to train.",
         default="train",
     )
     parser.add_argument(
@@ -49,6 +53,8 @@ def _add_generic_params(
     )
     parser.add_argument(
         "--load_newest_checkpoint",
+        type=bool,
+        required=False,
         default=False,
         # action="store_true",
         help="If set, the most recent checkpoint will be loaded.",
@@ -56,6 +62,8 @@ def _add_generic_params(
     # TODO: JDD: Load from best validation checkpoint.
     parser.add_argument(
         "--verbose",
+        type=bool,
+        required=False,
         default=False,
         # action="store_true",
         help="If set, will output additional information during the run. Useful for debugging.",
@@ -78,6 +86,14 @@ def _add_generic_params(
         default=1e-3,
         help="The learning rate.",
     )
+    parser.add_argument(
+        "--model_for_warm_starting",
+        type=str,
+        required=False,
+        default=None,
+        help="Path to .pt file where the model to be used for incremental learning is saved"
+    )
+
     return parent_parser
 
 

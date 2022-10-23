@@ -10,7 +10,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 
     parser.add_argument(
         "--csv",
-        required=True,
+        required=False,
         help="Path to MOAD every.csv"
     )
     parser.add_argument(

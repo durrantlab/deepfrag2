@@ -1,7 +1,12 @@
 from dataclasses import field
 from pathlib import Path
 from typing import Dict, List, Union
-from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target
+from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, Pfizer_target, Pfizer_ligand
+import glob
+import os
+from rdkit import Chem
+import linecache
+
 
 class MOADInterface(object):
     """
@@ -34,7 +39,7 @@ class MOADInterface(object):
         noh: bool,
         discard_distant_atoms: bool,
     ):
-        self.classes = MOADInterface._load_classes_families_targets_ligands(
+        self._load_classes_families_targets_ligands(
             metadata,
             cache_pdbs_to_disk,
             grid_width,
@@ -80,8 +85,8 @@ class MOADInterface(object):
         assert k in self._lookup, f'Target "{k}" not found.'
         return self._lookup[k]
 
-    @staticmethod
     def _load_classes_families_targets_ligands(
+        self,
         every_csv_path,
         cache_pdbs_to_disk: bool,
         grid_width: int,
@@ -163,14 +168,14 @@ class MOADInterface(object):
         if curr_class is not None:
             classes.append(curr_class)
 
-        return classes
+        self.classes = classes
 
     def _resolve_paths(self, path: Union[str, Path]):
         path = Path(path)
 
         # Map the pdb to the file on disk.
         files = {}
-        for fam in path.glob("./**/*.bio*"):
+        for fam in path.glob("./**/*." + self._extension_for_resolve_paths()):
             if str(fam).endswith(".pkl"):
                 continue
             pdbid = fam.stem  # Removes extension (.bio?)
@@ -196,3 +201,99 @@ class MOADInterface(object):
                     else:
                         # No structures for this pdb id!
                         print(f"No structures for {k}")
+
+    def _extension_for_resolve_paths(self):
+        return "bio*"
+
+
+class PfizerInterface(MOADInterface):
+    def __init__(
+            self,
+            structures: Union[str, Path],
+            cache_pdbs_to_disk: bool,
+            grid_width: int,
+            grid_resolution: float,
+            noh: bool,
+            discard_distant_atoms: bool,
+    ):
+        super().__init__(structures, structures, cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
+
+    def _load_classes_families_targets_ligands(
+        self,
+        every_csv_path,
+        cache_pdbs_to_disk: bool,
+        grid_width: int,
+        grid_resolution: float,
+        noh: bool,
+        discard_distant_atoms: bool,
+    ):
+
+        classes = []
+        curr_class = None
+        curr_class_name = None
+        curr_family = None
+        curr_family_name = None
+        curr_target = None
+        curr_target_name = None
+
+        pdb_files = glob. glob(every_csv_path + os.sep + "*.pdb", recursive=True)
+        pdb_files.sort()
+        for line in pdb_files:
+            parts = line.split(os.sep)
+            full_pdb_name = parts[len(parts) - 1].split(".")[0]
+            parts = full_pdb_name.split("_")
+
+            if (curr_target is None) or (full_pdb_name != curr_target_name):
+                if curr_target is not None:
+                    curr_family.targets.append(curr_target)
+                curr_target_name = full_pdb_name
+                curr_target = Pfizer_target(
+                    pdb_id=full_pdb_name,
+                    ligands=[],
+                    cache_pdbs_to_disk=cache_pdbs_to_disk,
+                    grid_width=grid_width,
+                    grid_resolution=grid_resolution,
+                    noh=noh,
+                    discard_distant_atoms=discard_distant_atoms,
+                )
+                sdf_name = parts[0] + "_lig_" + parts[2]
+                sdf_reader = Chem.SDMolSupplier(every_csv_path + os.sep + sdf_name + ".sdf")
+                for ligand_ in sdf_reader:  # it is expected only one iteration because each SDF file must have a single molecule
+                    if ligand_ is not None:
+                        curr_target.ligands.append(
+                            Pfizer_ligand(
+                                name=linecache.getline(every_csv_path + os.sep + sdf_name + ".sdf", 1).rstrip(),
+                                validity="valid",
+                                affinity_measure="",
+                                affinity_value="",
+                                affinity_unit="",
+                                smiles=Chem.MolToSmiles(ligand_),
+                                rdmol=ligand_,
+                            )
+                        )
+
+            if (curr_family is None) or (parts[0] != curr_family_name):
+                if curr_family is not None:
+                    curr_class.families.append(curr_family)
+                curr_family_name = parts[0]
+                curr_family = MOAD_family(rep_pdb_id=parts[0], targets=[])
+
+            if curr_class is None:
+                curr_class_name = parts[0]
+                curr_class = MOAD_class(ec_num=parts[0], families=[])
+            elif parts[0] != curr_class_name:
+                classes.append(curr_class)
+                curr_class_name = parts[0]
+                curr_class = MOAD_class(ec_num=parts[0], families=[])
+
+        if curr_target is not None:
+            curr_family.targets.append(curr_target)
+        if curr_family is not None:
+            curr_class.families.append(curr_family)
+        if curr_class is not None:
+            classes.append(curr_class)
+
+        self.classes = classes
+
+    def _extension_for_resolve_paths(self):
+        return "pdb"
