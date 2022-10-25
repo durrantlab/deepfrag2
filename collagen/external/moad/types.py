@@ -330,9 +330,6 @@ class MOAD_target(object):
 class Pfizer_target(MOAD_target):
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
-        """
-        The 'idx' is never used because the ligand is not obtained from a pdb file
-        """
 
         lig_mols = []
 
@@ -342,10 +339,42 @@ class Pfizer_target(MOAD_target):
             lig_mol.meta["moad_ligand"] = lig
             lig_mols.append(lig_mol)
 
-        rec_mol = lig_mols[0]
+        m = self._load_pdb(idx)
+        rec_mol = self._get_rec_from_prody_mol(m, [], [])
         rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
 
         return rec_mol, lig_mols
+
+    def _get_rec_from_prody_mol(
+        self,
+        m: Any,
+        not_part_of_protein_sels: List[str],
+        lig_sels: List[str],
+    ):
+        rec_sel = "not water"
+
+        if self.noh:
+            # Removing hydrogen atoms (when not needed) also speeds the
+            # calculations.
+            rec_sel = f"not hydrogen and {rec_sel}"
+
+        # Note that "(altloc _ or altloc A)" makes sure only the first alternate
+        # locations are used.
+        rec_sel = f"{rec_sel} and (altloc _ or altloc A)"
+
+        try:
+            # So strange. Sometimes prody can't parse perfectly valid selection
+            # strings, but if you just try a second time, it works. I don't know
+            # why.
+            prody_mol = m.select(rec_sel)
+        except prody.atomic.select.SelectionError as e:
+            prody_mol = m.select(rec_sel)
+            # import pdb; pdb.set_trace()
+
+        rec_mol = Mol.from_prody(prody_mol)
+        rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
+
+        return rec_mol
 
 
 @dataclass
