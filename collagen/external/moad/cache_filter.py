@@ -240,6 +240,7 @@ def _build_moad_cache_file(
                     cache[pdb_id][lig_name][prop_name] = prop_val
 
             pbar.update(1)
+        p.close()
 
     pbar.close()
 

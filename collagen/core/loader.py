@@ -132,6 +132,7 @@ class MultiLoader(object):
                 except Exception as e:
                     print("Error in method __iter__ with cesar_version()", file=sys.stderr)
                     traceback.print_exc(e)
+            p.close()
 
     def jdd_version(self):
         global DATA
