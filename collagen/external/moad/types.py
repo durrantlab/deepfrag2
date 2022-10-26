@@ -4,19 +4,14 @@ from typing import List, Tuple, Any
 from collections import OrderedDict
 from pathlib import Path
 import textwrap
-from collagen.core.debug import logit
 from collagen.core.molecules.mol import (
     TemplateGeometryMismatchException,
     UnparsableGeometryException,
     UnparsableSMILESException,
 )
-from rdkit import Chem
 import os
 import pickle
 from io import StringIO
-from copy import deepcopy
-
-# from functools import lru_cache
 import prody
 from ... import Mol
 from .moad_utils import fix_moad_smiles
@@ -332,6 +327,57 @@ class MOAD_target(object):
 
 
 @dataclass
+class Pfizer_target(MOAD_target):
+
+    def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
+
+        lig_mols = []
+
+        for lig in self.ligands:
+            lig_mol = Mol.from_rdkit(lig.rdmol, strict=False)
+            lig_mol.meta["name"] = lig.name
+            lig_mol.meta["moad_ligand"] = lig
+            lig_mols.append(lig_mol)
+
+        m = self._load_pdb(idx)
+        rec_mol = self._get_rec_from_prody_mol(m, [], [])
+        rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
+
+        return rec_mol, lig_mols
+
+    def _get_rec_from_prody_mol(
+        self,
+        m: Any,
+        not_part_of_protein_sels: List[str],
+        lig_sels: List[str],
+    ):
+        rec_sel = "not water"
+
+        if self.noh:
+            # Removing hydrogen atoms (when not needed) also speeds the
+            # calculations.
+            rec_sel = f"not hydrogen and {rec_sel}"
+
+        # Note that "(altloc _ or altloc A)" makes sure only the first alternate
+        # locations are used.
+        rec_sel = f"{rec_sel} and (altloc _ or altloc A)"
+
+        try:
+            # So strange. Sometimes prody can't parse perfectly valid selection
+            # strings, but if you just try a second time, it works. I don't know
+            # why.
+            prody_mol = m.select(rec_sel)
+        except prody.atomic.select.SelectionError as e:
+            prody_mol = m.select(rec_sel)
+            # import pdb; pdb.set_trace()
+
+        rec_mol = Mol.from_prody(prody_mol)
+        rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
+
+        return rec_mol
+
+
+@dataclass
 class MOAD_ligand(object):
     name: str
     validity: str
@@ -355,6 +401,11 @@ class MOAD_ligand(object):
     @property
     def is_valid(self) -> bool:
         return self.validity == "valid"
+
+
+@dataclass
+class Pfizer_ligand(MOAD_ligand):
+    rdmol: Any
 
 
 @dataclass

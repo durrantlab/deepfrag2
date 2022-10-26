@@ -333,7 +333,7 @@ class MoadVoxelModelTest(object):
             return None
 
     @staticmethod
-    def _save_test_results_to_json(all_test_data, s, pth=None):
+    def _save_test_results_to_json(all_test_data, s, args, pth=None):
         # Save the test results to a carefully formatted JSON file.
 
         jsn = json.dumps(all_test_data, indent=4)
@@ -349,13 +349,12 @@ class MoadVoxelModelTest(object):
         jsn = re.sub(r"\n +?\"dist", ' "dist', jsn, 0, re.MULTILINE)
 
         if pth is None:
-            pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else ""
-        else:
-            pth = pth + os.sep
+            pth = os.getcwd()
+        pth = pth + os.sep
 
-        with open(f"{pth}test_results.json", "w") as f:
+        with open(f"{pth}test_results_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_{args.aggregation_rotations}.json", "w") as f:
             f.write(jsn)
-        with open(f"{pth}cProfile.txt", "w+") as f:
+        with open(f"{pth}cProfile_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_{args.aggregation_rotations}.txt", "w+") as f:
             f.write(s.getvalue())
 
         # txt = ""
@@ -519,5 +518,5 @@ class MoadVoxelModelTest(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        self._save_test_results_to_json(all_test_data, s, args.default_root_dir)
+        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir)
         self._save_examples_used(model, args)

@@ -1,10 +1,9 @@
-from typing import Any, Type, TypeVar, List, Optional, Tuple, Dict
+from typing import Optional
 from argparse import Namespace
 from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.loggers.csv_logs import CSVLogger
 from ...checkpoints import MyModelCheckpoint
 import torch
 import os
@@ -16,7 +15,6 @@ class MoadVoxelModelInits(object):
 
     @staticmethod
     def init_trainer(args: Namespace) -> pl.Trainer:
-        logger = None
         if args.wandb_project:
             logger = WandbLogger(project=args.wandb_project)
         elif args.default_root_dir is not None:
@@ -64,3 +62,9 @@ class MoadVoxelModelInits(object):
     @staticmethod
     def init_device(args: Namespace) -> torch.device:
         return torch.device("cpu") if args.cpu else torch.device("cuda")
+
+    def init_warm_model(self, args):
+        model = self.model_cls(**vars(args))
+        state_dict = torch.load(args.model_for_warm_starting)
+        model.load_state_dict(state_dict)
+        return model

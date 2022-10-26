@@ -79,10 +79,16 @@ class MoadVoxelModelParent(
             print(f"Restoring from checkpoint: {ckpt}")
 
         if args.mode == "train":
+            print("Starting 'training' process")
             self.run_train(args, ckpt)
+        elif args.mode == "warm_starting":
+            print("Starting 'warm_starting' process")
+            self.run_warm_starting(args)
         elif args.mode == "test":
+            print("Starting 'test' process")
             self.run_test(args, ckpt)
         elif args.mode == "lr_finder":
+            print("Starting 'lr_finder' process")
             self.run_lr_finder(args)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
@@ -112,11 +118,19 @@ class MoadVoxelModelParent(
     #             frag_counts[entry_info.fragment_smiles] += 1
     #     return frag_counts
 
-    @staticmethod
-    def _save_examples_used(model, args):
+    def _save_examples_used(self, model, args):
         if args.save_splits is not None:
-            pth = "/mnt/extra/" if os.path.exists("/mnt/extra/") else args.default_root_dir
+            if args.default_root_dir is None:
+                pth = os.getcwd() + os.sep
+            else:
+                pth = args.default_root_dir + os.sep
+
+            if args.mode == "train":
+                torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_train.pt")
+            elif args.mode == "warm_starting":
+                torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_after_warm_starting.pt")
+
             examples_used = model.get_examples_used()
-            out_name = pth + os.sep + os.path.basename(args.save_splits) + ".actually_used.json"
+            out_name = pth + os.sep + os.path.basename(args.save_splits) + "_" + args.mode + ".actually_used.json"
             with open(out_name, "w") as f:
                 json.dump(examples_used, f, indent=4)
