@@ -20,3 +20,4 @@ export LD_LIBRARY_PATH=/ihome/jdurrant/durrantj/miniconda3/envs/deepfrag2/lib:$L
 
 python MainDF2.py
 
+
