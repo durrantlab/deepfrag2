@@ -15,6 +15,5 @@ module load pytorch_gpu/1.11.0
 
 source activate deepfrag2cesar
 
+cd /ihome/jdurrant/crg93/deepfrag2/
 python MainDF2.py --csv /ihome/jdurrant/crg93/moad/every.csv --data /ihome/jdurrant/crg93/moad/BindingMOAD_2020 --save_splits /ihome/jdurrant/crg93/output/splits.json --default_root_dir /ihome/jdurrant/crg93/output --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30
-
-
