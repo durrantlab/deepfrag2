@@ -4,7 +4,7 @@
 #SBATCH --ntasks-per-node=16
 #SBATCH --output=slurm.out
 #SBATCH --error=slurm.err
-#SBATCH --time=200:00:00
+#SBATCH --time=144:00:00
 #SBATCH --cluster=gpu
 #SBATCH --partition=a100
 #SBATCH --gres=gpu:1
