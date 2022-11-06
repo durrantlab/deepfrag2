@@ -22,10 +22,24 @@ class MoadVoxelModelInits(object):
         else:
             logger = TensorBoardLogger("tb_logs", "my_model_run_name")
 
-        return pl.Trainer.from_argparse_args(
-            args,
-            logger=logger,
-            callbacks=[
+        if args.save_every_epoch:
+            callbacks = [
+                MyModelCheckpoint(
+                    dirpath=args.default_root_dir,
+                    monitor="val_loss",
+                    filename="val-loss-{epoch:02d}-{val_loss:.2f}",
+                    save_top_k=args.max_epochs,
+                ),
+                MyModelCheckpoint(
+                    dirpath=args.default_root_dir,
+                    monitor="loss",
+                    filename="loss-{epoch:02d}-{loss:.2f}",
+                    save_last=True,
+                    save_top_k=args.max_epochs,
+                )
+            ]
+        else:
+            callbacks = [
                 MyModelCheckpoint(
                     dirpath=args.default_root_dir,
                     monitor="val_loss",
@@ -38,8 +52,13 @@ class MoadVoxelModelInits(object):
                     filename="loss-{epoch:02d}-{loss:.2f}",
                     save_last=True,
                     save_top_k=3,
-                ),
-            ],
+                )
+            ]
+
+        return pl.Trainer.from_argparse_args(
+            args,
+            logger=logger,
+            callbacks=callbacks
         )
 
     def init_model(

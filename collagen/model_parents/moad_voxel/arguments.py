@@ -19,6 +19,27 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="Path to MOAD root structure folder"
     )
     parser.add_argument(
+        "--fraction_train",
+        required=False,
+        default=0.6,
+        type=float,
+        help="Percentage of targets to use in the TRAIN set."
+    )
+    parser.add_argument(
+        "--fraction_val",
+        required=False,
+        default=0.5,
+        type=float,
+        help="Percentage of (non-train) targets to use in the VAL set. The remaining ones will be used in the test set"
+    )
+    parser.add_argument(
+        "--save_every_epoch",
+        required=False,
+        default=False,
+        type=bool,
+        help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
+    )
+    parser.add_argument(
         "--cache",
         required=False,
         default=None,
