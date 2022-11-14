@@ -23,6 +23,7 @@ class MoadVoxelModelInits(object):
             logger = TensorBoardLogger("tb_logs", "my_model_run_name")
 
         if args.save_every_epoch:
+            print("Saving a checkpoint per epoch")
             callbacks = [
                 MyModelCheckpoint(
                     dirpath=args.default_root_dir,
