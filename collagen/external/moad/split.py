@@ -364,6 +364,10 @@ def compute_moad_split(
         # Save spits and seed to json (for record keeping).
         _save_split(save_splits, seed, pdb_ids, all_smis)
 
+    print("Training dataset size: " + str(len(pdb_ids.train)))
+    print("Validation dataset size: " + str(len(pdb_ids.val)))
+    print("Test dataset size: " + str(len(pdb_ids.test)))
+
     return (
         MOAD_split(name="TRAIN", targets=pdb_ids.train, smiles=all_smis.train),
         MOAD_split(name="VAL", targets=pdb_ids.val, smiles=all_smis.val),
