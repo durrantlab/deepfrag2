@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from typing import List, Set, Tuple
 from .types import MOAD_split
@@ -280,6 +281,8 @@ def _save_split(
         "val": {"pdbs": pdb_ids.val, "smiles": [smi for smi in all_smis.val]},
         "test": {"pdbs": pdb_ids.test, "smiles": [smi for smi in all_smis.test]},
     }
+    if not os.path.exists(os.path.dirname(save_splits)):
+        os.mkdir(os.path.dirname(save_splits))
     with open(save_splits, "w") as f:
         json.dump(split_inf, f, indent=4)
 
