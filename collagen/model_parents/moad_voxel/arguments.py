@@ -19,6 +19,41 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="Path to MOAD root structure folder"
     )
     parser.add_argument(
+        "--fraction_train",
+        required=False,
+        default=0.6,
+        type=float,
+        help="Percentage of targets to use in the TRAIN set."
+    )
+    parser.add_argument(
+        "--fraction_val",
+        required=False,
+        default=0.5,
+        type=float,
+        help="Percentage of (non-train) targets to use in the VAL set. The remaining ones will be used in the test set"
+    )
+    parser.add_argument(
+        "--save_every_epoch",
+        required=False,
+        default=False,
+        action="store_true",
+        help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
+    )
+    parser.add_argument(
+        "--butina_cluster_division",
+        required=False,
+        default=False,
+        action="store_true",
+        help="True if a clustering is applied to get the training/validation/test datasets. By default is False."
+    )
+    parser.add_argument(
+        "--butina_cluster_cutoff",
+        required=False,
+        default=0.4,
+        type=float,
+        help="Cutoff value to be applied for the Butina clustering method"
+    )
+    parser.add_argument(
         "--cache",
         required=False,
         default=None,

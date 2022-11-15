@@ -2,7 +2,7 @@ from argparse import Namespace
 from typing import Optional
 from torchinfo import summary
 from collagen.external.moad.interface import MOADInterface, PfizerInterface
-from collagen.external.moad.split import compute_moad_split
+from collagen.external.moad.split import compute_moad_split, full_moad_split
 
 
 class MoadVoxelModelTrain(object):
@@ -56,6 +56,10 @@ class MoadVoxelModelTrain(object):
                 raise ValueError(
                     "For 'train' mode is required to specify the 'csv' parameter."
                 )
+            if args.butina_cluster_division:
+                raise ValueError(
+                    "Rational division based on Butina clustering is only for fine-tuning"
+                )
 
             moad = MOADInterface(
                 metadata=args.csv,
@@ -83,12 +87,16 @@ class MoadVoxelModelTrain(object):
 
         train, val, _ = compute_moad_split(
             moad,
-            args.split_seed,
+            seed=args.split_seed,
+            fraction_train=args.fraction_train,
+            fraction_val=args.fraction_val,
             save_splits=args.save_splits,
             load_splits=args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
+            butina_cluster_division=args.butina_cluster_division,
+            butina_cluster_cutoff=args.butina_cluster_cutoff,
         )
 
         # pr = cProfile.Profile()
@@ -101,6 +109,9 @@ class MoadVoxelModelTrain(object):
         # open('cProfilez.txt', 'w+').write(s.getvalue())
 
         train_data = self.get_data_from_split(args, moad, train, voxel_params, device)
-        val_data = self.get_data_from_split(args, moad, val, voxel_params, device)
+        if len(val.targets) > 0:
+            val_data = self.get_data_from_split(args, moad, val, voxel_params, device)
+        else:
+            val_data = None
 
         return moad, train_data, val_data

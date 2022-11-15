@@ -1,9 +1,11 @@
+import os
 from dataclasses import dataclass
 from typing import List, Set, Tuple
 from .types import MOAD_split
 import numpy as np
 from collagen.util import sorted_list
 import json
+from collagen.external.moad.split_clustering import generate_splits_from_clustering
 
 # This module has functions required to split the MOAD into train, val, and test
 # sets.
@@ -116,27 +118,34 @@ def _generate_splits_from_scratch(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
+    butina_cluster_division: bool = False,
+    butina_cluster_cutoff: float = 0.4,
 ):
-    # Not loading previously determined splits from disk, so generate based on
-    # random seed.
+    if not butina_cluster_division:
+        print("Building training/validation/test sets in a random way")
+        # Not loading previously determined splits from disk, so generate based on
+        # random seed.
 
-    # First, get a flat list of all the families (not grouped by class).
-    families: List[List[str]] = []
-    for c in moad.classes:
-        for f in c.families:
-            families.append([x.pdb_id for x in f.targets])
+        # First, get a flat list of all the families (not grouped by class).
+        families: List[List[str]] = []
+        for c in moad.classes:
+            for f in c.families:
+                families.append([x.pdb_id for x in f.targets])
 
-    # Note that we're working with families (not individual targets in those
-    # families) so members of same family are shared across train, val, test
-    # sets.
+        # Note that we're working with families (not individual targets in those
+        # families) so members of same family are shared across train, val, test
+        # sets.
 
-    # Divide the families into train/val/test sets.
-    train_families, other_families = _split_seq_per_probability(
-        families, fraction_train
-    )
-    val_families, test_families = _split_seq_per_probability(
-        other_families, fraction_val
-    )
+        # Divide the families into train/val/test sets.
+        train_families, other_families = _split_seq_per_probability(
+            families, fraction_train
+        )
+        val_families, test_families = _split_seq_per_probability(
+            other_families, fraction_val
+        )
+    else:
+        print("Building training/validation/test sets based on Butina clustering")
+        train_families, val_families, test_families = generate_splits_from_clustering(moad, split_rand_num_gen, fraction_train, fraction_val, butina_cluster_cutoff,)
 
     # Now that they are divided, we can keep only the targets themselves (no
     # longer organized into families).
@@ -272,6 +281,8 @@ def _save_split(
         "val": {"pdbs": pdb_ids.val, "smiles": [smi for smi in all_smis.val]},
         "test": {"pdbs": pdb_ids.test, "smiles": [smi for smi in all_smis.test]},
     }
+    if not os.path.exists(os.path.dirname(save_splits)):
+        os.mkdir(os.path.dirname(save_splits))
     with open(save_splits, "w") as f:
         json.dump(split_inf, f, indent=4)
 
@@ -287,6 +298,8 @@ def compute_moad_split(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
+    butina_cluster_division: bool = False,
+    butina_cluster_cutoff = 0.4,
 ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
     """Compute a TRAIN/VAL/TEST split.
 
@@ -337,6 +350,8 @@ def compute_moad_split(
             max_pdbs_train,
             max_pdbs_val,
             max_pdbs_test,
+            butina_cluster_division,
+            butina_cluster_cutoff,
         )
     else:
         # User has asked to load splits from file on disk. Get from the file.
@@ -351,6 +366,10 @@ def compute_moad_split(
     if save_splits is not None:
         # Save spits and seed to json (for record keeping).
         _save_split(save_splits, seed, pdb_ids, all_smis)
+
+    print("Training dataset size: " + str(len(pdb_ids.train)))
+    print("Validation dataset size: " + str(len(pdb_ids.val)))
+    print("Test dataset size: " + str(len(pdb_ids.test)))
 
     return (
         MOAD_split(name="TRAIN", targets=pdb_ids.train, smiles=all_smis.train),
