@@ -403,7 +403,7 @@ class MoadVoxelModelTest(object):
         device = self.init_device(args)
 
         if args.csv and args.data:
-            print("Test mode on the MOAD test dataset")
+            print("Test mode on the MOAD test dataset. Using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
             moad = MOADInterface(
                 metadata=args.csv,
                 structures=args.data,
@@ -414,7 +414,7 @@ class MoadVoxelModelTest(object):
                 discard_distant_atoms=args.discard_distant_atoms,
             )
         elif not args.csv and args.data:
-            print("Test mode on a test dataset other than the MOAD test dataset")
+            print("Test mode on a test dataset other than the MOAD test dataset. Using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
             moad = PfizerInterface(
                 structures=args.data,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,

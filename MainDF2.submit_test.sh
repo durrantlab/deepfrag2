@@ -2,8 +2,8 @@
 #SBATCH --job-name=deepfrag
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
-#SBATCH --output=slurm.out
-#SBATCH --error=slurm.err
+#SBATCH --output=slurm_%A_%a.out
+#SBATCH --error=slurm_%A_%a.err
 #SBATCH --time=144:00:00
 #SBATCH --cluster=gpu
 #SBATCH --partition=a100
