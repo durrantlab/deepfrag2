@@ -1,3 +1,4 @@
+import glob
 from argparse import ArgumentParser, Namespace
 import cProfile
 from io import StringIO
@@ -14,7 +15,7 @@ from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.metrics.ensembled import averaged as ensemble_helper
-from collagen.external.moad.interface import MOADInterface
+from collagen.external.moad.interface import MOADInterface, PfizerInterface
 from collagen.external.moad.split import compute_moad_split
 from collagen.metrics.metrics import (
     most_similar_matches,
@@ -350,11 +351,13 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
-        pth = pth + os.sep
+        pth = pth + os.sep + args.aggregation_rotations + os.sep
+        os.makedirs(pth, exist_ok=True)
+        num = len(glob.glob(pth + "*.json", recursive=False))
 
-        with open(f"{pth}test_results_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_{args.aggregation_rotations}.json", "w") as f:
+        with open(f"{pth}test_results-{num + 1}.json", "w") as f:
             f.write(jsn)
-        with open(f"{pth}cProfile_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_{args.aggregation_rotations}.txt", "w+") as f:
+        with open(f"{pth}cProfile-{num + 1}.txt", "w+") as f:
             f.write(s.getvalue())
 
         # txt = ""
@@ -399,15 +402,32 @@ class MoadVoxelModelTest(object):
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
-        moad = MOADInterface(
-            metadata=args.csv,
-            structures=args.data,
-            cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-            grid_width=voxel_params.width,
-            grid_resolution=voxel_params.resolution,
-            noh=args.noh,
-            discard_distant_atoms=args.discard_distant_atoms,
-        )
+        if args.csv and args.data:
+            print("Test mode on the MOAD test dataset")
+            moad = MOADInterface(
+                metadata=args.csv,
+                structures=args.data,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms,
+            )
+        elif not args.csv and args.data:
+            print("Test mode on a test dataset other than the MOAD test dataset")
+            moad = PfizerInterface(
+                structures=args.data,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms,
+            )
+        elif args.csv and not args.data:
+            raise Exception("To run the test mode on the MOAD test database is required to specify the --csv and --data arguments")
+        elif not args.csv and not args.data:
+            raise Exception("To run the test mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only (for a database other than MOAD)")
+
         train, val, test = compute_moad_split(
             moad,
             args.split_seed,
