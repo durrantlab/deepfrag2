@@ -119,18 +119,18 @@ class MoadVoxelModelParent(
     #     return frag_counts
 
     def _save_examples_used(self, model, args):
-        if args.save_splits is not None:
-            if args.default_root_dir is None:
-                pth = os.getcwd() + os.sep
-            else:
-                pth = args.default_root_dir + os.sep
+        if args.default_root_dir is None:
+            pth = os.getcwd() + os.sep
+        else:
+            pth = args.default_root_dir + os.sep
 
-            if args.mode == "train":
-                torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_train.pt")
-            elif args.mode == "warm_starting":
-                torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_after_warm_starting.pt")
+        if args.mode == "train":
+            torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_train.pt")
+        elif args.mode == "warm_starting":
+            torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_after_warm_starting.pt")
 
+        out_name = pth + os.sep + args.mode + ".actually_used.json"
+        if not os.path.exists(out_name):
             examples_used = model.get_examples_used()
-            out_name = pth + os.sep + os.path.basename(args.save_splits) + "_" + args.mode + ".actually_used.json"
             with open(out_name, "w") as f:
                 json.dump(examples_used, f, indent=4)

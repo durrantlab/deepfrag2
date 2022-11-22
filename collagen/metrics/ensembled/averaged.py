@@ -15,8 +15,8 @@ class AveragedEnsembled(ParentEnsembled):
     aggregation = None
 
     def __init__(self, trainer, model, test_data, num_rotations, device, ckpt_name, aggregation_function: Operator):
-        if aggregation_function.__str__() != Operator.MEAN.__str__() and num_rotations == 1:
-            raise "Use more than one rotation to use an aggregation function other than Mean (average) function"
+        if aggregation_function != Operator.MEAN.value and num_rotations == 1:
+            raise Exception("Use more than one rotation to use an aggregation function other than Mean (average) function")
 
         if aggregation_function != Operator.MEAN.value:
             self.aggregation = Aggregate1DTensor(operator=aggregation_function)
@@ -42,6 +42,8 @@ class AveragedEnsembled(ParentEnsembled):
     def _finalize_prediction_tensor(self):
         # Divide by number of rotations to get the final average predictions.
         if self.num_rotations == 1 or self.aggregation is None:
+            self.predictions_ensembled.to(self.device)
+            torch.device(self.device)
             torch.div(
                 self.predictions_ensembled,
                 torch.tensor(self.num_rotations, device=self.device),
