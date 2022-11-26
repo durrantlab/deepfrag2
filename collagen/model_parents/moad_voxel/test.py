@@ -272,11 +272,6 @@ class MoadVoxelModelTest(object):
 
         predictions_per_rot.finish(pca_space)
         model, predictions_ensembled = predictions_per_rot.unpack()
-
-        torch.device(device)
-        predictions_ensembled.to(device)
-        avg_over_ckpts_of_avgs.to(device)
-
         torch.add(
             avg_over_ckpts_of_avgs,
             predictions_ensembled,
