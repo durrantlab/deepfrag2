@@ -287,10 +287,10 @@ class MoadVoxelModelTest(object):
                 )
 
         # Calculate top_k metric for this checkpoint
-        label_set_fingerprints = torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=True)
+        label_set_fingerprints = torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=False)
         top_k_results = top_k(
             predictions_ensembled,
-            torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=True),
+            torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=False),
             label_set_fingerprints,
             k=[1, 8, 16, 32, 64],
         )
@@ -493,10 +493,10 @@ class MoadVoxelModelTest(object):
         )
 
         # Calculate top-k metric of that average of averages
-        label_set_fingerprints = torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=True)
+        label_set_fingerprints = torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=False)
         top_k_results = top_k(
             avg_over_ckpts_of_avgs,
-            torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=True),
+            torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=False),
             label_set_fingerprints,
             k=[1, 8, 16, 32, 64],
         )

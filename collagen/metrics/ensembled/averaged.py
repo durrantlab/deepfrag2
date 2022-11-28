@@ -42,10 +42,10 @@ class AveragedEnsembled(ParentEnsembled):
     def _finalize_prediction_tensor(self):
         # Divide by number of rotations to get the final average predictions.
         if self.num_rotations == 1 or self.aggregation is None:
-            self.predictions_ensembled = torch.tensor(self.predictions_ensembled, dtype=torch.float32, device=self.device, requires_grad=True)
+            self.predictions_ensembled = torch.tensor(self.predictions_ensembled, dtype=torch.float32, device=self.device, requires_grad=False)
             torch.div(
                 self.predictions_ensembled,
-                torch.tensor(self.num_rotations, dtype=torch.float32, device=self.device, requires_grad=True),
+                torch.tensor(self.num_rotations, dtype=torch.float32, device=self.device, requires_grad=False),
                 out=self.predictions_ensembled
             )
         else:
