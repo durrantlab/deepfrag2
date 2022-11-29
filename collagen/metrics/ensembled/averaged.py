@@ -5,8 +5,19 @@ from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
+import multiprocessing
 # Given multiple predictions, this class can be used to average them. Much of
 # the "meat" is in ParentEnsembled.
+
+
+def _finalize_aggregation(dict_predictions_ensembled, aggregation, device, idx):
+    nested_list = dict_predictions_ensembled[idx.__str__()]
+    tensor_resp = np.zeros(len(nested_list[0]), dtype=float)
+    matrix = np.matrix(nested_list)
+    for j in range(0, len(tensor_resp)):
+        tensor_resp[j] = aggregation.aggregate_on_numpy_array((np.asarray(matrix[:, j])).flatten())
+    tensor_resp = torch.tensor(tensor_resp, dtype=torch.float32, device=device, requires_grad=False)
+    return idx, tensor_resp
 
 
 class AveragedEnsembled(ParentEnsembled):
@@ -41,6 +52,7 @@ class AveragedEnsembled(ParentEnsembled):
 
     def _finalize_prediction_tensor(self):
         # Divide by number of rotations to get the final average predictions.
+        print("Starting _finalize_prediction_tensor")
         if self.num_rotations == 1 or self.aggregation is None:
             self.predictions_ensembled = torch.tensor(self.predictions_ensembled, dtype=torch.float32, device=self.device, requires_grad=False)
             torch.div(
@@ -49,11 +61,12 @@ class AveragedEnsembled(ParentEnsembled):
                 out=self.predictions_ensembled
             )
         else:
-            for i in range(0, len(self.dict_predictions_ensembled)):
-                nested_list = self.dict_predictions_ensembled[i.__str__()]
-                tensor_resp = np.zeros(len(nested_list[0]), dtype=float)
-                matrix = np.matrix(nested_list)
-                for j in range(0, len(tensor_resp)):
-                    tensor_resp[j] = self.aggregation.aggregate_on_numpy_array((np.asarray(matrix[:, j])).flatten())
-                tensor_resp = torch.tensor(tensor_resp, dtype=torch.float32, device=self.device, requires_grad=False)
-                self.predictions_ensembled[i] = tensor_resp
+            print("Starting aggregation")
+            parameters = [(self.dict_predictions_ensembled, self.aggregation, self.device, i) for i in range(0, len(self.dict_predictions_ensembled))]
+            with multiprocessing.Pool() as p:
+                for i, tensor_resp in p.starmap(_finalize_aggregation, iterable=parameters, chunksize=1):
+                    print(i)
+                    self.predictions_ensembled[i] = tensor_resp
+                p.close()
+            print("Finishing aggregation")
+        print("Finishing _finalize_prediction_tensor")

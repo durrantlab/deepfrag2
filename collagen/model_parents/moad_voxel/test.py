@@ -272,6 +272,7 @@ class MoadVoxelModelTest(object):
 
         predictions_per_rot.finish(pca_space)
         model, predictions_ensembled = predictions_per_rot.unpack()
+        avg_over_ckpts_of_avgs = torch.tensor(avg_over_ckpts_of_avgs, dtype=torch.float32, device=device, requires_grad=False)
         torch.add(
             avg_over_ckpts_of_avgs,
             predictions_ensembled,
@@ -486,6 +487,7 @@ class MoadVoxelModelTest(object):
                 ) = payload
 
         # Get the average of averages (across all checkpoints)
+        avg_over_ckpts_of_avgs = torch.tensor(avg_over_ckpts_of_avgs, dtype=torch.float32, device=device, requires_grad=False)
         torch.div(
             avg_over_ckpts_of_avgs,
             torch.tensor(len(ckpts), device=device),
