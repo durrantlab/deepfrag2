@@ -14,9 +14,11 @@ def _finalize_aggregation(dict_predictions_ensembled, aggregation, device, idx):
     nested_list = dict_predictions_ensembled[idx.__str__()]
     tensor_resp = np.zeros(len(nested_list[0]), dtype=float)
     matrix = np.matrix(nested_list)
+    print("starting _finalize_aggregation " + str(idx))
     for j in range(0, len(tensor_resp)):
         tensor_resp[j] = aggregation.aggregate_on_numpy_array((np.asarray(matrix[:, j])).flatten())
     tensor_resp = torch.tensor(tensor_resp, dtype=torch.float32, device=device, requires_grad=False)
+    print("finishing _finalize_aggregation " + str(idx))
     return idx, tensor_resp
 
 
@@ -51,7 +53,6 @@ class AveragedEnsembled(ParentEnsembled):
         torch.add(self.predictions_ensembled, predicitons_to_add, out=self.predictions_ensembled)
 
     def _finalize_prediction_tensor(self):
-        # Divide by number of rotations to get the final average predictions.
         print("Starting _finalize_prediction_tensor")
         if self.num_rotations == 1 or self.aggregation is None:
             self.predictions_ensembled = torch.tensor(self.predictions_ensembled, dtype=torch.float32, device=self.device, requires_grad=False)
@@ -65,8 +66,9 @@ class AveragedEnsembled(ParentEnsembled):
             parameters = [(self.dict_predictions_ensembled, self.aggregation, self.device, i) for i in range(0, len(self.dict_predictions_ensembled))]
             with multiprocessing.Pool() as p:
                 for i, tensor_resp in p.starmap(_finalize_aggregation, iterable=parameters, chunksize=1):
-                    print(i)
+                    print("starting assignment " + str(i))
                     self.predictions_ensembled[i] = tensor_resp
+                    print("finishing assignment " + str(i))
                 p.close()
             print("Finishing aggregation")
         print("Finishing _finalize_prediction_tensor")
