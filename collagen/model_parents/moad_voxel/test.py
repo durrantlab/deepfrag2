@@ -117,7 +117,7 @@ class MoadVoxelModelTest(object):
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
 
         if existing_label_set_fps is None:
-            label_set_fps = torch.zeros((0, args.fp_size), device=device)
+            label_set_fps = torch.zeros((0, args.fp_size), dtype=torch.float32, device=device, requires_grad=False)
             label_set_smis = []
         else:
             # If you get an existing set of fingerprints, be sure to keep only the
@@ -150,7 +150,7 @@ class MoadVoxelModelTest(object):
                 for smi, mol in mols_from_smi_file(filename):
                     fp_tnsrs_from_smi_file.append(
                         torch.tensor(
-                            mol.fingerprint("rdk10", args.fp_size), device=device
+                            mol.fingerprint("rdk10", args.fp_size), dtype=torch.float32, device=device, requires_grad=False
                         ).reshape((1, args.fp_size))
                     )
                     label_set_smis.append(smi)
@@ -208,14 +208,10 @@ class MoadVoxelModelTest(object):
             100 * r for r in pca_space.pca.explained_variance_ratio_.tolist()
         ]
 
-        avg_over_ckpts_of_avgs = torch.zeros(
-            model.prediction_targets.shape, device=device
-        )
-
         return (
             pca_space,
-            avg_over_ckpts_of_avgs,
-            label_set_fingerprints,
+            torch.zeros(model.prediction_targets.shape, dtype=torch.float32, device=device, requires_grad=False),
+            torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=False),
             label_set_entry_infos,
         )
 
@@ -272,7 +268,6 @@ class MoadVoxelModelTest(object):
 
         predictions_per_rot.finish(pca_space)
         model, predictions_ensembled = predictions_per_rot.unpack()
-        avg_over_ckpts_of_avgs = torch.tensor(avg_over_ckpts_of_avgs, dtype=torch.float32, device=device, requires_grad=False)
         torch.add(
             avg_over_ckpts_of_avgs,
             predictions_ensembled,
@@ -288,7 +283,6 @@ class MoadVoxelModelTest(object):
                 )
 
         # Calculate top_k metric for this checkpoint
-        label_set_fingerprints = torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=False)
         top_k_results = top_k(
             predictions_ensembled,
             torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=False),
@@ -487,7 +481,6 @@ class MoadVoxelModelTest(object):
                 ) = payload
 
         # Get the average of averages (across all checkpoints)
-        avg_over_ckpts_of_avgs = torch.tensor(avg_over_ckpts_of_avgs, dtype=torch.float32, device=device, requires_grad=False)
         torch.div(
             avg_over_ckpts_of_avgs,
             torch.tensor(len(ckpts), device=device),
@@ -495,7 +488,6 @@ class MoadVoxelModelTest(object):
         )
 
         # Calculate top-k metric of that average of averages
-        label_set_fingerprints = torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=False)
         top_k_results = top_k(
             avg_over_ckpts_of_avgs,
             torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=False),

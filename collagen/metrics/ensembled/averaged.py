@@ -5,21 +5,9 @@ from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
-import multiprocessing
+from multiprocessing import cpu_count
 # Given multiple predictions, this class can be used to average them. Much of
 # the "meat" is in ParentEnsembled.
-
-
-def _finalize_aggregation(dict_predictions_ensembled, aggregation, device, idx):
-    nested_list = dict_predictions_ensembled[idx.__str__()]
-    tensor_resp = np.zeros(len(nested_list[0]), dtype=float)
-    matrix = np.matrix(nested_list)
-    print("starting _finalize_aggregation " + str(idx))
-    for j in range(0, len(tensor_resp)):
-        tensor_resp[j] = aggregation.aggregate_on_numpy_array((np.asarray(matrix[:, j])).flatten())
-    tensor_resp = torch.tensor(tensor_resp, dtype=torch.float32, device=device, requires_grad=False)
-    print("finishing _finalize_aggregation " + str(idx))
-    return idx, tensor_resp
 
 
 class AveragedEnsembled(ParentEnsembled):
@@ -39,21 +27,23 @@ class AveragedEnsembled(ParentEnsembled):
     def _create_initial_prediction_tensor(self) -> torch.Tensor:
         # At this point, model is after inference on the first rotation. So it
         # has a prediciton.
-        predictions_ = self.model.predictions.detach().clone()
+        predictions_to_return = self.model.predictions.detach().clone()
+
         if self.num_rotations > 1 and self.aggregation is not None:
+            predictions_ = predictions_to_return.cpu().detach().clone()
             self.dict_predictions_ensembled = {i.__str__(): [predictions_[i].numpy()] for i in range(0, len(predictions_))}
-        return predictions_
+
+        return predictions_to_return
 
     def _udpate_prediction_tensor(self, predicitons_to_add: torch.Tensor, idx: int):
         if self.num_rotations > 1 and self.aggregation is not None:
-            predictions_ = predicitons_to_add.detach().clone()
+            predictions_ = predicitons_to_add.cpu().detach().clone()
             for i in range(0, len(predictions_)):
                 self.dict_predictions_ensembled[i.__str__()].append(predictions_[i].numpy())
 
         torch.add(self.predictions_ensembled, predicitons_to_add, out=self.predictions_ensembled)
 
     def _finalize_prediction_tensor(self):
-        print("Starting _finalize_prediction_tensor")
         if self.num_rotations == 1 or self.aggregation is None:
             self.predictions_ensembled = torch.tensor(self.predictions_ensembled, dtype=torch.float32, device=self.device, requires_grad=False)
             torch.div(
@@ -62,13 +52,12 @@ class AveragedEnsembled(ParentEnsembled):
                 out=self.predictions_ensembled
             )
         else:
-            print("Starting aggregation")
-            parameters = [(self.dict_predictions_ensembled, self.aggregation, self.device, i) for i in range(0, len(self.dict_predictions_ensembled))]
-            with multiprocessing.Pool() as p:
-                for i, tensor_resp in p.starmap(_finalize_aggregation, iterable=parameters, chunksize=1):
-                    print("starting assignment " + str(i))
-                    self.predictions_ensembled[i] = tensor_resp
-                    print("finishing assignment " + str(i))
-                p.close()
-            print("Finishing aggregation")
-        print("Finishing _finalize_prediction_tensor")
+            for i in range(0, len(self.dict_predictions_ensembled)):
+                nested_list = self.dict_predictions_ensembled[i.__str__()]
+                tensor_resp = np.zeros(len(nested_list[0]), dtype=float)
+                matrix = np.matrix(nested_list)
+                for j in range(0, len(tensor_resp)):
+                    tensor_resp[j] = self.aggregation.aggregate_on_numpy_array((np.asarray(matrix[:, j])).flatten())
+                tensor_resp = torch.tensor(tensor_resp, dtype=torch.float32, device=self.device, requires_grad=False)
+                self.predictions_ensembled[i] = tensor_resp
+            self.predictions_ensembled = torch.tensor(self.predictions_ensembled, dtype=torch.float32, device=self.device, requires_grad=False)
