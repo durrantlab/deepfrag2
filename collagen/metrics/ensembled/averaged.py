@@ -57,7 +57,9 @@ class AveragedEnsembled(ParentEnsembled):
                 tensor_resp = np.zeros(len(nested_list[0]), dtype=float)
                 matrix = np.matrix(nested_list)
                 for j in range(0, len(tensor_resp)):
-                    tensor_resp[j] = self.aggregation.aggregate_on_numpy_array((np.asarray(matrix[:, j])).flatten())
+                    array_col = np.asarray(matrix[:, j])
+                    array_col = array_col.flatten()
+                    tensor_resp[j] = self.aggregation.aggregate_on_numpy_array(array_col)
                 tensor_resp = torch.tensor(tensor_resp, dtype=torch.float32, device=self.device, requires_grad=False)
                 self.predictions_ensembled[i] = tensor_resp
             self.predictions_ensembled = torch.tensor(self.predictions_ensembled, dtype=torch.float32, device=self.device, requires_grad=False)
