@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=deepfrag
+#SBATCH --job-name=deepfrag_test
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #SBATCH --output=slurm_%A_%a.out
