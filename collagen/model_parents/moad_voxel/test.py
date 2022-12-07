@@ -440,6 +440,7 @@ class MoadVoxelModelTest(object):
         test_data = self.get_data_from_split(
             args, moad, test, voxel_params, device, shuffle=False
         )
+        print("Number of batches for the test data: " + str(len(test_data)))
 
         trainer = self.init_trainer(args)
 

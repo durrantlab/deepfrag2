@@ -109,8 +109,10 @@ class MoadVoxelModelTrain(object):
         # open('cProfilez.txt', 'w+').write(s.getvalue())
 
         train_data = self.get_data_from_split(args, moad, train, voxel_params, device)
+        print("Number of batches for the training data: " + str(len(train_data)))
         if len(val.targets) > 0:
             val_data = self.get_data_from_split(args, moad, val, voxel_params, device)
+            print("Number of batches for the validation data: " + str(len(val_data)))
         else:
             val_data = None
 
