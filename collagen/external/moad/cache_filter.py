@@ -321,4 +321,5 @@ def load_cache_and_filter(
             + str(lig)
         )
 
+    print("Number of fragments in the " + split.name + " set: " + str(len(filtered_cache)))
     return cache, filtered_cache
