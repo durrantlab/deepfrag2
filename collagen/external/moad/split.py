@@ -266,7 +266,7 @@ def _save_split(
                 "frags": len(set(all_smis.train)),
             },
             "val": {
-                "pdbs": len(str(pdb_ids.val)),
+                "pdbs": len(set(pdb_ids.val)),
                 "frags": len(set(all_smis.val)),
             },
             "test": {

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=deepfrag
+#SBATCH --job-name=deepfrag-finetune
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #SBATCH --output=slurm.out
@@ -15,5 +15,6 @@ module load python/ondemand-jupyter-python3.8
 source activate deepfrag2cesar
 
 cd /ihome/jdurrant/crg93/deepfrag2/
+
 python MainDF2.py --data /ihome/jdurrant/crg93/prots_and_ligs/ --save_splits /ihome/jdurrant/crg93/output_ft_random/splits.json --default_root_dir /ihome/jdurrant/crg93/output_ft_random/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30 --mode warm_starting --model_for_warm_starting /ihome/jdurrant/crg93/output_deepfrag/model_mean_mean_train.pt --save_every_epoch
-#python MainDF2.py --data /ihome/jdurrant/crg93/prots_and_ligs/ --save_splits /ihome/jdurrant/crg93/output_ft_random/splits.json --default_root_dir /ihome/jdurrant/crg93/output_ft_random/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30 --mode warm_starting --model_for_warm_starting /ihome/jdurrant/crg93/output_deepfrag/model_mean_mean_train.pt --save_every_epoch --butina_cluster_division --butina_cluster_cutoff 0.4
+#python MainDF2.py --data /ihome/jdurrant/crg93/prots_and_ligs/ --save_splits /ihome/jdurrant/crg93/output_ft_buti04/splits.json --default_root_dir /ihome/jdurrant/crg93/output_ft_buti04/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30 --mode warm_starting --model_for_warm_starting /ihome/jdurrant/crg93/output_deepfrag/model_mean_mean_train.pt --save_every_epoch --butina_cluster_division --butina_cluster_cutoff 0.4

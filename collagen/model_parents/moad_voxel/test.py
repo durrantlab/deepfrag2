@@ -1,3 +1,4 @@
+import glob
 from argparse import ArgumentParser, Namespace
 import cProfile
 from io import StringIO
@@ -14,7 +15,7 @@ from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.metrics.ensembled import averaged as ensemble_helper
-from collagen.external.moad.interface import MOADInterface
+from collagen.external.moad.interface import MOADInterface, PfizerInterface
 from collagen.external.moad.split import compute_moad_split
 from collagen.metrics.metrics import (
     most_similar_matches,
@@ -116,7 +117,7 @@ class MoadVoxelModelTest(object):
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
 
         if existing_label_set_fps is None:
-            label_set_fps = torch.zeros((0, args.fp_size), device=device)
+            label_set_fps = torch.zeros((0, args.fp_size), dtype=torch.float32, device=device, requires_grad=False)
             label_set_smis = []
         else:
             # If you get an existing set of fingerprints, be sure to keep only the
@@ -149,7 +150,7 @@ class MoadVoxelModelTest(object):
                 for smi, mol in mols_from_smi_file(filename):
                     fp_tnsrs_from_smi_file.append(
                         torch.tensor(
-                            mol.fingerprint("rdk10", args.fp_size), device=device
+                            mol.fingerprint("rdk10", args.fp_size), dtype=torch.float32, device=device, requires_grad=False
                         ).reshape((1, args.fp_size))
                     )
                     label_set_smis.append(smi)
@@ -207,14 +208,10 @@ class MoadVoxelModelTest(object):
             100 * r for r in pca_space.pca.explained_variance_ratio_.tolist()
         ]
 
-        avg_over_ckpts_of_avgs = torch.zeros(
-            model.prediction_targets.shape, device=device
-        )
-
         return (
             pca_space,
-            avg_over_ckpts_of_avgs,
-            label_set_fingerprints,
+            torch.zeros(model.prediction_targets.shape, dtype=torch.float32, device=device, requires_grad=False),
+            torch.tensor(label_set_fingerprints, dtype=torch.float32, device=device, requires_grad=False),
             label_set_entry_infos,
         )
 
@@ -288,7 +285,7 @@ class MoadVoxelModelTest(object):
         # Calculate top_k metric for this checkpoint
         top_k_results = top_k(
             predictions_ensembled,
-            model.prediction_targets,
+            torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=False),
             label_set_fingerprints,
             k=[1, 8, 16, 32, 64],
         )
@@ -350,11 +347,13 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
-        pth = pth + os.sep
+        pth = pth + os.sep + args.aggregation_rotations + os.sep
+        os.makedirs(pth, exist_ok=True)
+        num = len(glob.glob(pth + "*.json", recursive=False))
 
-        with open(f"{pth}test_results_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_{args.aggregation_rotations}.json", "w") as f:
+        with open(f"{pth}test_results-{num + 1}.json", "w") as f:
             f.write(jsn)
-        with open(f"{pth}cProfile_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_{args.aggregation_rotations}.txt", "w+") as f:
+        with open(f"{pth}cProfile-{num + 1}.txt", "w+") as f:
             f.write(s.getvalue())
 
         # txt = ""
@@ -399,15 +398,32 @@ class MoadVoxelModelTest(object):
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
-        moad = MOADInterface(
-            metadata=args.csv,
-            structures=args.data,
-            cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-            grid_width=voxel_params.width,
-            grid_resolution=voxel_params.resolution,
-            noh=args.noh,
-            discard_distant_atoms=args.discard_distant_atoms,
-        )
+        if args.csv and args.data:
+            print("Test mode on the MOAD test dataset. Using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
+            moad = MOADInterface(
+                metadata=args.csv,
+                structures=args.data,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms,
+            )
+        elif not args.csv and args.data:
+            print("Test mode on a test dataset other than the MOAD test dataset. Using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
+            moad = PfizerInterface(
+                structures=args.data,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms,
+            )
+        elif args.csv and not args.data:
+            raise Exception("To run the test mode on the MOAD test database is required to specify the --csv and --data arguments")
+        elif not args.csv and not args.data:
+            raise Exception("To run the test mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only (for a database other than MOAD)")
+
         train, val, test = compute_moad_split(
             moad,
             args.split_seed,
@@ -424,6 +440,7 @@ class MoadVoxelModelTest(object):
         test_data = self.get_data_from_split(
             args, moad, test, voxel_params, device, shuffle=False
         )
+        print("Number of batches for the test data: " + str(len(test_data)))
 
         trainer = self.init_trainer(args)
 
@@ -474,7 +491,7 @@ class MoadVoxelModelTest(object):
         # Calculate top-k metric of that average of averages
         top_k_results = top_k(
             avg_over_ckpts_of_avgs,
-            model.prediction_targets,
+            torch.tensor(model.prediction_targets, dtype=torch.float32, device=device, requires_grad=False),
             label_set_fingerprints,
             k=[1, 8, 16, 32, 64],
         )

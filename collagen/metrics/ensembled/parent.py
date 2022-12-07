@@ -9,6 +9,7 @@ from collagen.metrics.metrics import PCAProject
 # A parent class for combining multiple predictions (ensembles of predictions)
 # into one that's hopefully more accurate.
 
+
 class ParentEnsembled(ABC):
     def __init__(self, trainer: Any, model: Any, test_data: DataLambda, num_rotations: int, device: Any, ckpt_name: str):
         self.device = device
