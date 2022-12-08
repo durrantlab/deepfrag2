@@ -13,9 +13,11 @@
 module purge
 module load python/ondemand-jupyter-python3.8
 
-source activate deepfrag2cesar
+. paths.sh
 
-cd /ihome/jdurrant/crg93/output_ft_buti04
+source activate ${CONDA_ENV_NAME}
+
+cd ${OUTPUT_DIR}/
 
 if [ $SLURM_ARRAY_TASK_ID -lt 10 ]; then
   file=`ls loss-epoch=0${SLURM_ARRAY_TASK_ID}*.ckpt`
@@ -26,8 +28,8 @@ fi
 file=$(realpath $file)
 echo ${file}
 
-cd /ihome/jdurrant/crg93/deepfrag2/
+cd ${DEEPFRAG_ROOT}/
 
 operator="mean"
 
-python MainDF2.py --data /ihome/jdurrant/crg93/prots_and_ligs/ --load_splits /ihome/jdurrant/crg93/output_ft_buti04/splits.json --default_root_dir /ihome/jdurrant/crg93/output_ft_buti04 --mode test --inference_rotations 8 --aggregation_rotations ${operator} --load_checkpoint ${file}
+python MainDF2.py --data ${DIR_WITH_MODELS}/ --load_splits ${OUTPUT_DIR}/splits.json --default_root_dir ${OUTPUT_DIR} --mode test --inference_rotations 8 --aggregation_rotations ${operator} --load_checkpoint ${file}

@@ -1,7 +1,7 @@
 from argparse import Namespace
 from typing import Optional
 from torchinfo import summary
-from collagen.external.moad.interface import MOADInterface, PfizerInterface
+from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
 from collagen.external.moad.split import compute_moad_split, full_moad_split
 
 
@@ -76,7 +76,7 @@ class MoadVoxelModelTrain(object):
                     "For 'warm_starting' mode is not required to specify the 'csv' parameter."
                 )
 
-            moad = PfizerInterface(
+            moad = PdbSdfDirInterface(
                 structures=args.data,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,

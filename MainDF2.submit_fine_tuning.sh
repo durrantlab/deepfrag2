@@ -12,9 +12,14 @@
 module purge
 module load python/ondemand-jupyter-python3.8
 
-source activate deepfrag2cesar
+. paths.sh
 
-cd /ihome/jdurrant/crg93/deepfrag2/
+source activate ${CONDA_ENV_NAME}
 
-python MainDF2.py --data /ihome/jdurrant/crg93/prots_and_ligs/ --save_splits /ihome/jdurrant/crg93/output_ft_random/splits.json --default_root_dir /ihome/jdurrant/crg93/output_ft_random/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30 --mode warm_starting --model_for_warm_starting /ihome/jdurrant/crg93/output_deepfrag/model_mean_mean_train.pt --save_every_epoch
-#python MainDF2.py --data /ihome/jdurrant/crg93/prots_and_ligs/ --save_splits /ihome/jdurrant/crg93/output_ft_buti04/splits.json --default_root_dir /ihome/jdurrant/crg93/output_ft_buti04/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30 --mode warm_starting --model_for_warm_starting /ihome/jdurrant/crg93/output_deepfrag/model_mean_mean_train.pt --save_every_epoch --butina_cluster_division --butina_cluster_cutoff 0.4
+cd ${DEEPFRAG_ROOT}/
+
+# This command recommended for production. Prevents similar compounds from appearing in both training and val/test sets.
+python MainDF2.py --data ${DIR_WITH_MODELS}/ --save_splits ${OUTPUT_DIR}/splits.json --default_root_dir ${OUTPUT_DIR}/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30 --mode warm_starting --model_for_warm_starting ${INPUT_MODEL_FOR_FINETUNING} --save_every_epoch --butina_cluster_division --butina_cluster_cutoff 0.4
+
+# Random split for train/val/test. Good for testing.
+# python MainDF2.py --data ${DIR_WITH_MODELS}/ --save_splits ${OUTPUT_DIR}/splits.json --default_root_dir ${OUTPUT_DIR}/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30 --mode warm_starting --model_for_warm_starting ${INPUT_MODEL_FOR_FINETUNING} --save_every_epoch
