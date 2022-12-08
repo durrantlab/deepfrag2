@@ -93,8 +93,7 @@ class MOAD_target(object):
             except Exception as e:
                 # If there's an error loading the pickle file, regenerate the
                 # pickle file
-                print("Corrupt pkl: " + str(e), file=sys.stderr)
-                pass
+                print(f"Error loading pkl: {str(e)}", file=sys.stderr)
 
         return None, pkl_filename
 
@@ -238,7 +237,7 @@ class MOAD_target(object):
     def _save_to_file_cache(self, pkl_filename: str, rec_mol: Any, ligands: Any):
         if self.cache_pdbs_to_disk:
             if os.path.exists(pkl_filename):
-                print("PROB!", pkl_filename)
+                print("\nFile already exists! Already saved from another thread?", pkl_filename)
             with open(pkl_filename, "wb") as f:
                 # print("Save pickle")
                 pickle.dump([rec_mol, ligands], f, protocol=pickle.HIGHEST_PROTOCOL)
