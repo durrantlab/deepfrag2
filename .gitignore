@@ -41,3 +41,5 @@ tmp/
 tmp_sync_pf.sh
 
 apps/deepfrag/collagen
+
+paths.sh

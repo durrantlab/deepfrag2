@@ -1,7 +1,7 @@
 from dataclasses import field
 from pathlib import Path
 from typing import Dict, List, Union
-from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, Pfizer_target, Pfizer_ligand
+from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, PdbSdfDir_target, PdbSdfDir_ligand
 import glob
 import os
 from rdkit import Chem
@@ -187,7 +187,7 @@ class MOADInterface(object):
         # hierarchy.
         for cls in self.classes:
             for fam in cls.families:
-                for targ in fam.targets:
+                for targ_idx, targ in enumerate(fam.targets):
                     # Assume lower case
                     k = targ.pdb_id.lower()
 
@@ -202,11 +202,17 @@ class MOADInterface(object):
                         # No structures for this pdb id!
                         print(f"No structures for {k}. Is your copy of BindingMOAD complete?")
 
+                        # Mark this target in familes for deletion
+                        fam.targets[targ_idx] = None
+
+                # Remove any Nones from the target list
+                fam.targets = [t for t in fam.targets if t is not None]
+
     def _extension_for_resolve_paths(self):
         return "bio*"
 
 
-class PfizerInterface(MOADInterface):
+class PdbSdfDirInterface(MOADInterface):
     def __init__(
             self,
             structures: Union[str, Path],
@@ -247,7 +253,7 @@ class PfizerInterface(MOADInterface):
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
                 curr_target_name = full_pdb_name
-                curr_target = Pfizer_target(
+                curr_target = PdbSdfDir_target(
                     pdb_id=full_pdb_name,
                     ligands=[],
                     cache_pdbs_to_disk=cache_pdbs_to_disk,
@@ -261,7 +267,7 @@ class PfizerInterface(MOADInterface):
                 for ligand_ in sdf_reader:  # it is expected only one iteration because each SDF file must have a single molecule
                     if ligand_ is not None:
                         curr_target.ligands.append(
-                            Pfizer_ligand(
+                            PdbSdfDir_ligand(
                                 name=linecache.getline(every_csv_path + os.sep + sdf_name + ".sdf", 1).rstrip(),
                                 validity="valid",
                                 affinity_measure="",

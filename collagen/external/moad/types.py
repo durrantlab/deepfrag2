@@ -60,7 +60,6 @@ class MOAD_target(object):
 
     def _get_pdb_from_disk_cache(self, idx: int) -> Tuple[Any]:
         # Load the protein/ligand complex (PDB formatted).
-
         pkl_filename = str(self.files[idx])
         if self.discard_distant_atoms:
             pkl_filename += f"_{str(self.grid_width)}_{str(self.grid_resolution)}"
@@ -326,7 +325,7 @@ class MOAD_target(object):
 
 
 @dataclass
-class Pfizer_target(MOAD_target):
+class PdbSdfDir_target(MOAD_target):
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
 
@@ -403,7 +402,7 @@ class MOAD_ligand(object):
 
 
 @dataclass
-class Pfizer_ligand(MOAD_ligand):
+class PdbSdfDir_ligand(MOAD_ligand):
     rdmol: Any
 
 
