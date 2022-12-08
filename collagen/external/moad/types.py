@@ -60,7 +60,6 @@ class MOAD_target(object):
 
     def _get_pdb_from_disk_cache(self, idx: int) -> Tuple[Any]:
         # Load the protein/ligand complex (PDB formatted).
-
         pkl_filename = str(self.files[idx])
         if self.discard_distant_atoms:
             pkl_filename += f"_{str(self.grid_width)}_{str(self.grid_resolution)}"

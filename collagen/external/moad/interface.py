@@ -187,7 +187,7 @@ class MOADInterface(object):
         # hierarchy.
         for cls in self.classes:
             for fam in cls.families:
-                for targ in fam.targets:
+                for targ_idx, targ in enumerate(fam.targets):
                     # Assume lower case
                     k = targ.pdb_id.lower()
 
@@ -201,6 +201,12 @@ class MOADInterface(object):
                     else:
                         # No structures for this pdb id!
                         print(f"No structures for {k}")
+
+                        # Mark this target in familes for deletion
+                        fam.targets[targ_idx] = None
+
+                # Remove any Nones from the target list
+                fam.targets = [t for t in fam.targets if t is not None]
 
     def _extension_for_resolve_paths(self):
         return "bio*"

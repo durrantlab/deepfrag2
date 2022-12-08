@@ -223,9 +223,11 @@ def _build_moad_cache_file(
     for pdb_id in moad.targets:
         list_ids_moad.append((pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE))
 
+    print("Building/updating " + filename)
     pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
     with multiprocessing.Pool(cores) as p:
         for pdb_id, lig_infs in p.starmap(_get_info_given_pdb_id, list_ids_moad):
+        
             pdb_id = pdb_id.lower()
 
             if pdb_id not in cache:
@@ -238,6 +240,7 @@ def _build_moad_cache_file(
                 for prop_name in lig_inf.keys():
                     prop_val = lig_inf[prop_name]
                     cache[pdb_id][lig_name][prop_name] = prop_val
+            # TODO: Progressbar doesn't actually update. Confusing.
 
             pbar.update(1)
         p.close()
