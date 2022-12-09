@@ -15,7 +15,7 @@ from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.metrics.ensembled import averaged as ensemble_helper
-from collagen.external.moad.interface import MOADInterface, PfizerInterface
+from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
 from collagen.external.moad.split import compute_moad_split
 from collagen.metrics.metrics import (
     most_similar_matches,
@@ -411,7 +411,7 @@ class MoadVoxelModelTest(object):
             )
         elif not args.csv and args.data:
             print("Test mode on a test dataset other than the MOAD test dataset. Using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
-            moad = PfizerInterface(
+            moad = PdbSdfDirInterface(
                 structures=args.data,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
