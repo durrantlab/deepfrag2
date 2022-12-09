@@ -327,7 +327,7 @@ class MOAD_target(object):
 
 
 @dataclass
-class PdbSdfFiles_target(MOAD_target):
+class Pfizer_target(MOAD_target):
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
 
@@ -404,7 +404,7 @@ class MOAD_ligand(object):
 
 
 @dataclass
-class PdbSdfFiles_ligand(MOAD_ligand):
+class Pfizer_ligand(MOAD_ligand):
     rdmol: Any
 
 
