@@ -32,7 +32,7 @@ class MOADInterface(object):
     def __init__(
         self,
         metadata: Union[str, Path],
-        structures: Union[str, Path],
+        structures_path: Union[str, Path],
         cache_pdbs_to_disk: bool,
         grid_width: int,
         grid_resolution: float,
@@ -51,7 +51,7 @@ class MOADInterface(object):
         self._all_targets = []
 
         self._init_lookup()
-        self._resolve_paths(structures)
+        self._resolve_paths(structures_path)
 
     def _init_lookup(self):
         # BindingMOAD is divided into clasess of proteins. These are dividied
@@ -187,7 +187,7 @@ class MOADInterface(object):
         # hierarchy.
         for cls in self.classes:
             for fam in cls.families:
-                for targ in fam.targets:
+                for targ_idx, targ in enumerate(fam.targets):
                     # Assume lower case
                     k = targ.pdb_id.lower()
 
@@ -200,7 +200,13 @@ class MOADInterface(object):
                         targ.files = sorted(files[k])
                     else:
                         # No structures for this pdb id!
-                        print(f"No structures for {k}")
+                        print(f"No structures for {k}. Is your copy of BindingMOAD complete?")
+
+                        # Mark this target in familes for deletion
+                        fam.targets[targ_idx] = None
+
+                # Remove any Nones from the target list
+                fam.targets = [t for t in fam.targets if t is not None]
 
     def _extension_for_resolve_paths(self):
         return "bio*"

@@ -63,7 +63,7 @@ class MoadVoxelModelTrain(object):
 
             moad = MOADInterface(
                 metadata=args.csv,
-                structures=args.data,
+                structures_path=args.data,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
