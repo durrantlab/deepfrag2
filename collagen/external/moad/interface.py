@@ -1,7 +1,7 @@
 from dataclasses import field
 from pathlib import Path
 from typing import Dict, List, Union
-from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, Pfizer_target, Pfizer_ligand
+from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, PdbSdfFiles_target, PdbSdfFiles_ligand
 import glob
 import os
 from rdkit import Chem
@@ -206,7 +206,7 @@ class MOADInterface(object):
         return "bio*"
 
 
-class PfizerInterface(MOADInterface):
+class PdbSdfFilesInterface(MOADInterface):
     def __init__(
             self,
             structures: Union[str, Path],
@@ -247,7 +247,7 @@ class PfizerInterface(MOADInterface):
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
                 curr_target_name = full_pdb_name
-                curr_target = Pfizer_target(
+                curr_target = PdbSdfFiles_target(
                     pdb_id=full_pdb_name,
                     ligands=[],
                     cache_pdbs_to_disk=cache_pdbs_to_disk,
@@ -261,7 +261,7 @@ class PfizerInterface(MOADInterface):
                 for ligand_ in sdf_reader:  # it is expected only one iteration because each SDF file must have a single molecule
                     if ligand_ is not None:
                         curr_target.ligands.append(
-                            Pfizer_ligand(
+                            PdbSdfFiles_ligand(
                                 name=linecache.getline(every_csv_path + os.sep + sdf_name + ".sdf", 1).rstrip(),
                                 validity="valid",
                                 affinity_measure="",

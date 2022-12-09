@@ -162,5 +162,6 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 def fix_moad_args(args: Namespace) -> Namespace:
     # Only works after arguments have been parsed, so in a separate definition.
     if args.cache is None:
-        args.cache = f"{args.csv}.cache.json"
+        import os
+        args.cache = f"{args.default_root_dir + os.sep}cache.json"
     return args
