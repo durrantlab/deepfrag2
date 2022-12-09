@@ -16,6 +16,6 @@ module load python/ondemand-jupyter-python3.8
 
 source activate ${CONDA_ENV_NAME}
 
-cd ${DEEPFRAG_ROOT}/
+cd ${DEEPFRAG_ROOT}
 
-python MainDF2.py --csv ${EVERY_CSV} --data ${BINDINGMOAD_DIR}/ --save_splits ${OUTPUT_DIR}/splits.json --default_root_dir ${OUTPUT_DIR}/ --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30
+python MainDF2.py --csv ${EVERY_CSV} --data ${BINDINGMOAD_DIR} --save_splits ${OUTPUT_TRAIN_DIR}/splits.json --default_root_dir ${OUTPUT_TRAIN_DIR} --aggregation_3x3_patches mean --aggregation_loss_vector mean --max_epochs 30
