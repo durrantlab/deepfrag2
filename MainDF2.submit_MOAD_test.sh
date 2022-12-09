@@ -2,8 +2,8 @@
 #SBATCH --job-name=deepfrag_test_MOAD
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
-#SBATCH --output=slurm_%A_%a.out
-#SBATCH --error=slurm_%A_%a.err
+#SBATCH --output=slurm.out
+#SBATCH --error=slurm.err
 #SBATCH --time=144:00:00
 #SBATCH --cluster=gpu
 #SBATCH --partition=a100
