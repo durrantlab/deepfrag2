@@ -153,7 +153,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--inference_label_sets",
         default="test",
         type=str,
-        help="A comma-separated list of the label sets to use during inference or testing. If for testing, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file.",
+        help="A comma-separated list of the label sets to use during inference or testing. Does not impact DeepFrag training. If you are testing DeepFrag, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file. \n\nFor example, to include the val- and test-set compounds in the label set, as well as the compounds described in a file named `my_smiles.smi`: `val,test,my_smiles.smi`",
     )
 
     return parent_parser
