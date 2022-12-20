@@ -23,7 +23,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         required=False,
         default=None,
         type=str,
-        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter is only for the generalization mode."
+        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter is only for the inference mode."
     )
     parser.add_argument(
         "--fraction_train",

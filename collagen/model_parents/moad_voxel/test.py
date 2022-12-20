@@ -342,7 +342,7 @@ class MoadVoxelModelTest(object):
             return None
 
     @staticmethod
-    def _save_test_results_to_json(all_test_data, s, args, pth=None, generalization=True):
+    def _save_test_results_to_json(all_test_data, s, args, pth=None, inference=True):
         # Save the test results to a carefully formatted JSON file.
 
         jsn = json.dumps(all_test_data, indent=4)
@@ -359,7 +359,7 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
-        folder_name = "test_results" if not generalization else "generalization_results"
+        folder_name = "test_results" if not inference else "inference_results"
         pth = pth + os.sep + folder_name + os.sep + args.aggregation_rotations + os.sep
         os.makedirs(pth, exist_ok=True)
         num = len(glob.glob(pth + "*.json", recursive=False))
@@ -392,7 +392,7 @@ class MoadVoxelModelTest(object):
         # with open('/mnt/extra/cProfile.txt', 'w+') as f:
         #    f.write(s.getvalue())
 
-    def run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], generalization: bool = False):
+    def run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], inference: bool = False):
         # Runs a model on the test and evaluates the output.
 
         pr = cProfile.Profile()
@@ -403,13 +403,13 @@ class MoadVoxelModelTest(object):
 
         if not args.inference_label_sets:
             raise ValueError("Must specify a label set (--inference_label_sets argument)")
-        if not generalization and "test" not in args.inference_label_sets:
+        if not inference and "test" not in args.inference_label_sets:
             raise ValueError("To run in test mode, you must include the `test` label set")
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
-        print("Test/generalization mode using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
+        print("Test/inference mode using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
         if args.csv and args.data:
             print("Loading MOAD database.")
             moad = MOADInterface(
@@ -434,11 +434,11 @@ class MoadVoxelModelTest(object):
         elif args.csv and not args.data:
             raise Exception("To load the MOAD database is required to specify the --csv and --data arguments")
         elif not args.csv and not args.data:
-            raise Exception("To run the test/generalization mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only for a database other than MOAD")
+            raise Exception("To run the test/inference mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only for a database other than MOAD")
 
-        if generalization:
+        if inference:
             if not args.external_data:
-                raise Exception("To run the generalization mode must be specified a external dataset (--external_data argument) comprised of protein-ligand pairs (PDB file and SDF file)")
+                raise Exception("To run the inference mode must be specified a external dataset (--external_data argument) comprised of protein-ligand pairs (PDB file and SDF file)")
             else:
                 external_db = PdbSdfDirInterface(
                     structures=args.external_data,
@@ -452,13 +452,13 @@ class MoadVoxelModelTest(object):
             raise Exception("To run the test mode is required loading a previously saved test dataset")
 
         train, val, test = compute_moad_split(
-            moad=moad if not generalization else external_db,
+            moad=moad if not inference else external_db,
             seed=None,
             fraction_train=0.0,
             fraction_val=0.0,
             prevent_smiles_overlap=False,  # DEBUG
             save_splits=None,
-            load_splits=None if generalization else args.load_splits,
+            load_splits=None if inference else args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
@@ -469,7 +469,7 @@ class MoadVoxelModelTest(object):
         # You'll always need the test data. Note that ligands are not fragmented
         # by calling the get_data_from_split function.
         test_data = self.get_data_from_split(
-            cache_file=None if generalization else args.cache, args=args, moad=moad if not generalization else external_db, split=test, voxel_params=voxel_params, device=device, shuffle=False,
+            cache_file=None if inference else args.cache, args=args, moad=moad if not inference else external_db, split=test, voxel_params=voxel_params, device=device, shuffle=False,
         )
         print("Number of batches for the test data: " + str(len(test_data)))
 
@@ -566,6 +566,6 @@ class MoadVoxelModelTest(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir, generalization)
-        if not generalization:
+        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir, inference)
+        if not inference:
             self._save_examples_used(model, args)

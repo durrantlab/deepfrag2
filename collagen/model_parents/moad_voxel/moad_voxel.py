@@ -87,8 +87,8 @@ class MoadVoxelModelParent(
         elif args.mode == "test":
             print("Starting 'test' process")
             self.run_test(args, ckpt)
-        elif args.mode == "generalization":
-            print("Starting 'generalization' process")
+        elif args.mode == "inference":
+            print("Starting 'inference' process")
             self.run_test(args, ckpt, True)
         elif args.mode == "lr_finder":
             print("Starting 'lr_finder' process")

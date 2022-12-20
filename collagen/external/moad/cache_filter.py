@@ -257,6 +257,8 @@ def _build_moad_cache_file(
     for pdb_id in moad.targets:
         list_ids_moad.append([pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE])
 
+    # NOTE: Filename specified via --cache parameter
+
     print("Building/updating " + (filename if filename else "dataset"))
     with multiprocessing.Pool(cores) as p:
         for pdb_id, lig_infs in tqdm(p.imap_unordered(_get_info_given_pdb_id, list_ids_moad), total=len(pdb_ids_queue), desc="Building cache"):
