@@ -23,7 +23,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         required=False,
         default=None,
         type=str,
-        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter is only for the generalization mode."
+        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter is only for the inference mode."
     )
     parser.add_argument(
         "--fraction_train",
@@ -148,7 +148,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--inference_limit",
         default=None,
-        help="Maximum number of examples to run inference on.",
+        help="Maximum number of examples to run inference on. TODO: Not currently used.",
     )
     parser.add_argument(
         "--inference_rotations",
@@ -160,7 +160,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--inference_label_sets",
         default=None,
         type=str,
-        help="A comma-separated list of the label sets to use during inference or testing. If for testing, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file.",
+        help="A comma-separated list of the label sets to use during inference or testing. Does not impact DeepFrag training. If you are testing DeepFrag, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file. \n\nFor example, to include the val- and test-set compounds in the label set, as well as the compounds described in a file named `my_smiles.smi`: `val,test,my_smiles.smi`",
     )
 
     return parent_parser

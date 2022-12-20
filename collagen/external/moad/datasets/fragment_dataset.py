@@ -68,6 +68,7 @@ class MOADFragmentDataset(Dataset):
         self.split = split if split is not None else full_moad_split(moad)
         self.transform = transform
         self.args = args
+        self.mol_props_param_validated = False
         self._index(cache_file, cache_cores)
 
     @staticmethod
@@ -107,6 +108,14 @@ class MOADFragmentDataset(Dataset):
             help="Consider only fragments that have at least this number of heavy atoms. Default is 1.",
         )
 
+        parser.add_argument(
+            "--mol_props",
+            required=False,
+            type=str,
+            default="",
+            help="Consider only fragments that match selected chemical properties. A comma-separated list. Options are \"aromatic\", \"aliphatic\", \"charged\", \"neutral\". If specifying multiple properties (e.g., \"aromatic,charged\"), only fragments matching all properties (charged aromatics) will be considered. Default is \"\" (no filtering).",
+        )
+
         return parent_parser
 
     def _lig_filter(
@@ -118,12 +127,41 @@ class MOADFragmentDataset(Dataset):
         # parameter.
         return True
 
+    def _get_and_validate_mol_props_param(self, args: argparse.Namespace) -> List[str]:
+        mol_props = args.mol_props.split(",")
+        
+        if not self.mol_props_param_validated:
+            # This check to make sure mol_props validation is only done once.
+            # Do some quick validation
+            if "aromatic" in mol_props and "aliphatic" in mol_props:
+                raise ValueError(
+                    "Cannot specify both aromatic and aliphatic properties. They are mutually exclusive."
+                )
+            
+            if "charged" in mol_props and "neutral" in mol_props:
+                raise ValueError(
+                    "Cannot specify both charged and neutral properties. They are mutually exclusive."
+                )
+            
+            # If anything in molprops other than aromatic, aliphatic, charged,
+            # or neutral is specified, raise an error saying which one is not
+            # recognized.
+            for prop in mol_props:
+                if prop not in ["aromatic", "aliphatic", "charged", "neutral"]:
+                    raise ValueError(f"Unrecognized property: {prop}")
+
+            self.mol_props_param_validated = True
+
+        return mol_props
+
     def _frag_filter(
         self,
         args: argparse.Namespace,
         mass: float,
         frag_dist_to_recep: float,
         frag_num_heavy_atom: int,
+        frag_aromatic: bool,
+        frag_charged: bool,
     ) -> bool:
         # This filter is passed to cache_filter.load_cache_and_filter via the
         # make_dataset_entries_func parameter.
@@ -133,10 +171,12 @@ class MOADFragmentDataset(Dataset):
             if user_args.verbose:
                 print(f"Fragment rejected; mass too small: {mass}")
             return False
+
         if mass > args.max_frag_mass:
             if user_args.verbose:
                 print(f"Fragment rejected; mass too large: {mass}")
             return False
+
         if frag_dist_to_recep > args.max_frag_dist_to_recep:
             if user_args.verbose:
                 print(
@@ -150,6 +190,30 @@ class MOADFragmentDataset(Dataset):
                     f"Fragment rejected; has too few heavy atoms: {frag_num_heavy_atom}"
                 )
             return False
+
+        if args.mol_props != "":
+            mol_props = self._get_and_validate_mol_props_param(args)
+
+            if "aromatic" in mol_props and not frag_aromatic:
+                if user_args.verbose:
+                    print("Fragment rejected; not aromatic.")
+                return False
+            
+            if "aliphatic" in mol_props and frag_aromatic:
+                if user_args.verbose:
+                    print("Fragment rejected; aromatic.")
+                return False
+            
+            if "charged" in mol_props and not frag_charged:
+                if user_args.verbose:
+                    print("Fragment rejected; not charged.")
+                return False
+            
+            if "neutral" in mol_props and frag_charged:
+                if user_args.verbose:
+                    print("Fragment rejected; charged.")
+                return False
+
         return True
 
     def _make_dataset_entries_func(
@@ -164,13 +228,18 @@ class MOADFragmentDataset(Dataset):
         frag_masses = lig_inf["frag_masses"]
         frag_dists_to_recep = lig_inf["frag_dists_to_recep"]
         frag_num_heavy_atoms = lig_inf["frag_num_heavy_atoms"]
+        frag_aromatics = lig_inf["frag_aromatic"]
+        frag_chargeds = lig_inf["frag_charged"]
 
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):
             mass = frag_masses[frag_idx]
             dist_to_recep = frag_dists_to_recep[frag_idx]
             num_heavy_atom = frag_num_heavy_atoms[frag_idx]
-            if self._frag_filter(args, mass, dist_to_recep, num_heavy_atom):
+            frag_aromatic = frag_aromatics[frag_idx]
+            frag_charged = frag_chargeds[frag_idx]
+
+            if self._frag_filter(args, mass, dist_to_recep, num_heavy_atom, frag_aromatic, frag_charged):
                 entries_to_return.append(
                     MOADFragmentDataset_entry(
                         pdb_id=pdb_id,
@@ -198,6 +267,8 @@ class MOADFragmentDataset(Dataset):
                 frag_num_heavy_atoms=True,
                 frag_dists_to_recep=True,
                 frag_smiles=True,  # Good for debugging.
+                frag_aromatic=True,
+                frag_charged=True,
             ),
             cache_file,
             cores,
