@@ -21,6 +21,7 @@ class MoadVoxelModelUtils(object):
 
     def get_data_from_split(
         self: "MoadVoxelModelParent",
+        cache_file: str,
         args: Namespace,
         moad: MOADInterface,
         split: MOAD_split,
@@ -34,9 +35,12 @@ class MoadVoxelModelUtils(object):
         # TODO: Create separate function .pre_voxelize_with_voxel that just
         # calculates just fingerprint.
 
+        # JDD NOTE: self.dataset_cls could be something like MOADFragmentDataset
+
         dataset = self.dataset_cls(
-            moad,
-            cache_file=args.cache,
+            moad=moad,
+            cache_file=cache_file,
+            cache_cores=args.num_dataloader_workers,
             split=split,
             transform=(
                 lambda entry: self.__class__.pre_voxelize(args, voxel_params, entry)

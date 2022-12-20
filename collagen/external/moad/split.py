@@ -380,9 +380,16 @@ def compute_moad_split(
 
 def full_moad_split(moad: "MOADInterface") -> MOAD_split:
     """Returns a split containing all targets and smiles strings."""
-
-    return MOAD_split(
-        name="Full",
-        targets=moad.targets,
-        smiles=sorted_list(moad._smiles_for(moad.targets)),
+    pdb_ids, all_smis = _generate_splits_from_scratch(
+        moad,
+        fraction_train=1.0,
+        fraction_val=0.0,
+        prevent_smiles_overlap=True,
+        max_pdbs_train=None,
+        max_pdbs_val=None,
+        max_pdbs_test=None,
+        butina_cluster_division=None,
+        butina_cluster_cutoff=0.0,
     )
+
+    return MOAD_split(name="Full", targets=pdb_ids.train, smiles=all_smis.train)

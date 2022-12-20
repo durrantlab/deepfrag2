@@ -68,7 +68,7 @@ def _set_molecular_prop(func, func_input, default_if_error):
         return default_if_error
 
 
-def _get_info_given_pdb_id(pdb_id: str, moad_entry_info, cache_items_to_update) -> Tuple[str, dict]:
+def _get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
     # Given a PDB ID, looks up the PDB in BindingMOAD, and calculates the
     # molecular properties specified in CACHE_ITEMS_TO_UPDATE. Returns a tuple
     # with the pdb id and a dictionary with the associated information.
@@ -77,6 +77,9 @@ def _get_info_given_pdb_id(pdb_id: str, moad_entry_info, cache_items_to_update) 
     # global CACHE_ITEMS_TO_UPDATE
 
     # moad_entry_info = moad[pdb_id]
+    pdb_id = arguments[0]
+    moad_entry_info = arguments[1]
+    cache_items_to_update = arguments[2]
 
     lig_infs = {}
     for lig_chunk_idx in range(len(moad_entry_info)):
@@ -228,11 +231,8 @@ def _build_moad_cache_file(
 ):
     # This builds/updates the whole BindingMOAD cache (on disk).
 
-    # TODO: hard coding to use all cores
-    cores = None
-
     # Load existing cache if it exists. So you can add to it.
-    if os.path.exists(filename):
+    if filename and os.path.exists(filename):
         with open(filename) as f:
             cache = json.load(f)
     else:
@@ -255,14 +255,11 @@ def _build_moad_cache_file(
     pdb_ids_queue = moad.targets
     list_ids_moad = []
     for pdb_id in moad.targets:
-        list_ids_moad.append((pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE))
+        list_ids_moad.append([pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE])
 
-    # NOTE: Filename specified via --cache parameter
-    print(f"Building/updating {filename}")
-    pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
+    print("Building/updating " + (filename if filename else "dataset"))
     with multiprocessing.Pool(cores) as p:
-        for pdb_id, lig_infs in p.starmap(_get_info_given_pdb_id, list_ids_moad):
-
+        for pdb_id, lig_infs in tqdm(p.imap_unordered(_get_info_given_pdb_id, list_ids_moad), total=len(pdb_ids_queue), desc="Building cache"):
             pdb_id = pdb_id.lower()
 
             if pdb_id not in cache:
@@ -275,16 +272,12 @@ def _build_moad_cache_file(
                 for prop_name in lig_inf.keys():
                     prop_val = lig_inf[prop_name]
                     cache[pdb_id][lig_name][prop_name] = prop_val
-            # TODO: Progressbar doesn't actually update. Confusing.
-
-            pbar.update(1)
         p.close()
 
-    pbar.close()
-
     # Save cache with updated information.
-    with open(filename, "w") as f:
-        json.dump(cache, f, indent=4)
+    if filename:
+        with open(filename, "w") as f:
+            json.dump(cache, f, indent=4)
 
     return cache
 
@@ -309,7 +302,7 @@ def load_cache_and_filter(
     # Returns tuple, cache and filtered_cache.
 
     cache_file = Path(cache_file) if cache_file is not None else None
-    cache = _build_moad_cache_file(str(cache_file), moad, cache_items_to_update, cores=cores)
+    cache = _build_moad_cache_file(str(cache_file) if cache_file else None, moad, cache_items_to_update, cores=cores)
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
