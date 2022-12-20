@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Tuple, Union, Any, Optional
 from tqdm.std import tqdm
+from collagen.external.moad.frag_substruct_detect import is_aromatic, is_charged
 import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
@@ -30,6 +31,8 @@ class CacheItemsToUpdate(object):
     frag_num_heavy_atoms: bool = False
     frag_dists_to_recep: bool = False
     frag_smiles: str = False  # str || bool
+    frag_aromatic: bool = False
+    frag_charged: bool = False
 
     def updatable(self) -> bool:
         # Updatable
@@ -42,6 +45,8 @@ class CacheItemsToUpdate(object):
                 self.frag_dists_to_recep,
                 self.frag_smiles,
                 self.frag_num_heavy_atoms,
+                self.frag_aromatic,
+                self.frag_charged
             ]
         )
 
@@ -106,6 +111,16 @@ def _get_info_given_pdb_id(pdb_id: str, moad_entry_info, cache_items_to_update) 
             if cache_items_to_update.num_heavy_atoms:
                 lig_infs[lig_name]["num_heavy_atoms"] = _set_molecular_prop(
                     lambda x: x.num_heavy_atoms, lig, 999999
+                )
+
+            if cache_items_to_update.frag_aromatic:
+                lig_infs[lig_name]["aromatic"] = _set_molecular_prop(
+                    lambda x: is_aromatic(x), lig, False
+                )
+
+            if cache_items_to_update.frag_charged:
+                lig_infs[lig_name]["charged"] = _set_molecular_prop(
+                    lambda x: is_charged(x), lig, False
                 )
 
             if (
