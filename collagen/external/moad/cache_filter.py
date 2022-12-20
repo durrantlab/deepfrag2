@@ -238,11 +238,12 @@ def _build_moad_cache_file(
     for pdb_id in moad.targets:
         list_ids_moad.append((pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE))
 
-    print("Building/updating " + filename)
+    # TODO: JDD: Is this the right filename?
+    print(f"Building/updating {filename}")
     pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
     with multiprocessing.Pool(cores) as p:
         for pdb_id, lig_infs in p.starmap(_get_info_given_pdb_id, list_ids_moad):
-        
+
             pdb_id = pdb_id.lower()
 
             if pdb_id not in cache:
@@ -339,5 +340,5 @@ def load_cache_and_filter(
             + str(lig)
         )
 
-    print("Number of fragments in the " + split.name + " set: " + str(len(filtered_cache)))
+    print(f"Number of fragments in the {split.name} set: {len(filtered_cache)}")
     return cache, filtered_cache

@@ -211,8 +211,8 @@ class MOADFragmentDataset(Dataset):
         frag_masses = lig_inf["frag_masses"]
         frag_dists_to_recep = lig_inf["frag_dists_to_recep"]
         frag_num_heavy_atoms = lig_inf["frag_num_heavy_atoms"]
-        frag_aromatics = lig_inf["frag_aromatic"]
-        frag_chargeds = lig_inf["frag_charged"]
+        frag_aromatics = lig_inf["aromatic"]
+        frag_chargeds = lig_inf["charged"]
 
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):
