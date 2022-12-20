@@ -68,6 +68,7 @@ class MOADFragmentDataset(Dataset):
         self.split = split if split is not None else full_moad_split(moad)
         self.transform = transform
         self.args = args
+        self.mol_props_param_validated = False
         self._index(cache_file, cache_cores)
 
     @staticmethod
@@ -126,6 +127,33 @@ class MOADFragmentDataset(Dataset):
         # parameter.
         return True
 
+    def _get_and_validate_mol_props_param(self, args: argparse.Namespace) -> List[str]:
+        mol_props = args.mol_props.split(",")
+        
+        if not self.mol_props_param_validated:
+            # This check to make sure mol_props validation is only done once.
+            # Do some quick validation
+            if "aromatic" in mol_props and "aliphatic" in mol_props:
+                raise ValueError(
+                    "Cannot specify both aromatic and aliphatic properties. They are mutually exclusive."
+                )
+            
+            if "charged" in mol_props and "neutral" in mol_props:
+                raise ValueError(
+                    "Cannot specify both charged and neutral properties. They are mutually exclusive."
+                )
+            
+            # If anything in molprops other than aromatic, aliphatic, charged,
+            # or neutral is specified, raise an error saying which one is not
+            # recognized.
+            for prop in mol_props:
+                if prop not in ["aromatic", "aliphatic", "charged", "neutral"]:
+                    raise ValueError(f"Unrecognized property: {prop}")
+
+            self.mol_props_param_validated = True
+
+        return mol_props
+
     def _frag_filter(
         self,
         args: argparse.Namespace,
@@ -163,19 +191,8 @@ class MOADFragmentDataset(Dataset):
                 )
             return False
 
-        if mol_props != "":
-            mol_props = mol_props.split(",")
-
-            # Do some quick validation
-            if "aromatic" in mol_props and "aliphatic" in mol_props:
-                raise ValueError(
-                    "Cannot specify both aromatic and aliphatic properties. They are mutually exclusive."
-                )
-            
-            if "charged" in mol_props and "neutral" in mol_props:
-                raise ValueError(
-                    "Cannot specify both charged and neutral properties. They are mutually exclusive."
-                )
+        if args.mol_props != "":
+            mol_props = self._get_and_validate_mol_props_param(args)
 
             if "aromatic" in mol_props and not frag_aromatic:
                 if user_args.verbose:
@@ -211,8 +228,8 @@ class MOADFragmentDataset(Dataset):
         frag_masses = lig_inf["frag_masses"]
         frag_dists_to_recep = lig_inf["frag_dists_to_recep"]
         frag_num_heavy_atoms = lig_inf["frag_num_heavy_atoms"]
-        frag_aromatics = lig_inf["aromatic"]
-        frag_chargeds = lig_inf["charged"]
+        frag_aromatics = lig_inf["frag_aromatic"]
+        frag_chargeds = lig_inf["frag_charged"]
 
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):

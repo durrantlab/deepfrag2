@@ -59,7 +59,12 @@ def _set_molecular_prop(func, func_input, default_if_error):
     # Provides a way to provide a default value if function fails.
     try:
         return func(func_input)
-    except Exception:
+    except Exception as e:
+        # Save the exception to err.txt
+        # with open("err.txt", "a") as f:
+        #     f.write(f"{func_input} failed to calculate {func.__name__}\n")
+        #     f.write(str(e) + "\n")            
+
         return default_if_error
 
 
@@ -92,6 +97,9 @@ def _get_info_given_pdb_id(pdb_id: str, moad_entry_info, cache_items_to_update) 
             lig_name = lig.meta["moad_ligand"].name
             lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
 
+            # First, deal with properties that apply to the entire ligand (not
+            # each fragment)
+
             # Updatable
             if cache_items_to_update.lig_mass:
                 lig_infs[lig_name]["lig_mass"] = _set_molecular_prop(
@@ -113,21 +121,15 @@ def _get_info_given_pdb_id(pdb_id: str, moad_entry_info, cache_items_to_update) 
                     lambda x: x.num_heavy_atoms, lig, 999999
                 )
 
-            if cache_items_to_update.frag_aromatic:
-                lig_infs[lig_name]["aromatic"] = _set_molecular_prop(
-                    lambda x: is_aromatic(x), lig, False
-                )
-
-            if cache_items_to_update.frag_charged:
-                lig_infs[lig_name]["charged"] = _set_molecular_prop(
-                    lambda x: is_charged(x), lig, False
-                )
+            # Now deal with properties by fragment (not entire ligand)
 
             if (
                     cache_items_to_update.frag_masses
                     or cache_items_to_update.frag_num_heavy_atoms
                     or cache_items_to_update.frag_dists_to_recep
                     or cache_items_to_update.frag_smiles
+                    or cache_items_to_update.frag_aromatic
+                    or cache_items_to_update.frag_charged
             ):
                 # Get all the fragments
                 frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
@@ -157,6 +159,19 @@ def _get_info_given_pdb_id(pdb_id: str, moad_entry_info, cache_items_to_update) 
                         lambda f: [x[1].smiles(True) for x in f],
                         frags,
                         [],
+                    )
+
+                if cache_items_to_update.frag_aromatic:
+                    lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
+                        lambda f: [is_aromatic(x[1].rdmol) for x in f],
+                        frags, []
+                        
+                    )
+
+                if cache_items_to_update.frag_charged:
+                    lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
+                        lambda f: [is_charged(x[1].rdmol) for x in f],
+                        frags, []
                     )
 
     return pdb_id, lig_infs
@@ -199,6 +214,10 @@ def _set_cache_params_to_update(cache):
         CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep = False
     if "frag_smiles" in first_lig:
         CACHE_ITEMS_TO_UPDATE.frag_smiles = False
+    if "frag_aromatic" in first_lig:
+        CACHE_ITEMS_TO_UPDATE.frag_aromatic = False
+    if "frag_charged" in first_lig:
+        CACHE_ITEMS_TO_UPDATE.frag_charged = False
 
 
 def _build_moad_cache_file(
@@ -238,7 +257,7 @@ def _build_moad_cache_file(
     for pdb_id in moad.targets:
         list_ids_moad.append((pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE))
 
-    # TODO: JDD: Is this the right filename?
+    # NOTE: Filename specified via --cache parameter
     print(f"Building/updating {filename}")
     pbar = tqdm(total=len(pdb_ids_queue), desc="Building MOAD cache")
     with multiprocessing.Pool(cores) as p:
