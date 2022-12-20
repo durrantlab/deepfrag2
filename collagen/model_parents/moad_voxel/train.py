@@ -48,6 +48,9 @@ class MoadVoxelModelTrain(object):
 
     def get_moad_train_val_sets(self, args, train: bool):
 
+        if args.external_data:
+            raise Exception("The external data are only to be used in the generalization mode")
+
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
@@ -108,10 +111,10 @@ class MoadVoxelModelTrain(object):
         # ps.print_stats()
         # open('cProfilez.txt', 'w+').write(s.getvalue())
 
-        train_data = self.get_data_from_split(args, moad, train, voxel_params, device)
+        train_data = self.get_data_from_split(cache_file=args.cache, args=args, moad=moad, split=train, voxel_params=voxel_params, device=device)
         print("Number of batches for the training data: " + str(len(train_data)))
         if len(val.targets) > 0:
-            val_data = self.get_data_from_split(args, moad, val, voxel_params, device)
+            val_data = self.get_data_from_split(cache_file=args.cache, args=args, moad=moad, split=val, voxel_params=voxel_params, device=device)
             print("Number of batches for the validation data: " + str(len(val_data)))
         else:
             val_data = None

@@ -16,7 +16,14 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--data",
         required=True,
-        help="Path to MOAD root structure folder"
+        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
+    )
+    parser.add_argument(
+        "--external_data",
+        required=False,
+        default=None,
+        type=str,
+        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter is only for the generalization mode."
     )
     parser.add_argument(
         "--fraction_train",
@@ -151,7 +158,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--inference_label_sets",
-        default="test",
+        default=None,
         type=str,
         help="A comma-separated list of the label sets to use during inference or testing. If for testing, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file.",
     )

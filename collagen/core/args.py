@@ -37,11 +37,12 @@ def _add_generic_params(
         "-m",
         "--mode",
         type=str,
-        choices=["train", "warm_starting", "test", "lr_finder"],
+        choices=["train", "warm_starting", "test", "generalization", "lr_finder"],
         help="Can be train, warm_starting, test, or lr_finder. " +
              "If train, trains the model. " +
              "If warm_starting, runs an incremental learning on a new dataset. " +
              "If test, runs inference on the test set. " +
+             "If generalization, runs a test mode but using all dataset as external set. " +
              "If lr_finder, suggests the best learning rate to use. Defaults to train.",
         default="train",
     )
