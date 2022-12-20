@@ -35,6 +35,8 @@ class MoadVoxelModelUtils(object):
         # TODO: Create separate function .pre_voxelize_with_voxel that just
         # calculates just fingerprint.
 
+        # JDD NOTE: self.dataset_cls could be something like MOADFragmentDataset
+
         dataset = self.dataset_cls(
             moad=moad,
             cache_file=cache_file,
