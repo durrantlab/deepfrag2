@@ -148,7 +148,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--inference_limit",
         default=None,
-        help="Maximum number of examples to run inference on.",
+        help="Maximum number of examples to run inference on. TODO: Not currently used.",
     )
     parser.add_argument(
         "--inference_rotations",
