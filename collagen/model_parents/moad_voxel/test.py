@@ -10,7 +10,7 @@ from collagen.core.loader import DataLambda
 import torch
 from tqdm.std import tqdm
 from typing import Any, List, Optional, Tuple
-
+import multiprocessing
 from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
@@ -22,6 +22,10 @@ from collagen.metrics.metrics import (
     pca_space_from_label_set_fingerprints,
     top_k,
 )
+
+
+def _return_paramter(object):
+    return object
 
 
 class MoadVoxelModelTest(object):
@@ -72,22 +76,25 @@ class MoadVoxelModelTest(object):
         # voxelize the receptor? Is that adding a lot of time to the
         # calculation? Just a thought. See other TODO: note about this.
         data = self.get_data_from_split(
-            args, moad, split, voxel_params, device, shuffle=False
+            cache_file=args.cache, args=args, moad=moad, split=split, voxel_params=voxel_params, device=device, shuffle=False,
         )
 
         all_fps = []
         all_smis = []
-        for batch in tqdm(data, desc=f"Getting fingerprints from {split.name} set..."):
-            voxels, fps_tnsr, smis = batch
-            all_fps.append(fps_tnsr)
-            all_smis.extend(smis)
-        all_smis.extend(existing_label_set_smis)
-        all_fps.append(existing_label_set_fps)
-        fps_tnsr = torch.cat(all_fps)
+        with multiprocessing.Pool() as p:
+            for batch in tqdm(p.imap_unordered(_return_paramter, data), total=len(data), desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."):
+                voxels, fps_tnsr, smis = batch
+                all_fps.append(fps_tnsr)
+                all_smis.extend(smis)
+
+        if existing_label_set_smis is not None:
+            all_smis.extend(existing_label_set_smis)
+        if existing_label_set_fps is not None:
+            all_fps.append(existing_label_set_fps)
 
         # Remove redundancies.
         fps_tnsr, all_smis = self._remove_redundant_fingerprints(
-            fps_tnsr, all_smis, device
+            torch.cat(all_fps), all_smis, device
         )
 
         return fps_tnsr, all_smis
@@ -116,34 +123,39 @@ class MoadVoxelModelTest(object):
         if lbl_set_codes is None:
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
 
-        if existing_label_set_fps is None:
-            label_set_fps = torch.zeros((0, args.fp_size), dtype=torch.float32, device=device, requires_grad=False)
-            label_set_smis = []
-        else:
-            # If you get an existing set of fingerprints, be sure to keep only the
-            # unique ones.
-            label_set_fps, label_set_smis = self._remove_redundant_fingerprints(
-                existing_label_set_fps, existing_label_set_entry_infos, device=device
-            )
-
         # Load from train, valm and test sets.
-        if "train" in lbl_set_codes:
+        if "all" in lbl_set_codes:
             label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
-                args, moad, train, voxel_params, device, label_set_fps, label_set_smis
+                args, moad, None, voxel_params, device, None, None
             )
+        else:
+            if existing_label_set_fps is None:
+                label_set_fps = torch.zeros((0, args.fp_size), dtype=torch.float32, device=device, requires_grad=False)
+                label_set_smis = []
+            else:
+                # If you get an existing set of fingerprints, be sure to keep only the
+                # unique ones.
+                label_set_fps, label_set_smis = self._remove_redundant_fingerprints(
+                    existing_label_set_fps, existing_label_set_entry_infos, device=device
+                )
 
-        if "val" in lbl_set_codes:
-            label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
-                args, moad, val, voxel_params, device, label_set_fps, label_set_smis
-            )
+            if "train" in lbl_set_codes and len(train.targets) > 0:
+                label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                    args, moad, train, voxel_params, device, label_set_fps, label_set_smis
+                )
 
-        if "test" in lbl_set_codes and not skip_test_set:
-            label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
-                args, moad, test, voxel_params, device, label_set_fps, label_set_smis
-            )
+            if "val" in lbl_set_codes and len(val.targets) > 0:
+                label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                    args, moad, val, voxel_params, device, label_set_fps, label_set_smis
+                )
+
+            if "test" in lbl_set_codes and not skip_test_set and len(test.targets) > 0:
+                label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                    args, moad, test, voxel_params, device, label_set_fps, label_set_smis
+                )
 
         # Add to that fingerprints from an SMI file.
-        smi_files = [f for f in lbl_set_codes if f not in ["train", "val", "test"]]
+        smi_files = [f for f in lbl_set_codes if f not in ["train", "val", "test", "all"]]
         if len(smi_files) > 0:
             fp_tnsrs_from_smi_file = [label_set_fps]
             for filename in smi_files:
@@ -330,7 +342,7 @@ class MoadVoxelModelTest(object):
             return None
 
     @staticmethod
-    def _save_test_results_to_json(all_test_data, s, args, pth=None):
+    def _save_test_results_to_json(all_test_data, s, args, pth=None, generalization=True):
         # Save the test results to a carefully formatted JSON file.
 
         jsn = json.dumps(all_test_data, indent=4)
@@ -347,7 +359,8 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
-        pth = pth + os.sep + args.aggregation_rotations + os.sep
+        folder_name = "test_results" if not generalization else "generalization_results"
+        pth = pth + os.sep + folder_name + os.sep + args.aggregation_rotations + os.sep
         os.makedirs(pth, exist_ok=True)
         num = len(glob.glob(pth + "*.json", recursive=False))
 
@@ -379,7 +392,7 @@ class MoadVoxelModelTest(object):
         # with open('/mnt/extra/cProfile.txt', 'w+') as f:
         #    f.write(s.getvalue())
 
-    def run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]):
+    def run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], generalization: bool = False):
         # Runs a model on the test and evaluates the output.
 
         pr = cProfile.Profile()
@@ -388,18 +401,17 @@ class MoadVoxelModelTest(object):
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
 
-        lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
-
-        if "test" not in lbl_set_codes:
-            raise ValueError(
-                "To run in test mode, you must include the `test` label set"
-            )
+        if not args.inference_label_sets:
+            raise ValueError("Must specify a label set (--inference_label_sets argument)")
+        if not generalization and "test" not in args.inference_label_sets:
+            raise ValueError("To run in test mode, you must include the `test` label set")
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
+        print("Test/generalization mode using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
         if args.csv and args.data:
-            print("Test mode on the MOAD test dataset. Using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
+            print("Loading MOAD database.")
             moad = MOADInterface(
                 metadata=args.csv,
                 structures_path=args.data,
@@ -410,7 +422,7 @@ class MoadVoxelModelTest(object):
                 discard_distant_atoms=args.discard_distant_atoms,
             )
         elif not args.csv and args.data:
-            print("Test mode on a test dataset other than the MOAD test dataset. Using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
+            print("Loading a database other than MOAD database.")
             moad = PdbSdfDirInterface(
                 structures=args.data,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
@@ -420,25 +432,44 @@ class MoadVoxelModelTest(object):
                 discard_distant_atoms=args.discard_distant_atoms,
             )
         elif args.csv and not args.data:
-            raise Exception("To run the test mode on the MOAD test database is required to specify the --csv and --data arguments")
+            raise Exception("To load the MOAD database is required to specify the --csv and --data arguments")
         elif not args.csv and not args.data:
-            raise Exception("To run the test mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only (for a database other than MOAD)")
+            raise Exception("To run the test/generalization mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only for a database other than MOAD")
+
+        if generalization:
+            if not args.external_data:
+                raise Exception("To run the generalization mode must be specified a external dataset (--external_data argument) comprised of protein-ligand pairs (PDB file and SDF file)")
+            else:
+                external_db = PdbSdfDirInterface(
+                    structures=args.external_data,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms,
+                )
+        elif not args.load_splits:
+            raise Exception("To run the test mode is required loading a previously saved test dataset")
 
         train, val, test = compute_moad_split(
-            moad,
-            args.split_seed,
-            save_splits=args.save_splits,
-            load_splits=args.load_splits,
+            moad=moad if not generalization else external_db,
+            seed=None,
+            fraction_train=0.0,
+            fraction_val=0.0,
+            prevent_smiles_overlap=False,  # DEBUG
+            save_splits=None,
+            load_splits=None if generalization else args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
-            prevent_smiles_overlap=False,  # DEBUG
+            butina_cluster_division=False,
+            butina_cluster_cutoff=0.0,
         )
 
         # You'll always need the test data. Note that ligands are not fragmented
         # by calling the get_data_from_split function.
         test_data = self.get_data_from_split(
-            args, moad, test, voxel_params, device, shuffle=False
+            cache_file=None if generalization else args.cache, args=args, moad=moad if not generalization else external_db, split=test, voxel_params=voxel_params, device=device, shuffle=False,
         )
         print("Number of batches for the test data: " + str(len(test_data)))
 
@@ -468,7 +499,7 @@ class MoadVoxelModelTest(object):
                 train,
                 val,
                 moad,
-                lbl_set_codes,
+                None,
                 avg_over_ckpts_of_avgs,
             )
 
@@ -535,5 +566,6 @@ class MoadVoxelModelTest(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir)
-        self._save_examples_used(model, args)
+        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir, generalization)
+        if not generalization:
+            self._save_examples_used(model, args)
