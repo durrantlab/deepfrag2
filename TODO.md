@@ -1,27 +1,27 @@
+# NOTES, LONG TERM
+
 Re. learning rate, this is great:
 https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
-
-When doing inference, get best validation checkpoint (not last).
-
-I think a lot of my old code is now cruft. Good to do audit.
-
-"Training will start from the beginning of the next epoch. This can cause
-unreliable results if further training is done, consider using an end of epoch
-checkpoint."
 
 Look into /dev/shm ramfs (to speed file load). Disk interface, but all in
 memory. Virtual file system. Each epoch loads file again. Also, each fragment
 loads multiple times. Can do it with docker, but could be tricky (must use host
 /dev/shim). Could give speed up, but not sure.
 
+What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
+
+# TODO
+
+When doing inference, get best validation checkpoint (not last).
+
+"Training will start from the beginning of the next epoch. This can cause
+unreliable results if further training is done, consider using an end of epoch
+checkpoint."
+
 Figure out how to not voxelize receptor when you just need the fragment smiles
 string. Notes in the code.
 
-Still need to set up inferance on user-provided PDB.
-
 FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
-
-What to aim for (orig model): https://mail.google.com/mail/u/0/#inbox/FMfcgzGmtrSFVRWFdpWQVbFnvJSdQGKj
 
 Would be nice to have "--name" parameter (optional) that would controll logging
 name. To distinguish between test and train.
@@ -39,14 +39,17 @@ Re. weighted training
 
 Revisit resolution and affinity deepfrag filter
 
-
-How does general model perform on ligands of various masses? Compare that to
-mass-specific model. Good to have.
-
 What about filtering fragments further, requiring specific interactions?
 (Hydrogen bonds).
 
 # EASY IDEAS
+
+I think a lot of my old code is now cruft. Good to do audit.
+
+Still need to set up inferance on user-provided PDB.
+
+How does general model perform on ligands of various masses? Compare that to
+mass-specific model. Good to have.
 
 SOMETHING TO TRY: Receptor + decorating fragments => Murkoscafold
 

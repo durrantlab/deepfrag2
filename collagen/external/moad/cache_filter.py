@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Tuple, Union, Any, Optional
 from tqdm.std import tqdm
+from collagen.external.moad.frag_substruct_detect import is_aromatic, is_charged
 import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
@@ -30,6 +31,8 @@ class CacheItemsToUpdate(object):
     frag_num_heavy_atoms: bool = False
     frag_dists_to_recep: bool = False
     frag_smiles: str = False  # str || bool
+    frag_aromatic: bool = False
+    frag_charged: bool = False
 
     def updatable(self) -> bool:
         # Updatable
@@ -42,6 +45,8 @@ class CacheItemsToUpdate(object):
                 self.frag_dists_to_recep,
                 self.frag_smiles,
                 self.frag_num_heavy_atoms,
+                self.frag_aromatic,
+                self.frag_charged
             ]
         )
 
@@ -54,7 +59,12 @@ def _set_molecular_prop(func, func_input, default_if_error):
     # Provides a way to provide a default value if function fails.
     try:
         return func(func_input)
-    except Exception:
+    except Exception as e:
+        # Save the exception to err.txt
+        # with open("err.txt", "a") as f:
+        #     f.write(f"{func_input} failed to calculate {func.__name__}\n")
+        #     f.write(str(e) + "\n")            
+
         return default_if_error
 
 
@@ -90,6 +100,9 @@ def _get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
             lig_name = lig.meta["moad_ligand"].name
             lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
 
+            # First, deal with properties that apply to the entire ligand (not
+            # each fragment)
+
             # Updatable
             if cache_items_to_update.lig_mass:
                 lig_infs[lig_name]["lig_mass"] = _set_molecular_prop(
@@ -111,11 +124,15 @@ def _get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
                     lambda x: x.num_heavy_atoms, lig, 999999
                 )
 
+            # Now deal with properties by fragment (not entire ligand)
+
             if (
                     cache_items_to_update.frag_masses
                     or cache_items_to_update.frag_num_heavy_atoms
                     or cache_items_to_update.frag_dists_to_recep
                     or cache_items_to_update.frag_smiles
+                    or cache_items_to_update.frag_aromatic
+                    or cache_items_to_update.frag_charged
             ):
                 # Get all the fragments
                 frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
@@ -145,6 +162,19 @@ def _get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
                         lambda f: [x[1].smiles(True) for x in f],
                         frags,
                         [],
+                    )
+
+                if cache_items_to_update.frag_aromatic:
+                    lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
+                        lambda f: [is_aromatic(x[1].rdmol) for x in f],
+                        frags, []
+                        
+                    )
+
+                if cache_items_to_update.frag_charged:
+                    lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
+                        lambda f: [is_charged(x[1].rdmol) for x in f],
+                        frags, []
                     )
 
     return pdb_id, lig_infs
@@ -187,6 +217,10 @@ def _set_cache_params_to_update(cache):
         CACHE_ITEMS_TO_UPDATE.frag_dists_to_recep = False
     if "frag_smiles" in first_lig:
         CACHE_ITEMS_TO_UPDATE.frag_smiles = False
+    if "frag_aromatic" in first_lig:
+        CACHE_ITEMS_TO_UPDATE.frag_aromatic = False
+    if "frag_charged" in first_lig:
+        CACHE_ITEMS_TO_UPDATE.frag_charged = False
 
 
 def _build_moad_cache_file(
@@ -318,5 +352,5 @@ def load_cache_and_filter(
             + str(lig)
         )
 
-    print("Number of fragments in the " + split.name + " set: " + str(len(filtered_cache)))
+    print(f"Number of fragments in the {split.name} set: {len(filtered_cache)}")
     return cache, filtered_cache
