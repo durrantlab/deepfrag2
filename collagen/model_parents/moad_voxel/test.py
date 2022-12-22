@@ -327,7 +327,7 @@ class MoadVoxelModelTest(object):
         device = self.init_device(args)
 
         predictions_per_rot = ensemble_helper.AveragedEnsembled(
-            trainer, model, test_data, args.inference_rotations, device, ckpt, args.aggregation_rotations
+            trainer, model, test_data, args.rotations, device, ckpt, args.aggregation_rotations
         )
 
         if ckpt_idx == 0:
@@ -415,7 +415,7 @@ class MoadVoxelModelTest(object):
             return None
 
     @staticmethod
-    def _save_test_results_to_json(all_test_data, s, args, pth=None, inference=True):
+    def _save_test_results_to_json(all_test_data, s, args, pth=None):
         # Save the test results to a carefully formatted JSON file.
 
         jsn = json.dumps(all_test_data, indent=4)
@@ -432,7 +432,7 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
-        folder_name = "inference_results" if inference else "test_results"
+        folder_name = "test_results"
         pth = pth + os.sep + folder_name + os.sep + args.aggregation_rotations + os.sep
         os.makedirs(pth, exist_ok=True)
         num = len(glob.glob(f"{pth}*.json", recursive=False))
@@ -472,9 +472,9 @@ class MoadVoxelModelTest(object):
         if not args.inference_label_sets:
             raise ValueError("Must specify a label set (--inference_label_sets argument)")
         if args.every_csv and not args.data_dir:
-            raise Exception("To load the MOAD database is required to specify the --every_csv and --data_dir arguments")
+            raise Exception("To load the MOAD database, you must specify the --every_csv and --data_dir arguments")
         elif not args.every_csv and not args.data_dir:
-            raise Exception("To run the test/inference mode is required to specify the --every_csv and --data_dir arguments (for MOAD database), or the --data_dir argument only for a database other than MOAD")
+            raise Exception("To run the test mode, you must specify the --every_csv and --data_dir arguments (for MOAD database), or the --data_dir argument only for a database other than MOAD")
 
         if use_custom_test_set:
             if not args.custom_test_set_dir:
@@ -486,10 +486,11 @@ class MoadVoxelModelTest(object):
                 raise Exception("To run the test mode is required loading a previously saved test dataset")
 
     def run_test(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], 
-        use_custom_test_set: bool = False
+        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
     ):
         # Runs a model on the test and evaluates the output.
+
+        use_custom_test_set = args.custom_test_set_dir is not None
 
         self._validate_run_test(args, ckpt, use_custom_test_set)
 
@@ -660,6 +661,6 @@ class MoadVoxelModelTest(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir, use_custom_test_set)
+        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir)
         if not use_custom_test_set:
             self._save_examples_used(model, args)

@@ -49,7 +49,7 @@ class MoadVoxelModelTrain(object):
     def get_moad_train_val_sets(self, args, train: bool):
 
         if args.custom_test_set_dir:
-            raise Exception("The external data can only be used in inference or testing mode")
+            raise Exception("The custom test set can only be used in testing mode")
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
