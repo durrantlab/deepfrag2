@@ -12,7 +12,7 @@ from model import MolVAE
 
 
 def run(args):
-    zinc = ZINCDatasetH5(args.data, make_3D=False)
+    zinc = ZINCDatasetH5(args.data_dir, make_3D=False)
     train_data = DataLoader(zinc, batch_size=8, shuffle=True, collate_fn=lambda x: x)
 
     model = MolVAE(
@@ -46,7 +46,7 @@ def run(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", required=True, help="Path to zinc.h5")
+    parser.add_argument("--data_dir", required=True, help="Path to zinc.h5")
     parser.add_argument("--cpu", default=False, action="store_true")
     parser.add_argument("--wandb_project", required=False, default=None)
     parser = pl.Trainer.add_argparse_args(parser)

@@ -46,7 +46,7 @@ You can also specify a `data` and `checkpoints` folder (mounted at `/mnt/data` a
 
 .. code-block:: bash
 
-    $ ./manager run --data ~/my_data --checkpoints ~/my_checkpoints cpu
+    $ ./manager run --data_dir ~/my_data --checkpoints ~/my_checkpoints cpu
 
     root@85748b57b7fa:/mnt/apps# ls /mnt
     apps data checkpoints

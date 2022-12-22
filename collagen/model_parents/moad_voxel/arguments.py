@@ -9,17 +9,19 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser = parent_parser.add_argument_group("Binding MOAD")
 
     parser.add_argument(
-        "--csv",
+        "--every_csv",
         required=False,
         help="Path to MOAD every.csv"
     )
     parser.add_argument(
-        "--data",
+        "--data_dir",
         required=True,
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
     )
+
+    # TODO: Is this parameter MOAD specific? Might add it elsewhere.
     parser.add_argument(
-        "--external_data",
+        "--mol_dir_for_inference",
         required=False,
         default=None,
         type=str,
@@ -64,7 +66,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--cache",
         required=False,
         default=None,
-        help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--csv`.",
+        help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--every_csv`.",
     )
     parser.add_argument(
         "--cache_pdbs_to_disk",
