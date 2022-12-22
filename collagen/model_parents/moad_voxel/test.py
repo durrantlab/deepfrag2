@@ -392,19 +392,35 @@ class MoadVoxelModelTest(object):
         # with open('/mnt/extra/cProfile.txt', 'w+') as f:
         #    f.write(s.getvalue())
 
-    def run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], inference: bool = False):
+    @staticmethod
+    def _validate_run_test(args: Namespace, ckpt: Optional[str], inference: bool):
+        if not ckpt:
+            raise ValueError("Must specify a checkpoint in test mode")
+        if not args.inference_label_sets:
+            raise ValueError("Must specify a label set (--inference_label_sets argument)")
+        if args.every_csv and not args.data_dir:
+            raise Exception("To load the MOAD database is required to specify the --every_csv and --data_dir arguments")
+        elif not args.every_csv and not args.data_dir:
+            raise Exception("To run the test/inference mode is required to specify the --every_csv and --data_dir arguments (for MOAD database), or the --data_dir argument only for a database other than MOAD")
+
+        if inference:
+            if not args.mol_dir_for_inference:
+                raise Exception("To run the inference mode must be specified a external dataset (--mol_dir_for_inference argument) comprised of protein-ligand pairs (PDB file and SDF file)")
+        else:
+            if "test" not in args.inference_label_sets:
+                raise ValueError("To run in test mode, you must include the `test` label set")
+            if not args.load_splits:
+                raise Exception("To run the test mode is required loading a previously saved test dataset")
+
+    def run_test(
+        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], inference: bool = False
+    ):
         # Runs a model on the test and evaluates the output.
 
         pr = cProfile.Profile()
         pr.enable()
 
-        if not ckpt:
-            raise ValueError("Must specify a checkpoint in test mode")
-
-        if not args.inference_label_sets:
-            raise ValueError("Must specify a label set (--inference_label_sets argument)")
-        if not inference and "test" not in args.inference_label_sets:
-            raise ValueError("To run in test mode, you must include the `test` label set")
+        self._validate_run_test(args, ckpt, inference)
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
@@ -412,6 +428,10 @@ class MoadVoxelModelTest(object):
         print(
             f"Test/inference mode using the operator {args.aggregation_rotations} to aggregate the inferences."
         )
+
+        # TODO: Why both moad and external_db variables? Seems like you could
+        # merge the logic here. Also, can we put belo code block in "if not
+        # inference"?
         if args.every_csv and args.data_dir:
             print("Loading MOAD database.")
             moad = MOADInterface(
@@ -433,25 +453,17 @@ class MoadVoxelModelTest(object):
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
             )
-        elif args.every_csv and not args.data_dir:
-            raise Exception("To load the MOAD database is required to specify the --every_csv and --data_dir arguments")
-        elif not args.every_csv and not args.data_dir:
-            raise Exception("To run the test/inference mode is required to specify the --every_csv and --data_dir arguments (for MOAD database), or the --data_dir argument only for a database other than MOAD")
 
+        external_db = None
         if inference:
-            if not args.mol_dir_for_inference:
-                raise Exception("To run the inference mode must be specified a external dataset (--mol_dir_for_inference argument) comprised of protein-ligand pairs (PDB file and SDF file)")
-            else:
-                external_db = PdbSdfDirInterface(
-                    structures=args.mol_dir_for_inference,
-                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-                    grid_width=voxel_params.width,
-                    grid_resolution=voxel_params.resolution,
-                    noh=args.noh,
-                    discard_distant_atoms=args.discard_distant_atoms,
-                )
-        elif not args.load_splits:
-            raise Exception("To run the test mode is required loading a previously saved test dataset")
+            external_db = PdbSdfDirInterface(
+                structures=args.mol_dir_for_inference,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms,
+            )
 
         train, val, test = compute_moad_split(
             moad=moad if not inference else external_db,
@@ -473,7 +485,7 @@ class MoadVoxelModelTest(object):
         test_data = self.get_data_from_split(
             cache_file=None if inference else args.cache, args=args, moad=moad if not inference else external_db, split=test, voxel_params=voxel_params, device=device, shuffle=False,
         )
-        print("Number of batches for the test data: " + str(len(test_data)))
+        print(f"Number of batches for the test data: {len(test_data)}")
 
         trainer = self.init_trainer(args)
 
