@@ -17,3 +17,7 @@ export OUTPUT_TRAIN_DIR="${HOME_DF_WORK}/output_deepfrag"
 export DIR_WITH_PDBSDF_FILES="/path/to/my_dir_with_pdb_and_sdf_models"
 export INPUT_MODEL_FOR_FINETUNING="${OUTPUT_TRAIN_DIR}/model_mean_mean_train.pt"
 export OUTPUT_FT_DIR="${HOME_DF_WORK}/output_deepfrag_ft"
+export FRACTION_TRAIN=0.6
+
+# Inferece parameters
+export EXTERNAL_DATA="${HOME_DF_WORK}/output_deepfrag_ft"
