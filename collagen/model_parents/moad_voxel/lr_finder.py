@@ -19,8 +19,8 @@ class MoadVoxelModelLRFinder(object):
         device = self.init_device(args)
 
         moad = MOADInterface(
-            metadata=args.csv,
-            structures_path=args.data,
+            metadata=args.every_csv,
+            structures_path=args.data_dir,
             cache_pdbs_to_disk=args.cache_pdbs_to_disk,
             grid_width=voxel_params.width,
             grid_resolution=voxel_params.resolution,

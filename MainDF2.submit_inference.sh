@@ -19,7 +19,7 @@ source activate ${CONDA_ENV_NAME}
 cd ${DEEPFRAG_ROOT}
 
 #This command is recommended to perform a faster inference process
-python MainDF2.py --csv ${EVERY_CSV} --data ${BINDINGMOAD_DIR} --mol_dir_for_inference ${EXTERNAL_DATA} --default_root_dir ${OUTPUT_FT_DIR} --mode inference  --inference_rotations 8 --aggregation_rotations mean --load_newest_checkpoint True --inference_label_sets test
+python MainDF2.py --every_csv ${EVERY_CSV} --data_dir ${BINDINGMOAD_DIR} --mol_dir_for_inference ${EXTERNAL_DATA} --default_root_dir ${OUTPUT_FT_DIR} --mode inference  --inference_rotations 8 --aggregation_rotations mean --load_newest_checkpoint True --inference_label_sets test
 
 #This command will perform a slower inference process because it requires to compute fingerprints for fragments into MOAD database
-#python MainDF2.py --csv ${EVERY_CSV} --data ${BINDINGMOAD_DIR} --mol_dir_for_inference ${EXTERNAL_DATA} --default_root_dir ${OUTPUT_FT_DIR} --mode inference  --inference_rotations 8 --aggregation_rotations mean --load_newest_checkpoint True --inference_label_sets all
+#python MainDF2.py --every_csv ${EVERY_CSV} --data_dir ${BINDINGMOAD_DIR} --mol_dir_for_inference ${EXTERNAL_DATA} --default_root_dir ${OUTPUT_FT_DIR} --mode inference  --inference_rotations 8 --aggregation_rotations mean --load_newest_checkpoint True --inference_label_sets all

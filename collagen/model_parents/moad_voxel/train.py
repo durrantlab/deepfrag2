@@ -55,7 +55,7 @@ class MoadVoxelModelTrain(object):
         device = self.init_device(args)
 
         if train:
-            if args.csv is None:
+            if args.every_csv is None:
                 raise ValueError(
                     "For 'train' mode is required to specify the 'csv' parameter."
                 )
@@ -65,8 +65,8 @@ class MoadVoxelModelTrain(object):
                 )
 
             moad = MOADInterface(
-                metadata=args.csv,
-                structures_path=args.data,
+                metadata=args.every_csv,
+                structures_path=args.data_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
@@ -74,13 +74,13 @@ class MoadVoxelModelTrain(object):
                 discard_distant_atoms=args.discard_distant_atoms,
             )
         else:
-            if args.csv is not None:
+            if args.every_csv is not None:
                 raise ValueError(
                     "For 'warm_starting' mode is not required to specify the 'csv' parameter."
                 )
 
             moad = PdbSdfDirInterface(
-                structures=args.data,
+                structures=args.data_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,

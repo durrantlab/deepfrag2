@@ -6,9 +6,9 @@ import argparse
 import pytorch_lightning as pl
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")
+parser.add_argument("--every_csv", required=True, help="Path to MOAD every.csv")
 parser.add_argument(
-    "--data", required=True, help="Path to MOAD root structure folder"
+    "--data_dir", required=True, help="Path to MOAD root structure folder"
 )
 parser.add_argument("--cache", required=True, help="Path to MOAD cache.json file")
 # parser.add_argument(

@@ -412,31 +412,31 @@ class MoadVoxelModelTest(object):
         print(
             f"Test/inference mode using the operator {args.aggregation_rotations} to aggregate the inferences."
         )
-        if args.csv and args.data:
+        if args.every_csv and args.data_dir:
             print("Loading MOAD database.")
             moad = MOADInterface(
-                metadata=args.csv,
-                structures_path=args.data,
+                metadata=args.every_csv,
+                structures_path=args.data_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
             )
-        elif not args.csv and args.data:
+        elif not args.every_csv and args.data_dir:
             print("Loading a database other than MOAD database.")
             moad = PdbSdfDirInterface(
-                structures=args.data,
+                structures=args.data_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
             )
-        elif args.csv and not args.data:
-            raise Exception("To load the MOAD database is required to specify the --csv and --data arguments")
-        elif not args.csv and not args.data:
-            raise Exception("To run the test/inference mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only for a database other than MOAD")
+        elif args.every_csv and not args.data_dir:
+            raise Exception("To load the MOAD database is required to specify the --every_csv and --data_dir arguments")
+        elif not args.every_csv and not args.data_dir:
+            raise Exception("To run the test/inference mode is required to specify the --every_csv and --data_dir arguments (for MOAD database), or the --data_dir argument only for a database other than MOAD")
 
         if inference:
             if not args.mol_dir_for_inference:
