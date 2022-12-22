@@ -287,8 +287,8 @@ def _save_split(
         json.dump(split_inf, f, indent=4)
 
 
-def compute_moad_split(
-    moad: "MOADInterface",
+def compute_dataset_split(
+    dataset: "MOADInterface",
     seed: int = 0,
     fraction_train: float = 0.6,
     fraction_val: float = 0.5,
@@ -343,7 +343,7 @@ def compute_moad_split(
         # Not loading previously determined splits from disk, so generate
         # based on random seed.
         pdb_ids, all_smis = _generate_splits_from_scratch(
-            moad,
+            dataset,
             fraction_train,
             fraction_val,
             prevent_smiles_overlap,
@@ -356,7 +356,7 @@ def compute_moad_split(
     else:
         # User has asked to load splits from file on disk. Get from the file.
         pdb_ids, all_smis, seed = _load_splits_from_disk(
-            moad,
+            dataset,
             load_splits,
             max_pdbs_train,
             max_pdbs_val,

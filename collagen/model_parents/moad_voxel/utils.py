@@ -23,7 +23,7 @@ class MoadVoxelModelUtils(object):
         self: "MoadVoxelModelParent",
         cache_file: str,
         args: Namespace,
-        moad: MOADInterface,
+        dataset: MOADInterface,
         split: MOAD_split,
         voxel_params: VoxelParams,
         device: Any,
@@ -38,7 +38,7 @@ class MoadVoxelModelUtils(object):
         # JDD NOTE: self.dataset_cls could be something like MOADFragmentDataset
 
         dataset = self.dataset_cls(
-            moad=moad,
+            moad=dataset,
             cache_file=cache_file,
             cache_cores=args.num_dataloader_workers,
             split=split,

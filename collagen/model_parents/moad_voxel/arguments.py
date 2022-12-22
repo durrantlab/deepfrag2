@@ -19,9 +19,11 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
     )
 
-    # TODO: Is this parameter MOAD specific? Might add it elsewhere.
+    # NOTE: --custom_test_set_dir must be separate from --data_dir because you
+    # might want to run inference on a given set of PDB files, but derive the
+    # label sets from the BindingMOAD.
     parser.add_argument(
-        "--mol_dir_for_inference",
+        "--custom_test_set_dir",
         required=False,
         default=None,
         type=str,

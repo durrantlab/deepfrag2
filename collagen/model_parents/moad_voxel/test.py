@@ -16,7 +16,7 @@ from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.metrics.ensembled import averaged as ensemble_helper
 from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
-from collagen.external.moad.split import compute_moad_split
+from collagen.external.moad.split import compute_dataset_split
 from collagen.metrics.metrics import (
     most_similar_matches,
     pca_space_from_label_set_fingerprints,
@@ -25,6 +25,14 @@ from collagen.metrics.metrics import (
 
 
 def _return_paramter(object):
+    """Returns a paramerter. For use in imap_unordered.
+
+    Args:
+        object (Any): The parameter.
+
+    Returns:
+        Any: The parameter returned.
+    """
     return object
 
 
@@ -34,9 +42,20 @@ class MoadVoxelModelTest(object):
     def _remove_redundant_fingerprints(
             label_set_fps: torch.Tensor, label_set_smis: List[str], device: Any
     ) -> Tuple[torch.Tensor, List[str]]:
-        # Given ordered lists of fingerprints and smiles strings, removes
-        # redundant fingerprints and smis while maintaining the consistent order
-        # between the two lists.
+        """Given ordered lists of fingerprints and smiles strings, removes
+        redundant fingerprints and smis while maintaining the consistent order
+        between the two lists.
+
+        Args:
+            label_set_fps (torch.Tensor): A tensor with the fingerprints.
+            label_set_smis (List[str]): A list of the associatd smiles strings.
+            device (Any): The device.
+
+        Returns:
+            Tuple[torch.Tensor, List[str]]: Same as input, but redundant
+            fingerprints are removed.
+        """
+
         label_set_fps, inverse_indices = label_set_fps.unique(
             dim=0, return_inverse=True
         )
@@ -56,7 +75,7 @@ class MoadVoxelModelTest(object):
 
         return label_set_fps, label_set_smis
 
-    def _add_fingerprints_to_label_set_tensor(
+    def _add_to_label_set(
         self: "MoadVoxelModelParent",
         args: Namespace,
         moad: MOADInterface,
@@ -65,24 +84,50 @@ class MoadVoxelModelTest(object):
         device: Any,
         existing_label_set_fps: torch.Tensor,
         existing_label_set_smis: List[str],
-    ):
-        # When testing a model, it's sometimes helpful to add additional
-        # fingerprints to the label set (lookup table), beyond those in the test
-        # set. This function allows you to include additional fingerprints
-        # (e.g., from the training and validation sets) in the label set for
-        # testing.
+    ) -> Tuple[torch.Tensor, List[str]]:
+        """This is a helper script. Adds fingerprints to a label set (lookup
+        table). This function allows you to include additional fingerprints
+        (e.g., from the training and validation sets) in the label set for
+        testing. Takes the fingerprints right from the split.
+        
+        Args:
+            self (MoadVoxelModelParent): This object
+            args (Namespace): The user arguments.
+            moad (MOADInterface): The MOAD dataset.
+            split (MOAD_split): The splits of the MOAD dataset.
+            voxel_params (VoxelParams): Parameters for voxelization.
+            device (Any): The device to use.
+            existing_label_set_fps (torch.Tensor): The existing tensor of 
+                fingerprints to which these new ones should be added.
+            existing_label_set_smis (List[str]): The existing list of SMILES
+                strings to which the new ones should be added.
+
+        Returns:
+            Tuple[torch.Tensor, List[str]]: The updated fingerprint
+                tensor and smiles list.
+        """
 
         # TODO: Harrison: How hard would it be to make it so data below doesn't
         # voxelize the receptor? Is that adding a lot of time to the
         # calculation? Just a thought. See other TODO: note about this.
         data = self.get_data_from_split(
-            cache_file=args.cache, args=args, moad=moad, split=split, voxel_params=voxel_params, device=device, shuffle=False,
+            cache_file=args.cache, 
+            args=args, 
+            dataset=moad, 
+            split=split, 
+            voxel_params=voxel_params, 
+            device=device, 
+            shuffle=False,
         )
 
         all_fps = []
         all_smis = []
         with multiprocessing.Pool() as p:
-            for batch in tqdm(p.imap_unordered(_return_paramter, data), total=len(data), desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."):
+            for batch in tqdm(
+                p.imap_unordered(_return_paramter, data), 
+                total=len(data), 
+                desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."
+            ):
                 voxels, fps_tnsr, smis = batch
                 all_fps.append(fps_tnsr)
                 all_smis.extend(smis)
@@ -99,7 +144,7 @@ class MoadVoxelModelTest(object):
 
         return fps_tnsr, all_smis
 
-    def _create_label_set_tensor(
+    def _create_label_set(
         self: "MoadVoxelModelParent",
         args: ArgumentParser,
         device: Any,
@@ -112,10 +157,33 @@ class MoadVoxelModelTest(object):
         moad: MOADInterface = None,
         voxel_params: VoxelParams = None,
         lbl_set_codes: List[str] = None,
-    ) -> torch.Tensor:
-        # Creates a label set (look-up) tensor for testing. Can be comprised of
-        # the fingerprints in the train and/or test and/or val sets, as well as
-        # SMILES strings from a file.
+    ) -> Tuple[torch.Tensor, List[Entry_info]]:
+        """Creates a label set (look-up) tensor and smiles list for testing. 
+        Can be comprised of the fingerprints in the train and/or test and/or
+        val sets, as well as SMILES strings from a file.
+
+        Args:
+            self (MoadVoxelModelParent): This object
+            args (Namespace): The user arguments.
+            device (Any): The device to use.
+            existing_label_set_fps (torch.Tensor, optional): The existing tensor of 
+                fingerprints to which these new ones should be added. Defaults
+                to None.
+            existing_label_set_entry_infos (List[Entry_info], optional): _description_. Defaults to None.
+            skip_test_set (bool, optional): Do not add test-set fingerprints,
+                presumably because they are already present in
+                existing_label_set_entry_infos. Defaults to False.
+            train (MOAD_split, optional): The train split. Defaults to None.
+            val (MOAD_split, optional): The val split. Defaults to None.
+            test (MOAD_split, optional): The test split. Defaults to None.
+            moad (MOADInterface, optional): The MOAD dataset. Defaults to None.
+            voxel_params (VoxelParams): Parameters for voxelization. Defaults to None.
+            lbl_set_codes (List[str], optional): _description_. Defaults to None.
+
+        Returns:
+            Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
+                tensor and smiles list.
+        """
 
         # skip_test_set can be true if those fingerprints are already in
         # existing_label_set
@@ -123,14 +191,16 @@ class MoadVoxelModelTest(object):
         if lbl_set_codes is None:
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
 
-        # Load from train, valm and test sets.
+        # Load from train, val, and test sets.
         if "all" in lbl_set_codes:
-            label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+            label_set_fps, label_set_smis = self._add_to_label_set(
                 args, moad, None, voxel_params, device, None, None
             )
         else:
             if existing_label_set_fps is None:
-                label_set_fps = torch.zeros((0, args.fp_size), dtype=torch.float32, device=device, requires_grad=False)
+                label_set_fps = torch.zeros(
+                    (0, args.fp_size), dtype=torch.float32, device=device, requires_grad=False
+                )
                 label_set_smis = []
             else:
                 # If you get an existing set of fingerprints, be sure to keep only the
@@ -140,29 +210,31 @@ class MoadVoxelModelTest(object):
                 )
 
             if "train" in lbl_set_codes and len(train.targets) > 0:
-                label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                label_set_fps, label_set_smis = self._add_to_label_set(
                     args, moad, train, voxel_params, device, label_set_fps, label_set_smis
                 )
 
             if "val" in lbl_set_codes and len(val.targets) > 0:
-                label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                label_set_fps, label_set_smis = self._add_to_label_set(
                     args, moad, val, voxel_params, device, label_set_fps, label_set_smis
                 )
 
             if "test" in lbl_set_codes and not skip_test_set and len(test.targets) > 0:
-                label_set_fps, label_set_smis = self._add_fingerprints_to_label_set_tensor(
+                label_set_fps, label_set_smis = self._add_to_label_set(
                     args, moad, test, voxel_params, device, label_set_fps, label_set_smis
                 )
 
         # Add to that fingerprints from an SMI file.
         smi_files = [f for f in lbl_set_codes if f not in ["train", "val", "test", "all"]]
-        if len(smi_files) > 0:
+        if smi_files:
             fp_tnsrs_from_smi_file = [label_set_fps]
             for filename in smi_files:
                 for smi, mol in mols_from_smi_file(filename):
                     fp_tnsrs_from_smi_file.append(
                         torch.tensor(
-                            mol.fingerprint("rdk10", args.fp_size), dtype=torch.float32, device=device, requires_grad=False
+                            mol.fingerprint("rdk10", args.fp_size), 
+                            dtype=torch.float32, device=device, 
+                            requires_grad=False
                         ).reshape((1, args.fp_size))
                     )
                     label_set_smis.append(smi)
@@ -190,17 +262,18 @@ class MoadVoxelModelTest(object):
         lbl_set_codes: List[str],
         device: Any,
         predictions_per_rot: ensemble_helper.AveragedEnsembled,
-    ) -> Any:
-        # Certain variables can only be defined when processing the first
-        # checkpoint. Note that all_test_data is modified in place and so does
-        # not need to be returned.
+    ) -> Tuple["PCAProject", torch.Tensor, torch.Tensor, List[Entry_info]]:
+        """Certain variables can only be defined when processing the first
+        checkpoint. Moving this out of the loop so it's not distracting. Note
+        that all_test_data is modified in place and so does not need to be
+        returned."""
 
         voxel_params = self.init_voxel_params(args)
 
         # Get the label set to use. Note that it only does this once (for the
         # first-checkpoint model), but I need model so I'm leaving it in the
         # loop.
-        label_set_fingerprints, label_set_entry_infos = self._create_label_set_tensor(
+        label_set_fingerprints, label_set_entry_infos = self._create_label_set(
             args,
             device,
             existing_label_set_fps=predictions_per_rot.model.prediction_targets,
@@ -227,7 +300,7 @@ class MoadVoxelModelTest(object):
             label_set_entry_infos,
         )
 
-    def _run_test_on_checkpoint(
+    def _run_test_on_single_checkpoint(
         self: "MoadVoxelModelParent",
         all_test_data: Any,
         args: Namespace,
@@ -242,9 +315,9 @@ class MoadVoxelModelTest(object):
         lbl_set_codes: List[str],
         avg_over_ckpts_of_avgs: Any,
     ) -> Any:
-        # Note that you're iterating through multiple checkpoints. This allows
-        # output from multiple trained models to be averaged. This is the test
-        # run on a single checkpoint.
+        """This is the test run on a single checkpoint. You're iterating through
+        multiple checkpoints. This allows output from multiple trained models to
+        be averaged."""
 
         # all_test_data is modified in place and so does not need to be
         # returned.
@@ -359,10 +432,10 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
-        folder_name = "test_results" if not inference else "inference_results"
+        folder_name = "inference_results" if inference else "test_results"
         pth = pth + os.sep + folder_name + os.sep + args.aggregation_rotations + os.sep
         os.makedirs(pth, exist_ok=True)
-        num = len(glob.glob(pth + "*.json", recursive=False))
+        num = len(glob.glob(f"{pth}*.json", recursive=False))
 
         with open(f"{pth}test_results-{num + 1}.json", "w") as f:
             f.write(jsn)
@@ -393,7 +466,7 @@ class MoadVoxelModelTest(object):
         #    f.write(s.getvalue())
 
     @staticmethod
-    def _validate_run_test(args: Namespace, ckpt: Optional[str], inference: bool):
+    def _validate_run_test(args: Namespace, ckpt: Optional[str], use_custom_test_set: bool):
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
         if not args.inference_label_sets:
@@ -403,9 +476,9 @@ class MoadVoxelModelTest(object):
         elif not args.every_csv and not args.data_dir:
             raise Exception("To run the test/inference mode is required to specify the --every_csv and --data_dir arguments (for MOAD database), or the --data_dir argument only for a database other than MOAD")
 
-        if inference:
-            if not args.mol_dir_for_inference:
-                raise Exception("To run the inference mode must be specified a external dataset (--mol_dir_for_inference argument) comprised of protein-ligand pairs (PDB file and SDF file)")
+        if use_custom_test_set:
+            if not args.custom_test_set_dir:
+                raise Exception("To run use a custom test set, you must specify the location of the dataset (--custom_test_set_dir argument) comprised of protein-ligand pairs (PDB file and SDF file)")
         else:
             if "test" not in args.inference_label_sets:
                 raise ValueError("To run in test mode, you must include the `test` label set")
@@ -413,66 +486,65 @@ class MoadVoxelModelTest(object):
                 raise Exception("To run the test mode is required loading a previously saved test dataset")
 
     def run_test(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], inference: bool = False
+        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], 
+        use_custom_test_set: bool = False
     ):
         # Runs a model on the test and evaluates the output.
+
+        self._validate_run_test(args, ckpt, use_custom_test_set)
+
+        print(f"Using the operator {args.aggregation_rotations} to aggregate the inferences.")
 
         pr = cProfile.Profile()
         pr.enable()
 
-        self._validate_run_test(args, ckpt, inference)
-
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
-        print(
-            f"Test/inference mode using the operator {args.aggregation_rotations} to aggregate the inferences."
-        )
-
-        # TODO: Why both moad and external_db variables? Seems like you could
-        # merge the logic here. Also, can we put belo code block in "if not
-        # inference"?
-        if args.every_csv and args.data_dir:
-            print("Loading MOAD database.")
-            moad = MOADInterface(
-                metadata=args.every_csv,
-                structures_path=args.data_dir,
+        dataset = None
+        if use_custom_test_set:
+            dataset = PdbSdfDirInterface(
+                structures=args.custom_test_set_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
             )
-        elif not args.every_csv and args.data_dir:
-            print("Loading a database other than MOAD database.")
-            moad = PdbSdfDirInterface(
-                structures=args.data_dir,
-                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-                grid_width=voxel_params.width,
-                grid_resolution=voxel_params.resolution,
-                noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms,
-            )
+        elif args.data_dir:
+            # not using custom test set
+            if args.every_csv:
+                print("Loading MOAD database.")
+                dataset = MOADInterface(
+                    metadata=args.every_csv,
+                    structures_path=args.data_dir,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms,
+                )
+            else:
+                print("Loading a database other than MOAD database.")
+                dataset = PdbSdfDirInterface(
+                    structures=args.data_dir,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms,
+                )
+        else:
+            print("TODO: Throw error here. Not using custom test set, but no data_dir specified")
 
-        external_db = None
-        if inference:
-            external_db = PdbSdfDirInterface(
-                structures=args.mol_dir_for_inference,
-                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-                grid_width=voxel_params.width,
-                grid_resolution=voxel_params.resolution,
-                noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms,
-            )
-
-        train, val, test = compute_moad_split(
-            moad=moad if not inference else external_db,
+        train, val, test = compute_dataset_split(
+            dataset=dataset,
             seed=None,
             fraction_train=0.0,
             fraction_val=0.0,
             prevent_smiles_overlap=False,  # DEBUG
             save_splits=None,
-            load_splits=None if inference else args.load_splits,
+            load_splits=None if use_custom_test_set else args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
@@ -483,7 +555,13 @@ class MoadVoxelModelTest(object):
         # You'll always need the test data. Note that ligands are not fragmented
         # by calling the get_data_from_split function.
         test_data = self.get_data_from_split(
-            cache_file=None if inference else args.cache, args=args, moad=moad if not inference else external_db, split=test, voxel_params=voxel_params, device=device, shuffle=False,
+            cache_file=None if use_custom_test_set else args.cache, 
+            args=args,
+            dataset=dataset,
+            split=test, 
+            voxel_params=voxel_params, 
+            device=device, 
+            shuffle=False,
         )
         print(f"Number of batches for the test data: {len(test_data)}")
 
@@ -502,7 +580,7 @@ class MoadVoxelModelTest(object):
             model = self.init_model(args, ckpt)
             model.eval()
 
-            payload = self._run_test_on_checkpoint(
+            payload = self._run_test_on_single_checkpoint(
                 all_test_data,
                 args,
                 model,
@@ -512,7 +590,7 @@ class MoadVoxelModelTest(object):
                 test_data,
                 train,
                 val,
-                moad,
+                dataset,
                 None,
                 avg_over_ckpts_of_avgs,
             )
@@ -532,6 +610,8 @@ class MoadVoxelModelTest(object):
             torch.tensor(len(ckpts), device=device),
             out=avg_over_ckpts_of_avgs,
         )
+
+        # TODO: Below only makes sense if 
 
         # Calculate top-k metric of that average of averages
         top_k_results = top_k(
@@ -580,6 +660,6 @@ class MoadVoxelModelTest(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir, inference)
-        if not inference:
+        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir, use_custom_test_set)
+        if not use_custom_test_set:
             self._save_examples_used(model, args)

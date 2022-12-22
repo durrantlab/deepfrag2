@@ -1,6 +1,6 @@
 from argparse import Namespace
 from collagen.external.moad.interface import MOADInterface
-from collagen.external.moad.split import compute_moad_split
+from collagen.external.moad.split import compute_dataset_split
 
 # Code to identify the best learning rate for the model. I ended up not using
 # it.
@@ -27,7 +27,7 @@ class MoadVoxelModelLRFinder(object):
             noh=args.noh,
             discard_distant_atoms=args.discard_distant_atoms,
         )
-        train, val, _ = compute_moad_split(
+        train, val, _ = compute_dataset_split(
             moad,
             args.split_seed,
             save_splits=args.save_splits,
@@ -37,9 +37,13 @@ class MoadVoxelModelLRFinder(object):
             max_pdbs_test=args.max_pdbs_test,
         )
 
-        train_data = self.get_data_from_split(args, moad, train, voxel_params, device)
+        train_data = self.get_data_from_split(
+            args, moad, train, voxel_params, device
+        )
 
-        val_data = self.get_data_from_split(args, moad, val, voxel_params, device)
+        val_data = self.get_data_from_split(
+            args, moad, val, voxel_params, device
+        )
 
         lr_finder = trainer.tuner.lr_find(model, train_data, val_data)
         print("Suggested learning rate:", lr_finder.suggestion())
