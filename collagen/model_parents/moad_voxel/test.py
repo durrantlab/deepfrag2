@@ -409,7 +409,9 @@ class MoadVoxelModelTest(object):
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
-        print("Test/inference mode using the operator " + args.aggregation_rotations + " to aggregate the inferences.")
+        print(
+            f"Test/inference mode using the operator {args.aggregation_rotations} to aggregate the inferences."
+        )
         if args.csv and args.data:
             print("Loading MOAD database.")
             moad = MOADInterface(
@@ -437,11 +439,11 @@ class MoadVoxelModelTest(object):
             raise Exception("To run the test/inference mode is required to specify the --csv and --data arguments (for MOAD database), or the --data argument only for a database other than MOAD")
 
         if inference:
-            if not args.external_data:
-                raise Exception("To run the inference mode must be specified a external dataset (--external_data argument) comprised of protein-ligand pairs (PDB file and SDF file)")
+            if not args.mol_dir_for_inference:
+                raise Exception("To run the inference mode must be specified a external dataset (--mol_dir_for_inference argument) comprised of protein-ligand pairs (PDB file and SDF file)")
             else:
                 external_db = PdbSdfDirInterface(
-                    structures=args.external_data,
+                    structures=args.mol_dir_for_inference,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
                     grid_resolution=voxel_params.resolution,

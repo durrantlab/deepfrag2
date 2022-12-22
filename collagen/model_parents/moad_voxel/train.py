@@ -48,8 +48,8 @@ class MoadVoxelModelTrain(object):
 
     def get_moad_train_val_sets(self, args, train: bool):
 
-        if args.external_data:
-            raise Exception("The external data are only to be used in the inference mode")
+        if args.mol_dir_for_inference:
+            raise Exception("The external data can only be used in inference or testing mode")
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)

@@ -18,8 +18,10 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         required=True,
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
     )
+
+    # TODO: Is this parameter MOAD specific? Might add it elsewhere.
     parser.add_argument(
-        "--external_data",
+        "--mol_dir_for_inference",
         required=False,
         default=None,
         type=str,
