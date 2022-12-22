@@ -20,4 +20,4 @@ export OUTPUT_FT_DIR="${HOME_DF_WORK}/output_deepfrag_ft"
 export FRACTION_TRAIN=0.6
 
 # Inferece parameters
-export EXTERNAL_DATA="${HOME_DF_WORK}/output_deepfrag_ft"
+export EXTERNAL_DATA="/path/to/my_external_data/in_pdb_and_sdf_files"
