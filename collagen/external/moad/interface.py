@@ -175,7 +175,7 @@ class MOADInterface(object):
 
         # Map the pdb to the file on disk.
         files = {}
-        for fam in path.glob("./**/*." + self._extension_for_resolve_paths()):
+        for fam in path.glob(f"./**/*.{self._extension_for_resolve_paths()}"):
             if str(fam).endswith(".pkl"):
                 continue
             pdbid = fam.stem  # Removes extension (.bio?)

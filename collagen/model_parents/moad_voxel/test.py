@@ -7,6 +7,7 @@ import pstats
 import os
 import re
 from collagen.core.loader import DataLambda
+from collagen.model_parents.moad_voxel.test_inference_utils import remove_redundant_fingerprints
 import torch
 from tqdm.std import tqdm
 from typing import Any, List, Optional, Tuple
@@ -37,43 +38,6 @@ def _return_paramter(object):
 
 
 class MoadVoxelModelTest(object):
-
-    @staticmethod
-    def _remove_redundant_fingerprints(
-            label_set_fps: torch.Tensor, label_set_smis: List[str], device: Any
-    ) -> Tuple[torch.Tensor, List[str]]:
-        """Given ordered lists of fingerprints and smiles strings, removes
-        redundant fingerprints and smis while maintaining the consistent order
-        between the two lists.
-
-        Args:
-            label_set_fps (torch.Tensor): A tensor with the fingerprints.
-            label_set_smis (List[str]): A list of the associatd smiles strings.
-            device (Any): The device.
-
-        Returns:
-            Tuple[torch.Tensor, List[str]]: Same as input, but redundant
-            fingerprints are removed.
-        """
-
-        label_set_fps, inverse_indices = label_set_fps.unique(
-            dim=0, return_inverse=True
-        )
-
-        label_set_smis = [
-            inf[1]
-            for inf in sorted(
-                [
-                    (inverse_idx, label_set_smis[smi_idx])
-                    for inverse_idx, smi_idx in {
-                        int(inverse_idx): smi_idx
-                        for smi_idx, inverse_idx in enumerate(inverse_indices)
-                    }.items()
-                ]
-            )
-        ]
-
-        return label_set_fps, label_set_smis
 
     def _add_to_label_set(
         self: "MoadVoxelModelParent",
@@ -138,7 +102,7 @@ class MoadVoxelModelTest(object):
             all_fps.append(existing_label_set_fps)
 
         # Remove redundancies.
-        fps_tnsr, all_smis = self._remove_redundant_fingerprints(
+        fps_tnsr, all_smis = remove_redundant_fingerprints(
             torch.cat(all_fps), all_smis, device
         )
 
@@ -205,7 +169,7 @@ class MoadVoxelModelTest(object):
             else:
                 # If you get an existing set of fingerprints, be sure to keep only the
                 # unique ones.
-                label_set_fps, label_set_smis = self._remove_redundant_fingerprints(
+                label_set_fps, label_set_smis = remove_redundant_fingerprints(
                     existing_label_set_fps, existing_label_set_entry_infos, device=device
                 )
 
@@ -241,7 +205,7 @@ class MoadVoxelModelTest(object):
             label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
 
             # Remove redundancy
-            label_set_fps, label_set_smis = self._remove_redundant_fingerprints(
+            label_set_fps, label_set_smis = remove_redundant_fingerprints(
                 label_set_fps, label_set_smis, device
             )
 
@@ -465,8 +429,7 @@ class MoadVoxelModelTest(object):
         # with open('/mnt/extra/cProfile.txt', 'w+') as f:
         #    f.write(s.getvalue())
 
-    @staticmethod
-    def _validate_run_test(args: Namespace, ckpt: Optional[str], use_custom_test_set: bool):
+    def _validate_run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], use_custom_test_set: bool):
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
         if not args.inference_label_sets:
@@ -490,14 +453,14 @@ class MoadVoxelModelTest(object):
     ):
         # Runs a model on the test and evaluates the output.
 
+        pr = cProfile.Profile()
+        pr.enable()
+
         use_custom_test_set = args.custom_test_set_dir is not None
 
         self._validate_run_test(args, ckpt, use_custom_test_set)
 
         print(f"Using the operator {args.aggregation_rotations} to aggregate the inferences.")
-
-        pr = cProfile.Profile()
-        pr.enable()
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
@@ -580,6 +543,8 @@ class MoadVoxelModelTest(object):
 
             model = self.init_model(args, ckpt)
             model.eval()
+            
+            # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
 
             payload = self._run_test_on_single_checkpoint(
                 all_test_data,

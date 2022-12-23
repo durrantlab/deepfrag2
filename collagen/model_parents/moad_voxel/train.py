@@ -23,6 +23,8 @@ class MoadVoxelModelTrain(object):
 
         model = self.init_model(args, ckpt)
 
+        # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
+
         model_stats = summary(model, (16, 10, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
         print(summary_str)

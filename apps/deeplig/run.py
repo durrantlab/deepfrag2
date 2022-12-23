@@ -98,7 +98,9 @@ class DeepLig(MoadVoxelModelParent):
             rec_names.append(rec_name)
             lig_names.append(lig_name)
 
-            rec.voxelize_into(voxels, batch_idx=i, layer_offset=0, cpu=(device.type == 'cpu'))
+            rec.voxelize_into(
+                voxels, batch_idx=i, layer_offset=0, cpu=(device.type == 'cpu')
+            )
 
             # parent.voxelize_into(
             #     voxels,

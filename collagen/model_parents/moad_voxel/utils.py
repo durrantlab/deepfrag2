@@ -1,5 +1,5 @@
 from argparse import Namespace
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 from collagen.checkpoints import get_last_checkpoint
 from collagen.core.loader import DataLambda, MultiLoader
 from collagen.core.molecules.mol import Mol
@@ -10,7 +10,6 @@ from collagen.external.moad.types import MOAD_split
 
 
 class MoadVoxelModelUtils(object):
-
     @staticmethod
     def disable_warnings():
         from rdkit import RDLogger
@@ -47,6 +46,7 @@ class MoadVoxelModelUtils(object):
             ),
             args=args,
         )
+
         data = (
             MultiLoader(
                 dataset,

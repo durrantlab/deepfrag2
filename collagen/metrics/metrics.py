@@ -131,10 +131,10 @@ def most_similar_matches(
         sorted_dists = torch.index_select(dists, 0, sorted_idxs)
         sorted_smis = [label_set_smis[idx] for idx in sorted_idxs]
 
-        if pca_project is not None:
-            sorted_label_set_fingerprints = torch.index_select(
-                label_set_fingerprints, 0, sorted_idxs
-            )
+        # if pca_project is not None:
+        sorted_label_set_fingerprints = torch.index_select(
+            label_set_fingerprints, 0, sorted_idxs
+        )
 
         most_similar = []
 
