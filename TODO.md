@@ -26,7 +26,7 @@ FORMAT OUTPUT BETTER: No [27*]. Make charges neural. No chirality.
 Would be nice to have "--name" parameter (optional) that would controll logging
 name. To distinguish between test and train.
 
-Mesage saying that inference_rotations doesn't matter if training (if user sets
+Mesage saying that rotations doesn't matter if training (if user sets
 it). Save with inference_label_sets. And learning_rate if in testing mode.
 
 Might be nice to save different test_results.json files as rotations build up.

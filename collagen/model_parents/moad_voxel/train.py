@@ -2,7 +2,7 @@ from argparse import Namespace
 from typing import Optional
 from torchinfo import summary
 from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
-from collagen.external.moad.split import compute_moad_split, full_moad_split
+from collagen.external.moad.split import compute_dataset_split, full_moad_split
 
 
 class MoadVoxelModelTrain(object):
@@ -22,6 +22,8 @@ class MoadVoxelModelTrain(object):
         #     continue
 
         model = self.init_model(args, ckpt)
+
+        # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
 
         model_stats = summary(model, (16, 10, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
@@ -48,8 +50,8 @@ class MoadVoxelModelTrain(object):
 
     def get_moad_train_val_sets(self, args, train: bool):
 
-        if args.mol_dir_for_inference:
-            raise Exception("The external data can only be used in inference or testing mode")
+        if args.custom_test_set_dir:
+            raise Exception("The custom test set can only be used in testing mode")
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
@@ -88,7 +90,7 @@ class MoadVoxelModelTrain(object):
                 discard_distant_atoms=args.discard_distant_atoms,
             )
 
-        train, val, _ = compute_moad_split(
+        train, val, _ = compute_dataset_split(
             moad,
             seed=args.split_seed,
             fraction_train=args.fraction_train,
@@ -111,10 +113,25 @@ class MoadVoxelModelTrain(object):
         # ps.print_stats()
         # open('cProfilez.txt', 'w+').write(s.getvalue())
 
-        train_data = self.get_data_from_split(cache_file=args.cache, args=args, moad=moad, split=train, voxel_params=voxel_params, device=device)
+        train_data = self.get_data_from_split(
+            cache_file=args.cache, 
+            args=args, 
+            dataset=moad, 
+            split=train, 
+            voxel_params=voxel_params, 
+            device=device
+        )
+
         print("Number of batches for the training data: " + str(len(train_data)))
         if len(val.targets) > 0:
-            val_data = self.get_data_from_split(cache_file=args.cache, args=args, moad=moad, split=val, voxel_params=voxel_params, device=device)
+            val_data = self.get_data_from_split(
+                cache_file=args.cache, 
+                args=args, 
+                dataset=moad, 
+                split=val, 
+                voxel_params=voxel_params, 
+                device=device
+            )
             print("Number of batches for the validation data: " + str(len(val_data)))
         else:
             val_data = None
