@@ -98,8 +98,8 @@ class MoadVoxelModelInference(object):
             raise ValueError("Must specify a receptor (--receptor) in inference mode")
         if args.ligand is None:
             raise ValueError("Must specify a ligand (--ligand) in inference mode")
-        if args.xyz is None:
-            raise ValueError("Must specify a center (--xyz) in inference mode")
+        if args.branch_atm_loc_xyz is None:
+            raise ValueError("Must specify a center (--branch_atm_loc_xyz) in inference mode")
 
     def run_inference(
         self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
@@ -123,7 +123,7 @@ class MoadVoxelModelInference(object):
             m = prody.parsePDBStream(StringIO(f.read()), model=1)
         prody_mol = m.select("all")
         recep = Mol.from_prody(prody_mol)
-        center = np.array([float(v.strip()) for v in args.xyz.split(",")])
+        center = np.array([float(v.strip()) for v in args.branch_atm_loc_xyz.split(",")])
 
         # Load the ligand
         suppl = Chem.SDMolSupplier(str(args.ligand))
