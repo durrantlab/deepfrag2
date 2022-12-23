@@ -59,7 +59,7 @@ def _add_generic_params(
         default=None,
     )
     parser.add_argument(
-        "--xyz",
+        "--branch_atm_loc_xyz",
         type=str,
         help="A comma-separated list of x,y,z coordinates to use when running in inference mode.",
         default=None,
