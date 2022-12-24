@@ -15,7 +15,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--data_dir",
-        required=True,
+        required=False,  # Not required if running in --mode "inference"
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
     )
 
