@@ -15,6 +15,12 @@ class MoadVoxelModelInits(object):
 
     @staticmethod
     def init_trainer(args: Namespace) -> pl.Trainer:
+        if args.default_root_dir is not None and not os.path.exists(
+            args.default_root_dir
+        ):
+            os.mkdir(args.default_root_dir)
+
+
         if args.wandb_project:
             logger = WandbLogger(project=args.wandb_project)
         elif args.default_root_dir is not None:
