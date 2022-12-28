@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 import json
 from typing import Type, TypeVar, List
+from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
 from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
 from collagen.model_parents.moad_voxel.lr_finder import MoadVoxelModelLRFinder
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
@@ -24,6 +25,7 @@ class MoadVoxelModelParent(
     MoadVoxelModelLRFinder,
     MoadVoxelModelTest,
     MoadVoxelModelTrain,
+    MoadVoxelModelInference,
     MoadVoxelModelUtils,
 ):
     NUM_MOST_SIMILAR_PER_ENTRY = 5
@@ -89,7 +91,7 @@ class MoadVoxelModelParent(
             self.run_test(args, ckpt)
         elif args.mode == "inference":
             print("Starting 'inference' process")
-            self.run_test(args, ckpt, True)
+            self.run_inference(args, ckpt)
         elif args.mode == "lr_finder":
             print("Starting 'lr_finder' process")
             self.run_lr_finder(args)

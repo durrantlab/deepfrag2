@@ -18,4 +18,13 @@ source activate ${CONDA_ENV_NAME}
 
 cd ${DEEPFRAG_ROOT}
 
-python MainDF2.py --every_csv ${EVERY_CSV} --data_dir ${BINDINGMOAD_DIR} --load_splits ${OUTPUT_TRAIN_DIR}/splits.json --default_root_dir ${OUTPUT_TRAIN_DIR} --mode test --rotations 8 --aggregation_rotations mean --load_newest_checkpoint True
+# NOTE: Below not tested yet
+
+python MainDF2.py --default_root_dir ${OUTPUT_TRAIN_DIR} \
+    --mode inference --rotations 8 --aggregation_rotations mean \
+    --load_checkpoint "path/to/checkpoint.pt" \
+    --inference_label_sets "my_file.smi,my_file2.smi" \
+    --receptor "/path/to/receptor.pdb" \
+    --ligand "/path/to/ligand.sdf" \
+    --xyz "5,6,7"
+

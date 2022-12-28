@@ -42,10 +42,29 @@ def _add_generic_params(
              "If train, trains the model. " +
              "If warm_starting, runs an incremental learning on a new dataset. " +
              "If test, runs inference on the test set. " +
-             "If inference, runs a test mode but using all dataset as external set. " +
+             "If inference, runs inference on the test set."
              "If lr_finder, suggests the best learning rate to use. Defaults to train.",
         default="train",
     )
+    parser.add_argument(
+        "--receptor",
+        type=str,
+        help="The receptor (PDB file) to use when running in inference mode.",
+        default=None,
+    )
+    parser.add_argument(
+        "--ligand",
+        type=str,
+        help="The ligand (SDF file) to use when running in inference mode.",
+        default=None,
+    )
+    parser.add_argument(
+        "--branch_atm_loc_xyz",
+        type=str,
+        help="A comma-separated list of x,y,z coordinates to use when running in inference mode.",
+        default=None,
+    )
+
     parser.add_argument(
         "--load_checkpoint",
         type=str,

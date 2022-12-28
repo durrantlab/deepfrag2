@@ -15,17 +15,19 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--data_dir",
-        required=True,
+        required=False,  # Not required if running in --mode "inference"
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
     )
 
-    # TODO: Is this parameter MOAD specific? Might add it elsewhere.
+    # NOTE: --custom_test_set_dir must be separate from --data_dir because you
+    # might want to run a test on a given set of PDB files, but derive the label
+    # sets from the BindingMOAD.
     parser.add_argument(
-        "--mol_dir_for_inference",
+        "--custom_test_set_dir",
         required=False,
         default=None,
         type=str,
-        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter is only for the inference mode."
+        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). Used for testing on a user-specified directory of protein/ligand pairs."
     )
     parser.add_argument(
         "--fraction_train",
@@ -153,7 +155,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="Maximum number of examples to run inference on. TODO: Not currently used.",
     )
     parser.add_argument(
-        "--inference_rotations",
+        "--rotations",
         default=8,
         type=int,
         help="Number of rotations to sample during inference or testing.",
@@ -162,7 +164,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--inference_label_sets",
         default=None,
         type=str,
-        help="A comma-separated list of the label sets to use during inference or testing. Does not impact DeepFrag training. If you are testing DeepFrag, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file. \n\nFor example, to include the val- and test-set compounds in the label set, as well as the compounds described in a file named `my_smiles.smi`: `val,test,my_smiles.smi`",
+        help="A comma-separated list of the label sets to use during inference or testing. Does not impact DeepFrag training. If you are running DeepFrag in test mode, you must include the test set (for top-K metrics). Options: train, val, test, PATH to SMILES file. \n\nFor example, to include the val- and test-set compounds in the label set, as well as the compounds described in a file named `my_smiles.smi`: `val,test,my_smiles.smi`",
     )
 
     return parent_parser

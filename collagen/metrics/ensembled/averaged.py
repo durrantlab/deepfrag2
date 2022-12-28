@@ -31,14 +31,17 @@ class AveragedEnsembled(ParentEnsembled):
 
         if self.num_rotations > 1 and self.aggregation is not None:
             predictions_ = predictions_to_return.cpu().detach().clone()
-            self.dict_predictions_ensembled = {i.__str__(): [predictions_[i].numpy()] for i in range(0, len(predictions_))}
+            self.dict_predictions_ensembled = {
+                i.__str__(): [predictions_[i].numpy()]
+                for i in range(len(predictions_))
+            }
 
         return predictions_to_return
 
     def _udpate_prediction_tensor(self, predicitons_to_add: torch.Tensor, idx: int):
         if self.num_rotations > 1 and self.aggregation is not None:
             predictions_ = predicitons_to_add.cpu().detach().clone()
-            for i in range(0, len(predictions_)):
+            for i in range(len(predictions_)):
                 self.dict_predictions_ensembled[i.__str__()].append(predictions_[i].numpy())
 
         torch.add(self.predictions_ensembled, predicitons_to_add, out=self.predictions_ensembled)
@@ -52,11 +55,11 @@ class AveragedEnsembled(ParentEnsembled):
                 out=self.predictions_ensembled
             )
         else:
-            for i in range(0, len(self.dict_predictions_ensembled)):
+            for i in range(len(self.dict_predictions_ensembled)):
                 nested_list = self.dict_predictions_ensembled[i.__str__()]
                 tensor_resp = np.zeros(len(nested_list[0]), dtype=float)
                 matrix = np.matrix(nested_list)
-                for j in range(0, len(tensor_resp)):
+                for j in range(len(tensor_resp)):
                     array_col = np.asarray(matrix[:, j])
                     array_col = array_col.flatten()
                     tensor_resp[j] = self.aggregation.aggregate_on_numpy_array(array_col)
