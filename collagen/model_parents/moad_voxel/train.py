@@ -59,7 +59,7 @@ class MoadVoxelModelTrain(object):
         if train:
             if args.every_csv is None:
                 raise ValueError(
-                    "For 'train' mode is required to specify the 'csv' parameter."
+                    "For 'train' mode is required to specify the '--every_csv' parameter."
                 )
             if args.butina_cluster_division:
                 raise ValueError(
@@ -78,7 +78,7 @@ class MoadVoxelModelTrain(object):
         else:
             if args.every_csv is not None:
                 raise ValueError(
-                    "For 'warm_starting' mode is not required to specify the 'csv' parameter."
+                    "For 'warm_starting' mode is not required to specify the '--every_csv' parameter."
                 )
 
             moad = PdbSdfDirInterface(
