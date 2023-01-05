@@ -184,7 +184,7 @@ class MoadVoxelModelInference(object):
             avg_over_ckpts_of_avgs,
             label_set_fingerprints,
             label_set_entry_infos,
-            25,  # self.NUM_MOST_SIMILAR_PER_ENTRY,
+            args.num_inference_predictions,  # self.NUM_MOST_SIMILAR_PER_ENTRY,
         )
 
         for smiles, score in most_similar[0]:
