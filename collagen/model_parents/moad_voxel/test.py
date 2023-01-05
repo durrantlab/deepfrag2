@@ -23,6 +23,7 @@ from collagen.metrics.metrics import (
     pca_space_from_label_set_fingerprints,
     top_k,
 )
+import pickle
 
 
 def _return_paramter(object):
@@ -157,9 +158,34 @@ class MoadVoxelModelTest(object):
 
         # Load from train, val, and test sets.
         if "all" in lbl_set_codes:
-            label_set_fps, label_set_smis = self._add_to_label_set(
-                args, moad, None, voxel_params, device, None, None
-            )
+            parent_every_csv = os.path.join(args.every_csv, os.pardir)
+            parent_every_csv = os.path.relpath(parent_every_csv)
+
+            label_set_fps_bin = parent_every_csv + os.sep + "all_label_set_fps.bin"
+            label_set_smis_bin = parent_every_csv + os.sep + "all_label_set_smis.bin"
+
+            if os.path.exists(label_set_fps_bin) and os.path.exists(label_set_smis_bin):
+                with open(label_set_fps_bin, 'rb') as file:
+                    label_set_fps = pickle.load(file)
+                    file.close()
+                with open(label_set_smis_bin, 'rb') as file:
+                    label_set_smis = pickle.load(file)
+                    file.close()
+            else:
+                label_set_fps, label_set_smis = remove_redundant_fingerprints(
+                    existing_label_set_fps, existing_label_set_entry_infos, device=device
+                )
+
+                label_set_fps, label_set_smis = self._add_to_label_set(
+                    args, moad, None, voxel_params, device, label_set_fps, label_set_smis
+                )
+
+                with open(label_set_fps_bin, 'wb') as file:
+                    pickle.dump(label_set_fps, file)
+                    file.close()
+                with open(label_set_smis_bin, 'wb') as file:
+                    pickle.dump(label_set_smis, file)
+                    file.close()
         else:
             if existing_label_set_fps is None:
                 label_set_fps = torch.zeros(
@@ -379,7 +405,7 @@ class MoadVoxelModelTest(object):
             return None
 
     @staticmethod
-    def _save_test_results_to_json(all_test_data, s, args, pth=None):
+    def _save_test_results_to_json(all_test_data, s, args, pth=None, use_custom_test_set=False):
         # Save the test results to a carefully formatted JSON file.
 
         jsn = json.dumps(all_test_data, indent=4)
@@ -396,7 +422,10 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
-        folder_name = "test_results"
+        if use_custom_test_set:
+            folder_name = "predictions_CustomDataset"
+        else:
+            folder_name = "predictions_MOAD" if (args.data_dir and args.every_csv) else "predictions_nonMOAD"
         pth = pth + os.sep + folder_name + os.sep + args.aggregation_rotations + os.sep
         os.makedirs(pth, exist_ok=True)
         num = len(glob.glob(f"{pth}*.json", recursive=False))
@@ -442,6 +471,10 @@ class MoadVoxelModelTest(object):
         if use_custom_test_set:
             if not args.custom_test_set_dir:
                 raise Exception("To run use a custom test set, you must specify the location of the dataset (--custom_test_set_dir argument) comprised of protein-ligand pairs (PDB file and SDF file)")
+            if "all" not in args.inference_label_sets or "train" in args.inference_label_sets or "test" in args.inference_label_sets or "val" in args.inference_label_sets:
+                raise Exception("To run use a custom test set, you must only include the `all` label set")
+            if not args.every_csv or not args.data_dir:
+                raise Exception("To run use a custom test set, you must specify the --every_csv and --data_dir arguments (for MOAD database)")
         else:
             if "test" not in args.inference_label_sets:
                 raise ValueError("To run in test mode, you must include the `test` label set")
@@ -466,7 +499,19 @@ class MoadVoxelModelTest(object):
         device = self.init_device(args)
 
         dataset = None
+        moad = None
         if use_custom_test_set:
+            print("Loading MOAD database.")
+            moad = MOADInterface(
+                metadata=args.every_csv,
+                structures_path=args.data_dir,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms,
+            )
+            print("Loading custom database.")
             dataset = PdbSdfDirInterface(
                 structures=args.custom_test_set_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
@@ -556,7 +601,7 @@ class MoadVoxelModelTest(object):
                 test_data,
                 train,
                 val,
-                dataset,
+                moad if use_custom_test_set else dataset,
                 None,
                 avg_over_ckpts_of_avgs,
             )
@@ -626,6 +671,6 @@ class MoadVoxelModelTest(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir)
+        self._save_test_results_to_json(all_test_data, s, args, args.default_root_dir, use_custom_test_set)
         if not use_custom_test_set:
             self._save_examples_used(model, args)
