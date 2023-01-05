@@ -1,3 +1,3 @@
-rm ?.OUT-*
+rm -f ?.OUT-*
 rm -rf ?.*.output
 

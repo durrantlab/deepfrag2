@@ -7,7 +7,7 @@ echo "synced to git)"
 # Get python script path
 MAIN_DF2_PY=`realpath $(ls ../MainDF2.py)`
 
-echo "Train on a small subset of the Binding MOAD (for testing; --max_pdbs_train 50)"
+echo "Train on a small subset of the Binding MOAD (for testing; --max_pdbs_train 100, --max_pdbs_val 100)"
 
 mkdir -p 1.train_on_moad.output
 
@@ -18,11 +18,12 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --cache $MOAD_DIR/every.csv.cache.json \
     --data_dir  $MOAD_DIR/ \
     --default_root_dir $(pwd)/1.train_on_moad.output/ \
-    --max_pdbs_train 50 \
+    --max_pdbs_train 100 \
+    --max_pdbs_val 100 \
     | tee 1.OUT-python_out.txt
 
 
-echo "Test on a small subset of the Bidning MOAD (--max_pdbs_test 50)"
+echo "Test on a small subset of the Bidning MOAD (--max_pdbs_test 100)"
 
 mkdir -p 2.test_moad_trained.output
 
@@ -35,7 +36,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --default_root_dir $(pwd)/2.test_moad_trained.output/ \
     --load_splits ./1.train_on_moad.output/splits.saved.json \
     --load_checkpoint ./1.train_on_moad.output/last.ckpt \
-    --max_pdbs_test 500 \
+    --max_pdbs_test 100 \
     | tee 2.OUT-python_out.txt
 
 

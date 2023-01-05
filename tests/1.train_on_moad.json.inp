@@ -8,7 +8,7 @@
     "cache_pdbs_to_disk": true,
     "discard_distant_atoms": true,
     "noh": true,
-    "max_epochs": 1,
+    "max_epochs": 3,
     "save_params": "./1.train_on_moad.output/params.saved.json",
     "save_splits": "./1.train_on_moad.output/splits.saved.json"
 }
