@@ -94,7 +94,7 @@ def _add_generic_params(
     parser.add_argument(
         "--verbose",
         type=bool,
-        required=False,x
+        required=False,
         default=False,
         # action="store_true",
         help="If set, will output additional information during the run. Useful for debugging.",
