@@ -43,3 +43,9 @@ tmp_sync_pf.sh
 apps/deepfrag/collagen
 
 paths.sh
+
+tests/env.sh
+tests/data_to_finetune/*.pdb
+tests/data_to_finetune/*.sdf
+tests/?.OUT*
+tests/*.output
