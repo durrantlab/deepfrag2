@@ -188,12 +188,15 @@ class MoadVoxelModelInference(object):
             args.num_inference_predictions,  # self.NUM_MOST_SIMILAR_PER_ENTRY,
         )
 
-        with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w"):
+        with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
             for smiles, score in most_similar[0]:
                 # [0] because only one prediction
 
                 score = 1.0 - score  # Bigger score better
-                print(f"{smiles}\t{score:.3f}")
+                line = f"{smiles}\t{score:.3f}"
+                print(line)
+                f.write(line + "\n")
+
 
         # TODO: Need to check on some known answers as a "sanity check".
 
