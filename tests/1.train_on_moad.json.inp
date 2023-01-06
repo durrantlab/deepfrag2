@@ -1,0 +1,14 @@
+{
+    "log_every_n_steps": 25,
+    "num_dataloader_workers": 32,
+    "max_voxels_in_memory": 512,
+    "learning_rate": 0.0001,
+    "mode": "train",
+    "batch_size": 16,
+    "cache_pdbs_to_disk": true,
+    "discard_distant_atoms": true,
+    "noh": true,
+    "max_epochs": 3,
+    "save_params": "./1.train_on_moad.output/params.saved.json",
+    "save_splits": "./1.train_on_moad.output/splits.saved.json"
+}
