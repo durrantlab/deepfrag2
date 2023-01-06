@@ -65,5 +65,6 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --receptor ./data_for_inference/5VUP_prot_955.pdb \
     --branch_atm_loc_xyz "12.413000, 3.755000, 59.021999" \
     --ligand ./data_for_inference/5VUP_lig_955.sdf \
+    --num_inference_predictions 10 \
     | tee 4.OUT-python_out.txt
 
