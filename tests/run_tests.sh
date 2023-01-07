@@ -1,4 +1,4 @@
-echo "Loading modules and environment. Also, define PYTHON_EXEC,"
+echo "Loading modules and environment. Also, define PYTHON_EXEC, EVERY_CSV_BSNM (usually 'every.csv')"
 echo "and MOAD_DIR variables. You must put all this in the env.sh file (not"
 echo "synced to git)"
 
@@ -14,8 +14,8 @@ mkdir -p 1.train_on_moad.output
 $PYTHON_EXEC -u $MAIN_DF2_PY \
     --gpus 1 \
     --json_params 1.train_on_moad.json.inp \
-    --every_csv   $MOAD_DIR/every.csv \
-    --cache $MOAD_DIR/every.csv.cache.json \
+    --every_csv   $MOAD_DIR/${EVERY_CSV_BSNM} \
+    --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
     --data_dir  $MOAD_DIR/ \
     --default_root_dir $(pwd)/1.train_on_moad.output/ \
     --max_pdbs_train 100 \
@@ -30,8 +30,8 @@ mkdir -p 2.test_moad_trained.output
 $PYTHON_EXEC -u $MAIN_DF2_PY \
     --gpus 1 \
     --json_params 2.test_moad_trained.json.inp \
-    --every_csv $MOAD_DIR/every.csv \
-    --cache $MOAD_DIR/every.csv.cache.json \
+    --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
+    --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
     --data_dir $MOAD_DIR/ \
     --default_root_dir $(pwd)/2.test_moad_trained.output/ \
     --load_splits ./1.train_on_moad.output/splits.saved.json \
