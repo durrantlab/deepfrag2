@@ -16,6 +16,7 @@ from collagen.util import rand_rot
 import rdkit
 from rdkit import Chem
 import pytorch_lightning as pl
+import os
 
 
 class MoadVoxelModelInference(object):
@@ -184,17 +185,21 @@ class MoadVoxelModelInference(object):
             avg_over_ckpts_of_avgs,
             label_set_fingerprints,
             label_set_entry_infos,
-            25,  # self.NUM_MOST_SIMILAR_PER_ENTRY,
+            args.num_inference_predictions,  # self.NUM_MOST_SIMILAR_PER_ENTRY,
         )
 
-        for smiles, score in most_similar[0]:
-            # [0] because only one prediction
+        with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
+            for smiles, score in most_similar[0]:
+                # [0] because only one prediction
 
-            score = 1.0 - score  # Bigger score better
-            print(f"{score:.3f} {smiles}")
+                score = 1.0 - score  # Bigger score better
+                line = f"{smiles}\t{score:.3f}"
+                print(line)
+                f.write(line + "\n")
+
 
         # TODO: Need to check on some known answers as a "sanity check".
-        
+
         # TODO: Can we add the fragments in most_similar[0] to the parent
         # molecule, to make a composite ligand ready for docking?
 

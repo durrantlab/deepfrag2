@@ -22,6 +22,9 @@ def _add_generic_params(
         parameters added.
     """
 
+    # TODO: Some of these arguments are not common, but specific to deepfrag.
+    # Good to refactor some of this.
+
     parser = parent_parser.add_argument_group("Common")
     parser.add_argument(
         "--cpu",
@@ -64,6 +67,14 @@ def _add_generic_params(
         help="A comma-separated list of x,y,z coordinates to use when running in inference mode.",
         default=None,
     )
+
+    parser.add_argument(
+        "--num_inference_predictions",
+        type=int,
+        help="The number of top-k matching fragments (SMILES strings) to return when running DeepFrag in inference mode.",
+        default=25,
+    )
+    
 
     parser.add_argument(
         "--load_checkpoint",

@@ -26,5 +26,6 @@ python MainDF2.py --default_root_dir ${OUTPUT_TRAIN_DIR} \
     --inference_label_sets "my_file.smi,my_file2.smi" \
     --receptor "/path/to/receptor.pdb" \
     --ligand "/path/to/ligand.sdf" \
+    --num_inference_predictions 25 \
     --xyz "5,6,7"
 

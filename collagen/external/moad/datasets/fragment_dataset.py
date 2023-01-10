@@ -69,6 +69,7 @@ class MOADFragmentDataset(Dataset):
         self.transform = transform
         self.args = args
         self.mol_props_param_validated = False
+        self.smi_counts = {}
         self._index(cache_file, cache_cores)
 
     @staticmethod
@@ -114,6 +115,13 @@ class MOADFragmentDataset(Dataset):
             type=str,
             default="",
             help="Consider only fragments that match selected chemical properties. A comma-separated list. Options are \"aromatic\", \"aliphatic\", \"charged\", \"neutral\". If specifying multiple properties (e.g., \"aromatic,charged\"), only fragments matching all properties (charged aromatics) will be considered. Default is \"\" (no filtering).",
+        )
+        parser.add_argument(
+            "--max_frag_repeats",
+            required=False,
+            type=int,
+            default=None,
+            help="If a given fragment has already been included in the dataset this many times, it will not be included again. This is to prevent common fragments (e.g., -OH) from dominating the datasets. If unspecified, no limit is imposed.",
         )
 
         return parent_parser
@@ -162,6 +170,7 @@ class MOADFragmentDataset(Dataset):
         frag_num_heavy_atom: int,
         frag_aromatic: bool,
         frag_charged: bool,
+        frag_smi: str
     ) -> bool:
         # This filter is passed to cache_filter.load_cache_and_filter via the
         # make_dataset_entries_func parameter.
@@ -191,6 +200,16 @@ class MOADFragmentDataset(Dataset):
                 )
             return False
 
+        if args.max_frag_repeats is not None:
+            if frag_smi not in self.smi_counts:
+                self.smi_counts[frag_smi] = 0
+            cnt = self.smi_counts[frag_smi]
+            if cnt >= args.max_frag_repeats:
+                if user_args.verbose:
+                    print(f"Fragment rejected; already included {cnt} times.")
+                return False
+            self.smi_counts[frag_smi] += 1
+
         if args.mol_props != "":
             mol_props = self._get_and_validate_mol_props_param(args)
 
@@ -198,17 +217,17 @@ class MOADFragmentDataset(Dataset):
                 if user_args.verbose:
                     print("Fragment rejected; not aromatic.")
                 return False
-            
+
             if "aliphatic" in mol_props and frag_aromatic:
                 if user_args.verbose:
                     print("Fragment rejected; aromatic.")
                 return False
-            
+
             if "charged" in mol_props and not frag_charged:
                 if user_args.verbose:
                     print("Fragment rejected; not charged.")
                 return False
-            
+
             if "neutral" in mol_props and frag_charged:
                 if user_args.verbose:
                     print("Fragment rejected; charged.")
@@ -230,6 +249,8 @@ class MOADFragmentDataset(Dataset):
         frag_num_heavy_atoms = lig_inf["frag_num_heavy_atoms"]
         frag_aromatics = lig_inf["frag_aromatic"]
         frag_chargeds = lig_inf["frag_charged"]
+        frag_smiles = lig_inf["frag_smiles"]  # Uses Chem.MolToSmiles, so should be cannonical
+
 
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):
@@ -238,8 +259,10 @@ class MOADFragmentDataset(Dataset):
             num_heavy_atom = frag_num_heavy_atoms[frag_idx]
             frag_aromatic = frag_aromatics[frag_idx]
             frag_charged = frag_chargeds[frag_idx]
+            frag_smi = frag_smiles[frag_idx]
+            
 
-            if self._frag_filter(args, mass, dist_to_recep, num_heavy_atom, frag_aromatic, frag_charged):
+            if self._frag_filter(args, mass, dist_to_recep, num_heavy_atom, frag_aromatic, frag_charged, frag_smi):
                 entries_to_return.append(
                     MOADFragmentDataset_entry(
                         pdb_id=pdb_id,
