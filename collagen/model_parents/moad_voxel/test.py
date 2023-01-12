@@ -156,7 +156,25 @@ class MoadVoxelModelTest(object):
         if lbl_set_codes is None:
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
 
-        # Load from train, val, and test sets.
+        # When you finetune on a custom dataset, you essentially replace the
+        # original train/val/test splits (e.g., from the BindingMOAD) with the
+        # new splits from the custom data. When testing a finetuned model,
+        # --inference_label_sets="test" will show accuracy on the custom-dataset
+        # test split. In some circumstances, you might want to include
+        # additional fragments in the label set. You could specify these
+        # fragments using the --inference_label_sets="custom_frags.smi".
+        # However, for convenience, you can also simply use all fragments from
+        # BindingMOAD, in addition to those from the 
+        # 
+        # also include all fragments derived from the original BindingMOAD in
+        # your label set (to have more fragments to choose from).
+
+        # If using a custom dataset, it's useful to generate a large fragment
+        # library derived from the BindingMOAD dataset (all ligands), plus any
+        # additional fragments that result from fragmenting the ligands in the
+        # custom set (which may be in BindingMOAD, but may not be). If you use
+        # --inference_label_sets="all", all these fragments wil be placed in a
+        # single cache (.bin) file for quickly loading later. 
         if "all" in lbl_set_codes:
             parent_every_csv = os.path.join(args.every_csv, os.pardir)
             parent_every_csv = os.path.relpath(parent_every_csv)
@@ -165,6 +183,7 @@ class MoadVoxelModelTest(object):
             label_set_smis_bin = parent_every_csv + os.sep + "all_label_set_smis.bin"
 
             if os.path.exists(label_set_fps_bin) and os.path.exists(label_set_smis_bin):
+                # Cache file exists, so load from that.
                 with open(label_set_fps_bin, 'rb') as file:
                     label_set_fps = pickle.load(file)
                     file.close()
@@ -172,6 +191,7 @@ class MoadVoxelModelTest(object):
                     label_set_smis = pickle.load(file)
                     file.close()
             else:
+                # Cache file does not exist, so generate.
                 label_set_fps, label_set_smis = remove_redundant_fingerprints(
                     existing_label_set_fps, existing_label_set_entry_infos, device=device
                 )
@@ -180,6 +200,7 @@ class MoadVoxelModelTest(object):
                     args, moad, None, voxel_params, device, label_set_fps, label_set_smis
                 )
 
+                # Save to cache file.
                 with open(label_set_fps_bin, 'wb') as file:
                     pickle.dump(label_set_fps, file)
                     file.close()
