@@ -23,7 +23,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     | tee 1.OUT-python_out.txt
 
 
-echo "Test on a small subset of the Bidning MOAD (--max_pdbs_test 100)"
+echo "Test on a small subset of the Binding MOAD (--max_pdbs_test 100)"
 
 mkdir -p 2.test_moad_trained.output
 
