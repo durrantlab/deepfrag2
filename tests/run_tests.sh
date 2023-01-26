@@ -77,6 +77,8 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
 
 echo "Perform inference using the fine-tuned model on a custom set"
 
+mkdir -p 5.inference_custom_set.output
+
 $PYTHON_EXEC -u $MAIN_DF2_PY \
     --mode inference_custom_set \
     --default_root_dir $(pwd)/5.inference_custom_set.output/ \
