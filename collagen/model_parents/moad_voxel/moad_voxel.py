@@ -2,6 +2,7 @@ from argparse import ArgumentParser, Namespace
 import json
 from typing import Type, TypeVar, List
 from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
+from collagen.model_parents.moad_voxel.inference_custom_dataset import MoadVoxelModelInferenceCustomSet
 from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
 from collagen.model_parents.moad_voxel.lr_finder import MoadVoxelModelLRFinder
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
@@ -23,7 +24,6 @@ OUT_T = TypeVar("OUT_T")
 class MoadVoxelModelParent(
     MoadVoxelModelInits,
     MoadVoxelModelLRFinder,
-    MoadVoxelModelTest,
     MoadVoxelModelTrain,
     MoadVoxelModelInference,
     MoadVoxelModelUtils,
@@ -88,10 +88,13 @@ class MoadVoxelModelParent(
             self.run_warm_starting(args)
         elif args.mode == "test":
             print("Starting 'test' process")
-            self.run_test(args, ckpt)
+            MoadVoxelModelTest(self).run_test(args, ckpt)
         elif args.mode == "inference":
             print("Starting 'inference' process")
             self.run_inference(args, ckpt)
+        elif args.mode == "inference_custom_set":
+            print("Starting 'inference_custom_set' process")
+            MoadVoxelModelInferenceCustomSet(self).run_test(args, ckpt)
         elif args.mode == "lr_finder":
             print("Starting 'lr_finder' process")
             self.run_lr_finder(args)
@@ -123,7 +126,7 @@ class MoadVoxelModelParent(
     #             frag_counts[entry_info.fragment_smiles] += 1
     #     return frag_counts
 
-    def _save_examples_used(self, model, args):
+    def save_examples_used(self, model, args):
         if args.default_root_dir is None:
             pth = os.getcwd() + os.sep
         else:
