@@ -53,7 +53,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --verbose True \
     | tee 3.OUT-python_out.txt
 
-echo "Perform inference on new data"
+echo "Perform inference using the fine-tuned model on a single example"
 
 mkdir -p 4.inference.output
 
@@ -67,4 +67,26 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --ligand ./data_for_inference/5VUP_lig_955.sdf \
     --num_inference_predictions 10 \
     | tee 4.OUT-python_out.txt
+
+echo "Perform inference using the fine-tuned model on a custom set"
+
+$PYTHON_EXEC -u $MAIN_DF2_PY \
+    --gpus 1 \
+    --json_params 5.inference_custom_set.json.inp \
+    --default_root_dir $(pwd)/5.inference_custom_set.output/ \
+    --load_checkpoint ./3.finetune_moad.output/last.ckpt \
+    --num_inference_predictions 10 \
+    | tee 5.OUT-python_out.txt
+
+
+python MainDF2.py --every_csv ${EVERY_CSV} --data_dir ${BINDINGMOAD_DIR} \
+    --custom_test_set_dir ${EXTERNAL_DATA} 
+    --mode test  --rotations 8 --aggregation_rotations mean \
+    --inference_label_sets test
+
+
+
+echo "IMPLEMENT THIS HERE!!!!!!"
+https://git.durrantlab.pitt.edu/jdurrant/deepfrag2/-/blob/development/MainDF2.submit_inferencet_on_custom_set.sh
+
 
