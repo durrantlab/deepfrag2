@@ -31,7 +31,7 @@ class MoadVoxelModelTrain(object):
 
         trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
 
-        self._save_examples_used(model, args)
+        self.save_examples_used(model, args)
 
     def run_warm_starting(self, args):
 
@@ -46,7 +46,7 @@ class MoadVoxelModelTrain(object):
 
         trainer.fit(model, train_data, val_data)
 
-        self._save_examples_used(model, args)
+        self.save_examples_used(model, args)
 
     def get_moad_train_val_sets(self, args, train: bool):
 
