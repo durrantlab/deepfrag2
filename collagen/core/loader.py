@@ -191,6 +191,8 @@ class MultiLoader(object):
         # this).
         # self._add_procs()
         # time.sleep(15)
+
+        num_warnings = 0
         
         count = 0
         while len(self.groups_of_batches) > 0:
@@ -198,7 +200,12 @@ class MultiLoader(object):
         
             # Wait until you've got at least one ready
             while len(self.return_list) == 0:
-                print("Waiting for a voxel grid to finish... If this happens a lot, you might try increasing --max_voxels_in_memory")
+                if num_warnings < 100:
+                    print("Waiting for a voxel grid to finish... If this happens a lot, you might try increasing --max_voxels_in_memory")
+                    num_warnings = num_warnings + 1
+                elif num_warnings == 100:
+                    print("Not printing any more warnings about waiting for a voxel grid to finish...")
+                    num_warnings = num_warnings + 1
                 time.sleep(0.1)
         
             # Yield the data as it is needed
