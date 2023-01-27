@@ -25,6 +25,7 @@ from collagen.metrics.metrics import (
     top_k,
 )
 
+torch.multiprocessing.set_start_method('spawn')
 
 def _return_paramter(object):
     """Returns a paramerter. For use in imap_unordered.
