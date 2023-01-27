@@ -26,11 +26,11 @@ from collagen.metrics.metrics import (
 )
 
 # See https://github.com/pytorch/pytorch/issues/3492
-# try:
-#     torch.multiprocessing.set_start_method('spawn')
-# except RuntimeError:
-#     pass
-multiprocessing_ctx = multiprocessing.get_context("spawn")
+try:
+    torch.multiprocessing.set_start_method('spawn')
+except RuntimeError:
+    pass
+#multiprocessing_ctx = multiprocessing.get_context("spawn")
 
 def _return_paramter(object):
     """Returns a paramerter. For use in imap_unordered.
@@ -80,7 +80,7 @@ class MoadVoxelModelTest(object):
                 tensor and smiles list.
         """
 
-        global multiprocessing_ctx
+        #global multiprocessing_ctx
 
         # TODO: Harrison: How hard would it be to make it so data below doesn't
         # voxelize the receptor? Is that adding a lot of time to the
@@ -97,7 +97,7 @@ class MoadVoxelModelTest(object):
 
         all_fps = []
         all_smis = []
-        with multiprocessing_ctx.Pool() as p:
+        with multiprocessing.Pool() as p:
             for batch in tqdm(
                 p.imap_unordered(_return_paramter, data), 
                 total=len(data), 
