@@ -16,15 +16,14 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --max_epochs 3 \
     --save_params ./1.train_on_moad.output/params.saved.json \
     --save_splits ./1.train_on_moad.output/splits.saved.json \
-    --every_csv   $MOAD_DIR/${EVERY_CSV_BSNM} \
+    --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
     --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
-    --data_dir  $MOAD_DIR/ \
+    --data_dir $MOAD_DIR/ \
     --default_root_dir $(pwd)/1.train_on_moad.output/ \
     --max_pdbs_train 100 \
     --max_pdbs_val 100 \
     --json_params common_params.json.inp \
     | tee 1.OUT-python_out.txt
-
 
 echo "Test on a small subset of the Binding MOAD (--max_pdbs_test 100)"
 
