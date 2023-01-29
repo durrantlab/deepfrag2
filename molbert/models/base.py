@@ -118,6 +118,8 @@ class FlexibleBertModel(BertPreTrainedModel):
 
 
 class MolbertModel(pl.LightningModule):
+    hparams = None
+
     def __init__(self, args: Namespace):
         super().__init__()
         self.hparams = args

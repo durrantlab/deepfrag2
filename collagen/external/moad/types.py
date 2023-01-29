@@ -126,6 +126,7 @@ class MOAD_target(object):
             m = prody.parsePDBStream(StringIO(pdb_txt), model=1)
         else:
             # Not caching, so just load the file without preprocessing.
+            prody.LOGGER._logger.disabled = True
             with open(self.files[idx], "r") as f:
                 m = prody.parsePDBStream(
                     f, model=1

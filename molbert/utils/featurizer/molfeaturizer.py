@@ -147,7 +147,7 @@ class PhysChemFeaturizer(RDKitFeaturizer):
         self.normalise = normalise
 
         distributions_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), '../data/physchem_distributions.json'
+            os.path.dirname(os.path.abspath(__file__)), ".." + os.sep + "data" + os.sep + "physchem_distributions.json"
         )
 
         with open(distributions_path) as fp:

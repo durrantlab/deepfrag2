@@ -10,7 +10,7 @@ from collagen.model_parents.moad_voxel.train import MoadVoxelModelTrain
 from collagen.model_parents.moad_voxel import arguments
 import os
 from collagen.model_parents.moad_voxel.utils import MoadVoxelModelUtils
-
+from collagen.core.molecules.fingerprints import download_molbert_ckpt
 import pytorch_lightning as pl
 import torch
 
@@ -75,6 +75,14 @@ class MoadVoxelModelParent(
 
     def run(self, args: Namespace = None):
         self.disable_warnings()
+
+        if "rdk10" == args.molecular_descriptors:
+            args.__setattr__("fp_size", 2048)
+        elif "molbert" == args.molecular_descriptors:
+            args.__setattr__("fp_size", 1536)
+            download_molbert_ckpt()
+        else:
+            raise Exception("The type of molecular descriptor to be used is wrong.")
 
         ckpt = self.get_checkpoint(args)
         if ckpt is not None:

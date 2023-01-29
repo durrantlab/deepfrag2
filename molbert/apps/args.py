@@ -1,4 +1,5 @@
 import argparse
+from multiprocessing import cpu_count
 
 
 def get_default_parser():
@@ -87,7 +88,7 @@ def get_default_parser():
     )
     parser.add_argument('--min_epochs', type=int, default=1, help='Minimum number of epochs')
     parser.add_argument('--max_epochs', type=int, default=20, help='Maximum number of epochs')
-    parser.add_argument('--num_workers', default=0, type=int, help='Number of processes to use for Dataloader')
+    parser.add_argument('--num_workers', default=cpu_count(), type=int, help='Number of processes to use for Dataloader')
     parser.add_argument('--max_position_embeddings', default=512, type=int, help='Max size of positional embeddings')
     parser.add_argument('--deterministic', type=int, default=0, help='Disable cuDNN optimisations')
     parser.add_argument(

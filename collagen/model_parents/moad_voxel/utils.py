@@ -90,8 +90,7 @@ class MoadVoxelModelUtils(object):
 
         return ckpt
 
-    @staticmethod
-    def debug_smis_match_fps(fps: torch.Tensor, smis: List[str], device: Any):
+    def debug_smis_match_fps(fps: torch.Tensor, smis: List[str], device: Any, args):
         import rdkit
         from rdkit import Chem
 
@@ -102,7 +101,7 @@ class MoadVoxelModelUtils(object):
             mol = Mol.from_smiles(smi)
             # TODO: 2048 should be hardcoded here? I think it's a user parameter.
             fp2 = torch.tensor(
-                mol.fingerprint("rdk10", 2048), device=device, dtype=torch.float32
+                mol.fingerprint(args.molecular_descriptors, args.fp_size), device=device, dtype=torch.float32
             )
             print((fp1 - fp2).max() == (fp1 - fp2).min())
 

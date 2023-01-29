@@ -63,7 +63,7 @@ class MolBertFeaturizer:
         # load model
         self.config = Namespace(**config_dict)
         self.model = SmilesMolbertModel(self.config)
-        self.model.load_from_checkpoint(self.checkpoint_path, hparam_overrides=self.model.__dict__)
+        self.model.load_from_checkpoint(self.checkpoint_path, args=self.config)
 
         # HACK: manually load model weights since they don't seem to load from checkpoint (PL v.0.8.5)
         checkpoint = torch.load(self.checkpoint_path, map_location=lambda storage, loc: storage)
