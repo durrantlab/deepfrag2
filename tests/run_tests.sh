@@ -19,9 +19,9 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
     --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
     --data_dir $MOAD_DIR/ \
-    --default_root_dir $(pwd)/1.train_on_moad.output/ \
-    --max_pdbs_train 100 \
-    --max_pdbs_val 100 \
+    --default_root_dir $(pwd)/1.train_on_moad.output/ \  # The output directory
+    --max_pdbs_train 100 \  # Train on a small subset of the Binding MOAD
+    --max_pdbs_val 100 \  # Validate on a small subset of the Binding MOAD
     --json_params common_params.json.inp \
     | tee 1.OUT-python_out.txt
 
@@ -36,7 +36,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
     --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
     --data_dir $MOAD_DIR/ \
-    --default_root_dir $(pwd)/2.test_moad_trained.output/ \
+    --default_root_dir $(pwd)/2.test_moad_trained.output/ \  # The output directory
     --inference_label_sets test \
     --rotations 2 \
     --max_pdbs_test 100 \
@@ -52,9 +52,11 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --mode warm_starting \
     --max_epochs 5 \
     --model_for_warm_starting ./1.train_on_moad.output/model_mean_mean_train.pt \
-    --data_dir ./data_to_finetune/ \
-    --default_root_dir $(pwd)/3.finetune_moad.output/ \
+    --data_dir ./data_to_finetune/ \  # Protein/ligands named like 1XDN_prot_123.pdb, 1XDN_lig_123.sdf
+    --default_root_dir $(pwd)/3.finetune_moad.output/ \  # The output directory
     --json_params common_params.json.inp \
+    --butina_cluster_division \
+    --butina_cluster_cutoff 0.4 \
     | tee 3.OUT-python_out.txt
 
 echo "Perform inference using the fine-tuned model on a single example"
@@ -67,7 +69,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --branch_atm_loc_xyz "12.413000, 3.755000, 59.021999" \
     --ligand ./data_for_inference/5VUP_lig_955.sdf \
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
-    --default_root_dir $(pwd)/4.inference.output/ \
+    --default_root_dir $(pwd)/4.inference.output/ \  # The output directory
     --inference_label_sets ./data_for_inference/label_set.smi \
     --num_inference_predictions 10 \
     --rotations 20 \
@@ -80,11 +82,11 @@ mkdir -p 5.inference_custom_set.output
 
 $PYTHON_EXEC -u $MAIN_DF2_PY \
     --mode inference_custom_set \
-    --default_root_dir $(pwd)/5.inference_custom_set.output/ \
+    --default_root_dir $(pwd)/5.inference_custom_set.output/ \  # The output directory
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
-    --custom_test_set_dir ./data_to_finetune/ \
+    --custom_test_set_dir ./data_to_finetune/ \  # separate from --data_dir so you can run test on one PDB set, but get labels from BindingMOAD.
     --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
-    --data_dir $MOAD_DIR/ \
+    --data_dir $MOAD_DIR/ \  # For labels
     --inference_label_sets all \
     --rotations 8 \
     --json_params common_params.json.inp \

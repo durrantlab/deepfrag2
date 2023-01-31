@@ -22,7 +22,7 @@ def return_value_data(idx):
 
 
 def log(txt):
-    os.system('echo "' + txt + '" >> log.txt')
+    os.system(f'echo "{txt}" >> log.txt')
     print(txt)
 
 
