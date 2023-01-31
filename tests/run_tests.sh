@@ -59,6 +59,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --json_params common_params.json.inp \
     --butina_cluster_division \
     --butina_cluster_cutoff 0.4 \
+    --fraction_val 0.0  `# No validation set` \
     | tee 3.OUT-python_out.txt
 
 echo "Perform inference using the fine-tuned model on a single example"
@@ -85,6 +86,7 @@ mkdir -p 5.inference_custom_set.output
 $PYTHON_EXEC -u $MAIN_DF2_PY \
     --mode inference_custom_set \
     --default_root_dir $(pwd)/5.inference_custom_set.output/  `# The output directory` \
+    --load_splits ./3.finetune_moad.output/splits.saved.json \
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
     --custom_test_set_dir ./data_to_finetune/  `# separate from --data_dir so you can run test on one PDB set, but get labels from BindingMOAD.` \
     --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
