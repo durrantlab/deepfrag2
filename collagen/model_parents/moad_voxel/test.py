@@ -109,7 +109,7 @@ class MoadVoxelModelTest(object):
         #         all_smis.extend(smis)
 
         # The above causes CUDA errors. Unfortunate, because it would speed
-        # things up quite a bit. TODO: Good to look into this.
+        # things up quite a bit. TODO: DISCUSS WITH CESAR. Good to look into this.
         for batch in tqdm(data, desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."):
             voxels, fps_tnsr, smis = batch
             all_fps.append(fps_tnsr)
@@ -559,8 +559,6 @@ class MoadVoxelModelTest(object):
             torch.tensor(len(ckpts), device=device),
             out=avg_over_ckpts_of_avgs,
         )
-
-        # TODO: Below only makes sense if 
 
         # Calculate top-k metric of that average of averages
         top_k_results = top_k(

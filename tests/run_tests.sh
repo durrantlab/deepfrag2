@@ -86,6 +86,7 @@ mkdir -p 5.inference_custom_set.output
 $PYTHON_EXEC -u $MAIN_DF2_PY \
     --mode inference_custom_set \
     --default_root_dir $(pwd)/5.inference_custom_set.output/  `# The output directory` \
+    # TODO: DISCUSS WITH CESAR. WHY CAN'T I DO THE BELOW?
     --load_splits ./3.finetune_moad.output/splits.saved.json \
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
     --custom_test_set_dir ./data_to_finetune/  `# separate from --data_dir so you can run test on one PDB set, but get labels from BindingMOAD.` \
