@@ -21,11 +21,15 @@ cd ${DEEPFRAG_ROOT}
 # NOTE: Below not tested yet
 
 python MainDF2.py --default_root_dir ${OUTPUT_TRAIN_DIR} \
-    --mode inference --rotations 8 --aggregation_rotations mean \
+    --mode inference \
+    --rotations 8 \
+    --aggregation_3x3_patches mean \
+    --aggregation_loss_vector mean \
+    --aggregation_rotations mean \
     --load_checkpoint "path/to/checkpoint.pt" \
     --inference_label_sets "my_file.smi,my_file2.smi" \
     --receptor "/path/to/receptor.pdb" \
     --ligand "/path/to/ligand.sdf" \
     --num_inference_predictions 25 \
-    --xyz "5,6,7"
-
+    --xyz "5,6,7" \
+    --molecular_descriptors ${DEEPFRAG_MD}

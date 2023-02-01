@@ -111,7 +111,7 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
         # Add to that fingerprints from an SMI file.
         label_set_fps, label_set_smis = self._add_fingerprints_from_smis(args, lbl_set_codes, label_set_fps, label_set_smis, device)
 
-        # debug_smis_match_fps(label_set_fps, label_set_smis, device)
+        # self.model_parent.debug_smis_match_fps(label_set_fps, label_set_smis, device, args)
 
         print(f"Label set size: {len(label_set_fps)}")
 
