@@ -98,6 +98,12 @@ class MoadVoxelModelTest(object):
         all_fps = []
         all_smis = []
 
+        # TODO: When using multiprocessing below, causes CUDA errors on some
+        # systems. But not on the CRC, so it's not a Windows vs. Linux issue.
+        # Below is commented out to avoid error, but runs much slower.
+        # Fortunately, this calculation is only performed once because the
+        # result is cached.
+
         # with multiprocessing.Pool() as p:
         #     for batch in tqdm(
         #         p.imap_unordered(_return_paramter, data), 
@@ -108,8 +114,7 @@ class MoadVoxelModelTest(object):
         #         all_fps.append(fps_tnsr)
         #         all_smis.extend(smis)
 
-        # The above causes CUDA errors. Unfortunate, because it would speed
-        # things up quite a bit. TODO: DISCUSS WITH CESAR. Good to look into this.
+        # Single-processor code to avoid error above.
         for batch in tqdm(data, desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."):
             voxels, fps_tnsr, smis = batch
             all_fps.append(fps_tnsr)
