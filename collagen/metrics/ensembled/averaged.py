@@ -5,7 +5,7 @@ from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
-from multiprocessing import cpu_count
+
 # Given multiple predictions, this class can be used to average them. Much of
 # the "meat" is in ParentEnsembled.
 

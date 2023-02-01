@@ -11,7 +11,8 @@ from collagen.model_parents.moad_voxel.test_inference_utils import remove_redund
 import torch
 from tqdm.std import tqdm
 from typing import Any, List, Optional, Tuple
-import multiprocessing
+# import multiprocessing
+# from torch import multiprocessing
 from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
@@ -24,6 +25,12 @@ from collagen.metrics.metrics import (
     top_k,
 )
 
+# See https://github.com/pytorch/pytorch/issues/3492
+# try:
+#     torch.multiprocessing.set_start_method('spawn')
+# except RuntimeError:
+#     pass
+# multiprocessing_ctx = multiprocessing.get_context("spawn")
 
 def _return_paramter(object):
     """Returns a paramerter. For use in imap_unordered.
@@ -73,6 +80,8 @@ class MoadVoxelModelTest(object):
                 tensor and smiles list.
         """
 
+        # global multiprocessing_ctx
+
         # TODO: Harrison: How hard would it be to make it so data below doesn't
         # voxelize the receptor? Is that adding a lot of time to the
         # calculation? Just a thought. See other TODO: note about this.
@@ -88,15 +97,23 @@ class MoadVoxelModelTest(object):
 
         all_fps = []
         all_smis = []
-        with multiprocessing.Pool() as p:
-            for batch in tqdm(
-                p.imap_unordered(_return_paramter, data), 
-                total=len(data), 
-                desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."
-            ):
-                voxels, fps_tnsr, smis = batch
-                all_fps.append(fps_tnsr)
-                all_smis.extend(smis)
+
+        # with multiprocessing.Pool() as p:
+        #     for batch in tqdm(
+        #         p.imap_unordered(_return_paramter, data), 
+        #         total=len(data), 
+        #         desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."
+        #     ):
+        #         voxels, fps_tnsr, smis = batch
+        #         all_fps.append(fps_tnsr)
+        #         all_smis.extend(smis)
+
+        # The above causes CUDA errors. Unfortunate, because it would speed
+        # things up quite a bit. TODO: DISCUSS WITH CESAR. Good to look into this.
+        for batch in tqdm(data, desc=f"Getting fingerprints from {split.name if split else 'Full'} set..."):
+            voxels, fps_tnsr, smis = batch
+            all_fps.append(fps_tnsr)
+            all_smis.extend(smis)
 
         if existing_label_set_smis is not None:
             all_smis.extend(existing_label_set_smis)
@@ -542,8 +559,6 @@ class MoadVoxelModelTest(object):
             torch.tensor(len(ckpts), device=device),
             out=avg_over_ckpts_of_avgs,
         )
-
-        # TODO: Below only makes sense if 
 
         # Calculate top-k metric of that average of averages
         top_k_results = top_k(

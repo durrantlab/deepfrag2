@@ -1,7 +1,8 @@
 import argparse
 from dataclasses import dataclass
 import json
-import multiprocessing
+# import multiprocessing
+from torch import multiprocessing
 import os
 from pathlib import Path
 from typing import Tuple, Union, Any, Optional

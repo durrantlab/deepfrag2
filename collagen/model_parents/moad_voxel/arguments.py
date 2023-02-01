@@ -51,7 +51,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
     )
     parser.add_argument(
-        "--butina_cluster_division",
+        "--butina_cluster_division",  # TODO: DISCUSS WITH CESAR. Redundant? Can we just have butina_cluster_cutoff be None by default?
         required=False,
         default=False,
         action="store_true",

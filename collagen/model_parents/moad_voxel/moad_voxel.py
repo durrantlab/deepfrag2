@@ -112,7 +112,7 @@ class MoadVoxelModelParent(
     # def _get_train_frag_counts(self, args, moad, train, voxel_params, device):
     #     # Without calculating voxels and fingerprints...
 
-    #     # TODO: No longer used, but leaving here as an example of how to get
+    #     # NOTE: No longer used, but leaving here as an example of how to get
     #     # fragments without calculating voxels. Useful for testing?
 
     #     voxel_params_frag = copy.deepcopy(voxel_params)
