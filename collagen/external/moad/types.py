@@ -103,7 +103,7 @@ class MOAD_target(object):
         # If you get here, either you're not caching PDBs, or there is no
         # previous cached PDB you can use, or that cached file is corrupted. So
         # loading from original PDB file (slower).
-
+        prody.LOGGER._logger.disabled = True
         if self.cache_pdbs_to_disk:
             # To improve caching, consider only lines that start with ATOM or
             # HETATM, etc. This makes files smaller and speeds pickling a bit.
@@ -126,7 +126,6 @@ class MOAD_target(object):
             m = prody.parsePDBStream(StringIO(pdb_txt), model=1)
         else:
             # Not caching, so just load the file without preprocessing.
-            prody.LOGGER._logger.disabled = True
             with open(self.files[idx], "r") as f:
                 m = prody.parsePDBStream(
                     f, model=1

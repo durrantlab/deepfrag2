@@ -18,4 +18,16 @@ source activate ${CONDA_ENV_NAME}
 
 cd ${DEEPFRAG_ROOT}
 
-python MainDF2.py --every_csv ${EVERY_CSV} --data_dir ${BINDINGMOAD_DIR} --load_splits ${OUTPUT_TRAIN_DIR}/splits.json --default_root_dir ${OUTPUT_TRAIN_DIR} --mode test --rotations 8 --aggregation_rotations mean --load_newest_checkpoint True --inference_label_sets test
+python MainDF2.py --every_csv ${EVERY_CSV} \
+    --data_dir ${BINDINGMOAD_DIR} \
+    --load_splits ${OUTPUT_TRAIN_DIR}/splits.json \
+    --default_root_dir ${OUTPUT_TRAIN_DIR} \
+    --aggregation_3x3_patches mean \
+    --aggregation_loss_vector mean \
+    --rotations 8 \
+    --aggregation_rotations mean \
+    --load_newest_checkpoint True \
+    --inference_label_sets test \
+    --molecular_descriptors ${DEEPFRAG_MD} \
+    --cache_pdbs_to_disk \
+    --mode test

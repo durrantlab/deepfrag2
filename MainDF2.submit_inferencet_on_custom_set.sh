@@ -20,7 +20,16 @@ cd ${DEEPFRAG_ROOT}
 
 # This command is slower. It calculates fingerprints from the entire MOAD
 # database (test, val, and train sets) for use as the label set.
-python MainDF2.py --every_csv ${EVERY_CSV} --data_dir ${BINDINGMOAD_DIR} \
-    --custom_test_set_dir ${EXTERNAL_DATA} --default_root_dir ${OUTPUT_FT_DIR} \
-    --mode inference_custom_set --rotations 8 --aggregation_rotations mean \
-    --load_newest_checkpoint True --inference_label_sets all
+python MainDF2.py --every_csv ${EVERY_CSV} \
+    --data_dir ${BINDINGMOAD_DIR} \
+    --custom_test_set_dir ${EXTERNAL_DATA} \
+    --default_root_dir ${OUTPUT_FT_DIR} \
+    --mode inference_custom_set \
+    --rotations 8 \
+    --aggregation_3x3_patches mean \
+    --aggregation_loss_vector mean \
+    --aggregation_rotations mean \
+    --load_newest_checkpoint True \
+    --inference_label_sets all \
+    --molecular_descriptors ${DEEPFRAG_MD} \
+    --cache_pdbs_to_disk
