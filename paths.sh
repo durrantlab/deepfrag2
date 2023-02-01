@@ -6,6 +6,7 @@
 export CONDA_ENV_NAME="my_deepfrag2_env"
 export HOME_DF_WORK="/path/to/where/deepfrag/was/downloaded"
 export DEEPFRAG_ROOT="${HOME_DF_WORK}/deepfrag2"
+export DEEPFRAG_MD="molbert"
 
 # Training on BindingMOAD parameters
 export MOAD_PATH="/path/to/data/moad"

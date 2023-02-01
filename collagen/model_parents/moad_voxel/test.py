@@ -191,7 +191,7 @@ class MoadVoxelModelTest(object):
         # Add to that fingerprints from an SMI file.
         label_set_fps, label_set_smis = self._add_fingerprints_from_smis(args, lbl_set_codes, label_set_fps, label_set_smis, device)
 
-        # debug_smis_match_fps(label_set_fps, label_set_smis, device)
+        # self.model_parent.debug_smis_match_fps(label_set_fps, label_set_smis, device, args)
 
         print(f"Label set size: {len(label_set_fps)}")
 
@@ -205,7 +205,7 @@ class MoadVoxelModelTest(object):
                 for smi, mol in mols_from_smi_file(filename):
                     fp_tnsrs_from_smi_file.append(
                         torch.tensor(
-                            mol.fingerprint("rdk10", args.fp_size),
+                            mol.fingerprint(args.molecular_descriptors, args.fp_size),
                             dtype=torch.float32, device=device,
                             requires_grad=False
                         ).reshape((1, args.fp_size))

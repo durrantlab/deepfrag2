@@ -78,7 +78,7 @@ class DeepLig(MoadVoxelModelParent):
             #     self.voxel_params, center=frag.connectors[0], rot=rot
             # ),
             # TODO: 2048 should be hardcoded here? I think it's a user parameter.
-            torch.tensor(scaffold_mol.fingerprint("rdk10", 2048)),
+            torch.tensor(scaffold_mol.fingerprint(args.molecular_descriptors, args.fp_size)),
             recep_name, lig_name
         )
 
