@@ -28,5 +28,5 @@ python MainDF2.py --data_dir ${DIR_WITH_PDBSDF_FILES} \
     --aggregation_rotations mean \
     --load_newest_checkpoint True \
     --inference_label_sets test \
-    --molecular_descriptors ${DEEPFRAG_MD} \
+    --fragment_representation ${DEEPFRAG_FRAGMENT_REPRESENTATION} \
     --cache_pdbs_to_disk

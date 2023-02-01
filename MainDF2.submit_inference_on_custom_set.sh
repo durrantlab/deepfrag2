@@ -31,5 +31,5 @@ python MainDF2.py --every_csv ${EVERY_CSV} \
     --aggregation_rotations mean \
     --load_newest_checkpoint True \
     --inference_label_sets all \
-    --molecular_descriptors ${DEEPFRAG_MD} \
+    --fragment_representation ${DEEPFRAG_FRAGMENT_REPRESENTATION} \
     --cache_pdbs_to_disk
