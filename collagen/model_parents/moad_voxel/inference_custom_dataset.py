@@ -121,6 +121,7 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
         elif args.load_splits:
+            # TODO: DISCUSS WITH CESAR. See run_tests.sh. Why not?
             raise Exception("To run the inference mode on a custom set is not required loading a previously saved test dataset")
         elif not args.inference_label_sets:
             raise ValueError("Must specify a label set (--inference_label_sets argument)")
