@@ -81,9 +81,6 @@ class MOADInterface(object):
         """
 
         assert type(pdb_id) is str, f"PDB ID must be a str (got {type(pdb_id)})"
-        
-        print("BEFORE LOWER:" + pdb_id)
-
         k = pdb_id.lower()
         assert k in self._lookup, f'Target "{k}" not found.'
         return self._lookup[k]
