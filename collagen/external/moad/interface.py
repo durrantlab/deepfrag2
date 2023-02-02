@@ -179,7 +179,9 @@ class MOADInterface(object):
             if str(fam).endswith(".pkl"):
                 continue
             pdbid = fam.stem  # Removes extension (.bio?)
-            print("HHH", pdbid)
+            if pdbid.lower() != pdbid:
+                print(f"Warning: {pdbid} is not all lower case. Use lower case for all filenames. Use of capital letters may cause problems in subsequent steps.")
+
             if pdbid not in files:
                 files[pdbid] = []
             files[pdbid].append(fam)
