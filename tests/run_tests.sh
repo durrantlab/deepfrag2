@@ -72,7 +72,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
     --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
     --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
-    --data_dir $MOAD_DIR/ \
+    --data_dir ./data_to_finetune/ \
     --default_root_dir $(pwd)/4.finetune_test.output/  `# The output directory` \
     --inference_label_sets test \
     --rotations 2 \
