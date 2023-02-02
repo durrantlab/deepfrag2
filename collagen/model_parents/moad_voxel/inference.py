@@ -52,7 +52,7 @@ class MoadVoxelModelInference(object):
             for smi, mol in mols_from_smi_file(filename):
                 fp_tnsrs_from_smi_file.append(
                     torch.tensor(
-                        mol.fingerprint(args.molecular_descriptors, args.fp_size),
+                        mol.fingerprint(args.fragment_representation, args.fp_size),
                         dtype=torch.float32,
                         device=device,
                         requires_grad=False,

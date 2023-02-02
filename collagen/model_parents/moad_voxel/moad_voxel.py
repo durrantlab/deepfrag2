@@ -76,9 +76,9 @@ class MoadVoxelModelParent(
     def run(self, args: Namespace = None):
         self.disable_warnings()
 
-        if "rdk10" == args.molecular_descriptors:
+        if "rdk10" == args.fragment_representation:
             args.__setattr__("fp_size", 2048)
-        elif "molbert" == args.molecular_descriptors:
+        elif "molbert" == args.fragment_representation:
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()
         else:

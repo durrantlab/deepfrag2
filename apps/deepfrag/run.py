@@ -17,7 +17,7 @@ OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 
 
 def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
-    return torch.tensor(mol.fingerprint(args.molecular_descriptors, args.fp_size))
+    return torch.tensor(mol.fingerprint(args.fragment_representation, args.fp_size))
 
 
 class DeepFrag(MoadVoxelModelParent):

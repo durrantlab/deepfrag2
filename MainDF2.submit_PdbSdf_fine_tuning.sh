@@ -30,5 +30,5 @@ python MainDF2.py --data_dir ${DIR_WITH_PDBSDF_FILES} \
     --butina_cluster_division \
     --butina_cluster_cutoff 0.4 \
     --fraction_train ${FRACTION_TRAIN} \
-    --molecular_descriptors ${DEEPFRAG_MD} \
+    --fragment_representation ${DEEPFRAG_FRAGMENT_REPRESENTATION} \
     --cache_pdbs_to_disk

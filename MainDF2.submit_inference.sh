@@ -32,4 +32,4 @@ python MainDF2.py --default_root_dir ${OUTPUT_TRAIN_DIR} \
     --ligand "/path/to/ligand.sdf" \
     --num_inference_predictions 25 \
     --xyz "5,6,7" \
-    --molecular_descriptors ${DEEPFRAG_MD}
+    --fragment_representation ${DEEPFRAG_FRAGMENT_REPRESENTATION}
