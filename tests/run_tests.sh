@@ -70,7 +70,6 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --mode test \
     --load_splits ./3.finetune_moad.output/splits.saved.json \
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
-    --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
     --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
     --data_dir ./data_to_finetune/ \
     --default_root_dir $(pwd)/4.finetune_test.output/  `# The output directory` \
@@ -80,6 +79,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --json_params common_params.json.inp \
     | tee 4.OUT-python_out.txt
 
+    # --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
 
 # JDD TODO: --MODE TEST ON FINE-TUNED MODEL.
 
