@@ -115,48 +115,22 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --json_params common_params.json.inp \
     | tee 5.OUT-python_out.txt
 
+# Create a function that detects if a file exists. If it does, it passes. Otherwise, it fails.
+function test_file_exists {
+    if [ -f $1 ]; then
+        echo "PASS: $1 exists"
+    else
+        echo "FAIL: $1 does not exist"
+    fi
+}
+
 # Now report results of tests
 echo "Results of tests"
 echo "================"
 
-# If the file ./1.train_on_moad.output/last.ckpt exists, it passed
-if [ -f ./1.train_on_moad.output/last.ckpt ]; then
-    echo "PASS: 1.train_on_moad.output/last.ckpt exists"
-else
-    echo "FAIL: 1.train_on_moad.output/last.ckpt does not exist"
-fi
-
-# If the file ./2.test_moad_trained.output/predictions_MOAD/mean/test_results-1.json exists, it passed
-if [ -f ./2.test_moad_trained.output/predictions_MOAD/mean/test_results-1.json ]; then
-    echo "PASS: 2.test_moad_trained.output/predictions_MOAD/mean/test_results-1.json exists"
-else
-    echo "FAIL: 2.test_moad_trained.output/predictions_MOAD/mean/test_results-1.json does not exist"
-fi
-
-# If the file ./3.finetune_moad.output/last.ckpt exists, it passed
-if [ -f ./3.finetune_moad.output/last.ckpt ]; then
-    echo "PASS: 3.finetune_moad.output/last.ckpt exists"
-else
-    echo "FAIL: 3.finetune_moad.output/last.ckpt does not exist"
-fi
-
-# If the file ./4.finetune_test.output/predictions_nonMOAD/mean/test_results-1.json exists, it passed
-if [ -f ./4.finetune_test.output/predictions_nonMOAD/mean/test_results-1.json ]; then
-    echo "PASS: 4.finetune_test.output/predictions_nonMOAD/mean/test_results-1.json exists"
-else
-    echo "FAIL: 4.finetune_test.output/predictions_nonMOAD/mean/test_results-1.json does not exist"
-fi
-
-# If the file ./5.inference.output/predictions_inference/inference_out.smi exists, it passed
-if [ -f ./5.inference.output/predictions_inference/inference_out.smi ]; then
-    echo "PASS: 5.inference.output/predictions_inference/inference_out.smi exists"
-else
-    echo "FAIL: 5.inference.output/predictions_inference/inference_out.smi does not exist"
-fi
-
-# If the file ./6.inference_custom_set.output/predictions_CustomDataset/mean/test_results-1.json exists, it passed
-if [ -f ./6.inference_custom_set.output/predictions_CustomDataset/mean/test_results-1.json ]; then
-    echo "PASS: 6.inference_custom_set.output/predictions_CustomDataset/mean/test_results-1.json exists"
-else
-    echo "FAIL: 6.inference_custom_set.output/predictions_CustomDataset/mean/test_results-1.json does not exist"
-fi
+test_file_exists ./1.train_on_moad.output/last.ckpt
+test_file_exists ./2.test_moad_trained.output/predictions_MOAD/mean/test_results-1.json
+test_file_exists ./3.finetune_moad.output/last.ckpt
+test_file_exists ./4.finetune_test.output/predictions_nonMOAD/mean/test_results-1.json
+test_file_exists ./5.inference.output/inference_out.smi
+test_file_exists ./6.inference_custom_set.output/predictions_CustomDataset/mean/test_results-1.json
