@@ -125,6 +125,7 @@ function test_file_exists {
 }
 
 # Now report results of tests
+echo
 echo "Results of tests"
 echo "================"
 
