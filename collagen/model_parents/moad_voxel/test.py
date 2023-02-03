@@ -384,13 +384,13 @@ class MoadVoxelModelTest(object):
         )
         for entry_idx in range(len(predictions_ensembled)):
             # Add closest compounds from label set.
-            for predicted_entry_info, dist, pca in most_similar[entry_idx]:
+            for predicted_entry_info, cos_similarity, pca in most_similar[entry_idx]:
                 all_test_data["entries"][entry_idx]["perCheckpoint"][-1][
                     "averagedPrediction"
                 ]["closestFromLabelSet"].append(
                     {
                         "smiles": predicted_entry_info.fragment_smiles,
-                        "cosineDistToAveraged": dist,
+                        "cosineSimilarityWithAveraged": cos_similarity,
                         "pcaProjection": pca[0],
                     }
                 )
@@ -596,13 +596,13 @@ class MoadVoxelModelTest(object):
                 "pcaProjection": avg_over_ckpts_of_avgs_viz[entry_idx],
                 "closestFromLabelSet": [],
             }
-            for predicted_entry_info, dist, pca in most_similar[entry_idx]:
+            for predicted_entry_info, cos_similarity, pca in most_similar[entry_idx]:
                 all_test_data["entries"][entry_idx]["avgOfCheckpoints"][
                     "closestFromLabelSet"
                 ].append(
                     {
                         "smiles": predicted_entry_info.fragment_smiles,
-                        "cosineDistToAveraged": dist,
+                        "cosineSimilarityWithAveraged": cos_similarity,
                         "pcaProjection": pca[0],
                     }
                 )

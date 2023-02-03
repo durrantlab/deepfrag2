@@ -78,11 +78,6 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --json_params common_params.json.inp \
     | tee 4.OUT-python_out.txt
 
-    #  --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
-    # --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
-
-# JDD TODO: --MODE TEST ON FINE-TUNED MODEL.
-
 echo "Perform inference using the fine-tuned model on a single example"
 
 mkdir -p 5.inference.output

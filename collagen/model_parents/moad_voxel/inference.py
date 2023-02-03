@@ -189,11 +189,11 @@ class MoadVoxelModelInference(object):
         )
 
         with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
-            for smiles, score in most_similar[0]:
+            f.write("SMILES\tScore (Cosine Similarity)\n")
+            for smiles, score_cos_similarity in most_similar[0]:
                 # [0] because only one prediction
 
-                score = 1.0 - score  # Bigger score better
-                line = f"{smiles}\t{score:.3f}"
+                line = f"{smiles}\t{score_cos_similarity:.3f}"
                 print(line)
                 f.write(line + "\n")
 
