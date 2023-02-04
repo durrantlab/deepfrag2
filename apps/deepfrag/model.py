@@ -169,7 +169,7 @@ class DeepFragModel(pl.LightningModule):
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         parser = parent_parser.add_argument_group('DeepFragModel')
         parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
-        parser.add_argument('--molecular_descriptors', required=True, type=str, help="The type of molecular descriptors to be calculated: rdk10 or molbert", default="rdk10")
+        parser.add_argument('--fragment_representation', required=False, type=str, help="The type of molecular descriptors to be calculated: rdk10 or molbert", default="rdk10")
         parser.add_argument('--aggregation_3x3_patches', required=False, type=str, help="The aggregation operator to be used to aggregate 3x3 patches. Defaults to Mean.", default=Operator.MEAN.value)
         parser.add_argument('--aggregation_loss_vector', required=False, type=str, help="The aggregation operator to be used to aggregate loss values. Defaults to Mean.", default=Operator.MEAN.value)
         parser.add_argument('--aggregation_rotations', required=False, type=str, help="The aggregation operator to be used to aggregate rotations. Defaults to Mean.", default=Operator.MEAN.value)

@@ -75,12 +75,7 @@ class MoadVoxelModelTrain(object):
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
             )
-        else:
-            if args.every_csv is not None:
-                raise ValueError(
-                    "For 'warm_starting' mode is not required to specify the '--every_csv' parameter."
-                )
-
+        elif args.every_csv is None:
             moad = PdbSdfDirInterface(
                 structures=args.data_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
@@ -88,6 +83,11 @@ class MoadVoxelModelTrain(object):
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
+            )
+
+        else:
+            raise ValueError(
+                "For 'warm_starting' mode is not required to specify the '--every_csv' parameter."
             )
 
         train, val, _ = compute_dataset_split(
@@ -122,7 +122,7 @@ class MoadVoxelModelTrain(object):
             device=device
         )
 
-        print("Number of batches for the training data: " + str(len(train_data)))
+        print(f"Number of batches for the training data: {len(train_data)}")
         if len(val.targets) > 0:
             val_data = self.get_data_from_split(
                 cache_file=args.cache, 
@@ -132,7 +132,7 @@ class MoadVoxelModelTrain(object):
                 voxel_params=voxel_params, 
                 device=device
             )
-            print("Number of batches for the validation data: " + str(len(val_data)))
+            print(f"Number of batches for the validation data: {len(val_data)}")
         else:
             val_data = None
 

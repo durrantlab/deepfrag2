@@ -25,5 +25,5 @@ python MainDF2.py --every_csv ${EVERY_CSV} \
     --aggregation_3x3_patches mean \
     --aggregation_loss_vector mean \
     --max_epochs 30 \
-    --molecular_descriptors ${DEEPFRAG_MD} \
+    --fragment_representation ${DEEPFRAG_FRAGMENT_REPRESENTATION} \
     --cache_pdbs_to_disk

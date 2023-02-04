@@ -10,6 +10,8 @@ import numpy as np
 
 # Functions and classes for assessing model predictions and performance.
 
+
+# Closer to 1 means more similar, closer to 0 means more dissimilar.
 _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 
@@ -33,6 +35,8 @@ class PCAProject(object):
 
 def cos_loss(yp, yt):
     """Cosine distance as a loss (inverted). Smaller means more similar."""
+    # Closer to 1 means more dissimilar, closer to 0 means more similar.
+
     return 1 - _cos(yp, yt)
 
 
@@ -72,12 +76,13 @@ def top_k(
 
     for i in tqdm(range(len(predictions)), desc="Top-K"):
         # Distances between this prediction and each of the label-set
-        # fingerprints.
+        # fingerprints. Note cos_loss is the cosine distance (so smaller means
+        # more similar).
         dists = _broadcast_fn(cos_loss, predictions[i], label_set_fingerprints)
 
         # The distance from this prediction and the correct answer. Note that
         # the correct answer must be among the answers in the label set.
-        d_target = cos_loss(
+        dist_to_target = cos_loss(
             predictions[i].unsqueeze(0), correct_predicton_targets[i].unsqueeze(0)
         )
 
@@ -85,12 +90,12 @@ def top_k(
         # at times it differs slightly, presumably due to rounding errors. So we
         # need to find the entry in dists that is closest to d_target (off by at
         # most only a tiny amount).
-        min_idx = dists.sub(d_target).abs().argmin()
-        d_target = dists[min_idx]
+        min_idx = dists.sub(dist_to_target).abs().argmin()
+        dist_to_target = dists[min_idx]
 
         # The rank is the number of label-set distances that are better (less)
         # than the distance to the correct answer.
-        ranks[i] = torch.sum(dists < d_target)
+        ranks[i] = torch.sum(dists < dist_to_target)
 
     # Rank is 0-indexed, K is 1-indexed
     # I.e. top-1 means frequency of rank 0
@@ -138,10 +143,11 @@ def most_similar_matches(
 
         most_similar = []
 
-        for d, s, fp in zip(
+        for cos_dist, smi, fp in zip(
             sorted_dists[:k], sorted_smis[:k], sorted_label_set_fingerprints[:k]
         ):
-            similar_one_to_add = [s, float(d)]
+            cos_sim = 1 - float(cos_dist)  # So reports cos similarity, not cosine distance.
+            similar_one_to_add = [smi, cos_sim]
             if pca_project is not None:
                 similar_one_to_add.append(pca_project.project(fp))
             most_similar.append(similar_one_to_add)
