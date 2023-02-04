@@ -52,7 +52,7 @@ class MoadVoxelModelInference(object):
             for smi, mol in mols_from_smi_file(filename):
                 fp_tnsrs_from_smi_file.append(
                     torch.tensor(
-                        mol.fingerprint(args.molecular_descriptors, args.fp_size),
+                        mol.fingerprint(args.fragment_representation, args.fp_size),
                         dtype=torch.float32,
                         device=device,
                         requires_grad=False,
@@ -189,11 +189,11 @@ class MoadVoxelModelInference(object):
         )
 
         with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
-            for smiles, score in most_similar[0]:
+            f.write("SMILES\tScore (Cosine Similarity)\n")
+            for smiles, score_cos_similarity in most_similar[0]:
                 # [0] because only one prediction
 
-                score = 1.0 - score  # Bigger score better
-                line = f"{smiles}\t{score:.3f}"
+                line = f"{smiles}\t{score_cos_similarity:.3f}"
                 print(line)
                 f.write(line + "\n")
 
