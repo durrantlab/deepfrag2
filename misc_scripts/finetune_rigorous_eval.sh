@@ -1,5 +1,8 @@
 # Bash script
 
+. env.sh
+. env2.sh
+
 # finetuned_output_dir is first argument. Contains checkpoints.
 finetuned_output_dir=$1
 
