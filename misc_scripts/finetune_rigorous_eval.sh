@@ -1,5 +1,8 @@
 # Bash script
 
+. env.sh
+. env2.sh
+
 # finetuned_ckpt_dir is first argument
 finetuned_ckpt_dir=$1
 
@@ -27,7 +30,7 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
 
     # Create a subdirectory in the directory in finetuned_ckpt_dir called
     # "test_results" called "epoch_finetuned_epoch".
-    epoch_output_dir = $finetuned_ckpt_dir/test_results/epoch_$finetuned_epoch/
+    epoch_output_dir=$finetuned_ckpt_dir/test_results/epoch_$finetuned_epoch/
     mkdir $epoch_output_dir
 
     # First test the model on the finetuned data.
