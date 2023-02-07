@@ -34,8 +34,8 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
     mkdir $epoch_output_dir
 
     # Create a subdirectories called finetuned and initial_model
-    epoch_output_finetuned_dir=$epoch_output_dir/finetuned
-    epoch_output_initial_model_dir=$epoch_output_dir/initial_model
+    epoch_output_finetuned_dir=$epoch_output_dir/finetuned/
+    epoch_output_initial_model_dir=$epoch_output_dir/initial_model/
     mkdir $epoch_output_finetuned_dir
     mkdir $epoch_output_initial_model_dir
 
