@@ -17,7 +17,7 @@ fi
 
 # Create a new directory called "test_results" in the directory in
 # finetuned_output_dir.
-mkdir ./test_results
+mkdir -p ./test_results
 
 # Get all the files that start with "loss" in that directory.
 # Sort them by the number after "loss=".
