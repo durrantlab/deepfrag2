@@ -39,39 +39,37 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
     mkdir $epoch_output_finetuned_dir
     mkdir $epoch_output_initial_model_dir
 
-    # First test the model on the finetuned data (expect accuracy to go up)
-    $PYTHON_EXEC -u $MAIN_DF2_PY \
-        --mode test \
-        --load_splits ${finetuned_output_dir}/splits.saved.json \
-        --load_checkpoint ${finetuned_ckpt_file} \
-        --data_dir ../data_to_finetune/ \
-        --default_root_dir ${epoch_output_finetuned_dir}  `# The output directory` \
-        --inference_label_sets test \
-        --rotations 2 \
-        --json_params common_params.json.inp \
-        | tee ${epoch_output_finetuned_dir}OUT-python_out.txt
+    # First test the model on the finetuned data (expect accuracy to go up).
+    # Only if the file ${epoch_output_finetuned_dir}OUT-python_out.txt doesn't
+    # exist.
+    if [ ! -f ${epoch_output_finetuned_dir}OUT-python_out.txt ]; then
+        $PYTHON_EXEC -u $MAIN_DF2_PY \
+            --mode test \
+            --load_splits ${finetuned_output_dir}/splits.saved.json \
+            --load_checkpoint ${finetuned_ckpt_file} \
+            --data_dir ../data_to_finetune/ \
+            --default_root_dir ${epoch_output_finetuned_dir}  `# The output directory` \
+            --inference_label_sets test \
+            --rotations 2 \
+            --json_params common_params.json.inp \
+            | tee ${epoch_output_finetuned_dir}OUT-python_out.txt
+    fi
 
-    # Also test the model on the whole binding moad (expect accuracy to go down)
-    $PYTHON_EXEC -u $MAIN_DF2_PY \
-        --mode test \
-        --load_splits ${initial_model_output_dir}/splits.saved.json \
-        --load_checkpoint ${finetuned_ckpt_file}   `# Note loading finetuned checkpoint` \
-        --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
-        --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
-        --data_dir $MOAD_DIR/ \
-        --default_root_dir ${epoch_output_initial_model_dir}  `# The output directory` \
-        --inference_label_sets test \
-        --rotations 2 \
-        --json_params common_params.json.inp \
-        | tee ${epoch_output_initial_model_dir}OUT-python_out.txt
+    # Also test the model on the whole binding moad (expect accuracy to go
+    # down). Only if the file
+    # ${epoch_output_initial_model_dir}OUT-python_out.txt doesn't exist.
+    if [ ! -f ${epoch_output_initial_model_dir}OUT-python_out.txt ]; then
+        $PYTHON_EXEC -u $MAIN_DF2_PY \
+            --mode test \
+            --load_splits ${initial_model_output_dir}/splits.saved.json \
+            --load_checkpoint ${finetuned_ckpt_file}   `# Note loading finetuned checkpoint` \
+            --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
+            --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
+            --data_dir $MOAD_DIR/ \
+            --default_root_dir ${epoch_output_initial_model_dir}  `# The output directory` \
+            --inference_label_sets test \
+            --rotations 2 \
+            --json_params common_params.json.inp \
+            | tee ${epoch_output_initial_model_dir}OUT-python_out.txt
+    fi
 done
-
-
-
-
-# Get the epoch, which is the number after "epoch="
-# epochs=`echo $finetuned_ckpt_files | sed -e 's/.*epoch=\([0-9]*\).*/\1/'`
-
-
-# echo $finetuned_ckpt_files
-# echo $epochs
