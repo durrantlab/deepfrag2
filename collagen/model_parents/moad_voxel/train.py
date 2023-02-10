@@ -61,7 +61,7 @@ class MoadVoxelModelTrain(object):
                 raise ValueError(
                     "For 'train' mode is required to specify the '--every_csv' parameter."
                 )
-            if args.butina_cluster_division:
+            if args.butina_cluster_cutoff:
                 raise ValueError(
                     "Rational division based on Butina clustering is only for fine-tuning"
                 )
@@ -100,7 +100,6 @@ class MoadVoxelModelTrain(object):
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
-            butina_cluster_division=args.butina_cluster_division,
             butina_cluster_cutoff=args.butina_cluster_cutoff,
         )
 

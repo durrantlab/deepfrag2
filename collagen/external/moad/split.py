@@ -118,10 +118,9 @@ def _generate_splits_from_scratch(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
-    butina_cluster_division: bool = False,
     butina_cluster_cutoff: float = 0.4,
 ):
-    if not butina_cluster_division:
+    if not butina_cluster_cutoff:
         print("Building training/validation/test sets in a random way")
         # Not loading previously determined splits from disk, so generate based on
         # random seed.
@@ -298,7 +297,6 @@ def compute_dataset_split(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
-    butina_cluster_division: bool = False,
     butina_cluster_cutoff = 0.4,
 ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
     """Compute a TRAIN/VAL/TEST split.
@@ -350,7 +348,6 @@ def compute_dataset_split(
             max_pdbs_train,
             max_pdbs_val,
             max_pdbs_test,
-            butina_cluster_division,
             butina_cluster_cutoff,
         )
     else:
@@ -388,7 +385,6 @@ def full_moad_split(moad: "MOADInterface") -> MOAD_split:
         max_pdbs_train=None,
         max_pdbs_val=None,
         max_pdbs_test=None,
-        butina_cluster_division=None,
         butina_cluster_cutoff=0.0,
     )
 

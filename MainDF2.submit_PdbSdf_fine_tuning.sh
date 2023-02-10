@@ -27,7 +27,6 @@ python MainDF2.py --data_dir ${DIR_WITH_PDBSDF_FILES} \
     --max_epochs 30 \
     --mode warm_starting \
     --model_for_warm_starting ${INPUT_MODEL_FOR_FINETUNING} \
-    --butina_cluster_division \
     --butina_cluster_cutoff 0.4 \
     --fraction_train ${FRACTION_TRAIN} \
     --fragment_representation ${DEEPFRAG_FRAGMENT_REPRESENTATION} \

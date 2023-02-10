@@ -79,8 +79,8 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
             parent_every_csv = os.path.join(args.every_csv, os.pardir)
             parent_every_csv = os.path.relpath(parent_every_csv)
 
-            label_set_fps_bin = parent_every_csv + os.sep + "all_label_set_fps.bin"
-            label_set_smis_bin = parent_every_csv + os.sep + "all_label_set_smis.bin"
+            label_set_fps_bin = parent_every_csv + os.sep + args.fragment_representation + "_all_label_set_fps.bin"
+            label_set_smis_bin = parent_every_csv + os.sep + args.fragment_representation + "_all_label_set_smis.bin"
 
             if os.path.exists(label_set_fps_bin) and os.path.exists(label_set_smis_bin):
                 # Cache file exists, so load from that.

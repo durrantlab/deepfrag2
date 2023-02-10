@@ -57,7 +57,6 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --data_dir ./data_to_finetune/  `# Protein/ligands named like 1XDN_prot_123.pdb, 1XDN_lig_123.sdf` \
     --default_root_dir $(pwd)/3.finetune_moad.output/  `# The output directory` \
     --json_params common_params.json.inp \
-    --butina_cluster_division \
     --butina_cluster_cutoff 0.4 \
     --fraction_val 0.0  `# No validation set` \
     | tee 3.OUT-python_out.txt
