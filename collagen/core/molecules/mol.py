@@ -575,7 +575,7 @@ class BackedMol(Mol):
         return pairs
 
     def fingerprint(self, fp_type: str, size: int) -> "numpy.ndarray":
-        return fingerprint_for(self.rdmol, fp_type, size)
+        return fingerprint_for(self.rdmol, fp_type, size, self.smiles(True))
 
 
 class MolDataset(Dataset):

@@ -18,4 +18,15 @@ source activate ${CONDA_ENV_NAME}
 
 cd ${DEEPFRAG_ROOT}
 
-python MainDF2.py --data_dir ${DIR_WITH_PDBSDF_FILES} --load_splits ${OUTPUT_FT_DIR}/splits.json --default_root_dir ${OUTPUT_FT_DIR} --mode test --rotations 8 --aggregation_rotations mean --load_newest_checkpoint True
+python MainDF2.py --data_dir ${DIR_WITH_PDBSDF_FILES} \
+    --load_splits ${OUTPUT_FT_DIR}/splits.json \
+    --default_root_dir ${OUTPUT_FT_DIR} \
+    --mode test \
+    --rotations 8 \
+    --aggregation_3x3_patches mean \
+    --aggregation_loss_vector mean \
+    --aggregation_rotations mean \
+    --load_newest_checkpoint True \
+    --inference_label_sets test \
+    --fragment_representation ${DEEPFRAG_FRAGMENT_REPRESENTATION} \
+    --cache_pdbs_to_disk

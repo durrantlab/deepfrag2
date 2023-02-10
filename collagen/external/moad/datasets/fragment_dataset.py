@@ -309,10 +309,13 @@ class MOADFragmentDataset(Dataset):
         entry = None
         counter = 1
         max_counter = 3
-        # For some reason, id we repeat this code more than 1 times,
-        # then we avoid 'a ligand not found' or 'atoms do not have coordinates' exceptions
-        # Is this only for Windows platforms due to the multiprocessing implemented in the loader.py file? I don't know
-        # Can this occur on Unix-type platforms with the fork multiprocessing implemented in the loader.py file? I don't know, if required to experiment
+        # For some reason, id we repeat this code more than 1 times, then we
+        # avoid 'a ligand not found' or 'atoms do not have coordinates'
+        # exceptions Is this only for Windows platforms due to the
+        # multiprocessing implemented in the loader.py file? I don't know Can
+        # this occur on Unix-type platforms with the fork multiprocessing
+        # implemented in the loader.py file? I don't know, if required to
+        # experiment
         while counter <= max_counter:
             try:
                 entry = self._internal_index_valids_filtered[idx]

@@ -7,9 +7,10 @@ from collagen.metrics import cos_loss
 
 
 class DeepFragModel(pl.LightningModule):
-    def __init__(self, num_voxel_features: int = 10, fp_size: int = 2048, **kwargs):
+    def __init__(self, num_voxel_features: int = 10, **kwargs):
         super().__init__()
-            
+
+        self.fp_size = kwargs["fp_size"]
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
@@ -157,7 +158,7 @@ class DeepFragModel(pl.LightningModule):
             nn.Dropout(),
 
             # Linear transform (fully connected). Increases features to 512.
-            nn.Linear(512, fp_size),
+            nn.Linear(512, self.fp_size),
 
             # Applies sigmoid activation function. See
             # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
@@ -168,7 +169,7 @@ class DeepFragModel(pl.LightningModule):
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         parser = parent_parser.add_argument_group('DeepFragModel')
         parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
-        parser.add_argument('--fp_size', type=int, help="The size of the output molecular fingerprint. Defaults to 2048.", default=2048)
+        parser.add_argument('--fragment_representation', required=False, type=str, help="The type of molecular descriptors to be calculated: rdk10 or molbert", default="rdk10")
         parser.add_argument('--aggregation_3x3_patches', required=False, type=str, help="The aggregation operator to be used to aggregate 3x3 patches. Defaults to Mean.", default=Operator.MEAN.value)
         parser.add_argument('--aggregation_loss_vector', required=False, type=str, help="The aggregation operator to be used to aggregate loss values. Defaults to Mean.", default=Operator.MEAN.value)
         parser.add_argument('--aggregation_rotations', required=False, type=str, help="The aggregation operator to be used to aggregate rotations. Defaults to Mean.", default=Operator.MEAN.value)
@@ -201,6 +202,26 @@ class DeepFragModel(pl.LightningModule):
         self.log("loss", loss, batch_size=batch_size)
 
         return loss
+
+    def training_epoch_end(self, outputs):
+        # See https://github.com/Lightning-AI/lightning/issues/2110
+        try:
+            # Sometimes x["loss"] is an empty TensorList. Not sure why. TODO:
+            # Using try catch like this is bad practice.
+            avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
+            self.log("loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1})
+        except Exception:
+            self.log("loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
+
+    def validation_epoch_end(self, outputs):
+        # See https://github.com/Lightning-AI/lightning/issues/2110
+        try:
+            # Sometimes x["val_loss"] is an empty TensorList. Not sure why. TODO:
+            # Using try catch like this is bad practice.
+            avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+            self.log("val_loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1})
+        except Exception:
+            self.log("val_loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
 
     # def on_train_epoch_end(self):
     #     if not self.first_epoch:

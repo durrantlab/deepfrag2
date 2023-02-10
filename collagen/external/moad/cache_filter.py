@@ -1,7 +1,8 @@
 import argparse
 from dataclasses import dataclass
 import json
-import multiprocessing
+# import multiprocessing
+from torch import multiprocessing
 import os
 from pathlib import Path
 from typing import Tuple, Union, Any, Optional
@@ -350,8 +351,7 @@ def load_cache_and_filter(
 
     if not filtered_cache:
         raise Exception(
-            "No ligands passed the moad filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Representative ligand info to help with debugging: "
-            + str(lig)
+            "No ligands passed the moad filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Consider using `--verbose True` to debug."
         )
 
     print(f"Number of fragments in the {split.name} set: {len(filtered_cache)}")

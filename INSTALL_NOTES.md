@@ -19,6 +19,11 @@
   * `conda install -c conda-forge wandb`
   * `conda install -c pyg pyg`
   * `conda install -c anaconda pip`
+  * `conda install filelock`
+  * `conda install regex`
+  * `conda install sacremoses`
+  * `pip install wget`
+  * `conda install "numpy<=1.21"`
   * `pip install Fancy-aggregations`
 
 2. Description of the scripts provided

@@ -2,6 +2,7 @@ from argparse import ArgumentParser, Namespace
 import json
 from typing import Type, TypeVar, List
 from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
+from collagen.model_parents.moad_voxel.inference_custom_dataset import MoadVoxelModelInferenceCustomSet
 from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
 from collagen.model_parents.moad_voxel.lr_finder import MoadVoxelModelLRFinder
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
@@ -9,7 +10,7 @@ from collagen.model_parents.moad_voxel.train import MoadVoxelModelTrain
 from collagen.model_parents.moad_voxel import arguments
 import os
 from collagen.model_parents.moad_voxel.utils import MoadVoxelModelUtils
-
+from collagen.core.molecules.fingerprints import download_molbert_ckpt
 import pytorch_lightning as pl
 import torch
 
@@ -23,7 +24,6 @@ OUT_T = TypeVar("OUT_T")
 class MoadVoxelModelParent(
     MoadVoxelModelInits,
     MoadVoxelModelLRFinder,
-    MoadVoxelModelTest,
     MoadVoxelModelTrain,
     MoadVoxelModelInference,
     MoadVoxelModelUtils,
@@ -76,6 +76,14 @@ class MoadVoxelModelParent(
     def run(self, args: Namespace = None):
         self.disable_warnings()
 
+        if args.fragment_representation == "rdk10":
+            args.__setattr__("fp_size", 2048)
+        elif args.fragment_representation == "molbert":
+            args.__setattr__("fp_size", 1536)
+            download_molbert_ckpt()
+        else:
+            raise Exception("The type of molecular descriptor to be used is wrong.")
+
         ckpt = self.get_checkpoint(args)
         if ckpt is not None:
             print(f"Restoring from checkpoint: {ckpt}")
@@ -88,10 +96,13 @@ class MoadVoxelModelParent(
             self.run_warm_starting(args)
         elif args.mode == "test":
             print("Starting 'test' process")
-            self.run_test(args, ckpt)
+            MoadVoxelModelTest(self).run_test(args, ckpt)
         elif args.mode == "inference":
             print("Starting 'inference' process")
             self.run_inference(args, ckpt)
+        elif args.mode == "inference_custom_set":
+            print("Starting 'inference_custom_set' process")
+            MoadVoxelModelInferenceCustomSet(self).run_test(args, ckpt)
         elif args.mode == "lr_finder":
             print("Starting 'lr_finder' process")
             self.run_lr_finder(args)
@@ -101,7 +112,7 @@ class MoadVoxelModelParent(
     # def _get_train_frag_counts(self, args, moad, train, voxel_params, device):
     #     # Without calculating voxels and fingerprints...
 
-    #     # TODO: No longer used, but leaving here as an example of how to get
+    #     # NOTE: No longer used, but leaving here as an example of how to get
     #     # fragments without calculating voxels. Useful for testing?
 
     #     voxel_params_frag = copy.deepcopy(voxel_params)
@@ -123,7 +134,7 @@ class MoadVoxelModelParent(
     #             frag_counts[entry_info.fragment_smiles] += 1
     #     return frag_counts
 
-    def _save_examples_used(self, model, args):
+    def save_examples_used(self, model, args):
         if args.default_root_dir is None:
             pth = os.getcwd() + os.sep
         else:
