@@ -205,11 +205,15 @@ class DeepFragModel(pl.LightningModule):
 
     def training_epoch_end(self, outputs):
         # See https://github.com/Lightning-AI/lightning/issues/2110
+        for x in outputs:
+            print(x["loss"])
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
         self.log("loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1})
 
     def validation_epoch_end(self, outputs):
-        # See # See https://github.com/Lightning-AI/lightning/issues/2110
+        # See https://github.com/Lightning-AI/lightning/issues/2110
+        for x in outputs:
+            print(x["val_loss"])
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         self.log("val_loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1})
 
