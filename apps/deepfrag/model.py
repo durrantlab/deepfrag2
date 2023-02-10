@@ -203,6 +203,26 @@ class DeepFragModel(pl.LightningModule):
 
         return loss
 
+    def training_epoch_end(self, outputs):
+        # See https://github.com/Lightning-AI/lightning/issues/2110
+        try:
+            # Sometimes x["loss"] is an empty TensorList. Not sure why. TODO:
+            # Using try catch like this is bad practice.
+            avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
+            self.log("loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1})
+        except Exception:
+            self.log("loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
+
+    def validation_epoch_end(self, outputs):
+        # See https://github.com/Lightning-AI/lightning/issues/2110
+        try:
+            # Sometimes x["val_loss"] is an empty TensorList. Not sure why. TODO:
+            # Using try catch like this is bad practice.
+            avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+            self.log("val_loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1})
+        except Exception:
+            self.log("val_loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
+
     # def on_train_epoch_end(self):
     #     if not self.first_epoch:
     #         return
