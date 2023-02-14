@@ -5,6 +5,7 @@ import os
 import wget
 import sys
 from zipfile import ZipFile
+from functools import lru_cache
 
 PATH_MOLBERT_MODEL = os.path.join(os.getcwd(), "molbert_model")
 PATH_MOLBERT_CKPT  = os.path.join(PATH_MOLBERT_MODEL, "molbert_100epochs" + os.sep + "checkpoints" + os.sep + "last.ckpt")
@@ -38,8 +39,8 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     return np.array(n_fp)
 
 
+@lru_cache
 def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
-    smiles = smiles.replace('*', '')
     fp = MOLBERT_MODEL.transform_single(smiles)
     n_fp = np.array(fp[0][0])
     return n_fp
