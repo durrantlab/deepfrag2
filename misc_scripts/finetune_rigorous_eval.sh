@@ -56,6 +56,7 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
             --inference_label_sets test \
             --rotations 2 \
             --json_params common_params.json.inp \
+            --min_frag_num_heavy_atoms 4 \
             | tee ${epoch_output_finetuned_dir}OUT-python_out.txt
     fi
 
@@ -74,6 +75,7 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
             --inference_label_sets test \
             --rotations 2 \
             --json_params common_params.json.inp \
+            --min_frag_num_heavy_atoms 4 \
             | tee ${epoch_output_initial_model_dir}OUT-python_out.txt
     fi
 done
