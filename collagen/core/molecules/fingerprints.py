@@ -8,7 +8,10 @@ from zipfile import ZipFile
 from functools import lru_cache
 
 PATH_MOLBERT_MODEL = os.path.join(os.getcwd(), "molbert_model")
-PATH_MOLBERT_CKPT  = os.path.join(PATH_MOLBERT_MODEL, "molbert_100epochs" + os.sep + "checkpoints" + os.sep + "last.ckpt")
+PATH_MOLBERT_CKPT = os.path.join(
+    PATH_MOLBERT_MODEL,
+    f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",
+)
 
 
 def bar_progress(current, total, width=80):
