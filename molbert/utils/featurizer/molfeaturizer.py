@@ -1294,7 +1294,8 @@ class SmilesIndexFeaturizer(MolFeaturizer):
                 try:
                     indices_array[i] = self.token_to_idx[c]
                 except KeyError:
-                    logging.warning(f'SMILES has unknown symbol {decorated_smiles} -> {c}')
+                    # logging.warning(f'SMILES has unknown symbol {decorated_smiles} -> {c}')
+                    pass
 
         return indices_array, valid_smiles
 

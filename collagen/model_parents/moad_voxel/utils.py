@@ -50,6 +50,7 @@ class MoadVoxelModelUtils(object):
         data = (
             MultiLoader(
                 dataset,
+                args.fragment_representation,
                 shuffle=shuffle,
                 num_dataloader_workers=args.num_dataloader_workers,
                 max_voxels_in_memory=args.max_voxels_in_memory,
