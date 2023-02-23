@@ -31,7 +31,7 @@ def download_molbert_ckpt():
         os.remove(file_name)
 
     global MOLBERT_MODEL
-    MOLBERT_MODEL = MolBertFeaturizer(PATH_MOLBERT_CKPT, embedding_type='average-1-cat-pooled', max_seq_len=200, device='cpu')
+    MOLBERT_MODEL = MolBertFeaturizer(PATH_MOLBERT_CKPT, embedding_type='average-1-cat-pooled', max_seq_len=200, device='cuda')
 
 
 def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
