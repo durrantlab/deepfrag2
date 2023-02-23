@@ -115,7 +115,7 @@ def _add_generic_params(
     parser.add_argument(
         "--learning_rate",
         required=False,
-        default=1e-3,
+        default=1e-4,
         help="The learning rate.",
     )
     parser.add_argument(
