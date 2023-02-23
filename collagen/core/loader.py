@@ -4,7 +4,7 @@ import time
 import os
 import traceback
 from datetime import datetime
-import sys
+import threading
 import platform
 
 DATA = None
@@ -12,13 +12,6 @@ COLLATE = None
 
 # If any thread takes longer than this, terminate it.
 TIMEOUT = 60.0 * 5
-
-# def _process(batch, return_list):
-#     return COLLATE([DATA[x] for x in batch])
-
-
-def return_value_data(idx):
-    return idx
 
 
 def log(txt):
@@ -51,6 +44,7 @@ class MultiLoader(object):
     def __init__(
         self,
         data,
+        fragment_representation,
         num_dataloader_workers=1,
         batch_size=1,
         shuffle=False,
@@ -60,6 +54,7 @@ class MultiLoader(object):
 
         # Save parameters to class variables.
         self.data = data
+        self.fragment_representation = fragment_representation
         self.num_dataloader_workers = num_dataloader_workers
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -97,7 +92,8 @@ class MultiLoader(object):
                 if cur_time - timestamp > TIMEOUT:
                     # It's been running for too long
                     print(f"timed out, killing a process: {p.name}")
-                    p.terminate()
+                    if self.fragment_representation == "rdk10" and platform.system().lower() != "windows":
+                        p.terminate()
                     self.procs[i] = None
             else:
                 # It's finished with the calculation
@@ -114,27 +110,23 @@ class MultiLoader(object):
             and len(self.groups_of_batches) > 0
         ):
             batch = self.groups_of_batches.pop(0)
-    
-            p = multiprocessing.Process(
-                target=_process2, args=(batch, self.return_list, id),
-                name=f"process_{str(self.name_idx + 1)}"
-            )
-    
+
+            if self.fragment_representation == "rdk10" and platform.system().lower() != "windows":
+                p = multiprocessing.Process(
+                    target=_process2, args=(batch, self.return_list, id),
+                    name=f"process_{str(self.name_idx + 1)}"
+                )
+            else:
+                p = threading.Thread(
+                    target=_process2, args=(batch, self.return_list, id),
+                    name=f"process_{str(self.name_idx + 1)}"
+                )
+
             self.name_idx = self.name_idx + 1
             p.start()
             self.procs.append((p, cur_time))
 
-    def cesar_version(self):
-        with multiprocessing.Pool() as p:
-            for result in p.imap_unordered(return_value_data, iterable=self.data, chunksize=1):
-                try:
-                    yield self.collate_fn([result])
-                except Exception as e:
-                    print("Error in method __iter__ with cesar_version()", file=sys.stderr)
-                    traceback.print_exc(e)
-            p.close()
-
-    def jdd_version(self):
+    def __iter__(self):
         global DATA
         global COLLATE
         
@@ -230,22 +222,6 @@ class MultiLoader(object):
                 # import pdb; pdb.set_trace()
         
                 yield item
-
-    def __iter__(self):
-
-        # Windows platform does not support fork multiprocessing
-        if platform.system().lower() != "windows":
-            # JDD Version runs MUCH faster, and seems to be less error prone. Does
-            # prody play nice with multiprocessing?
-            return self.jdd_version()
-        else:
-            # CESAR:
-            # JDD Version cannot be faster because it is algorithmically more complex.
-            # The scheduling (workload per processor) implemented in JDD version never will be more efficient than the multiprocessing API.
-            # The faster execution time of this version of DeepFrag is not related to the use of JDD version, but to the improvements done in other parts of the code.
-            # Cesar Version is more clair to understand (only 7 code lines vs. 50 code lines).
-            # Cesar version is not error prone.
-            return self.cesar_version()
 
         # ===== WORKS BUT IF ERROR ON ANY THREAD, HANGS WHOLE PROGRAM ====
         # with multiprocessing.Pool(self.num_dataloader_workers) as p:
