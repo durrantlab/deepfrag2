@@ -51,25 +51,8 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
 @lru_cache
 def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     global MOLBERT_MODEL
-
-    #f = open("/var/tmp/tmp.log", "a")
-    #f.write("here4 " + smiles + "\n")
-    #f.write("here5 " + str(MOLBERT_MODEL) + "\n")
-    #f.write("here6 " + str(MOLBERT_MODEL.transform_single) + "\n")
-    #f.close()
-
-    # smiles is reasonable, MOLBERT_MODEL and MOLBERT_MODEL.transform_single
-    # are defined. No obvious problem.
-
-    # TODO: fp never generated, but no error... On CRC works well
     fp = MOLBERT_MODEL.transform_single(smiles)
-
-    #f.write("here7 " + str(fp) + "\n")
-    #f.close()
-
     n_fp = np.array(fp[0][0])
-    #f.write(str(n_fp) + "\n")
-    #f.close()
     return n_fp
 
 
