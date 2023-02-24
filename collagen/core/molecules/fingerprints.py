@@ -8,16 +8,14 @@ from zipfile import ZipFile
 from functools import lru_cache
 
 PATH_MOLBERT_MODEL = os.path.join(os.getcwd(), "molbert_model")
-<<<<<<< HEAD
 PATH_MOLBERT_CKPT = os.path.join(
     PATH_MOLBERT_MODEL,
     f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",
 )
 
-=======
-PATH_MOLBERT_CKPT  = os.path.join(PATH_MOLBERT_MODEL, "molbert_100epochs" + os.sep + "checkpoints" + os.sep + "last.ckpt")
+PATH_MOLBERT_CKPT  = os.path.join(PATH_MOLBERT_MODEL, f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt")
 MOLBERT_MODEL = None
->>>>>>> af2573cb6d57afad645f6c702a8d4d0e16034995
+
 
 def bar_progress(current, total, width=80):
     progress_message = "Downloading Molbert model: %d%% [%d / %d] bytes" % (current / total * 100, current, total)
@@ -63,7 +61,7 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     # smiles is reasonable, MOLBERT_MODEL and MOLBERT_MODEL.transform_single
     # are defined. No obvious problem.
 
-    # TODO: fp never generated, but no error...
+    # TODO: fp never generated, but no error... On CRC works well
     fp = MOLBERT_MODEL.transform_single(smiles)
 
     #f.write("here7 " + str(fp) + "\n")
