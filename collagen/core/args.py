@@ -1,5 +1,6 @@
 import argparse
 import json
+from ..args_defaults import get_default_args
 
 # It would be tedious to get the user args to some places in the code (e.g.,
 # MOAD_target). Let's just make some of the variables globally availble here.
@@ -189,6 +190,11 @@ def get_args(parser_funcs = None, post_parse_args_funcs = None, is_pytorch_light
 
     # Get the parser
     parser = _get_arg_parser(parser_funcs, is_pytorch_lightning)
+
+    # Set any missing defaults. Use the set_defaults() function.
+    d = get_default_args()
+    for k, v in d.items():
+        parser.set_defaults(**{k: v})
 
     # Parse the arguments
     args = parser.parse_args()
