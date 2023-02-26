@@ -12,5 +12,5 @@ from typing import Any, Dict
 
 def get_default_args() -> Dict[str, Any]:
     return {
-        "fragment_representation": "rdk10iiii",
+        "fragment_representation": "rdk10",
     }
