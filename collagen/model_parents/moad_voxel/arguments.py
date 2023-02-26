@@ -27,7 +27,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--custom_test_set_dir",
         required=False,
-        default=None,
+        # default=None,
         type=str,
         help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). Used for testing on a user-specified directory of protein/ligand pairs."
     )
@@ -48,21 +48,21 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--save_every_epoch",
         required=False,
-        default=False,
+        # default=False,
         action="store_true",
         help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
     )
     parser.add_argument(
         "--butina_cluster_cutoff",
         required=False,
-        default=None,
+        # default=None,
         type=float,
         help="Cutoff value to be applied for the Butina clustering method"
     )
     parser.add_argument(
         "--cache",
         required=False,
-        default=None,
+        # default=None,
         help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--every_csv`.",
     )
     parser.add_argument(

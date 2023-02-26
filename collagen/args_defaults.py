@@ -37,7 +37,13 @@ def get_default_args() -> Dict[str, Any]:
         "max_pdbs_test": None,
         "batch_size": 16,
         "rotations": 8,
-        "cache_pdbs_to_disk": False
+        "cache_pdbs_to_disk": False,
+        "cache": None,
+        "wandb_project": None,
+        "save_every_epoch": False,
+        "custom_test_set_dir": None,
+        "every_csv": None,
+        "butina_cluster_cutoff": None
     }
 
 # Given a namespace, add any missing values

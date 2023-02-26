@@ -50,18 +50,18 @@ class MoadVoxelModelTrain(object):
 
     def get_train_val_sets(self, args, train: bool):
 
-        if "custom_test_set_dir" in args and args.custom_test_set_dir:
+        if args.custom_test_set_dir:
             raise Exception("The custom test set can only be used in testing mode")
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
         if train:
-            if "every_csv" not in args or args.every_csv is None:
+            if args.every_csv is None:
                 raise ValueError(
                     "For 'train' mode, you must specify the '--every_csv' parameter."
                 )
-            if "butina_cluster_cutoff" in args and args.butina_cluster_cutoff:
+            if args.butina_cluster_cutoff:
                 raise ValueError(
                     "Rational division based on Butina clustering is only for fine-tuning."
                 )
@@ -72,21 +72,17 @@ class MoadVoxelModelTrain(object):
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
-                # Assume no hydrogens if not specified
-                noh=args.noh if "noh" in args else True,
-                # Assume discard if not specified
-                discard_distant_atoms=args.discard_distant_atoms if "discard_distant_atoms" in args else True,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms
             )
-        elif "every_csv" not in args or args.every_csv is None:
+        elif args.every_csv is None:
             moad = PdbSdfDirInterface(
                 structures=args.data_dir,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
-                # Assume no hydrogens if not specified
-                noh=args.noh if "noh" in args else True,
-                # Assume discard if not specified
-                discard_distant_atoms=args.discard_distant_atoms if "discard_distant_atoms" in args else True,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms
             )
 
         else:

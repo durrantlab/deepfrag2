@@ -37,7 +37,7 @@ def _add_generic_params(
     parser.add_argument(
         "--wandb_project",
         required=False,
-        default=None
+        # default=None
     )
     parser.add_argument(
         "-m",
