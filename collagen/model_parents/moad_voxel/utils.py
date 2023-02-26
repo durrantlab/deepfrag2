@@ -64,24 +64,25 @@ class MoadVoxelModelUtils(object):
         return data
 
     @staticmethod
-    def get_checkpoint(args: Namespace) -> Optional[str]:
-        if args.load_checkpoint and args.load_newest_checkpoint:
-            raise ValueError(
-                "Can specify 'load_checkpoint=xyz' or 'load_newest_checkpoint' but not both."
-            )
+    def get_checkpoint(args: Namespace, validate_args=True) -> Optional[str]:
+        if validate_args:
+            if args.load_checkpoint and args.load_newest_checkpoint:
+                raise ValueError(
+                    "Can specify 'load_checkpoint=xyz' or 'load_newest_checkpoint' but not both."
+                )
 
-        if args.model_for_warm_starting and (args.load_checkpoint or args.load_newest_checkpoint):
-            raise ValueError(
-                "If warm starting will be performed, then it cannot specify 'load_checkpoint=xyz' nor 'load_newest_checkpoint'."
-            )
-        if args.mode == "warm_starting" and not args.model_for_warm_starting:
-            raise ValueError(
-                "If 'warm_starting' mode was specified, then it must be specified the 'model_for_warm_starting' parameter."
-            )
-        if args.model_for_warm_starting and args.mode != "warm_starting":
-            raise ValueError(
-                "The 'model_for_warm_starting' parameter is only valid when 'warm_starting' mode is specified."
-            )
+            if args.model_for_warm_starting and (args.load_checkpoint or args.load_newest_checkpoint):
+                raise ValueError(
+                    "If warm starting will be performed, then it cannot specify 'load_checkpoint=xyz' nor 'load_newest_checkpoint'."
+                )
+            if args.mode == "warm_starting" and not args.model_for_warm_starting:
+                raise ValueError(
+                    "If 'warm_starting' mode was specified, then it must be specified the 'model_for_warm_starting' parameter."
+                )
+            if args.model_for_warm_starting and args.mode != "warm_starting":
+                raise ValueError(
+                    "The 'model_for_warm_starting' parameter is only valid when 'warm_starting' mode is specified."
+                )
 
         ckpt = None
         if args.load_checkpoint:
