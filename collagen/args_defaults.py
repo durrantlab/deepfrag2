@@ -8,9 +8,43 @@
 # defined by the argparser or must be explicitly defined via the API.
 
 from typing import Any, Dict
+import argparse
+from apps.deepfrag.AggregationOperators import Operator
 
 
 def get_default_args() -> Dict[str, Any]:
     return {
         "fragment_representation": "rdk10",
+        "aggregation_3x3_patches": Operator.MEAN.value,
+        "aggregation_loss_vector": Operator.MEAN.value,
+        "aggregation_rotations": Operator.MEAN.value,
+        "cpu": False,
+        "save_params": None,
+        "learning_rate": 1e-4,
+        "min_frag_mass": 0,
+        "max_frag_mass": 150,
+        "max_frag_dist_to_recep": 4,
+        "min_frag_num_heavy_atoms": 1,
+        "fraction_train": 0.6,
+        "fraction_val": 0.5,
+        "noh": True,
+        "discard_distant_atoms": True,
+        "split_seed": 1,
+        "save_splits": None,
+        "load_splits": None,
+        "max_pdbs_train": None,
+        "max_pdbs_val": None,
+        "max_pdbs_test": None,
+        "batch_size": 16,
+        "rotations": 8,
+        "cache_pdbs_to_disk": False
     }
+
+# Given a namespace, add any missing values
+def add_missing_args_to_namespace(args: argparse.Namespace) -> argparse.Namespace:
+    defaults = get_default_args()
+    for key, value in defaults.items():
+        if not hasattr(args, key):
+            setattr(args, key, value)
+    return args
+

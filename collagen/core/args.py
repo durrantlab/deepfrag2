@@ -26,10 +26,12 @@ def _add_generic_params(
     # TODO: Some of these arguments are not common, but specific to deepfrag.
     # Good to refactor some of this.
 
+    # For many of these, good to define default values in args_defaults.py
+
     parser = parent_parser.add_argument_group("Common")
     parser.add_argument(
         "--cpu",
-        default=False,
+        # default=False,
         # action="store_true"
     )
     parser.add_argument(
@@ -110,13 +112,13 @@ def _add_generic_params(
     parser.add_argument(
         "--save_params",
         required=False,
-        default=None,
+        # default=None,
         help="Path to a json file where all parameters will be saved. Useful for debugging.",
     )
     parser.add_argument(
         "--learning_rate",
         required=False,
-        default=1e-4,
+        # default=1e-4,
         help="The learning rate.",
     )
     parser.add_argument(

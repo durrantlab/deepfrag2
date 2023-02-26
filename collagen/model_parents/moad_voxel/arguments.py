@@ -19,6 +19,8 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
     )
 
+    # For many of these, good to define default values in args_defaults.py
+
     # NOTE: --custom_test_set_dir must be separate from --data_dir because you
     # might want to run a test on a given set of PDB files, but derive the label
     # sets from the BindingMOAD.
@@ -32,14 +34,14 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--fraction_train",
         required=False,
-        default=0.6,
+        # default=0.6,
         type=float,
         help="Percentage of targets to use in the TRAIN set."
     )
     parser.add_argument(
         "--fraction_val",
         required=False,
-        default=0.5,
+        # default=0.5,
         type=float,
         help="Percentage of (non-train) targets to use in the VAL set. The remaining ones will be used in the test set"
     )
@@ -65,60 +67,60 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--cache_pdbs_to_disk",
-        default=False,
+        # default=False,
         action="store_true",
         help="If given, collagen will convert the PDB files to a faster cachable format. Will run slower the first epoch, but faster on subsequent epochs and runs.",
     )
     parser.add_argument(
         "--noh",
-        default=True,
+        # default=True,
         action="store_true",
         help="If given, collagen will not use protein hydrogen atoms, nor will it save them to the cachable files generated with --cache_pdbs_to_disk. Can speed calculations and free disk space if your model doesn't need hydrogens, and if you're using --cache_pdbs_to_disk.",
     )
     parser.add_argument(
         "--discard_distant_atoms",
-        default=True,
+        # default=True,
         action="store_true",
         help="If given, collagen will not consider atoms that are far from any ligand, nor will it save them to the cachable files generated with --cache_pdbs_to_disk. Can speed calculations and free disk space if you're using --cache_pdbs_to_disk.",
     )
     parser.add_argument(
         "--split_seed",
         required=False,
-        default=1,
+        # default=1,
         type=int,
         help="Seed for TRAIN/VAL/TEST split. Defaults to 1.",
     )
     parser.add_argument(
         "--save_splits",
         required=False,
-        default=None,
+        # default=None,
         help="Path to a json file where the splits will be saved.",
     )
     parser.add_argument(
         "--load_splits",
         required=False,
-        default=None,
+        # default=None,
         type=str,
         help="Path to a json file (previously saved with --save_splits) describing the splits to use.",
     )
     parser.add_argument(
         "--max_pdbs_train",
         required=False,
-        default=None,
+        # default=None,
         type=int,
         help="If given, the max number of PDBs used to generate examples in the train set. If this set contains more than `max_pdbs_train` PDBs, extra PDBs will be removed.",
     )
     parser.add_argument(
         "--max_pdbs_val",
         required=False,
-        default=None,
+        # default=None,
         type=int,
         help="If given, the max number of PDBs used to generate examples in the val set. If this set contains more than `max_pdbs_val` PDBs, extra PDBs will be removed.",
     )
     parser.add_argument(
         "--max_pdbs_test",
         required=False,
-        default=None,
+        # default=None,
         type=int,
         help="If given, the max number of PDBs used to generate examples in the test set. If this set contains more than `max_pdbs_test` PDBs, extra PDBs will be removed.",
     )
@@ -139,7 +141,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--batch_size",
         type=int,
         required=False,
-        default=16,
+        # default=16,
         help="The size of the batch. Defaults to 16.",
     )
     parser.add_argument(
@@ -149,7 +151,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     )
     parser.add_argument(
         "--rotations",
-        default=8,
+        # default=8,
         type=int,
         help="Number of rotations to sample during inference or testing.",
     )
