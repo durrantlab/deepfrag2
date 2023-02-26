@@ -92,7 +92,7 @@ class MoadVoxelModelParent(
         return ckpt
 
     def run(self, args: Namespace = None):
-        self.setup_fingerprint_scheme()
+        self.setup_fingerprint_scheme(args)
         ckpt = self.load_checkpoint(args)
 
         if args.mode == "train":
