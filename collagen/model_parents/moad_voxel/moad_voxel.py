@@ -76,7 +76,7 @@ class MoadVoxelModelParent(
         pass
 
     @staticmethod
-    def __init_fragment_representation_size(args):
+    def setup_fingerprint_scheme(args):
         if args.fragment_representation == "rdk10":
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation == "rdkit_desc":
@@ -91,17 +91,15 @@ class MoadVoxelModelParent(
         else:
             raise Exception("The type of molecular descriptor to be used is wrong.")
 
-    def run(self, args: Namespace = None):
-        self.disable_warnings()
-        self.__init_fragment_representation_size(args)
-
-        ckpt = self.get_checkpoint(args)
+    def load_checkpoint(self, args: Namespace = None, validate_args=True):
+        ckpt = self.get_checkpoint(args, validate_args)
         if ckpt is not None:
             print(f"Restoring from checkpoint: {ckpt}")
 
         return ckpt
 
     def run(self, args: Namespace = None):
+        self.disable_warnings()
         self.setup_fingerprint_scheme(args)
         ckpt = self.load_checkpoint(args)
 
