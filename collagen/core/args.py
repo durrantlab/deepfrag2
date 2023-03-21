@@ -1,5 +1,6 @@
 import argparse
 import json
+from ..args_defaults import get_default_args
 
 # It would be tedious to get the user args to some places in the code (e.g.,
 # MOAD_target). Let's just make some of the variables globally availble here.
@@ -25,16 +26,18 @@ def _add_generic_params(
     # TODO: Some of these arguments are not common, but specific to deepfrag.
     # Good to refactor some of this.
 
+    # For many of these, good to define default values in args_defaults.py
+
     parser = parent_parser.add_argument_group("Common")
     parser.add_argument(
         "--cpu",
-        default=False,
+        # default=False,
         # action="store_true"
     )
     parser.add_argument(
         "--wandb_project",
         required=False,
-        default=None
+        # default=None
     )
     parser.add_argument(
         "-m",
@@ -109,13 +112,13 @@ def _add_generic_params(
     parser.add_argument(
         "--save_params",
         required=False,
-        default=None,
+        # default=None,
         help="Path to a json file where all parameters will be saved. Useful for debugging.",
     )
     parser.add_argument(
         "--learning_rate",
         required=False,
-        default=1e-3,
+        # default=1e-4,
         help="The learning rate.",
     )
     parser.add_argument(
@@ -189,6 +192,11 @@ def get_args(parser_funcs = None, post_parse_args_funcs = None, is_pytorch_light
 
     # Get the parser
     parser = _get_arg_parser(parser_funcs, is_pytorch_lightning)
+
+    # Set any missing defaults. Use the set_defaults() function.
+    d = get_default_args()
+    for k, v in d.items():
+        parser.set_defaults(**{k: v})
 
     # Parse the arguments
     args = parser.parse_args()

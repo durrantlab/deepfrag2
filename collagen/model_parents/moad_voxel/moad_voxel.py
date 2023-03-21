@@ -38,6 +38,8 @@ class MoadVoxelModelParent(
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
 
+        self.disable_warnings()
+
     @staticmethod
     def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         return arguments.add_moad_args(parent_parser)
@@ -73,9 +75,7 @@ class MoadVoxelModelParent(
     def custom_test(args: Namespace, predictions):
         pass
 
-    def run(self, args: Namespace = None):
-        self.disable_warnings()
-
+    def setup_fingerprint_scheme(self, args: Namespace = None):
         if args.fragment_representation == "rdk10":
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation == "molbert":
@@ -84,9 +84,16 @@ class MoadVoxelModelParent(
         else:
             raise Exception("The type of molecular descriptor to be used is wrong.")
 
-        ckpt = self.get_checkpoint(args)
+    def load_checkpoint(self, args: Namespace = None, validate_args=True):
+        ckpt = self.get_checkpoint(args, validate_args)
         if ckpt is not None:
             print(f"Restoring from checkpoint: {ckpt}")
+
+        return ckpt
+
+    def run(self, args: Namespace = None):
+        self.setup_fingerprint_scheme(args)
+        ckpt = self.load_checkpoint(args)
 
         if args.mode == "train":
             print("Starting 'training' process")

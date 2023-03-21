@@ -78,34 +78,36 @@ class MOADFragmentDataset(Dataset):
     ) -> argparse.ArgumentParser:
         # Adds user arguments so user can control how fragments are generated.
 
+        # For many of these, good to define default values in args_defaults.py
+
         parser = parent_parser.add_argument_group("Fragment Dataset")
 
         parser.add_argument(
             "--min_frag_mass",
             required=False,
             type=float,
-            default=0,
+            # default=0,
             help="Consider only fragments with at least this molecular mass. Default is 0 Da.",
         )
         parser.add_argument(
             "--max_frag_mass",
             required=False,
             type=float,
-            default=150,
+            # default=150,
             help="Consider only fragments with at most this molecular mass. Default is 150 Da.",
         )
         parser.add_argument(
             "--max_frag_dist_to_recep",
             required=False,
             type=float,
-            default=4,
+            # default=4,
             help="Consider only fragments that have at least one atom that comes within this distance of any receptor atom. Default is 4 Å.",
         )
         parser.add_argument(
             "--min_frag_num_heavy_atoms",
             required=False,
             type=int,
-            default=1,
+            # default=1,
             help="Consider only fragments that have at least this number of heavy atoms. Default is 1.",
         )
 

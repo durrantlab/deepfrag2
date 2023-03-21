@@ -11,7 +11,7 @@ class MoadVoxelModelTrain(object):
 
         # Runs training.
         trainer = self.init_trainer(args)
-        moad, train_data, val_data = self.get_moad_train_val_sets(args, True)
+        moad, train_data, val_data = self.get_train_val_sets(args, True)
 
         # Below is helpful for debugging
         # for batch in train_data:
@@ -36,7 +36,7 @@ class MoadVoxelModelTrain(object):
     def run_warm_starting(self, args):
 
         trainer = self.init_trainer(args)
-        moad, train_data, val_data = self.get_moad_train_val_sets(args, False)
+        moad, train_data, val_data = self.get_train_val_sets(args, False)
 
         model = self.init_warm_model(args)
 
@@ -48,7 +48,7 @@ class MoadVoxelModelTrain(object):
 
         self.save_examples_used(model, args)
 
-    def get_moad_train_val_sets(self, args, train: bool):
+    def get_train_val_sets(self, args, train: bool):
 
         if args.custom_test_set_dir:
             raise Exception("The custom test set can only be used in testing mode")
@@ -59,11 +59,11 @@ class MoadVoxelModelTrain(object):
         if train:
             if args.every_csv is None:
                 raise ValueError(
-                    "For 'train' mode is required to specify the '--every_csv' parameter."
+                    "For 'train' mode, you must specify the '--every_csv' parameter."
                 )
             if args.butina_cluster_cutoff:
                 raise ValueError(
-                    "Rational division based on Butina clustering is only for fine-tuning"
+                    "Rational division based on Butina clustering is only for fine-tuning."
                 )
 
             moad = MOADInterface(
@@ -73,7 +73,7 @@ class MoadVoxelModelTrain(object):
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms,
+                discard_distant_atoms=args.discard_distant_atoms
             )
         elif args.every_csv is None:
             moad = PdbSdfDirInterface(
@@ -82,7 +82,7 @@ class MoadVoxelModelTrain(object):
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms,
+                discard_distant_atoms=args.discard_distant_atoms
             )
 
         else:

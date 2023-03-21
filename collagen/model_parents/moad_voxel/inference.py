@@ -20,7 +20,7 @@ import os
 
 
 class MoadVoxelModelInference(object):
-    def _create_inference_label_set(
+    def create_inference_label_set(
         self: "MoadVoxelModelParent",
         args: ArgumentParser,
         device: Any,
@@ -103,7 +103,7 @@ class MoadVoxelModelInference(object):
             raise ValueError("Must specify a center (--branch_atm_loc_xyz) in inference mode")
 
     def run_inference(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
+        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], save_results_to_disk=True
     ):
         # Runs a model on the test and evaluates the output.
 
@@ -175,7 +175,7 @@ class MoadVoxelModelInference(object):
         (
             label_set_fingerprints,
             label_set_entry_infos,
-        ) = self._create_inference_label_set(
+        ) = self.create_inference_label_set(
             args,
             device,
             [l.strip() for l in args.inference_label_sets.split(",")],
@@ -188,15 +188,27 @@ class MoadVoxelModelInference(object):
             args.num_inference_predictions,  # self.NUM_MOST_SIMILAR_PER_ENTRY,
         )
 
-        with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
-            f.write("SMILES\tScore (Cosine Similarity)\n")
-            for smiles, score_cos_similarity in most_similar[0]:
-                # [0] because only one prediction
+        if not save_results_to_disk:
+            with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
+                f.write("SMILES\tScore (Cosine Similarity)\n")
+                for smiles, score_cos_similarity in most_similar[0]:
+                    # [0] because only one prediction
 
-                line = f"{smiles}\t{score_cos_similarity:.3f}"
-                print(line)
-                f.write(line + "\n")
+                    line = f"{smiles}\t{score_cos_similarity:.3f}"
+                    print(line)
+                    f.write(line + "\n")
+        else:
+            # Return the results
+            result = {
+                "most_similar": most_similar[0],
+                "fps": {
+                    "per_rot": fps,
+                    "avg": avg_over_ckpts_of_avgs
+                },
 
+            }
+
+            return result
 
         # TODO: Need to check on some known answers as a "sanity check".
 
