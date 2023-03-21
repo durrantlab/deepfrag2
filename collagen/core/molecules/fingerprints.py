@@ -4,7 +4,6 @@ from rdkit.Chem import MACCSkeys
 from rdkit.Chem import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
-from sklearn import preprocessing as norm
 from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
 from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 import os
