@@ -83,7 +83,7 @@ class MoadVoxelModelParent(
             args.__setattr__("fp_size", 167)
         elif args.fragment_representation == "morgan":
             args.__setattr__("fp_size", 2048)
-        elif "molbert" in args.fragment_representation:
+        elif args.fragment_representation == "molbert_x_rdk10" or args.fragment_representation == "molbert_x_morgan":
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()
         else:
