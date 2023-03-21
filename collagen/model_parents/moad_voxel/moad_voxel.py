@@ -73,16 +73,25 @@ class MoadVoxelModelParent(
     def custom_test(args: Namespace, predictions):
         pass
 
-    def run(self, args: Namespace = None):
-        self.disable_warnings()
-
+    @staticmethod
+    def __init_fragment_representation_size(args):
         if args.fragment_representation == "rdk10":
             args.__setattr__("fp_size", 2048)
-        elif args.fragment_representation == "molbert":
+        elif args.fragment_representation == "rdkit_desc":
+            args.__setattr__("fp_size", 208)
+        elif args.fragment_representation == "maccs":
+            args.__setattr__("fp_size", 167)
+        elif args.fragment_representation == "morgan":
+            args.__setattr__("fp_size", 2048)
+        elif "molbert" in args.fragment_representation:
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()
         else:
             raise Exception("The type of molecular descriptor to be used is wrong.")
+
+    def run(self, args: Namespace = None):
+        self.disable_warnings()
+        self.__init_fragment_representation_size(args)
 
         ckpt = self.get_checkpoint(args)
         if ckpt is not None:

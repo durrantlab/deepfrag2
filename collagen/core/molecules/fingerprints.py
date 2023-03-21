@@ -1,5 +1,10 @@
 import numpy as np
 import rdkit.Chem.AllChem as Chem
+from rdkit.Chem import MACCSkeys
+from rdkit.Chem import DataStructs
+from rdkit.Chem import AllChem
+from rdkit.Chem import Descriptors
+from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
 from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 import os
 import wget
@@ -15,6 +20,8 @@ PATH_MOLBERT_CKPT = os.path.join(
 
 PATH_MOLBERT_CKPT  = os.path.join(PATH_MOLBERT_MODEL, f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt")
 MOLBERT_MODEL = None
+
+RDKit_DESC_CALC = MolecularDescriptorCalculator([x[0] for x in Descriptors._descList])
 
 
 def bar_progress(current, total, width=80):
@@ -48,6 +55,31 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     return np.array(n_fp)
 
 
+def _rdkit_2D_descriptors(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    """Compute all RDKit Descriptors"""
+
+    global RDKit_DESC_CALC
+    fp = RDKit_DESC_CALC.CalcDescriptors(mol=Chem.MolFromSmiles(smiles))
+    fp = np.nan_to_num(fp)
+    return fp
+
+
+def _MACCSkeys(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    """MACCSkeys fingerprints."""
+
+    fp = MACCSkeys.GenMACCSKeys(Chem.MolFromSmiles(smiles))
+    n_fp = list(map(int, list(fp.ToBitString())))
+    return np.array(n_fp)
+
+
+def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    """Morgan fingerprints."""
+
+    array = np.zeros((0,))
+    DataStructs.ConvertToNumpyArray(AllChem.GetHashedMorganFingerprint(Chem.MolFromSmiles(smiles), 3, nBits=size), array)
+    return array
+
+
 @lru_cache
 def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     global MOLBERT_MODEL
@@ -56,7 +88,21 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     return n_fp
 
 
-FINGERPRINTS = {"rdk10": _rdk10, "molbert": _molbert}
+def _molbert_x_rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    rdk10_fp = _rdk10(m, size, smiles)
+    molbert_fp = _molbert(m, size, smiles)
+    result_fp = np.multiply(molbert_fp, rdk10_fp)
+    return result_fp
+
+
+def _molbert_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    morgan_fp = _Morgan(m, size, smiles)
+    molbert_fp = _molbert(m, size, smiles)
+    result_fp = np.multiply(molbert_fp, morgan_fp)
+    return result_fp
+
+
+FINGERPRINTS = {"rdk10": _rdk10, "rdkit_desc": _rdkit_2D_descriptors, "maccs": _MACCSkeys, "morgan": _Morgan, "molbert": _molbert, "molbert_x_rdk10": _molbert_x_rdk10, "molbert_x_morgan": _molbert_x_morgan}
 
 
 def fingerprint_for(

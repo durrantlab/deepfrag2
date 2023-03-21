@@ -92,7 +92,7 @@ class MultiLoader(object):
                 if cur_time - timestamp > TIMEOUT:
                     # It's been running for too long
                     print(f"timed out, killing a process: {p.name}")
-                    if self.fragment_representation == "rdk10" and platform.system().lower() != "windows":
+                    if "molbert" not in self.fragment_representation and platform.system().lower() != "windows":
                         p.terminate()
                     self.procs[i] = None
             else:
@@ -111,7 +111,7 @@ class MultiLoader(object):
         ):
             batch = self.groups_of_batches.pop(0)
 
-            if self.fragment_representation == "rdk10" and platform.system().lower() != "windows":
+            if "molbert" not in self.fragment_representation and platform.system().lower() != "windows":
                 p = multiprocessing.Process(
                     target=_process2, args=(batch, self.return_list, id),
                     name=f"process_{str(self.name_idx + 1)}"
