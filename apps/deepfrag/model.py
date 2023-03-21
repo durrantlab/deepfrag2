@@ -167,6 +167,7 @@ class DeepFragModel(pl.LightningModule):
 
     @staticmethod
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+        # For many of these, good to define default values in args_defaults.py
         parser = parent_parser.add_argument_group('DeepFragModel')
         parser.add_argument('--voxel_features', type=int, help="The number of voxel Features. Defaults to 10.", default=10)
         parser.add_argument('--fragment_representation', required=False, type=str, help="The type of molecular descriptors to be calculated: rdk10, rdkit_desc, maccs, morgan, molbert, molbert_pos, molbert_x_rdk10, and molbert_x_morgan", default="rdk10")

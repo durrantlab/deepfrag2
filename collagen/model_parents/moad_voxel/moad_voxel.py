@@ -38,6 +38,8 @@ class MoadVoxelModelParent(
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
 
+        self.disable_warnings()
+
     @staticmethod
     def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         return arguments.add_moad_args(parent_parser)
@@ -96,6 +98,12 @@ class MoadVoxelModelParent(
         ckpt = self.get_checkpoint(args)
         if ckpt is not None:
             print(f"Restoring from checkpoint: {ckpt}")
+
+        return ckpt
+
+    def run(self, args: Namespace = None):
+        self.setup_fingerprint_scheme(args)
+        ckpt = self.load_checkpoint(args)
 
         if args.mode == "train":
             print("Starting 'training' process")
