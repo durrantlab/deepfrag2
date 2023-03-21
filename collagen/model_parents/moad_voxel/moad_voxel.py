@@ -75,10 +75,17 @@ class MoadVoxelModelParent(
     def custom_test(args: Namespace, predictions):
         pass
 
-    def setup_fingerprint_scheme(self, args: Namespace = None):
+    @staticmethod
+    def setup_fingerprint_scheme(args):
         if args.fragment_representation == "rdk10":
             args.__setattr__("fp_size", 2048)
-        elif args.fragment_representation == "molbert":
+        elif args.fragment_representation == "rdkit_desc":
+            args.__setattr__("fp_size", 208)
+        elif args.fragment_representation == "maccs":
+            args.__setattr__("fp_size", 167)
+        elif args.fragment_representation == "morgan":
+            args.__setattr__("fp_size", 2048)
+        elif args.fragment_representation == "molbert_x_rdk10" or args.fragment_representation == "molbert_x_morgan" or args.fragment_representation == "molbert_pos":
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()
         else:
@@ -92,6 +99,7 @@ class MoadVoxelModelParent(
         return ckpt
 
     def run(self, args: Namespace = None):
+        self.disable_warnings()
         self.setup_fingerprint_scheme(args)
         ckpt = self.load_checkpoint(args)
 
