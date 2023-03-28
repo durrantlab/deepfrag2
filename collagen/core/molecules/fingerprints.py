@@ -96,9 +96,9 @@ def _molbert_pos(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
 
 def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     molbert_fp = _molbert(m, size, smiles)
-    max = np.max(molbert_fp)
-    min = np.min(molbert_fp)
-    molbert_fp_norm = np.array([(x - min) / (max - min) for x in molbert_fp])
+    mx = np.max(molbert_fp)
+    mn = np.min(molbert_fp)
+    molbert_fp_norm = np.array([(x - mn) / (mx - mn) for x in molbert_fp])
     molbert_fp_norm = np.nan_to_num(molbert_fp_norm, nan=0.0, posinf=0.0, neginf=0.0)
     return molbert_fp_norm
 
