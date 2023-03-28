@@ -43,7 +43,10 @@ def get_default_args() -> Dict[str, Any]:
         "save_every_epoch": False,
         "custom_test_set_dir": None,
         "every_csv": None,
-        "butina_cluster_cutoff": None
+        "butina_cluster_cutoff": None,
+        "max_frag_repeats": None,
+        "mol_props": "",
+        "max_voxels_in_memory": 512
     }
 
 # Given a namespace, add any missing values

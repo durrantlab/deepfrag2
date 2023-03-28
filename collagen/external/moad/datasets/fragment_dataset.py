@@ -115,14 +115,14 @@ class MOADFragmentDataset(Dataset):
             "--mol_props",
             required=False,
             type=str,
-            default="",
+            # default="",
             help="Consider only fragments that match selected chemical properties. A comma-separated list. Options are \"aromatic\", \"aliphatic\", \"charged\", \"neutral\". If specifying multiple properties (e.g., \"aromatic,charged\"), only fragments matching all properties (charged aromatics) will be considered. Default is \"\" (no filtering).",
         )
         parser.add_argument(
             "--max_frag_repeats",
             required=False,
             type=int,
-            default=None,
+            # default=None,
             help="If a given fragment has already been included in the dataset this many times, it will not be included again. This is to prevent common fragments (e.g., -OH) from dominating the datasets. If unspecified, no limit is imposed.",
         )
 
