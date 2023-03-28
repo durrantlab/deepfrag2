@@ -60,7 +60,7 @@ def _rdkit_2D_descriptors(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
 
     global RDKit_DESC_CALC
     fp = RDKit_DESC_CALC.CalcDescriptors(mol=Chem.MolFromSmiles(smiles))
-    fp = np.nan_to_num(fp)
+    fp = np.nan_to_num(fp, nan=0.0, posinf=0.0, neginf=0.0)
     return fp
 
 
@@ -99,6 +99,7 @@ def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     max = np.max(molbert_fp)
     min = np.min(molbert_fp)
     molbert_fp_norm = np.array([(x - min) / (max - min) for x in molbert_fp])
+    molbert_fp_norm = np.nan_to_num(molbert_fp_norm, nan=0.0, posinf=0.0, neginf=0.0)
     return molbert_fp_norm
 
 
