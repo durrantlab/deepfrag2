@@ -117,7 +117,16 @@ def _molbert_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     return result_fp
 
 
-FINGERPRINTS = {"rdk10": _rdk10, "rdkit_desc": _rdkit_2D_descriptors, "maccs": _MACCSkeys, "morgan": _Morgan, "molbert": _molbert, "molbert_pos": _molbert_pos, "molbert_norm": _molbert_norm, "molbert_x_rdk10": _molbert_x_rdk10, "molbert_x_morgan": _molbert_x_morgan}
+FINGERPRINTS = {
+    "rdk10": _rdk10, 
+    "rdkit_desc": _rdkit_2D_descriptors, 
+    "maccs": _MACCSkeys, 
+    "morgan": _Morgan, 
+    "molbert_pos": _molbert_pos, 
+    "molbert_norm": _molbert_norm, 
+    "molbert_x_rdk10": _molbert_x_rdk10, 
+    "molbert_x_morgan": _molbert_x_morgan
+}
 
 
 def fingerprint_for(
