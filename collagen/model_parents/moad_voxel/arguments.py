@@ -133,7 +133,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--max_voxels_in_memory",
         required=False,
-        default=512,
+        # default=512,
         type=int,
         help="The data loader will store no more than this number of voxel in memory at once.",
     )

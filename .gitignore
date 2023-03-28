@@ -54,3 +54,4 @@ tests/*.output
 **/lightning_logs/**
 
 tmp_working_dir/
+tests/core.*
