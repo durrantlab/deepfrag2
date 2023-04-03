@@ -18,7 +18,7 @@ PATH_MOLBERT_CKPT = os.path.join(
     f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",
 )
 
-PATH_MOLBERT_CKPT  = os.path.join(PATH_MOLBERT_MODEL, f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt")
+# PATH_MOLBERT_CKPT  = os.path.join(PATH_MOLBERT_MODEL, f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt")
 MOLBERT_MODEL = None
 
 RDKit_DESC_CALC = MolecularDescriptorCalculator([x[0] for x in Descriptors._descList])
@@ -102,6 +102,20 @@ def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     molbert_fp_norm = np.nan_to_num(molbert_fp_norm, nan=0.0, posinf=0.0, neginf=0.0)
     return molbert_fp_norm
 
+def _molbert_norm2(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    molbert_fp = _molbert(m, size, smiles)
+
+    # NOTE: I calculated molbert fingerprints for 7574 unique fragments, and the
+    # min/max values for any value were -5.631347 and 5.4433527. Let's assume
+    # the fingerprint is bounded by -6/6.
+
+    mx = 6 # np.max(molbert_fp)
+    mn = -6 # np.min(molbert_fp)
+    molbert_fp_norm2 = np.array([(x - mn) / (mx - mn) for x in molbert_fp])
+    molbert_fp_norm2 = np.nan_to_num(molbert_fp_norm2, nan=0.0, posinf=0.0, neginf=0.0)
+
+    return molbert_fp_norm2
+
 
 def _molbert_x_rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     rdk10_fp = _rdk10(m, size, smiles)
@@ -123,7 +137,8 @@ FINGERPRINTS = {
     "maccs": _MACCSkeys, 
     "morgan": _Morgan, 
     "molbert_pos": _molbert_pos, 
-    "molbert_norm": _molbert_norm, 
+    "molbert_norm": _molbert_norm,
+    "molbert_norm2": _molbert_norm2,
     "molbert_x_rdk10": _molbert_x_rdk10, 
     "molbert_x_morgan": _molbert_x_morgan
 }
