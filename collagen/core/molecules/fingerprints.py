@@ -136,6 +136,7 @@ FINGERPRINTS = {
     "rdkit_desc": _rdkit_2D_descriptors, 
     "maccs": _MACCSkeys, 
     "morgan": _Morgan, 
+    "molbert": _molbert, 
     "molbert_pos": _molbert_pos, 
     "molbert_norm": _molbert_norm,
     "molbert_norm2": _molbert_norm2,
