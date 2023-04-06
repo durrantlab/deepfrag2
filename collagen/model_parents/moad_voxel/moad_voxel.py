@@ -31,9 +31,9 @@ class MoadVoxelModelParent(
     NUM_MOST_SIMILAR_PER_ENTRY = 5
 
     def __init__(
-        self,
-        model_cls: Type[pl.LightningModule],
-        dataset_cls: Type[torch.utils.data.Dataset],
+            self,
+            model_cls: Type[pl.LightningModule],
+            dataset_cls: Type[torch.utils.data.Dataset],
     ):
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
@@ -52,17 +52,17 @@ class MoadVoxelModelParent(
 
     @staticmethod
     def pre_voxelize(
-        args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T
+            args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T
     ) -> TMP_T:
         # Should be overwritten by child class.
         return entry
 
     @staticmethod
     def voxelize(
-        args: Namespace,
-        voxel_params: VoxelParams,
-        device: torch.device,
-        batch: List[TMP_T],
+            args: Namespace,
+            voxel_params: VoxelParams,
+            device: torch.device,
+            batch: List[TMP_T],
     ) -> OUT_T:
         # Should be overwritten by child class.
         raise NotImplementedError()
@@ -85,13 +85,9 @@ class MoadVoxelModelParent(
             args.__setattr__("fp_size", 167)
         elif args.fragment_representation == "morgan":
             args.__setattr__("fp_size", 2048)
-        elif args.fragment_representation in [
-            "molbert_x_rdk10",
-            "molbert_x_morgan",
-            "molbert_pos",
-            "molbert_norm",
-            "molbert_norm2",
-        ]:
+        elif args.fragment_representation == "molbert" or args.fragment_representation == "molbert_x_rdk10" or \
+                args.fragment_representation == "molbert_x_morgan" or args.fragment_representation == "molbert_pos" or \
+                args.fragment_representation == "molbert_norm":
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()
         else:
@@ -162,9 +158,11 @@ class MoadVoxelModelParent(
             pth = args.default_root_dir + os.sep
 
         if args.mode == "train":
-            torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_train.pt")
+            torch.save(model.state_dict(),
+                       pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_train.pt")
         elif args.mode == "warm_starting":
-            torch.save(model.state_dict(), pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_fine_tuned.pt")
+            torch.save(model.state_dict(),
+                       pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_fine_tuned.pt")
 
         out_name = pth + os.sep + args.mode + ".actually_used.json"
         if not os.path.exists(out_name):
