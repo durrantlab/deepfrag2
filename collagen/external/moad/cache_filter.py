@@ -1,7 +1,6 @@
 import argparse
 from dataclasses import dataclass
 import json
-# import multiprocessing
 from torch import multiprocessing
 import os
 from pathlib import Path
@@ -11,7 +10,6 @@ from collagen.external.moad.frag_substruct_detect import is_aromatic, is_charged
 import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
-from collagen.core.molecules.smiles_utils import standardize_smiles
 from .moad_utils import fix_moad_smiles
 
 # Calculating molecular properties for the many ligands and fragments in the
@@ -69,7 +67,7 @@ def _set_molecular_prop(func, func_input, default_if_error):
         return default_if_error
 
 
-def _get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
+def get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
     # Given a PDB ID, looks up the PDB in BindingMOAD, and calculates the
     # molecular properties specified in CACHE_ITEMS_TO_UPDATE. Returns a tuple
     # with the pdb id and a dictionary with the associated information.
@@ -262,7 +260,7 @@ def _build_moad_cache_file(
 
     print("Building/updating " + (filename if filename else "dataset"))
     with multiprocessing.Pool(cores) as p:
-        for pdb_id, lig_infs in tqdm(p.imap_unordered(_get_info_given_pdb_id, list_ids_moad), total=len(pdb_ids_queue), desc="Building cache"):
+        for pdb_id, lig_infs in tqdm(p.imap_unordered(get_info_given_pdb_id, list_ids_moad), total=len(pdb_ids_queue), desc="Building cache"):
             pdb_id = pdb_id.lower()
 
             if pdb_id not in cache:

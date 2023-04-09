@@ -10,7 +10,7 @@ from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
-from apps.deepfrag.model_v2 import DeepFragModelSDFData
+from apps.deepfrag.model_additional_data import DeepFragModelSDFData
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
