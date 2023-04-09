@@ -1,7 +1,6 @@
 from apps.deepfrag.model import DeepFragModel
 from collagen.external.moad.interface import SdfDirInterface
 from collagen.external.moad.split import compute_dataset_split
-from collagen.external.moad import MOADFragmentDataset
 from collagen.external.moad.cache_filter import CacheItemsToUpdate, get_info_given_pdb_id
 from collagen.core.molecules.fingerprints import fingerprint_for
 from rdkit import Chem
@@ -16,7 +15,6 @@ class DeepFragModelSDFData(DeepFragModel):
 
         self.is_cpu = kwargs["cpu"]
         self.fragment_representation = kwargs["fragment_representation"]
-        self.dataset_cls = MOADFragmentDataset
         self.fragments = DeepFragModelSDFData.__get_train_val_sdf_sets(**kwargs)
 
     def loss(self, pred, fps, entry_infos, batch_size):
