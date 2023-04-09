@@ -10,6 +10,7 @@ from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
+from apps.deepfrag.model_v2 import DeepFragModelSDFData
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
@@ -21,9 +22,10 @@ def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
 
 
 class DeepFrag(MoadVoxelModelParent):
-    def __init__(self):
+    def __init__(self, args):
         super().__init__(
-            model_cls=DeepFragModel, dataset_cls=MOADFragmentDataset
+            model_cls=DeepFragModelSDFData if args.additional_training_data_dir else DeepFragModel,
+            dataset_cls=MOADFragmentDataset
         )
 
     @staticmethod
@@ -106,5 +108,5 @@ def function_2run_deepfrag():
         is_pytorch_lightning=True,
     )
 
-    model = DeepFrag()
+    model = DeepFrag(args)
     model.run(args)
