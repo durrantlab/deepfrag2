@@ -18,20 +18,30 @@ class DeepFragModelSDFData(DeepFragModel):
         self.fragments = DeepFragModelSDFData.__get_train_val_sdf_sets(**kwargs)
 
     def loss(self, pred, fps, entry_infos, batch_size):
+        # Look up the bad fragments that correspond to the good fragments fps.
         batch_size = fps.shape[0]
-        selected_fragments = random.choices(self.fragments, k=batch_size)
+        selected_bad_fragment_smis = random.choices(self.fragments, k=batch_size)  # Temp solution
         fps_bad = np.zeros(shape=[batch_size, self.fp_size])
 
+        # Convert smiles representations into fingerprint using same fragment
+        # representation used for the good fragment.
         idx = 0
-        for c_fragment in selected_fragments:
-            fps_bad[idx] = fingerprint_for(Chem.MolFromSmiles(c_fragment), self.fragment_representation, self.fp_size, c_fragment)
+        for bad_fragment_smi in selected_bad_fragment_smis:
+            fps_bad[idx] = fingerprint_for(
+                Chem.MolFromSmiles(bad_fragment_smi), self.fragment_representation, 
+                self.fp_size, bad_fragment_smi
+            )
             idx = idx + 1
+        fps_bad = torch.tensor(
+            fps_bad, dtype=torch.float32, 
+            device=torch.device("cpu") if self.is_cpu else torch.device("cuda"), 
+            requires_grad=False
+        )
 
-        fps_bad = torch.tensor(fps_bad, dtype=torch.float32, device=torch.device("cpu") if self.is_cpu else torch.device("cuda"), requires_grad=False)
-        loss_1 = super().loss(pred, fps, entry_infos, batch_size)
-        loss_2 = super().loss(pred, fps_bad, None, None)
-        loss = loss_1 + (1 - loss_2)
-        return loss
+        loss_good_frag = super().loss(pred, fps, entry_infos, batch_size)
+        loss_bad_frag = super().loss(pred, fps_bad, None, None)
+        loss_overall = loss_good_frag + (1 - loss_bad_frag)
+        return loss_overall
 
     @staticmethod
     def __get_train_val_sdf_sets(**kwargs):
