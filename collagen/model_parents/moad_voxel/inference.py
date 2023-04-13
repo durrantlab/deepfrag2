@@ -188,18 +188,14 @@ class MoadVoxelModelInference(object):
             args.num_inference_predictions,  # self.NUM_MOST_SIMILAR_PER_ENTRY,
         )
 
-        if not save_results_to_disk:
-            with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
-                f.write("SMILES\tScore (Cosine Similarity)\n")
-                for smiles, score_cos_similarity in most_similar[0]:
-                    # [0] because only one prediction
+        pr.disable()
+        s = StringIO()
+        ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
+        ps.print_stats()
 
-                    line = f"{smiles}\t{score_cos_similarity:.3f}"
-                    print(line)
-                    f.write(line + "\n")
-        else:
+        if not save_results_to_disk:
             # Return the results
-            result = {
+            return {
                 "most_similar": most_similar[0],
                 "fps": {
                     "per_rot": fps,
@@ -208,14 +204,18 @@ class MoadVoxelModelInference(object):
 
             }
 
-            return result
+        # If you get here, you are saving the results to disk (default).
+        with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
+            f.write("SMILES\tScore (Cosine Similarity)\n")
+            for smiles, score_cos_similarity in most_similar[0]:
+                # [0] because only one prediction
+
+                line = f"{smiles}\t{score_cos_similarity:.3f}"
+                print(line)
+                f.write(line + "\n")
 
         # TODO: Need to check on some known answers as a "sanity check".
 
         # TODO: DISCUSS WITH CESAR. Can we add the fragments in most_similar[0] to the parent
         # molecule, to make a composite ligand ready for docking?
 
-        pr.disable()
-        s = StringIO()
-        ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
-        ps.print_stats()
