@@ -18,6 +18,11 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         required=False,  # Not required if running in --mode "inference"
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
     )
+    parser.add_argument(
+        "--additional_training_data_dir",
+        required=False,  # Not required if running in --mode "inference"
+        help="Path to a folder containing a SDF files"
+    )
 
     # For many of these, good to define default values in args_defaults.py
 
