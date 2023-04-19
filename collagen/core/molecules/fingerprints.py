@@ -102,6 +102,11 @@ def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     molbert_fp_norm = np.nan_to_num(molbert_fp_norm, nan=0.0, posinf=0.0, neginf=0.0)
     return molbert_fp_norm
 
+
+def _molbert_sig(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    return _molbert(m, size, smiles)
+
+
 def _molbert_norm2(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     molbert_fp = _molbert(m, size, smiles)
 
@@ -139,6 +144,7 @@ FINGERPRINTS = {
     "molbert": _molbert, 
     "molbert_pos": _molbert_pos, 
     "molbert_norm": _molbert_norm,
+    "molbert_sig": _molbert_sig,
     "molbert_norm2": _molbert_norm2,
     "molbert_x_rdk10": _molbert_x_rdk10, 
     "molbert_x_morgan": _molbert_x_morgan
