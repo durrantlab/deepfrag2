@@ -158,12 +158,24 @@ class DeepFragModel(pl.LightningModule):
             nn.Dropout(),
 
             # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
+            # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
             nn.Linear(512, self.fp_size),
 
             # Applies sigmoid activation function. See
             # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
+            # Values ranging between 0 and 1
             nn.Sigmoid(),
         )
+
+        self.sigmoid_on_fps = None
+        if kwargs["fragment_representation"] == "molbert_sig":
+            # This function will be applied on the fragment representation vector
+            self.sigmoid_on_fps = nn.Sequential(
+                # Applies sigmoid activation function. See
+                # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
+                # Values ranging between 0 and 1
+                nn.Sigmoid(),
+            )
 
     @staticmethod
     def add_model_args(parent_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -184,6 +196,9 @@ class DeepFragModel(pl.LightningModule):
         # return self.model(voxel)
 
     def loss(self, pred, fps, entry_infos, batch_size):
+        if self.sigmoid_on_fps:
+            fps = self.sigmoid_on_fps(fps)
+
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
 
     def training_step(self, batch, batch_idx):

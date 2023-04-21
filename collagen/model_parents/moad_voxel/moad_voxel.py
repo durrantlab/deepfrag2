@@ -91,6 +91,7 @@ class MoadVoxelModelParent(
             "molbert_x_morgan",
             "molbert_pos",
             "molbert_norm",
+            "molbert_sig",
             "molbert_norm2",
         ]:
             args.__setattr__("fp_size", 1536)

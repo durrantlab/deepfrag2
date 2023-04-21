@@ -175,17 +175,21 @@ class MOADInterface(object):
 
         # Map the pdb to the file on disk.
         files = {}
-        for fam in path.glob(f"./**/*.{self._extension_for_resolve_paths()}"):
-            if str(fam).endswith(".pkl"):
-                continue
-            pdbid = fam.stem  # Removes extension (.bio?)
+        if self._extension_for_resolve_paths():
+            for fam in path.glob(f"./**/*.{self._extension_for_resolve_paths()}"):
+                if str(fam).endswith(".pkl"):
+                    continue
+                pdbid = fam.stem  # Removes extension (.bio?)
 
-            # if pdbid.lower() != pdbid:
-            #     print(f"Warning: {pdbid} has upper-case letters ({fam}). Use lower case for all filenames.")
+                # if pdbid.lower() != pdbid:
+                #     print(f"Warning: {pdbid} has upper-case letters ({fam}). Use lower case for all filenames.")
 
-            if pdbid not in files:
-                files[pdbid] = []
-            files[pdbid].append(fam)
+                if pdbid not in files:
+                    files[pdbid] = []
+                files[pdbid].append(fam)
+        else:
+            files["Non"] = []
+            files["Non"].append("Non")
 
         # Associate the filename with each target in the class=>family=>target
         # hierarchy.
@@ -307,3 +311,70 @@ class PdbSdfDirInterface(MOADInterface):
 
     def _extension_for_resolve_paths(self):
         return "pdb"
+
+
+class SdfDirInterface(MOADInterface):
+    def __init__(
+            self,
+            structures: Union[str, Path],
+            cache_pdbs_to_disk: bool,
+            grid_width: int,
+            grid_resolution: float,
+            noh: bool,
+            discard_distant_atoms: bool,
+    ):
+        super().__init__(structures, structures, cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
+
+    def _load_classes_families_targets_ligands(
+        self,
+        every_csv_path,
+        cache_pdbs_to_disk: bool,
+        grid_width: int,
+        grid_resolution: float,
+        noh: bool,
+        discard_distant_atoms: bool,
+    ):
+
+        classes = []
+        curr_target = PdbSdfDir_target(
+            pdb_id="Non",
+            ligands=[],
+            cache_pdbs_to_disk=None,
+            grid_width=None,
+            grid_resolution=None,
+            noh=None,
+            discard_distant_atoms=None,
+        )
+
+        sdf_files = glob. glob(every_csv_path + os.sep + "*.sdf", recursive=True)
+        sdf_files.sort()
+        for line in sdf_files:
+            parts = line.split(os.sep)
+            sdf_name = parts[len(parts) - 1].split(".")[0]
+            parts = sdf_name.split("_")
+
+            sdf_reader = Chem.SDMolSupplier(every_csv_path + os.sep + sdf_name + ".sdf")
+            for ligand_ in sdf_reader:  # it is expected only one iteration because each SDF file must have a single molecule
+                if ligand_ is not None:
+                    curr_target.ligands.append(
+                        PdbSdfDir_ligand(
+                            name=linecache.getline(every_csv_path + os.sep + sdf_name + ".sdf", 1).rstrip(),
+                            validity="valid",
+                            affinity_measure="",
+                            affinity_value="",
+                            affinity_unit="",
+                            smiles=Chem.MolToSmiles(ligand_),
+                            rdmol=ligand_,
+                        )
+                    )
+
+        curr_family = MOAD_family(rep_pdb_id="Non", targets=[])
+        curr_family.targets.append(curr_target)
+        curr_class = MOAD_class(ec_num="Non", families=[])
+        curr_class.families.append(curr_family)
+        classes.append(curr_class)
+
+        self.classes = classes
+
+    def _extension_for_resolve_paths(self):
+        return None
