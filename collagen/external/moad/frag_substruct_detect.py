@@ -96,9 +96,6 @@ def is_charged(mol: Chem.Mol) -> bool:
             # print("1", "formal charge found", Chem.MolToSmiles(mol))
             return True
 
-    # if all(atom.GetFormalCharge() != 0 for atom in mol.GetAtoms()):
-    #     return True
-
     # If you get here, you need to consider the possibility that it could be
     # ionizable, even though neutral in SMILES.
 
@@ -119,46 +116,7 @@ def is_charged(mol: Chem.Mol) -> bool:
 
     for charged_substruct in charged_substructs:
         if mol.HasSubstructMatch(charged_substruct):
-            # print("2", "charged substruct found", Chem.MolToSmiles(mol), Chem.MolToSmarts(charged_substruct))
             return True
 
-    # print("3", "no charged substruct found", Chem.MolToSmiles(mol))
     return False
 
-    # if any(
-    #     mol.HasSubstructMatch(charged_substruct)
-    #     for charged_substruct in charged_substructs
-    # ):
-    #     return True
-
-
-    # If here, then there is a charged atom. If there are no charged nitrogen
-    # atoms, count this molecule as charged. Charged nitrogen atoms are handled
-    # separately below.
-    # if not any(
-    #     mol.HasSubstructMatch(charged_nitrogen_substruct)
-    #     for charged_nitrogen_substruct in charged_nitrogen_substructs
-    # ):
-    #     return True
-
-    # The molecule has a charged nitrogen atom. Does it one of the prohibited
-    # substructures (e.g., azide)? If not, count it as charged.
-    # if not any(
-    #     mol.HasSubstructMatch(charged_substruct_to_ignore)
-    #     for charged_substruct_to_ignore in charged_substructs_to_ignore
-    # ):
-    #     return True
-
-    # If here, there is a prohibited substructure that appears to be a charged
-    # nitrogen (e.g., azide). You must replace it with a carbon and reassess the
-    # charge.
-    # for charged_substruct_to_ignore in charged_substructs_to_ignore:
-    #     if mol.HasSubstructMatch(charged_substruct_to_ignore):
-    #         mol = Chem.ReplaceSubstructs(
-    #             mol, charged_substruct_to_ignore, Chem.MolFromSmiles("C")
-    #         )[0]
-    #         if is_charged(mol):
-    #             return True
-
-    # # If you get here, it's not charged.
-    # return False
