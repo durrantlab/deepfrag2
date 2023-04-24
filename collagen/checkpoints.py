@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import glob
 import os
+import torch
 
 
 # see  https://github.com/PyTorchLightning/pytorch-lightning/issues/4911 Saves
@@ -25,6 +26,14 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
         self.best_k_models = callback_state["best_k_models"]
         self.save_last = callback_state["save_last"]
         self.kth_best_model_path = callback_state["kth_best_model_path"]
+
+
+class MyModelCheckpointEveryEpoch(MyModelCheckpoint):
+    def _save_checkpoint(self, trainer: "pl.Trainer", filepath: str) -> None:
+        super()._save_checkpoint(trainer, filepath)
+
+        state_dict_model = trainer._checkpoint_connector.dump_checkpoint(False)["state_dict"]
+        torch.save(state_dict_model, filepath + ".pt")
 
 
 def get_last_checkpoint(args) -> str:
