@@ -338,7 +338,7 @@ class PdbSdfDir_target(MOAD_target):
             lig_mols.append(lig_mol)
 
         rec_mol = None
-        if self.pdb_id is not "Non":
+        if self.pdb_id != "Non":
             m = self._load_pdb(idx)
             rec_mol = self._get_rec_from_prody_mol(m, [], [])
             rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
