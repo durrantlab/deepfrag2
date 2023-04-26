@@ -4,7 +4,7 @@ from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.loggers import TensorBoardLogger
-from ...checkpoints import MyModelCheckpoint
+from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch
 import os
 
@@ -20,7 +20,6 @@ class MoadVoxelModelInits(object):
         ):
             os.mkdir(args.default_root_dir)
 
-
         if args.wandb_project:
             logger = WandbLogger(project=args.wandb_project)
         elif args.default_root_dir is not None:
@@ -31,13 +30,13 @@ class MoadVoxelModelInits(object):
         if args.save_every_epoch:
             print("Saving a checkpoint per epoch")
             callbacks = [
-                MyModelCheckpoint(
+                MyModelCheckpointEveryEpoch(
                     dirpath=args.default_root_dir,
                     monitor="val_loss",
                     filename="val-loss-{epoch:02d}-{val_loss:.2f}",
                     save_top_k=args.max_epochs,
                 ),
-                MyModelCheckpoint(
+                MyModelCheckpointEveryEpoch(
                     dirpath=args.default_root_dir,
                     monitor="loss",
                     filename="loss-{epoch:02d}-{loss:.2f}",
