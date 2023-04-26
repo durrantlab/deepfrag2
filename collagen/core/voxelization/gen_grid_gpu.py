@@ -1,9 +1,9 @@
 import numba
 import numba.cuda
 import math
+from typing import List, Tuple
 
-"""
-Adds atoms to the grid in a GPU kernel.
+"""Adds atoms to the grid in a GPU kernel.
 
 This kernel converts atom coordinate information to 3D voxel information.
 Each GPU thread is responsible for one specific grid point. This function
@@ -46,7 +46,24 @@ Args:
 
 
 @numba.cuda.jit(device=True, inline=True)
-def prepare_grid(width, res, rot, center):
+def prepare_grid(
+    width: int, res: float, rot: List[float], center: List[float]
+) -> Tuple[int, int, int, float, float, float]:
+    """Prepares the grid for voxelization.
+
+    Args:
+        width: Number of grid points in each dimension.
+        res: Distance between neighboring grid points in angstroms.
+            (1 == gridpoint every angstrom)
+            (0.5 == gridpoint every half angstrom, e.g. tighter grid)
+        rot: (x,y,z,y) rotation quaternion.
+        center: (x,y,z) coordinate of grid center.
+
+    Returns:
+        Tuple[int, int, int, float, float, float]: (x,y,z,tx,ty,tz)
+    """
+
+    # https://numba.pydata.org/numba-doc/latest/cuda/kernels.html#absolute-positions
     x, y, z = numba.cuda.grid(3)
 
     # center grid points around origin. "width" is number of grid points in each
@@ -93,7 +110,34 @@ def prepare_grid(width, res, rot, center):
 
 
 @numba.cuda.jit(device=True, inline=True)
-def get_atom(atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz):
+def get_atom(
+    atom_coords: List[Tuple[float, float, float]],
+    atom_mask: List[int],
+    atom_radii: List[float],
+    atom_scale: float,
+    i: int,
+    tx: float,
+    ty: float,
+    tz: float,
+) -> Tuple[float, float, float, float, float, int, bool]:
+    """Gets an atom from the list of atoms.
+    
+    Args:
+        atom_coords: Array containing (x,y,z) atom coordinates.
+        atom_mask: A uint32 array of size atom_num containing a destination
+            layer bitmask (i.e. if bit k is set, write atom to index k).
+        atom_radii: A float32 array of size atom_num containing invidiual
+            atomic radius values.
+        atom_scale: A float32 value specifying the scale of the atoms.
+        i: Index of atom to fetch.
+        tx: Translated x coordinate of grid point.
+        ty: Translated y coordinate of grid point.
+        tz: Translated z coordinate of grid point.
+        
+    Returns:
+        Tuple[float, float, float, float, float, int, bool]: (fx, fy, fz, r2, r, mask, visible)
+    """
+
     # fetch atom
     fx, fy, fz = atom_coords[i]
     mask = atom_mask[i]
@@ -114,6 +158,8 @@ def get_atom(atom_coords, atom_mask, atom_radii, atom_scale, i, tx, ty, tz):
 
 @numba.cuda.jit(device=True, inline=True)
 def add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z):
+    # TODO: RESUME DOCSTRINGS HERE
+
     # add value to layers
     # ORIG VERISON:
     # for k in range(32):
@@ -129,6 +175,7 @@ def add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z):
         if (mask >> k) & 1:
             idx = (batch_idx, layer_offset + k, x, y, z)
             numba.cuda.atomic.add(grid, idx, val)
+
 
 @numba.cuda.jit(device=True, inline=True)
 def add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z):
@@ -152,7 +199,7 @@ def gpu_gridify_cube_sum(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -185,7 +232,7 @@ def gpu_gridify_discrete_sum(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -226,7 +273,7 @@ def gpu_gridify_exp_sum(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -267,7 +314,7 @@ def gpu_gridify_gaussian_sum(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -313,7 +360,7 @@ def gpu_gridify_lj_sum(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -357,7 +404,7 @@ def gpu_gridify_sphere_sum(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -383,6 +430,7 @@ def gpu_gridify_sphere_sum(
         # add value to layers
         add_sum_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
 
+
 @numba.cuda.jit()
 def gpu_gridify_cube_max(
     grid,
@@ -396,7 +444,7 @@ def gpu_gridify_cube_max(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -429,7 +477,7 @@ def gpu_gridify_discrete_max(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -470,7 +518,7 @@ def gpu_gridify_exp_max(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -511,7 +559,7 @@ def gpu_gridify_gaussian_max(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -557,7 +605,7 @@ def gpu_gridify_lj_max(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 
@@ -601,7 +649,7 @@ def gpu_gridify_sphere_max(
     res,
     center,
     rot,
-    atom_scale
+    atom_scale,
 ):
     x, y, z, tx, ty, tz = prepare_grid(width, res, rot, center)
 

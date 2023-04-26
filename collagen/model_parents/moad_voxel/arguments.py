@@ -3,8 +3,16 @@ from multiprocessing import cpu_count
 
 
 def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
-    # Add user-defined command-line parameters to control how the MOAD data is
-    # processed.
+    """Add user-defined command-line parameters to control how the MOAD data is
+    processed.
+    
+    Args:
+        parent_parser (ArgumentParser): The parent parser to add the MOAD
+            arguments to.
+            
+    Returns:
+        ArgumentParser: The parser with the MOAD arguments added.
+    """
 
     parser = parent_parser.add_argument_group("Binding MOAD")
 
@@ -171,7 +179,16 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 
 
 def fix_moad_args(args: Namespace) -> Namespace:
-    # Only works after arguments have been parsed, so in a separate definition.
+    """Fixes MOAD-specific arguments. Only works after arguments have been
+    parsed, so in a separate definition.
+    
+    Args:
+        args (Namespace): The arguments to fix.
+        
+    Returns:
+        Namespace: The fixed arguments.
+    """
+
     if args.cache is None:
         import os
         args.cache = f"{args.default_root_dir + os.sep}cache.json"

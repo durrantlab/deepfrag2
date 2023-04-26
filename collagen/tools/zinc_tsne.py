@@ -16,6 +16,7 @@ from tqdm import tqdm
 from ..data.zinc import ZINCMolGraphProviderH5
 from ..models.dense_graph_autoencoder import DenseGraphAutoencoder
 
+# TODO: Not used anywhere.
 
 def generate_samples(zinc_path: str, gcn_model: str, num: int, cpu_only: bool):
     print("[*] Loading data...")

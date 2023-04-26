@@ -48,7 +48,7 @@ class DeepFragModelSDFData(DeepFragModel):
 
         print("Building/updating additional SDF dataset to train DeepFrag")
         sdf_data = SdfDirInterface(
-            structures=kwargs["additional_training_data_dir"],
+            structures_dir=kwargs["additional_training_data_dir"],
             cache_pdbs_to_disk=None,
             grid_width=None,
             grid_resolution=None,

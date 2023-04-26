@@ -27,8 +27,16 @@ class MOAD_splits_smiles:
     test: Set[str]
 
 
-def _split_seq_per_probability(seq, p):
-    # Divide a sequence according to a probability, p.
+def _split_seq_per_probability(seq: List, p: float) -> Tuple[List, List]:
+    """Divide a sequence according to a probability, p.
+
+    Args:
+        seq (List): Sequence to be divided.
+        p (float): Probability of the first part.
+
+    Returns:
+        Tuple[List, List]: First and second parts of the sequence.
+    """
 
     global split_rand_num_gen
     l = sorted_list(seq)
@@ -39,14 +47,32 @@ def _split_seq_per_probability(seq, p):
     return l[: int(size * p)], l[int(size * p) :]
 
 
-def _flatten(seq):
+def _flatten(seq: List[List]) -> List:
+    """Flatten a list of lists.
+
+    Args:
+        seq (List[List]): List of lists.
+
+    Returns:
+        List: Flattened list.
+    """
+
     a = []
     for s in seq:
         a += s
     return a
 
 
-def _divide_into_two_parts(seq):
+def _divide_into_two_parts(seq: List) -> Tuple[List, List]:
+    """Divide a sequence into two parts.
+
+    Args:
+        seq (List): Sequence to be divided.
+
+    Returns:
+        Tuple[List, List]: First and second parts of the sequence.
+    """
+
     global split_rand_num_gen
     l = sorted_list(seq)  # To make deterministic is same seed used
     size = len(l)
@@ -59,7 +85,16 @@ def _divide_into_two_parts(seq):
     return (set(l[:half_size]), set(l[half_size:]))
 
 
-def _divide_into_three_parts(seq):
+def _divide_into_three_parts(seq: List) -> Tuple[List, List, List]:
+    """Divide a sequence into three parts.
+
+    Args:
+        seq (List): Sequence to be divided.
+
+    Returns:
+        Tuple[List, List, List]: First, second, and third parts of the sequence.
+    """
+
     global split_rand_num_gen
     l = sorted_list(seq)
     size = len(l)
@@ -76,7 +111,15 @@ def _divide_into_three_parts(seq):
 
 
 def _smiles_for(moad: "MOADInterface", targets: List[str]) -> Set[str]:
-    """Return all the SMILES strings contained in the selected targets."""
+    """Return all the SMILES strings contained in the selected targets.
+    
+    Args:
+        moad (MOADInterface): MOADInterface object.
+        targets (List[str]): List of targets.
+        
+        Returns:
+            Set[str]: Set of SMILES strings.
+    """
 
     smiles = set()
 
@@ -144,7 +187,13 @@ def _generate_splits_from_scratch(
         )
     else:
         print("Building training/validation/test sets based on Butina clustering")
-        train_families, val_families, test_families = generate_splits_from_clustering(moad, split_rand_num_gen, fraction_train, fraction_val, butina_cluster_cutoff,)
+        train_families, val_families, test_families = generate_splits_from_clustering(
+            moad,
+            split_rand_num_gen,
+            fraction_train,
+            fraction_val,
+            butina_cluster_cutoff,
+        )
 
     # Now that they are divided, we can keep only the targets themselves (no
     # longer organized into families).
@@ -156,12 +205,7 @@ def _generate_splits_from_scratch(
 
     # If the user has asked to limit the size of the train, test, or val set,
     # impose those limits here.
-    pdb_ids = _limit_split_size(
-        max_pdbs_train,
-        max_pdbs_val,
-        max_pdbs_test,
-        pdb_ids,
-    )
+    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
 
     # Get all the smiles associated with the targets in each set.
     all_smis = MOAD_splits_smiles(
@@ -234,12 +278,7 @@ def _load_splits_from_disk(
     # If you get here, the user has asked to limit the number of pdbs in the
     # train/test/val set(s), so also don't get the smiles from the cache as
     # above.
-    pdb_ids = _limit_split_size(
-        max_pdbs_train,
-        max_pdbs_val,
-        max_pdbs_test,
-        pdb_ids,
-    )
+    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
 
     all_smis = MOAD_splits_smiles(
         train=_smiles_for(moad, pdb_ids.train),
@@ -264,19 +303,10 @@ def _save_split(
                 "pdbs": len(set(pdb_ids.train)),
                 "frags": len(set(all_smis.train)),
             },
-            "val": {
-                "pdbs": len(set(pdb_ids.val)),
-                "frags": len(set(all_smis.val)),
-            },
-            "test": {
-                "pdbs": len(set(pdb_ids.test)),
-                "frags": len(set(all_smis.test)),
-            },
+            "val": {"pdbs": len(set(pdb_ids.val)), "frags": len(set(all_smis.val)),},
+            "test": {"pdbs": len(set(pdb_ids.test)), "frags": len(set(all_smis.test)),},
         },
-        "train": {
-            "pdbs": pdb_ids.train,
-            "smiles": [smi for smi in all_smis.train],
-        },
+        "train": {"pdbs": pdb_ids.train, "smiles": [smi for smi in all_smis.train],},
         "val": {"pdbs": pdb_ids.val, "smiles": [smi for smi in all_smis.val]},
         "test": {"pdbs": pdb_ids.test, "smiles": [smi for smi in all_smis.test]},
     }
@@ -297,7 +327,7 @@ def compute_dataset_split(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
-    butina_cluster_cutoff = 0.4,
+    butina_cluster_cutoff=0.4,
 ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
     """Compute a TRAIN/VAL/TEST split.
 
@@ -353,11 +383,7 @@ def compute_dataset_split(
     else:
         # User has asked to load splits from file on disk. Get from the file.
         pdb_ids, all_smis, seed = _load_splits_from_disk(
-            dataset,
-            load_splits,
-            max_pdbs_train,
-            max_pdbs_val,
-            max_pdbs_test,
+            dataset, load_splits, max_pdbs_train, max_pdbs_val, max_pdbs_test,
         )
 
     if save_splits is not None:

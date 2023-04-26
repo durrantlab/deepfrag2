@@ -3,11 +3,20 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import rdmolops
 
 # From https://www.rdkit.org/docs/Cookbook.html
-def neutralize_atoms(mol):
+def neutralize_atoms(mol: Chem.Mol) -> Chem.Mol:
+    """Neutralize the molecule by adding/removing hydrogens.
+
+    Args:
+        mol (Chem.Mol): RDKit molecule.
+
+    Returns:
+        Chem.Mol: Neutralized RDKit molecule.
+    """
+
     pattern = Chem.MolFromSmarts("[+1!h0!$([*]~[-1,-2,-3,-4]),-1!$([*]~[+1,+2,+3,+4])]")
     at_matches = mol.GetSubstructMatches(pattern)
     at_matches_list = [y[0] for y in at_matches]
-    if len(at_matches_list) > 0:
+    if at_matches_list:
         for at_idx in at_matches_list:
             atom = mol.GetAtomWithIdx(at_idx)
             chg = atom.GetFormalCharge()
@@ -17,7 +26,17 @@ def neutralize_atoms(mol):
             atom.UpdatePropertyCache()
     return mol
 
+
 def standardize_smiles(smiles: str) -> str:
+    """Standardize SMILES string.
+
+    Args:
+        smiles (str): SMILES string.
+
+    Returns:
+        str: Standardized SMILES string.
+    """
+
     # Catch all errors
     try:
         # Convert smiles to rdkit mol
@@ -34,9 +53,9 @@ def standardize_smiles(smiles: str) -> str:
         rdmol = Chem.RemoveHs(rdmol)
 
         return Chem.MolToSmiles(
-            rdmol, 
+            rdmol,
             isomericSmiles=False,  # No chirality
-            canonical=True  # e.g., all benzenes are written as aromatic
+            canonical=True,  # e.g., all benzenes are written as aromatic
         )
 
     except Exception as e:

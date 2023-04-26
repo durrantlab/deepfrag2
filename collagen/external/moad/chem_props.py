@@ -81,7 +81,16 @@ charged_substructs_to_ignore = [
 
 
 def is_aromatic(mol: Chem.Mol) -> bool:
-    # Below is overkill. Could probably just keep the first one.
+    """Determines if a molecule is aromatic. Below is overkill. Could probably
+    just keep the first one.
+    
+    Args:
+        mol: RDKit molecule object.
+        
+    Returns:
+        True if aromatic, False if not.
+    """
+
     return (
         len(mol.GetAromaticAtoms()) > 0
         or mol.HasSubstructMatch(Chem.MolFromSmarts("a"))
@@ -90,6 +99,16 @@ def is_aromatic(mol: Chem.Mol) -> bool:
 
 
 def is_charged(mol: Chem.Mol) -> bool:
+    """Determines if a molecule is charged or has the potential to be charged
+    near neutral pH. 
+
+    Args:
+        mol: RDKit molecule object.
+
+    Returns:
+        True if charged, False if not.
+    """
+
     # If formal charge on any atom, then the molecule is charged. Easy solution.
     for atom in mol.GetAtoms():
         if atom.GetFormalCharge() != 0:
@@ -114,9 +133,8 @@ def is_charged(mol: Chem.Mol) -> bool:
             # fix
             mol.UpdatePropertyCache(strict=False)
 
-    for charged_substruct in charged_substructs:
-        if mol.HasSubstructMatch(charged_substruct):
-            return True
-
-    return False
+    return any(
+        mol.HasSubstructMatch(charged_substruct)
+        for charged_substruct in charged_substructs
+    )
 

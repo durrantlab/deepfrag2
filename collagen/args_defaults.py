@@ -7,12 +7,21 @@
 # I'm only going to define defaults here for select arguments. The rest will be
 # defined by the argparser or must be explicitly defined via the API.
 
+# TODO: Defaults should be defined in their respective modules and "hooked"
+# here.
+
 from typing import Any, Dict
 import argparse
 from apps.deepfrag.AggregationOperators import Operator
 
 
-def get_default_args() -> Dict[str, Any]:
+def get_default_args() -> dict:
+    """Returns a dictionary of default arguments for the deepfrag app.
+    
+    Returns:
+        dict: A dictionary of default arguments.
+    """
+
     return {
         "fragment_representation": "rdk10",
         "aggregation_3x3_patches": Operator.MEAN.value,
@@ -51,6 +60,16 @@ def get_default_args() -> Dict[str, Any]:
 
 # Given a namespace, add any missing values
 def add_missing_args_to_namespace(args: argparse.Namespace) -> argparse.Namespace:
+    """Add missing arguments to the namespace.
+
+    Args:
+        args (argparse.Namespace): The existing arguments, to which the missing
+            arguments will be added.
+
+    Returns:
+        argparse.Namespace: The updated namespace.
+    """
+
     defaults = get_default_args()
     for key, value in defaults.items():
         if not hasattr(args, key):

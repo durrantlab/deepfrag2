@@ -9,10 +9,10 @@ from scipy import stats
 from scipy.spatial.distance import cdist
 import math
 
-# NOT USED. Part of early efforts to improve accuracy by filtering out outlier
-# predictions. Never got it to work. Might be worth revisiting.
+# TODO: NOT USED. Part of early efforts to improve accuracy by filtering out
+# outlier predictions. Never got it to work. Might be worth revisiting.
 
-def create_initial_prediction_tensor(model_after_first_rotation: Any, num_rotations: int, device: Any) -> torch.Tensor:
+def create_initial_prediction_tensor(model_after_first_rotation: Any, num_rotations: int, device: torch.device) -> torch.Tensor:
     num_entries = model_after_first_rotation.predictions.shape[0]
     fp_size = model_after_first_rotation.predictions.shape[1]
     initial_tnsr = torch.zeros(
@@ -28,7 +28,7 @@ def udpate_prediction_tensor(existing_tensor: torch.Tensor, data_to_add: torch.T
     existing_tensor[idx] = data_to_add
 
 # Below also doesn't seem to improve anything.
-def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, device: Any):
+def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, device: torch.device):
     num_entries = final_tensor.shape[1]
     final_arr = final_tensor.cpu().numpy()
 
@@ -96,7 +96,7 @@ def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, d
     return final_tnsr
 
 # Using DBScan didn't seem to work
-# def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, device: Any):
+# def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, device: torch.device):
 #     num_entries = final_tensor.shape[1]
 #     final_arr = final_tensor.cpu().numpy()
 

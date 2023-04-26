@@ -17,14 +17,26 @@ _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 @dataclass
 class PCAProject(object):
-    # Sometimes it's helpful to project a high-dimensional fingerprint onto a
-    # lower-dimensional space (for visualization and comparison). This dataclass
-    # facilitates that projection process.
+    """Sometimes it's helpful to project a high-dimensional fingerprint onto a
+    lower-dimensional space (for visualization and comparison). This dataclass
+    facilitates that projection process."""
+
+    # TODO: How long does this take? Might not be worth calculating this during
+    # testing if it takes a long time. Not really used much anymore.
 
     pca: Any
     transformer: Any
 
     def project(self, fingerprints: torch.Tensor) -> List[float]:
+        """Project a fingerprint onto the PCA space.
+        
+        Args:
+            fingerprints (torch.Tensor): The fingerprint(s) to project.
+            
+        Returns:
+            List[float]: The projected fingerprint(s).
+        """
+
         np_arr = (
             np.array([fingerprints.cpu().numpy()])
             if len(fingerprints.shape) == 1
@@ -33,20 +45,39 @@ class PCAProject(object):
         return self.pca.transform(self.transformer.transform(np_arr)).tolist()
 
 
-def cos_loss(yp, yt):
-    """Cosine distance as a loss (inverted). Smaller means more similar."""
+def cos_loss(yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
+    """Cosine distance as a loss (inverted). Smaller means more similar.
+    
+    Args:
+        yp (torch.Tensor): Predicted fingerprint.
+        yt (torch.Tensor): Target fingerprint.
+        
+    Returns:
+        torch.Tensor: The loss.
+    """
+
     # Closer to 1 means more dissimilar, closer to 0 means more similar.
 
     return 1 - _cos(yp, yt)
 
 
 def bin_acc(pred, target):
-    """Binary accuracy."""
+    """Binary accuracy. TODO: Not currently used."""
     return torch.mean((torch.round(pred) == target).float())
 
 
-def _broadcast_fn(fn, yp, yt):
-    """Broadcast a distance function."""
+def _broadcast_fn(fn: callable, yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
+    """Broadcast a distance function.
+    
+    Args:
+        fn (callable): The distance function.
+        yp (torch.Tensor): Predicted fingerprint.
+        yt (torch.Tensor): Target fingerprint.
+        
+    Returns:
+        torch.Tensor: The distance.
+    """
+
     yp_b, yt_b = torch.broadcast_tensors(yp, yt)
     return fn(yp_b, yt_b)
 
@@ -56,7 +87,7 @@ def top_k(
     correct_predicton_targets: torch.Tensor,
     label_set_fingerprints: torch.Tensor,
     k: List[int],
-    ignore_duplicates=False,
+    ignore_duplicates: bool=False,
 ) -> Dict[int, float]:
     """
     Batched Top-K accuracy.
@@ -67,6 +98,9 @@ def top_k(
         label_set_fingerprints: DxF tensor containing a fingerprint set.
         k (List[int]): K values to consider.
         ignore_duplicates (bool): If True, ignore duplicate fingerprints when ranking.
+
+    Returns:
+        Dict[int, float]: The top-k accuracies.
     """
 
     if ignore_duplicates:
@@ -114,15 +148,18 @@ def most_similar_matches(
     k: int,
     pca_project: PCAProject = None,
     ignore_duplicates=False,
-):  # -> List[List[str, float, List[float]]]:
-    """
-    Identify most similar entires in fingerprint library.
+) -> List[List[str, float, List[float]]]:
+    """Identify most similar entires in fingerprint library.
 
     Args:
         predictions: NxF tensor containing predicted fingerprints.
         label_set_fingerprints: DxF tensor containing a fingerprint set.
         k (int): Top K values to consider.
         ignore_duplicates (bool): If True, ignore duplicate fingerprints.
+
+    Returns:
+        List[List[str, float, List[float]]]: List of [SMILES, distance,
+            projected fingerprint] for each entry.
     """
 
     if ignore_duplicates:
@@ -160,8 +197,16 @@ def most_similar_matches(
 def pca_space_from_label_set_fingerprints(
     label_set_fingerprints: torch.Tensor, n_components: int
 ) -> PCAProject:
-    # Creates a PCA space from a set of fingerprints. Other fingerprints can be
-    # projected onto this space elsewhere.
+    """Creates a PCA space from a set of fingerprints. Other fingerprints can be
+    projected onto this space elsewhere.
+    
+    Args:
+        label_set_fingerprints (torch.Tensor): DxF tensor containing a fingerprint set.
+        n_components (int): Number of components to use in PCA.
+        
+    Returns:
+        PCAProject: The PCA space.
+    """
 
     # Get all labelset fingerprints, but normalized.
     lblst_data_nmpy = label_set_fingerprints.cpu().numpy()

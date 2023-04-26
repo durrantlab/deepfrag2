@@ -6,7 +6,7 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
 import torch
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from collagen.core.molecules.mol import Mol, mols_from_smi_file
 from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import most_similar_matches
@@ -23,7 +23,7 @@ class MoadVoxelModelInference(object):
     def create_inference_label_set(
         self: "MoadVoxelModelParent",
         args: ArgumentParser,
-        device: Any,
+        device: torch.device,
         smi_files: List[str],
     ) -> Tuple[torch.Tensor, List[Entry_info]]:
         """Creates a label set (look-up) tensor and smiles list for testing.
@@ -33,7 +33,7 @@ class MoadVoxelModelInference(object):
         Args:
             self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
-            device (Any): The device to use.
+            device (torch.device): The device to use.
             smi_files (List[str]): The file(s) containing SMILES strings.
 
         Returns:
@@ -76,6 +76,17 @@ class MoadVoxelModelInference(object):
     def _validate_run_inference(
         self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
     ):
+        """Validates the arguments for inference mode.
+        
+        Args:
+            self (MoadVoxelModelParent): This object
+            args (Namespace): The user arguments.
+            ckpt (Optional[str]): The checkpoint to load.
+            
+        Raises:
+            ValueError: If the arguments are invalid.
+        """
+
         if not ckpt:
             raise ValueError(
                 "Must specify a checkpoint (e.g., --load_checkpoint) in inference mode"
@@ -103,11 +114,23 @@ class MoadVoxelModelInference(object):
             raise ValueError("Must specify a center (--branch_atm_loc_xyz) in inference mode")
 
     def run_inference(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], save_results_to_disk=True
-    ):
-        # Runs a model on the test and evaluates the output.
+        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str], save_results_to_disk=True
+    ) -> Union[Dict[str, Any], None]:
+        """Runs a model on the test and evaluates the output.
 
-        self._validate_run_inference(args, ckpt)
+        Args:
+            self (MoadVoxelModelParent): This object
+            args (Namespace): The user arguments.
+            ckpt_filename (Optional[str]): The checkpoint to load.
+            save_results_to_disk (bool): Whether to save the results to disk.
+                If false, the results are returned as a dictionary.
+
+        Returns:
+            Union[Dict[str, Any], None]: The results dictionary, or None if
+                save_results_to_disk is True.
+        """
+
+        self._validate_run_inference(args, ckpt_filename)
 
         print(
             f"Using the operator {args.aggregation_rotations} to aggregate the inferences."
@@ -135,11 +158,11 @@ class MoadVoxelModelInference(object):
         # cpu = device.type == "cpu"
         cpu = True  # TODO: Required because model.device == "cpu", I think.
 
-        ckpts = [c.strip() for c in ckpt.split(",")]
+        ckpts = [c.strip() for c in ckpt_filename.split(",")]
         fps = []
-        for ckpt in ckpts:
-            print(f"Using checkpoint {ckpt}")
-            model = self.init_model(args, ckpt)
+        for ckpt_filename in ckpts:
+            print(f"Using checkpoint {ckpt_filename}")
+            model = self.init_model(args, ckpt_filename)
 
             # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
 

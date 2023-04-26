@@ -10,4 +10,6 @@ if __name__ == "__main__":
     start_time = time.time()
     function_2run_deepfrag()
     final_time = time.time()
-    print("Successful DeepFrag execution in: " + str(final_time - start_time) + " seconds")
+    print(
+        f"Successful DeepFrag execution in: {str(final_time - start_time)} seconds"
+    )

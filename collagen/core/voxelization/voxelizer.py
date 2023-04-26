@@ -21,16 +21,20 @@ GPU_DIM = 6  # Cubic root of threads per block
 
 @dataclass
 class VoxelParams(object):
-    """
-    A VoxelParams object describes how a molecular structure is converted into a voxel tensor.
+    """A VoxelParams object describes how a molecular structure is converted
+    into a voxel tensor.
 
     Attributes:
-        resolution (float): The distance in Angstroms between neighboring grid points. A smaller number means more zoomed-in.
+        resolution (float): The distance in Angstroms between neighboring grid
+            points. A smaller number means more zoomed-in.
         width (int): The number of gridpoints in each spatial dimension.
         atom_scale (float): A multiplier applied to atomic radii.
-        atom_shape: (VoxelParams.AtomShapeType): Describes the atomic density sampling function.
-        acc_type: (VoxelParams.AccType): Describes how overlapping atomic densities are handled.
-        atom_featurizer (AtomFeaturizer): An atom featurizer that describes how to assign atoms to layers.
+        atom_shape: (VoxelParams.AtomShapeType): Describes the atomic density
+            sampling function.
+        acc_type: (VoxelParams.AccType): Describes how overlapping atomic
+            densities are handled.
+        atom_featurizer (AtomFeaturizer): An atom featurizer that describes how
+            to assign atoms to layers.
     """
 
     class AtomShapeType(Enum):
@@ -55,17 +59,24 @@ class VoxelParams(object):
     calc_fps: bool = True
 
     def validate(self):
-        assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
-        assert self.atom_featurizer is not None, f"atom_featurizer must not be None"
+        """Validates the VoxelParams object."""
 
-    def tensor_size(self, batch=1, feature_mult=1):
-        """
-        Compute the required tensor size given the voxel parameters.
+        assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
+        assert self.atom_featurizer is not None, "atom_featurizer must not be None"
+
+    def tensor_size(self, batch=1, feature_mult=1) -> Tuple[int, int, int, int, int]:
+        """Compute the required tensor size given the voxel parameters.
 
         Args:
-            batch (int, optional): Number of molecules in the target tensor (default: 1).
-            feature_mult (int, optional): Optional multiplier for the channel size.
+            batch (int, optional): Number of molecules in the target tensor
+                (default: 1).
+            feature_mult (int, optional): Optional multiplier for the channel
+                size.
+
+        Returns:
+            Tuple[int, int, int, int, int]: The tensor size.
         """
+
         N = self.atom_featurizer.size() * feature_mult
         W = self.width
         return (batch, N, W, W, W)
@@ -83,7 +94,18 @@ class VoxelParamsDefault(object):
     )
 
 
-def numba_ptr(tensor: "torch.Tensor", cpu: bool = False):
+def numba_ptr(tensor: "torch.Tensor", cpu: bool = False) -> Any:
+    """Converts a PyTorch tensor to a Numba pointer.
+
+    Args:
+        tensor (torch.Tensor): The tensor to convert.
+        cpu (bool, optional): If True, the tensor is copied to the CPU before
+            conversion (default: False).
+
+    Returns:
+        Any: The Numba pointer.
+    """
+
     if cpu:
         return tensor.numpy()
 
@@ -93,7 +115,7 @@ def numba_ptr(tensor: "torch.Tensor", cpu: bool = False):
     memory = numba.cuda.cudadrv.driver.MemoryPointer(
         ctx, ctypes.c_ulong(tensor.data_ptr()), tensor.numel() * 4
     )
-    cuda_arr = numba.cuda.cudadrv.devicearray.DeviceNDArray(
+    return numba.cuda.cudadrv.devicearray.DeviceNDArray(
         tensor.size(),
         [i * 4 for i in tensor.stride()],
         np.dtype("float32"),
@@ -101,7 +123,9 @@ def numba_ptr(tensor: "torch.Tensor", cpu: bool = False):
         stream=torch.cuda.current_stream().cuda_stream,
     )
 
-    return cuda_arr
+
+# TODO: Resume types, etc.
+
 
 @numba.cuda.jit
 def gpu_gridify(
@@ -120,8 +144,7 @@ def gpu_gridify(
     atom_shape,
     acc_type,
 ):
-    """
-    Adds atoms to the grid in a GPU kernel.
+    """Adds atoms to the grid in a GPU kernel.
 
     This kernel converts atom coordinate information to 3D voxel information.
     Each GPU thread is responsible for one specific grid point. This function
@@ -161,6 +184,7 @@ def gpu_gridify(
         center: (x,y,z) coordinate of grid center.
         rot: (x,y,z,y) rotation quaternion.
     """
+
     x, y, z = numba.cuda.grid(3)
 
     # center grid points around origin. "width" is number of grid points in each
@@ -289,6 +313,7 @@ def gpu_gridify(
                 elif acc_type == 1:  # AccType.MAX
                     numba.cuda.atomic.max(grid, idx, val)
 
+
 @numba.jit(nopython=True)
 def cpu_gridify(
     grid,
@@ -306,10 +331,8 @@ def cpu_gridify(
     atom_shape,
     acc_type,
 ):
-    """
-    Adds atoms to the grid on the CPU.
-    See gpu_gridify() for argument details.
-    """
+    """Adds atoms to the grid on the CPU. See gpu_gridify() for argument details."""
+
     for x in range(width):
         for y in range(width):
             for z in range(width):
@@ -439,6 +462,7 @@ def cpu_gridify(
                             elif acc_type == 1:  # AccType.MAX
                                 grid[idx] = max(grid[idx], val)
 
+
 @lru_cache(maxsize=None)
 def _get_num_blocks_and_threads(num_points: int) -> Tuple[int, int]:
     # Following the helpful guide here:
@@ -462,6 +486,7 @@ def _get_num_blocks_and_threads(num_points: int) -> Tuple[int, int]:
 
     return num_blocks, thread_per_block
 
+
 def _debug_grid_to_xyz(grid):
     grid_cpu = grid.copy_to_host()
     txt = ""
@@ -469,7 +494,7 @@ def _debug_grid_to_xyz(grid):
     for x in range(24):
         for y in range(24):
             for z in range(24):
-                if merged[x,y,z] > 0:
+                if merged[x, y, z] > 0:
                     txt += "X\t" + str(x) + "\t" + str(y) + "\t" + str(z) + "\n"
 
     count = len(txt.split("\n")) - 1
@@ -480,10 +505,14 @@ def _debug_grid_to_xyz(grid):
 
     print(count)
 
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
+
 
 # time_debug = 0
 # cnt = 0
+
 
 def mol_gridify(
     grid,
@@ -559,7 +588,7 @@ def mol_gridify(
 
         # gpu_gridify[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
         gpu_func[(dw, dw, dw), (GPU_DIM, GPU_DIM, GPU_DIM)](
-        # gpu_func[num_blocks, thread_per_block](
+            # gpu_func[num_blocks, thread_per_block](
             grid,
             len(atom_coords),
             atom_coords,

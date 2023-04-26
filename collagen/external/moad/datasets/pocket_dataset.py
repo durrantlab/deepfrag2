@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 import numpy as np
 from collagen.external.moad.split import full_moad_split
 
-# NOT CURRENTLY USED
+# TODO: NOT CURRENTLY USED
 
 def _unit_rand(thresh):
     u = np.random.uniform(size=3)

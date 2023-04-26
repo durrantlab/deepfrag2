@@ -8,6 +8,8 @@ import numpy as np
 
 
 class GraphMol(Data):
+    # TODO: Not currently used.
+
     _MIN_ALLOC = 8
 
     _edge_alloc: int = 0

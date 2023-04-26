@@ -326,8 +326,16 @@ class MOAD_target(object):
 
 @dataclass
 class PdbSdfDir_target(MOAD_target):
+    """Class to load a target/ligand from a directory of PDB/SDF files."""
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
+        """Load the Nth structure for this target.
+
+        Args:
+            idx (int): The index of the biological assembly to load.
+
+        Returns a (receptor, ligand) tuple of Mol objects.
+        """
 
         lig_mols = []
 
@@ -351,6 +359,18 @@ class PdbSdfDir_target(MOAD_target):
         not_part_of_protein_sels: List[str],
         lig_sels: List[str],
     ):
+        """Get the receptor atoms from a prody mol.
+
+        Args:
+            m (Any): A prody mol.
+            not_part_of_protein_sels (List[str]): A list of selections for
+                components that are not part of the protein.
+            lig_sels (List[str]): A list of selections for the ligands.
+
+        Returns:
+            Mol: The receptor atoms.
+        """
+
         rec_sel = "not water"
 
         if self.noh:
@@ -388,18 +408,42 @@ class MOAD_ligand(object):
 
     @property
     def chain(self) -> str:
+        """The chain ID of the ligand.
+        
+        Returns:
+            str: The chain ID of the ligand.
+        """
+
         return self.name.split(":")[1]
 
     @property
     def resnum(self) -> int:
+        """The residue number of the ligand.
+
+        Returns:
+            int: The residue number of the ligand.
+        """
+
         return int(self.name.split(":")[2])
 
     @property
     def reslength(self) -> int:
+        """The length of the residue name of the ligand.
+
+        Returns:
+            int: The length of the residue name of the ligand.
+        """
+
         return len(self.name.split(":")[0].split(" "))
 
     @property
     def is_valid(self) -> bool:
+        """Whether the ligand is valid.
+
+        Returns:
+            bool: Whether the ligand is valid.
+        """
+
         return self.validity == "valid"
 
 
@@ -418,11 +462,21 @@ class MOAD_split(object):
 @dataclass
 class Entry_info(object):
     fragment_smiles: str
-    parent_smiles: str  # TODO: Really need to calculate this? Not sure how long it takes, but not really needed.
+    
+    # TODO: Really need to calculate this? Not sure how long it takes, but not
+    # really needed.
+    parent_smiles: str  
+    
     receptor_name: str
     connection_pt: List[float]
 
     def hashable_key(self) -> str:
+        """Get a hashable key for this entry.
+
+        Returns:
+            str: A hashable key for this entry.
+        """
+
         return (
             self.fragment_smiles
             + "--"

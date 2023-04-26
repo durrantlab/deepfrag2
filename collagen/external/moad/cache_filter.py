@@ -4,9 +4,9 @@ import json
 from torch import multiprocessing
 import os
 from pathlib import Path
-from typing import Tuple, Union, Any, Optional
+from typing import Tuple, Union, Any, Optional, List
 from tqdm.std import tqdm
-from collagen.external.moad.frag_substruct_detect import is_aromatic, is_charged
+from collagen.external.moad.chem_props import is_aromatic, is_charged
 import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
@@ -19,8 +19,8 @@ from .moad_utils import fix_moad_smiles
 
 @dataclass
 class CacheItemsToUpdate(object):
-    # Dataclass describing which calculated properties should be added to the
-    # cache.
+    """Dataclass describing which calculated properties should be added to the
+    cache."""
 
     # Updatable
     lig_mass: bool = False
@@ -34,6 +34,12 @@ class CacheItemsToUpdate(object):
     frag_charged: bool = False
 
     def updatable(self) -> bool:
+        """Returns True if any of the properties are updatable.
+        
+        Returns:
+            bool: True if any of the properties are updatable.
+        """
+
         # Updatable
         return any(
             [
@@ -45,7 +51,7 @@ class CacheItemsToUpdate(object):
                 self.frag_smiles,
                 self.frag_num_heavy_atoms,
                 self.frag_aromatic,
-                self.frag_charged
+                self.frag_charged,
             ]
         )
 
@@ -54,31 +60,52 @@ class CacheItemsToUpdate(object):
 CACHE_ITEMS_TO_UPDATE = CacheItemsToUpdate()
 
 
-def _set_molecular_prop(func, func_input, default_if_error):
-    # Provides a way to provide a default value if function fails.
+def _set_molecular_prop(func: function, func_input: Any, default_if_error: Any) -> Any:
+    """Provides a way to provide a default value if function fails.
+
+    Args:
+        func (function): The function to call.
+        func_input (Any): The input to the function.
+        default_if_error (Any): The default value to return if the function
+            fails.
+
+    Returns:
+        Any: The result of the function, or the default value if the function
+            fails.
+    """
+
     try:
         return func(func_input)
     except Exception as e:
         # Save the exception to err.txt
         # with open("err.txt", "a") as f:
         #     f.write(f"{func_input} failed to calculate {func.__name__}\n")
-        #     f.write(str(e) + "\n")            
+        #     f.write(str(e) + "\n")
 
         return default_if_error
 
 
-def get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
-    # Given a PDB ID, looks up the PDB in BindingMOAD, and calculates the
-    # molecular properties specified in CACHE_ITEMS_TO_UPDATE. Returns a tuple
-    # with the pdb id and a dictionary with the associated information.
+def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
+    """Given a PDB ID, looks up the PDB in BindingMOAD, and calculates the
+    molecular properties specified in CACHE_ITEMS_TO_UPDATE. Returns a tuple
+    with the pdb id and a dictionary with the associated information.
+    
+    Args:
+        payload (List[Any]): A list containing the PDB ID, the MOADInterface
+            object, and the CacheItemsToUpdate object.
+            
+    Returns:
+        Tuple[str, dict]: A tuple containing the PDB ID and a dictionary with
+            the associated information.
+    """
 
     # global MOAD_REF
     # global CACHE_ITEMS_TO_UPDATE
 
     # moad_entry_info = moad[pdb_id]
-    pdb_id = arguments[0]
-    moad_entry_info = arguments[1]
-    cache_items_to_update = arguments[2]
+    pdb_id = payload[0]
+    moad_entry_info = payload[1]
+    cache_items_to_update = payload[2]
 
     lig_infs = {}
     for lig_chunk_idx in range(len(moad_entry_info)):
@@ -126,12 +153,12 @@ def get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
             # Now deal with properties by fragment (not entire ligand)
 
             if (
-                    cache_items_to_update.frag_masses
-                    or cache_items_to_update.frag_num_heavy_atoms
-                    or cache_items_to_update.frag_dists_to_recep
-                    or cache_items_to_update.frag_smiles
-                    or cache_items_to_update.frag_aromatic
-                    or cache_items_to_update.frag_charged
+                cache_items_to_update.frag_masses
+                or cache_items_to_update.frag_num_heavy_atoms
+                or cache_items_to_update.frag_dists_to_recep
+                or cache_items_to_update.frag_smiles
+                or cache_items_to_update.frag_aromatic
+                or cache_items_to_update.frag_charged
             ):
                 # Get all the fragments
                 frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
@@ -158,30 +185,29 @@ def get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
                 if cache_items_to_update.frag_smiles:
                     # Helpful for debugging, mostly.
                     lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
-                        lambda f: [x[1].smiles(True) for x in f],
-                        frags,
-                        [],
+                        lambda f: [x[1].smiles(True) for x in f], frags, [],
                     )
 
                 if cache_items_to_update.frag_aromatic:
                     lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
-                        lambda f: [is_aromatic(x[1].rdmol) for x in f],
-                        frags, []
-                        
+                        lambda f: [is_aromatic(x[1].rdmol) for x in f], frags, []
                     )
 
                 if cache_items_to_update.frag_charged:
                     lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
-                        lambda f: [is_charged(x[1].rdmol) for x in f],
-                        frags, []
+                        lambda f: [is_charged(x[1].rdmol) for x in f], frags, []
                     )
 
     return pdb_id, lig_infs
 
 
-def _set_cache_params_to_update(cache):
-    # This looks at the current cache and determines which properties need to be
-    # added to it. Sets flags in CACHE_ITEMS_TO_UPDATE as appropriate.
+def _set_cache_params_to_update(cache: dict):
+    """This looks at the current cache and determines which properties need to be
+    added to it. Sets flags in CACHE_ITEMS_TO_UPDATE as appropriate.
+
+    Args:
+        cache (dict): The current cache.
+    """
 
     pdb_ids_in_cache = list(cache.keys())
     if not pdb_ids_in_cache:  # empty
@@ -223,12 +249,22 @@ def _set_cache_params_to_update(cache):
 
 
 def _build_moad_cache_file(
-        filename: str,
-        moad: "MOADInterface",
-        cache_items_to_update: CacheItemsToUpdate,
-        cores: int = None,
-):
-    # This builds/updates the whole BindingMOAD cache (on disk).
+    filename: str,
+    moad: "MOADInterface",
+    cache_items_to_update: CacheItemsToUpdate,
+    cores: int = None,
+) -> dict:
+    """This builds/updates the whole BindingMOAD cache (on disk).
+
+    Args:
+        filename (str): The filename to save the cache to.
+        moad (MOADInterface): The MOADInterface object to use.
+        cache_items_to_update (CacheItemsToUpdate): The cache items to update.
+        cores (int, optional): The number of cores to use. Defaults to None.
+
+    Returns:
+        dict: The cache.
+    """
 
     # Load existing cache if it exists. So you can add to it.
     if filename and os.path.exists(filename):
@@ -252,15 +288,18 @@ def _build_moad_cache_file(
     # MOAD_REF = moad
 
     pdb_ids_queue = moad.targets
-    list_ids_moad = []
-    for pdb_id in moad.targets:
-        list_ids_moad.append([pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE])
-
+    list_ids_moad = [
+        [pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE] for pdb_id in moad.targets
+    ]
     # NOTE: Filename specified via --cache parameter
 
-    print("Building/updating " + (filename if filename else "dataset"))
+    print("Building/updating " + (filename or "dataset"))
     with multiprocessing.Pool(cores) as p:
-        for pdb_id, lig_infs in tqdm(p.imap_unordered(get_info_given_pdb_id, list_ids_moad), total=len(pdb_ids_queue), desc="Building cache"):
+        for pdb_id, lig_infs in tqdm(
+            p.imap_unordered(get_info_given_pdb_id, list_ids_moad),
+            total=len(pdb_ids_queue),
+            desc="Building cache",
+        ):
             pdb_id = pdb_id.lower()
 
             if pdb_id not in cache:
@@ -284,18 +323,34 @@ def _build_moad_cache_file(
 
 
 def load_cache_and_filter(
-        lig_filter_func: Any,  # The function used to filter the ligands
-        moad: "MOADInterface",
-        split: "MOAD_split",
-        args: argparse.Namespace,
-        make_dataset_entries_func: Any,
-        cache_items_to_update: CacheItemsToUpdate,
-        cache_file: Optional[Union[str, Path]] = None,
-        cores: int = 1,
-):
-    # This not only builds/gets the cache, but also filters the properties to
-    # retain only those BindingMOAD entries for training. For example, could
-    # filter by ligand mass.
+    lig_filter_func: function,  # The function used to filter the ligands
+    moad: "MOADInterface",
+    split: "MOAD_split",
+    args: argparse.Namespace,
+    make_dataset_entries_func: function,
+    cache_items_to_update: CacheItemsToUpdate,
+    cache_file: Optional[Union[str, Path]] = None,
+    cores: int = 1,
+) -> Tuple[dict, list]:
+    """This not only builds/gets the cache, but also filters the properties to
+    retain only those BindingMOAD entries for training. For example, could
+    filter by ligand mass.
+    
+    Args:
+        lig_filter_func (function): The function used to filter the ligands.
+        moad (MOADInterface): The MOADInterface object to use.
+        split (MOAD_split): The MOAD_split object to use.
+        args (argparse.Namespace): The arguments.
+        make_dataset_entries_func (function): The function to make the dataset
+            entries.
+        cache_items_to_update (CacheItemsToUpdate): The cache items to update.
+        cache_file (Optional[Union[str, Path]], optional): The cache file to
+            use. Defaults to None.
+        cores (int, optional): The number of cores to use. Defaults to 1.
+
+    Returns:
+        Tuple[dict, list]: The cache and the filtered cache.
+    """
 
     # This function gets called from the dataset (e.g., fragment_dataset.py),
     # where the actual filters are set (via lig_filter_func).
@@ -303,7 +358,12 @@ def load_cache_and_filter(
     # Returns tuple, cache and filtered_cache.
 
     cache_file = Path(cache_file) if cache_file is not None else None
-    cache = _build_moad_cache_file(str(cache_file) if cache_file else None, moad, cache_items_to_update, cores=cores)
+    cache = _build_moad_cache_file(
+        str(cache_file) if cache_file else None,
+        moad,
+        cache_items_to_update,
+        cores=cores,
+    )
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):

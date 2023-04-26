@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from ..core.molecules.mol import Mol
 
-# NOT CURRENTLY USED
+# TODO: NOT CURRENTLY USED
 
 class ZINCDataset(object):
     """
