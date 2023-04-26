@@ -165,10 +165,10 @@ class MoadVoxelModelParent(
 
         if args.mode == "train":
             torch.save(model.state_dict(),
-                       pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_train.pt")
+                       pth + f"model_train.pt")
         elif args.mode == "warm_starting":
             torch.save(model.state_dict(),
-                       pth + f"model_{args.aggregation_3x3_patches}_{args.aggregation_loss_vector}_fine_tuned.pt")
+                       pth + f"model_fine_tuned.pt")
 
         out_name = pth + os.sep + args.mode + ".actually_used.json"
         if not os.path.exists(out_name):
