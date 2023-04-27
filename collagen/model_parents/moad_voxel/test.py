@@ -367,7 +367,7 @@ class MoadVoxelModelTest(object):
         self: "MoadVoxelModelParent",
         all_test_data: Any,
         args: Namespace,
-        model: pl.LightningModule,
+        model: "pl.LightningModule",
         ckpt_idx: int,
         ckpt: str,
         trainer: Any,
