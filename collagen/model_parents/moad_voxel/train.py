@@ -1,3 +1,5 @@
+"""The MOAD voxel model for training."""
+
 from argparse import Namespace
 from typing import Any, Optional, Tuple
 from collagen.core.loader import DataLambda
@@ -7,16 +9,18 @@ from collagen.external.moad.split import compute_dataset_split, full_moad_split
 
 
 class MoadVoxelModelTrain(object):
+
+    """A model for training on the MOAD dataset."""
+
     def run_train(
         self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
     ):
-        """Runs training.
+        """Run training.
         
         Args:
             args (Namespace): The arguments passed to the program.
             ckpt_filename (Optional[str]): The checkpoint filename to use.
         """
-
         # Runs training.
         trainer = self.init_trainer(args)
         moad, train_data, val_data = self.get_train_val_sets(args, True)
@@ -42,12 +46,11 @@ class MoadVoxelModelTrain(object):
         self.save_examples_used(model, args)
 
     def run_warm_starting(self, args: Namespace):
-        """Runs warm starting.
+        """Run warm starting.
         
         Args:
             args (Namespace): The arguments passed to the program.
         """
-
         trainer = self.init_trainer(args)
         moad, train_data, val_data = self.get_train_val_sets(args, False)
 
@@ -64,7 +67,7 @@ class MoadVoxelModelTrain(object):
     def get_train_val_sets(
         self, args: Namespace, train: bool
     ) -> Tuple[Any, DataLambda, DataLambda]:
-        """Gets the training and validation sets.
+        """Get the training and validation sets.
 
         Args:
             args (Namespace): The arguments passed to the program.
@@ -75,7 +78,6 @@ class MoadVoxelModelTrain(object):
             Tuple[Any, DataLambda, DataLambda]: The MOAD, training and
                 validation sets.
         """
-
         if args.custom_test_set_dir:
             raise Exception("The custom test set can only be used in testing mode")
 

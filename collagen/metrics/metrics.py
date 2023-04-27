@@ -1,3 +1,5 @@
+"""Functions and classes for assessing model predictions and performance."""
+
 from dataclasses import dataclass
 import torch
 from torch import nn
@@ -8,8 +10,6 @@ from sklearn.manifold import TSNE
 from sklearn.preprocessing import Normalizer
 import numpy as np
 
-# Functions and classes for assessing model predictions and performance.
-
 
 # Closer to 1 means more similar, closer to 0 means more dissimilar.
 _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
@@ -17,9 +17,11 @@ _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 @dataclass
 class PCAProject(object):
+
     """Sometimes it's helpful to project a high-dimensional fingerprint onto a
     lower-dimensional space (for visualization and comparison). This dataclass
-    facilitates that projection process."""
+    facilitates that projection process.
+    """
 
     # TODO: How long does this take? Might not be worth calculating this during
     # testing if it takes a long time. Not really used much anymore.
@@ -36,7 +38,6 @@ class PCAProject(object):
         Returns:
             List[float]: The projected fingerprint(s).
         """
-
         np_arr = (
             np.array([fingerprints.cpu().numpy()])
             if len(fingerprints.shape) == 1
@@ -55,7 +56,6 @@ def cos_loss(yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
     Returns:
         torch.Tensor: The loss.
     """
-
     # Closer to 1 means more dissimilar, closer to 0 means more similar.
 
     return 1 - _cos(yp, yt)
@@ -77,7 +77,6 @@ def _broadcast_fn(fn: callable, yp: torch.Tensor, yt: torch.Tensor) -> torch.Ten
     Returns:
         torch.Tensor: The distance.
     """
-
     yp_b, yt_b = torch.broadcast_tensors(yp, yt)
     return fn(yp_b, yt_b)
 
@@ -87,7 +86,7 @@ def top_k(
     correct_predicton_targets: torch.Tensor,
     label_set_fingerprints: torch.Tensor,
     k: List[int],
-    ignore_duplicates: bool=False,
+    ignore_duplicates: bool = False,
 ) -> Dict[int, float]:
     """
     Batched Top-K accuracy.
@@ -102,7 +101,6 @@ def top_k(
     Returns:
         Dict[int, float]: The top-k accuracies.
     """
-
     if ignore_duplicates:
         label_set_fingerprints = label_set_fingerprints.unique(dim=0)
 
@@ -141,6 +139,7 @@ def top_k(
 # TODO: Label set could be in a single class that includes both fingerprints and
 # vectors, etc. Would be slick.
 
+
 def most_similar_matches(
     predictions: torch.Tensor,
     label_set_fingerprints: torch.Tensor,
@@ -161,7 +160,6 @@ def most_similar_matches(
         List[List[str, float, List[float]]]: List of [SMILES, distance,
             projected fingerprint] for each entry.
     """
-
     if ignore_duplicates:
         label_set_fingerprints = label_set_fingerprints.unique(dim=0)
 
@@ -183,7 +181,9 @@ def most_similar_matches(
         for cos_dist, smi, fp in zip(
             sorted_dists[:k], sorted_smis[:k], sorted_label_set_fingerprints[:k]
         ):
-            cos_sim = 1 - float(cos_dist)  # So reports cos similarity, not cosine distance.
+            cos_sim = 1 - float(
+                cos_dist
+            )  # So reports cos similarity, not cosine distance.
             similar_one_to_add = [smi, cos_sim]
             if pca_project is not None:
                 similar_one_to_add.append(pca_project.project(fp))
@@ -197,7 +197,7 @@ def most_similar_matches(
 def pca_space_from_label_set_fingerprints(
     label_set_fingerprints: torch.Tensor, n_components: int
 ) -> PCAProject:
-    """Creates a PCA space from a set of fingerprints. Other fingerprints can be
+    """Create a PCA space from a set of fingerprints. Other fingerprints can be
     projected onto this space elsewhere.
     
     Args:
@@ -207,7 +207,6 @@ def pca_space_from_label_set_fingerprints(
     Returns:
         PCAProject: The PCA space.
     """
-
     # Get all labelset fingerprints, but normalized.
     lblst_data_nmpy = label_set_fingerprints.cpu().numpy()
     transformer = Normalizer().fit(lblst_data_nmpy)

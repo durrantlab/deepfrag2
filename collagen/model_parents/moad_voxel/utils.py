@@ -1,3 +1,5 @@
+"""Utilities for MOAD voxel model."""
+
 from argparse import Namespace
 from typing import Any, List, Optional, Tuple
 from collagen.checkpoints import get_last_checkpoint
@@ -10,10 +12,12 @@ from collagen.external.moad.types import MOAD_split
 
 
 class MoadVoxelModelUtils(object):
+
+    """Provides utility funcitons."""
+
     @staticmethod
     def disable_warnings():
         """Disable warnings from RDKit and ProDy."""
-
         from rdkit import RDLogger
         import prody
 
@@ -30,7 +34,7 @@ class MoadVoxelModelUtils(object):
         device: torch.device,
         shuffle=True,
     ) -> DataLambda:
-        """This is where you do actual dataset construction. The transform
+        """Where you do actual dataset construction. The transform
         function actually gets the data (voxelizes and creates fingerprint).
         Note also call to self.dataset_cls should create the .json.cache file.
         TODO: Create separate function .pre_voxelize_with_voxel that just
@@ -49,7 +53,6 @@ class MoadVoxelModelUtils(object):
         Returns:
             DataLambda: The data.
         """
-
         # JDD NOTE: self.dataset_cls could be something like MOADFragmentDataset
 
         dataset = self.dataset_cls(
@@ -83,7 +86,7 @@ class MoadVoxelModelUtils(object):
     def get_checkpoint_filename(
         args: Namespace, validate_args: bool = True
     ) -> Optional[str]:
-        """Gets the checkpoint filename.
+        """Get the checkpoint filename.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
@@ -96,7 +99,6 @@ class MoadVoxelModelUtils(object):
         Returns:
             Optional[str]: The checkpoint filename.
         """
-
         if validate_args:
             if args.load_checkpoint and args.load_newest_checkpoint:
                 raise ValueError(
@@ -135,7 +137,6 @@ class MoadVoxelModelUtils(object):
             device (torch.device): The device to use.
             args (Namespace): The user arguments.
         """
-
         # TODO: Not currently used.
         import rdkit
         from rdkit import Chem

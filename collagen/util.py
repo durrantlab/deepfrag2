@@ -1,14 +1,15 @@
+"""Utility functions for collagen."""
+
 import numpy as np
 import time
 from typing import List
 
 def rand_rot() -> np.ndarray:
-    """Returns a random uniform quaternion rotation.
+    """Return a random uniform quaternion rotation.
     
     Returns:
         np.ndarray: A random uniform quaternion rotation.
     """
-
     # Had to do the below to get the rotation to be different on every rotation
     # during inferance. Note that if two rotations are requested within a
     # microsecond of each other, will return same rotation. But even that
@@ -136,7 +137,7 @@ VDW_RADIUS_BY_NUM = {
 
 
 def get_vdw_radius(num: int) -> float:
-    """Returns the Van-der Waals radius for a given atomic number or 0.
+    """Return the Van-der Waals radius for a given atomic number or 0.
     
     Args:
         num (int): Atomic number.
@@ -144,11 +145,10 @@ def get_vdw_radius(num: int) -> float:
     Returns:
         float: Van-der Waals radius for a given atomic number or 0.
     """
-
     return VDW_RADIUS_BY_NUM[num] if num in VDW_RADIUS_BY_NUM else 0
 
 def sorted_list(st: set) -> List:
-    """Returns a sorted list from a set.
+    """Return a sorted list from a set.
     
     Args:
         st (set): Set to be sorted.
@@ -156,5 +156,3 @@ def sorted_list(st: set) -> List:
     Returns:
         List: Sorted list from a set.
     """
-
-    return sorted(st)

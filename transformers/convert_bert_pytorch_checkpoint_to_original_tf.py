@@ -14,7 +14,6 @@
 # limitations under the License.
 
 """Convert Huggingface Pytorch checkpoint to Tensorflow checkpoint."""
-
 import argparse
 import os
 
@@ -43,7 +42,6 @@ def convert_pytorch_checkpoint_to_tf(model: BertModel, ckpt_dir: str, model_name
         - N BertForSequenceClassification
         - N BertForQuestionAnswering
     """
-
     tensors_to_transpose = ("dense.weight", "attention.self.query", "attention.self.key", "attention.self.value")
 
     var_map = (

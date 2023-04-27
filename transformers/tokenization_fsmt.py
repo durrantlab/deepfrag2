@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for FSMT."""
 
-
 import json
 import os
 import re
@@ -174,7 +173,6 @@ class FSMTTokenizer(PreTrainedTokenizer):
             The token used for padding, for example when batching sequences of different lengths.
 
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -380,7 +378,6 @@ class FSMTTokenizer(PreTrainedTokenizer):
 
     def convert_tokens_to_string(self, tokens):
         """ Converts a sequence of tokens (string) in a single string. """
-
         # remove BPE
         tokens = [t.replace(" ", "").replace("</w>", " ") for t in tokens]
         tokens = "".join(tokens).split()
@@ -432,7 +429,6 @@ class FSMTTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(

@@ -1,3 +1,7 @@
+"""ParentEnsembled is a parent class for combining multiple predictions
+(ensembles of predictions) into one that's hopefully more accurate.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Any, Tuple
 import numpy as np
@@ -6,17 +10,19 @@ from collagen.core.loader import DataLambda
 from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import PCAProject
 
-# A parent class for combining multiple predictions (ensembles of predictions)
-# into one that's hopefully more accurate.
-
 # TODO: Only averaged.py uses this. Is the inheritance really necessary?
 
 
 class ParentEnsembled(ABC):
+
+    """ParentEnsembled is a parent class for combining multiple predictions
+    (ensembles of predictions) into one that's hopefully more accurate.
+    """
+
     def __init__(
         self,
-        trainer: Any,
-        model: Any,
+        trainer: "pl.Trainer",
+        model: "pl.LightningModule",
         test_data: DataLambda,
         num_rotations: int,
         device: torch.device,
@@ -25,14 +31,13 @@ class ParentEnsembled(ABC):
         """Initialize the class.
 
         Args:
-            trainer (Any): The trainer object.
-            model (Any): The model object.
+            trainer (pl.Trainer): The trainer object.
+            model (pl.LightningModule): The model object.
             test_data (DataLambda): The test data.
             num_rotations (int): The number of rotations to perform.
             device (torch.device): The device to use.
             ckpt_name (str): The name of the checkpoint.
         """
-
         self.device = device
         self.num_rotations = num_rotations
         self.model = model
@@ -55,7 +60,6 @@ class ParentEnsembled(ABC):
         Args:
             pca_space (PCAProject): The PCA space.
         """
-
         self.pca_space = pca_space
 
         # Get predictionsPerRotation projection (pca).
@@ -82,7 +86,6 @@ class ParentEnsembled(ABC):
         Returns:
             Tuple[Any, torch.Tensor]: The model and predictions_ensembled.
         """
-
         return self.model, self.predictions_ensembled
 
     def get_correct_answer_info(self, entry_idx: int) -> dict:
@@ -94,7 +97,6 @@ class ParentEnsembled(ABC):
         Returns:
             dict: The correct answer info.
         """
-
         if self.correct_fp_pca_projected is None:
             self.correct_fp_pca_projected = self.pca_space.project(
                 self.model.prediction_targets
@@ -118,7 +120,6 @@ class ParentEnsembled(ABC):
         Returns:
             dict: The predictions info.
         """
-
         if self.averaged_predicted_fp_pca_projected is None:
             self.averaged_predicted_fp_pca_projected = self.pca_space.project(
                 self.predictions_ensembled
@@ -126,9 +127,7 @@ class ParentEnsembled(ABC):
 
         return {
             "averagedPrediction": {
-                "pcaProjection": self.averaged_predicted_fp_pca_projected[
-                    entry_idx
-                ],
+                "pcaProjection": self.averaged_predicted_fp_pca_projected[entry_idx],
                 "closestFromLabelSet": [],
             },
             "predictionsPerRotation": [
@@ -140,7 +139,8 @@ class ParentEnsembled(ABC):
     @abstractmethod
     def _create_initial_prediction_tensor(self):
         """Create the initial prediction tensor. Children should implement
-        this."""
+        this.
+        """
         pass
 
     @abstractmethod
@@ -151,5 +151,6 @@ class ParentEnsembled(ABC):
     @abstractmethod
     def _finalize_prediction_tensor(self):
         """Finalize the prediction tensor. Children should implement this.
-        Should modify self.predictions_ensembled directly."""
+        Should modify self.predictions_ensembled directly.
+        """
         pass

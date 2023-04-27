@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ PEGASUS model configuration """
-
 from .configuration_bart import BartConfig
 from .utils import logging
 
@@ -139,6 +138,5 @@ class PegasusConfig(BartConfig):
         force_bos_token_to_be_generated (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to force BOS token to be generated at step 1 (after ``decoder_start_token_id``).
     """
-
     model_type = "pegasus"
     # The implementation of the config object is in BartConfig

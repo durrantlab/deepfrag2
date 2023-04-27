@@ -1,3 +1,5 @@
+"""The inference mode for the MOAD voxel model."""
+
 from argparse import ArgumentParser, Namespace
 import cProfile
 from io import StringIO
@@ -20,13 +22,16 @@ import os
 
 
 class MoadVoxelModelInference(object):
+
+    """A model for inference."""
+
     def create_inference_label_set(
         self: "MoadVoxelModelParent",
         args: ArgumentParser,
         device: torch.device,
         smi_files: List[str],
     ) -> Tuple[torch.Tensor, List[Entry_info]]:
-        """Creates a label set (look-up) tensor and smiles list for testing.
+        """Create a label set (look-up) tensor and smiles list for testing.
         Can be comprised of the fingerprints in the train and/or test and/or
         val sets, as well as SMILES strings from a file.
 
@@ -40,7 +45,6 @@ class MoadVoxelModelInference(object):
             Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
                 tensor and smiles list.
         """
-
         # Can we cache the label_set_fps and label_set_smis variables to a disk
         # to not have to recalculate them every time? It can be a pretty
         # expensive calculation.
@@ -76,7 +80,7 @@ class MoadVoxelModelInference(object):
     def _validate_run_inference(
         self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
     ):
-        """Validates the arguments for inference mode.
+        """Validate the arguments for inference mode.
         
         Args:
             self (MoadVoxelModelParent): This object
@@ -86,7 +90,6 @@ class MoadVoxelModelInference(object):
         Raises:
             ValueError: If the arguments are invalid.
         """
-
         if not ckpt:
             raise ValueError(
                 "Must specify a checkpoint (e.g., --load_checkpoint) in inference mode"
@@ -111,12 +114,17 @@ class MoadVoxelModelInference(object):
         if args.ligand is None:
             raise ValueError("Must specify a ligand (--ligand) in inference mode")
         if args.branch_atm_loc_xyz is None:
-            raise ValueError("Must specify a center (--branch_atm_loc_xyz) in inference mode")
+            raise ValueError(
+                "Must specify a center (--branch_atm_loc_xyz) in inference mode"
+            )
 
     def run_inference(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str], save_results_to_disk=True
+        self: "MoadVoxelModelParent",
+        args: Namespace,
+        ckpt_filename: Optional[str],
+        save_results_to_disk=True,
     ) -> Union[Dict[str, Any], None]:
-        """Runs a model on the test and evaluates the output.
+        """Run a model on the test and evaluates the output.
 
         Args:
             self (MoadVoxelModelParent): This object
@@ -129,7 +137,6 @@ class MoadVoxelModelInference(object):
             Union[Dict[str, Any], None]: The results dictionary, or None if
                 save_results_to_disk is True.
         """
-
         self._validate_run_inference(args, ckpt_filename)
 
         print(
@@ -147,7 +154,9 @@ class MoadVoxelModelInference(object):
             m = prody.parsePDBStream(StringIO(f.read()), model=1)
         prody_mol = m.select("all")
         recep = Mol.from_prody(prody_mol)
-        center = np.array([float(v.strip()) for v in args.branch_atm_loc_xyz.split(",")])
+        center = np.array(
+            [float(v.strip()) for v in args.branch_atm_loc_xyz.split(",")]
+        )
 
         # Load the ligand
         suppl = Chem.SDMolSupplier(str(args.ligand))
@@ -199,9 +208,7 @@ class MoadVoxelModelInference(object):
             label_set_fingerprints,
             label_set_entry_infos,
         ) = self.create_inference_label_set(
-            args,
-            device,
-            [l.strip() for l in args.inference_label_sets.split(",")],
+            args, device, [l.strip() for l in args.inference_label_sets.split(",")],
         )
 
         most_similar = most_similar_matches(
@@ -220,11 +227,7 @@ class MoadVoxelModelInference(object):
             # Return the results
             return {
                 "most_similar": most_similar[0],
-                "fps": {
-                    "per_rot": fps,
-                    "avg": avg_over_ckpts_of_avgs
-                },
-
+                "fps": {"per_rot": fps, "avg": avg_over_ckpts_of_avgs},
             }
 
         # If you get here, you are saving the results to disk (default).

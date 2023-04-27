@@ -1,4 +1,4 @@
-# Testing and inference share a lot of code. Let's put the common code here.
+"""Testing and inference share a lot of code. Let's put the common code here."""
 
 from argparse import Namespace
 from collagen.external.moad.interface import MOADInterface
@@ -22,7 +22,6 @@ def remove_redundant_fingerprints(
         Tuple[torch.Tensor, List[str]]: Same as input, but redundant
             fingerprints are removed.
     """
-
     label_set_fps, inverse_indices = label_set_fps.unique(
         dim=0, return_inverse=True
     )

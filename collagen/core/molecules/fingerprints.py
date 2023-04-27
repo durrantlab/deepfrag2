@@ -1,3 +1,5 @@
+"""Fingerprinting functions for molecules."""
+
 import numpy as np
 import rdkit.Chem.AllChem as Chem
 from rdkit.Chem import MACCSkeys
@@ -30,13 +32,11 @@ def bar_progress(current: float, total: float, width=80):
         total (float): Total progress.
         width (int, optional): Width of the progress bar. Defaults to 80.
     """
-
     progress_message = "Downloading Molbert model: %d%% [%d / %d] bytes" % (
         current / total * 100,
         current,
         total,
     )
-
     # Don't use print() as it will print in new line every time.
     sys.stdout.write("\r" + progress_message)
     sys.stdout.flush()
@@ -44,7 +44,6 @@ def bar_progress(current: float, total: float, width=80):
 
 def download_molbert_ckpt():
     """Download Molbert model checkpoint. TODO: Candidate for removal."""
-
     global PATH_MOLBERT_CKPT
     global PATH_MOLBERT_MODEL
 
@@ -80,13 +79,14 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     Returns:
         np.array: Fingerprint.
     """
-
     fp = Chem.rdmolops.RDKFingerprint(m, maxPath=10, fpSize=size)
     n_fp = list(map(int, list(fp.ToBitString())))
     return np.array(n_fp)
 
 
-def _rdkit_2D_descriptors(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+def _rdkit_2D_descriptors(
+    m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str
+) -> np.array:
     """Compute all RDKit Descriptors. TODO: Candidate for removal.
 
     Args:
@@ -97,7 +97,6 @@ def _rdkit_2D_descriptors(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) ->
     Returns:
         np.array: Fingerprint.
     """
-
     global RDKit_DESC_CALC
     fp = RDKit_DESC_CALC.CalcDescriptors(mol=Chem.MolFromSmiles(smiles))
     fp = np.nan_to_num(fp, nan=0.0, posinf=0.0, neginf=0.0)
@@ -115,7 +114,6 @@ def _MACCSkeys(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     Returns:
         np.array: Fingerprint.
     """
-
     fp = MACCSkeys.GenMACCSKeys(Chem.MolFromSmiles(smiles))
     n_fp = list(map(int, list(fp.ToBitString())))
     return np.array(n_fp)
@@ -132,7 +130,6 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     Returns:
         np.array: Fingerprint.
     """
-
     array = np.zeros((0,))
     DataStructs.ConvertToNumpyArray(
         AllChem.GetHashedMorganFingerprint(Chem.MolFromSmiles(smiles), 3, nBits=size),
@@ -153,7 +150,6 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     Returns:
         np.array: Fingerprint.
     """
-
     global MOLBERT_MODEL
     fp = MOLBERT_MODEL.transform_single(smiles)
     return np.array(fp[0][0])
@@ -171,7 +167,6 @@ def _molbert_pos(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array
     Returns:
         np.array: Fingerprint.
     """
-
     molbert_fp = _molbert(m, size, smiles)
     molbert_fp[molbert_fp < 0] = 0
     return molbert_fp
@@ -188,7 +183,6 @@ def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.arra
     Returns:
         np.array: Fingerprint.
     """
-
     molbert_fp = _molbert(m, size, smiles)
     mx = np.max(molbert_fp)
     mn = np.min(molbert_fp)
@@ -208,7 +202,6 @@ def _molbert_sig(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array
     Returns:
         np.array: Fingerprint.
     """
-
     # TODO: Is sigmoid function really applied here?
 
     return _molbert(m, size, smiles)
@@ -228,7 +221,6 @@ def _molbert_norm2(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.arr
     Returns:
         np.array: Fingerprint.
     """
-
     molbert_fp = _molbert(m, size, smiles)
 
     # NOTE: I calculated molbert fingerprints for 7574 unique fragments, and the
@@ -255,7 +247,6 @@ def _molbert_x_rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.a
     Returns:
         np.array: Fingerprint.
     """
-
     rdk10_fp = _rdk10(m, size, smiles)
     molbert_fp = _molbert_norm(m, size, smiles)
     return np.multiply(molbert_fp, rdk10_fp)
@@ -273,7 +264,6 @@ def _molbert_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.
     Returns:
         np.array: Fingerprint.
     """
-
     morgan_fp = _Morgan(m, size, smiles)
     molbert_fp = _molbert_norm(m, size, smiles)
     return np.multiply(molbert_fp, morgan_fp)
@@ -309,7 +299,6 @@ def fingerprint_for(
     Returns:
         np.array: Fingerprint.
     """
-
     if fp_type in FINGERPRINTS:
         return FINGERPRINTS[fp_type](mol, size, smiles)
 

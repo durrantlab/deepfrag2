@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ XLM configuration """
-
 from .configuration_utils import PretrainedConfig
 from .utils import logging
 
@@ -144,7 +143,6 @@ class XLMConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
-
     model_type = "xlm"
 
     def __init__(

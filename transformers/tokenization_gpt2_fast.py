@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for OpenAI GPT."""
 
-
 import json
 import warnings
 from typing import Optional, Tuple
@@ -113,7 +112,6 @@ class GPT2TokenizerFast(PreTrainedTokenizerFast):
         trim_offsets (:obj:`bool`, `optional`, defaults to :obj:`True`):
             Whether or not the post-processing step should trim offsets to avoid including whitespaces.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

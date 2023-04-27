@@ -16,7 +16,6 @@
  Tokenization classes for fast tokenizers (provided by HuggingFace's tokenizers library). For slow (python) tokenizers
  see tokenization_utils.py
 """
-
 import json
 import os
 import warnings
@@ -75,7 +74,6 @@ class PreTrainedTokenizerFast(PreTrainedTokenizerBase):
     This class also contains the added tokens in a unified way on top of all tokenizers so we don't have to handle the
     specific vocabulary augmentation methods of the various underlying dictionary structures (BPE, sentencepiece...).
     """
-
     slow_tokenizer_class: PreTrainedTokenizer = None
 
     def __init__(self, *args, **kwargs):

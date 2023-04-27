@@ -14,7 +14,6 @@
 # limitations under the License.
 """ LayoutLM model configuration """
 
-
 from .configuration_bert import BertConfig
 from .utils import logging
 

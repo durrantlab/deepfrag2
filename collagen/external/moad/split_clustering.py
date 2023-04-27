@@ -1,3 +1,5 @@
+"""Split MOAD data using clustering."""
+
 from typing import Any, List, Tuple
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
@@ -6,7 +8,7 @@ from rdkit.ML.Cluster import Butina
 # TODO: Name of this file isn't obvious. Good to rename.
 
 def _cluster_fps(fps: List[List[float]], cutoff: float=0.2) -> Any:
-    """Clusters fingerprints using the Butina algorithm.
+    """Cluster fingerprints using the Butina algorithm.
     
     Args:
         fps (List[List[float]]): List of fingerprints.
@@ -15,7 +17,6 @@ def _cluster_fps(fps: List[List[float]], cutoff: float=0.2) -> Any:
     Returns:
         Any: Clusters.
     """
-
     # first generate the distance matrix:
     dists = []
     nfps = len(fps)
@@ -33,7 +34,7 @@ def generate_splits_from_clustering(
     fraction_val: float = 0.5,
     butina_cluster_cutoff: float = 0.4,
 ) -> Tuple[List, List, List]:
-    """Generates test/train/val splits given clustering.
+    """Generate test/train/val splits given clustering.
 
     Args:
         moad (MOADInterface): MOADInterface object.
@@ -45,7 +46,6 @@ def generate_splits_from_clustering(
     Returns:
         Tuple[List, List, List]: Train, validation, and test splits.
     """
-
     ligands = []
     targets = []
     for c in moad.classes:

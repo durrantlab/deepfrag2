@@ -14,7 +14,6 @@
 # ==============================================================================
 """Functions and classes related to optimization (weight updates)."""
 
-
 import re
 from typing import Callable, List, Optional, Union
 
@@ -38,7 +37,6 @@ class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
         name (:obj:`str`, `optional`):
             Optional name prefix for the returned tensors during the schedule.
     """
-
     def __init__(
         self,
         initial_learning_rate: float,
@@ -187,7 +185,6 @@ class AdamWeightDecay(tf.keras.optimizers.Adam):
             compatibility to allow time inverse decay of learning rate. ``lr`` is included for backward compatibility,
             recommended to use ``learning_rate`` instead.
     """
-
     def __init__(
         self,
         learning_rate: Union[float, tf.keras.optimizers.schedules.LearningRateSchedule] = 0.001,
@@ -285,7 +282,6 @@ class GradientAccumulator(object):
     replica context. Gradients will be accumulated locally on each replica and without synchronization. Users should
     then call ``.gradients``, scale the gradients if required, and pass the result to ``apply_gradients``.
     """
-
     # We use the ON_READ synchronization policy so that no synchronization is
     # performed on assignment. To get the value, we call .value() which returns the
     # value on the current replica without synchronization.

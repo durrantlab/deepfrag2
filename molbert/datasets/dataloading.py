@@ -12,7 +12,6 @@ class MolbertDataLoader(DataLoader):
        created.
     2) it does the valid filtering and trimming in the workers
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # See dataloader.pyi for examplanation of type: ignore

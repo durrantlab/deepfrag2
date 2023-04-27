@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for DPR."""
 
-
 import collections
 from typing import List, Optional, Union
 
@@ -98,7 +97,6 @@ class DPRContextEncoderTokenizerFast(BertTokenizerFast):
     Refer to superclass :class:`~transformers.BertTokenizerFast` for usage examples and documentation concerning
     parameters.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = CONTEXT_ENCODER_PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = CONTEXT_ENCODER_PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
@@ -116,7 +114,6 @@ class DPRQuestionEncoderTokenizerFast(BertTokenizerFast):
     Refer to superclass :class:`~transformers.BertTokenizerFast` for usage examples and documentation concerning
     parameters.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = QUESTION_ENCODER_PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = QUESTION_ENCODER_PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
@@ -196,7 +193,6 @@ CUSTOM_DPR_READER_DOCSTRING = r"""
         - ``input_ids``: List of token ids to be fed to a model.
         - ``attention_mask``: List of indices specifying which tokens should be attended to by the model.
     """
-
 
 @add_start_docstrings(CUSTOM_DPR_READER_DOCSTRING)
 class CustomDPRReaderTokenizerMixin:
@@ -380,7 +376,6 @@ class DPRReaderTokenizerFast(CustomDPRReaderTokenizerMixin, BertTokenizerFast):
     parameters.
 
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = READER_PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = READER_PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

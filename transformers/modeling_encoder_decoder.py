@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Classes to support Encoder-Decoder architectures """
 
-
 from typing import Optional
 
 from .configuration_encoder_decoder import EncoderDecoderConfig
@@ -58,7 +57,6 @@ ENCODER_DECODER_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 ENCODER_DECODER_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -123,7 +121,6 @@ ENCODER_DECODER_INPUTS_DOCSTRING = r"""
             - Without a prefix which will be input as ``**encoder_kwargs`` for the encoder forward function.
             - With a `decoder_` prefix which will be input as ``**decoder_kwargs`` for the decoder forward function.
 """
-
 
 @add_start_docstrings(ENCODER_DECODER_START_DOCSTRING)
 class EncoderDecoderModel(PreTrainedModel):
@@ -263,7 +260,6 @@ class EncoderDecoderModel(PreTrainedModel):
             >>> model = EncoderDecoderModel.from_pretrained("./bert2bert")
 
         """
-
         kwargs_encoder = {
             argument[len("encoder_") :]: value for argument, value in kwargs.items() if argument.startswith("encoder_")
         }

@@ -14,7 +14,6 @@
 # limitations under the License.
 """PyTorch Pegasus model, ported from https://github.com/google-research/pegasus"""
 
-
 from .configuration_pegasus import PegasusConfig
 from .file_utils import add_start_docstrings
 from .modeling_bart import BART_START_DOCSTRING, BartForConditionalGeneration

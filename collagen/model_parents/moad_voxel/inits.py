@@ -1,3 +1,5 @@
+"""Functions to initialize the trainer, model, voxel parameters, and device."""
+
 from typing import Optional
 from argparse import Namespace
 from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
@@ -8,12 +10,12 @@ from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch
 import os
 
-# A few function to initialize the trainer, model, voxel parameters, and device.
-
 
 class MoadVoxelModelInits(object):
+
     """A few function to initialize the trainer, model, voxel parameters, and
-    device."""
+    device.
+    """
 
     @staticmethod
     def init_trainer(args: Namespace) -> pl.Trainer:
@@ -25,7 +27,6 @@ class MoadVoxelModelInits(object):
         Returns:
             pl.Trainer: The trainer.
         """
-
         if args.default_root_dir is not None and not os.path.exists(
             args.default_root_dir
         ):
@@ -89,7 +90,6 @@ class MoadVoxelModelInits(object):
         Returns:
             pl.LightningModule: The model.
         """
-
         if not ckpt_filename:
             return self.model_cls(**vars(args))
 
@@ -98,7 +98,7 @@ class MoadVoxelModelInits(object):
 
     @staticmethod
     def init_voxel_params(args: Namespace) -> VoxelParams:
-        """Sets things like voxel resolution, dimensions, etc. TODO: make
+        """Set things like voxel resolution, dimensions, etc. TODO: make
         configurable via argparse. Currently hard coded.
 
         Args:
@@ -107,7 +107,6 @@ class MoadVoxelModelInits(object):
         Returns:
             VoxelParams: The voxel parameters.
         """
-
         return VoxelParamsDefault.DeepFrag
 
     @staticmethod
@@ -120,7 +119,6 @@ class MoadVoxelModelInits(object):
         Returns:
             torch.device: The device.
         """
-
         return torch.device("cpu") if args.cpu else torch.device("cuda")
 
     def init_warm_model(self, args: Namespace) -> pl.LightningModule:
@@ -132,7 +130,6 @@ class MoadVoxelModelInits(object):
         Returns:
             pl.LightningModule: The model.
         """
-
         model = self.model_cls(**vars(args))
         state_dict = torch.load(args.model_for_warm_starting)
         model.load_state_dict(state_dict)

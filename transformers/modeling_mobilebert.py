@@ -159,7 +159,6 @@ NORM2FN = {"layer_norm": torch.nn.LayerNorm, "no_norm": NoNorm}
 
 class MobileBertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         self.trigram_input = config.trigram_input
@@ -672,7 +671,6 @@ class MobileBertPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = MobileBertConfig
     pretrained_model_archive_map = MOBILEBERT_PRETRAINED_MODEL_ARCHIVE_LIST
     load_tf_weights = load_tf_weights_in_mobilebert
@@ -718,7 +716,6 @@ class MobileBertForPreTrainingOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     prediction_logits: torch.FloatTensor = None
     seq_relationship_logits: torch.FloatTensor = None
@@ -727,7 +724,6 @@ class MobileBertForPreTrainingOutput(ModelOutput):
 
 
 MOBILEBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -742,7 +738,6 @@ MOBILEBERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 MOBILEBERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -803,7 +798,6 @@ MOBILEBERT_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
 @add_start_docstrings(
     "The bare MobileBert Model transformer outputting raw hidden-states without any specific head on top.",
     MOBILEBERT_START_DOCSTRING,
@@ -812,7 +806,6 @@ class MobileBertModel(MobileBertPreTrainedModel):
     """
     https://arxiv.org/pdf/2004.02984.pdf
     """
-
     def __init__(self, config, add_pooling_layer=True):
         super().__init__(config)
         self.config = config
@@ -1226,7 +1219,6 @@ class MobileBertForNextSentencePrediction(MobileBertPreTrainedModel):
             >>> loss = outputs.loss
             >>> logits = outputs.logits
         """
-
         if "next_sentence_label" in kwargs:
             warnings.warn(
                 "The `next_sentence_label` argument is deprecated and will be removed in a future version, use `labels` instead.",

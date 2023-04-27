@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch REFORMER model. """
-
 import sys
 from collections import namedtuple
 from dataclasses import dataclass
@@ -116,7 +115,6 @@ class AxialPositionEmbeddings(nn.Module):
     """
     Constructs axial position embeddings. Useful for very long input sequences to save memory and time.
     """
-
     def __init__(self, config):
         super().__init__()
         self.axial_pos_shape = config.axial_pos_shape
@@ -208,7 +206,6 @@ class AxialPositionEmbeddings(nn.Module):
 
 class PositionEmbeddings(nn.Module):
     """Constructs conventional position embeddings of shape `[max_pos_embeddings, hidden_size]`."""
-
     def __init__(self, config):
         super().__init__()
         self.dropout = config.hidden_dropout_prob
@@ -222,7 +219,6 @@ class PositionEmbeddings(nn.Module):
 
 class ReformerEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         self.max_position_embeddings = config.max_position_embeddings
@@ -270,7 +266,6 @@ class EfficientAttentionMixin:
     """
     A few utilities for nn.Modules in Reformer, to be used as a mixin.
     """
-
     def _look_adjacent(self, vectors, num_chunks_before, num_chunks_after):
         """
         Used to implement attention between consecutive chunks.
@@ -987,7 +982,6 @@ class ReverseSort(Function):
     After chunked attention is applied which sorted clusters, original ordering has to be restored. Since customized
     backward function is used for Reformer, the gradients of the output vectors have to be explicitly sorted here.
     """
-
     @staticmethod
     def forward(ctx, out_vectors, logits, sorted_bucket_idx, undo_sorted_bucket_idx):
         # save sorted_bucket_idx for backprop
@@ -1424,7 +1418,6 @@ class ReformerLayer(nn.Module):
         This function sets a new seed for the attention layer to make dropout deterministic for both forward calls: 1
         normal forward call and 1 forward call in backward to recalculate activations.
         """
-
         # randomize seeds
         # use cuda generator if available
         if hasattr(torch.cuda, "default_generators") and len(torch.cuda.default_generators) > 0:
@@ -1577,7 +1570,6 @@ class _ReversibleFunction(Function):
     This way it is made sure that no memory expensive activations are saved during the forward pass. This function is
     heavily inspired by https://github.com/lucidrains/reformer-pytorch/blob/master/reformer_pytorch/reversible.py
     """
-
     @staticmethod
     def forward(
         ctx,
@@ -1770,7 +1762,6 @@ class ReformerPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = ReformerConfig
     base_model_prefix = "reformer"
 
@@ -1834,7 +1825,6 @@ class ReformerModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     last_hidden_state: torch.FloatTensor
     past_buckets_states: Optional[List[Tuple[torch.LongTensor, torch.FloatTensor]]] = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -1874,7 +1864,6 @@ class ReformerModelWithLMHeadOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     past_buckets_states: Optional[List[Tuple[torch.LongTensor, torch.FloatTensor]]] = None
@@ -1900,7 +1889,6 @@ REFORMER_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 REFORMER_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -1960,7 +1948,6 @@ REFORMER_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare Reformer Model transformer outputting raw hidden-states" "without any specific head on top.",
@@ -2456,7 +2443,6 @@ class ReformerForSequenceClassification(ReformerPreTrainedModel):
 
 class ReformerClassificationHead(nn.Module):
     """Head for sentence-level classification tasks."""
-
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(2 * config.hidden_size, config.hidden_size)

@@ -3,7 +3,6 @@ This is a utility script to generate a bunch of latent fragment embeddings from
 a ZINC database a run a T-SNE projection. You can use this to precompute a CSV
 database in the format that viz/fragment_explorer expects.
 """
-
 import argparse
 import time
 

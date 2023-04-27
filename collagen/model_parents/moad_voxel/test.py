@@ -1,3 +1,5 @@
+"""Test a model on the MOAD dataset."""
+
 import glob
 from argparse import ArgumentParser, Namespace
 import cProfile
@@ -37,7 +39,7 @@ from collagen.metrics.metrics import (
 
 
 def _return_paramter(object):
-    """Returns a paramerter. For use in imap_unordered.
+    """Return a paramerter. For use in imap_unordered.
 
     Args:
         object (Any): The parameter.
@@ -45,18 +47,19 @@ def _return_paramter(object):
     Returns:
         Any: The parameter returned.
     """
-
     return object
 
 
 class MoadVoxelModelTest(object):
+
+    """A model for testing."""
+
     def __init__(self, model_parent: Any):
-        """Initializes the MoadVoxelModelTest object.
+        """Initialize the MoadVoxelModelTest object.
         
         Args:
             model_parent (Any): The model parent.
         """
-
         self.model_parent = model_parent
 
     def _add_to_label_set(
@@ -69,10 +72,10 @@ class MoadVoxelModelTest(object):
         existing_label_set_fps: torch.Tensor,
         existing_label_set_smis: List[str],
     ) -> Tuple[torch.Tensor, List[str]]:
-        """This is a helper script. Adds fingerprints to a label set (lookup
-        table). This function allows you to include additional fingerprints
-        (e.g., from the training and validation sets) in the label set for
-        testing. Takes the fingerprints right from the split.
+        """Add fingerprints to a label set (lookup table). This function allows
+        you to include additional fingerprints (e.g., from the training and
+        validation sets) in the label set for testing. Takes the fingerprints
+        right from the split. A helper script.
         
         Args:
             self (MoadVoxelModelParent): This object
@@ -90,7 +93,6 @@ class MoadVoxelModelTest(object):
             Tuple[torch.Tensor, List[str]]: The updated fingerprint
                 tensor and smiles list.
         """
-
         # global multiprocessing_ctx
 
         # TODO: Harrison: How hard would it be to make it so data below doesn't
@@ -160,7 +162,7 @@ class MoadVoxelModelTest(object):
         voxel_params: VoxelParams = None,
         lbl_set_codes: List[str] = None,
     ) -> Tuple[torch.Tensor, List[Entry_info]]:
-        """Creates a label set (look-up) tensor and smiles list for testing. 
+        """Create a label set (look-up) tensor and smiles list for testing. 
         Can be comprised of the fingerprints in the train and/or test and/or
         val sets, as well as SMILES strings from a file.
 
@@ -186,7 +188,6 @@ class MoadVoxelModelTest(object):
             Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
                 tensor and smiles list.
         """
-
         if "all" in args.inference_label_sets:
             raise Exception(
                 "The 'all' value for the --inference_label_sets parameter is not a valid value in test mode"
@@ -248,7 +249,7 @@ class MoadVoxelModelTest(object):
         label_set_smis: List[str],
         device: torch.device,
     ) -> Tuple[torch.Tensor, List[str]]:
-        """Adds fingerprints from an SMI file to the label set.
+        """Add fingerprints from an SMI file to the label set.
 
         Args:
             args (Namespace): The user arguments.
@@ -261,7 +262,6 @@ class MoadVoxelModelTest(object):
             Tuple[torch.Tensor, List[str]]: The updated label set fingerprints
                 and SMILES strings.
         """
-
         smi_files = [
             f for f in lbl_set_codes if f not in ["train", "val", "test", "all"]
         ]
@@ -321,7 +321,6 @@ class MoadVoxelModelTest(object):
                 The PCA space, the predictions (all zeros), the label set
                 fingerprints, and the label set entry infos.
         """
-
         voxel_params = self.model_parent.init_voxel_params(args)
 
         # Get the label set to use. Note that it only does this once (for the
@@ -379,7 +378,7 @@ class MoadVoxelModelTest(object):
         lbl_set_codes: List[str],
         avg_over_ckpts_of_avgs: Any,
     ) -> Union[Tuple["PCAProject", torch.Tensor, torch.Tensor, List[Entry_info]], None]:
-        """This is the test run on a single checkpoint. You're iterating through
+        """Test run on a single checkpoint. You're iterating through
         multiple checkpoints. This allows output from multiple trained models to
         be averaged.
 
@@ -403,7 +402,6 @@ class MoadVoxelModelTest(object):
                 checkpoints), the label set fingerprints, and the label set
                 entry infos.
         """
-
         # all_test_data is modified in place and so does not need to be
         # returned.
 
@@ -519,7 +517,6 @@ class MoadVoxelModelTest(object):
             args (Namespace): The user arguments.
             pth (str, optional): The path to save the JSON file to. Defaults to None.
         """
-
         jsn = json.dumps(all_test_data, indent=4)
         jsn = re.sub(r"([\-0-9\.]+?,)\n +?([\-0-9\.])", r"\1 \2", jsn, 0, re.MULTILINE)
         jsn = re.sub(
@@ -582,7 +579,6 @@ class MoadVoxelModelTest(object):
             args (Namespace): The user arguments.
             ckpt_filename (Optional[str]): The checkpoint to use.
         """
-
         if not ckpt_filename:
             raise ValueError("Must specify a checkpoint in test mode")
         elif not args.inference_label_sets:
@@ -617,13 +613,12 @@ class MoadVoxelModelTest(object):
     def run_test(
         self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
     ):
-        """Runs a model on the test and evaluates the output.
+        """Run a model on the test and evaluates the output.
 
         Args:
             args (Namespace): The user arguments.
             ckpt_filename (Optional[str]): The checkpoint to use.
         """
-
         pr = cProfile.Profile()
         pr.enable()
 
@@ -773,7 +768,7 @@ class MoadVoxelModelTest(object):
     def _read_datasets_to_run_test(
         self, args: Namespace, voxel_params: VoxelParams
     ) -> Tuple[Any, Any]:
-        """Reads the dataset to run test on.
+        """Read the dataset to run test on.
         
         Args:
             args: The arguments passed to the program.
@@ -783,7 +778,6 @@ class MoadVoxelModelTest(object):
             A tuple of (dataset, dataset). The two are the same. TODO: Why
                 repeated twice?
         """
-
         if args.every_csv and args.data_dir:
             print("Loading MOAD database.")
             dataset = self._read_BindingMOAD_database(args, voxel_params)
@@ -803,7 +797,7 @@ class MoadVoxelModelTest(object):
     def _read_BindingMOAD_database(
         self, args: Namespace, voxel_params: VoxelParams
     ) -> MOADInterface:
-        """Reads the BindingMOAD database.
+        """Read the BindingMOAD database.
 
         Args:
             args: The arguments passed to the program.
@@ -812,7 +806,6 @@ class MoadVoxelModelTest(object):
         Returns:
             The MOAD database.
         """
-
         return MOADInterface(
             metadata=args.every_csv,
             structures_path=args.data_dir,
@@ -824,7 +817,7 @@ class MoadVoxelModelTest(object):
         )
 
     def _get_load_splits(self, args: Namespace) -> Any:
-        """Gets the splits to load.
+        """Get the splits to load.
         
         Args:
             args: The arguments passed to the program.
@@ -832,11 +825,10 @@ class MoadVoxelModelTest(object):
         Returns:
             The splits to load.
         """
-
         return args.load_splits
 
     def _get_cache(self, args: Namespace) -> Any:
-        """Gets the cache.
+        """Get the cache.
 
         Args:
             args: The arguments passed to the program.
@@ -844,11 +836,10 @@ class MoadVoxelModelTest(object):
         Returns:
             The cache.
         """
-
         return args.cache
 
     def _get_json_name(self, args: Namespace) -> str:
-        """Gets the name of the JSON file to save the results to.
+        """Get the name of the JSON file to save the results to.
 
         Args:
             args: The arguments passed to the program.
@@ -856,7 +847,6 @@ class MoadVoxelModelTest(object):
         Returns:
             The name of the JSON file to save the results to.
         """
-
         return (
             "predictions_MOAD"
             if (args.data_dir and args.every_csv)
@@ -864,11 +854,10 @@ class MoadVoxelModelTest(object):
         )
 
     def _save_examples_used(self, model: "pl.LightningModule", args: Namespace):
-        """Saves the examples used.
+        """Save the examples used.
 
         Args:
             model: The model.
             args: The arguments passed to the program.
         """
-
         self.model_parent.save_examples_used(model, args)

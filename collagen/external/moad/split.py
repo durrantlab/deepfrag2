@@ -1,3 +1,5 @@
+"""Functions required to split the MOAD into train, val, and test sets."""
+
 import os
 from dataclasses import dataclass
 from typing import List, Set, Tuple
@@ -7,14 +9,15 @@ from collagen.util import sorted_list
 import json
 from collagen.external.moad.split_clustering import generate_splits_from_clustering
 
-# This module has functions required to split the MOAD into train, val, and test
-# sets.
 
 split_rand_num_gen = None
 
 
 @dataclass
 class MOAD_splits_pdb_ids:
+
+    """MOAD splits in terms of PDB IDs."""
+
     train: List
     val: List
     test: List
@@ -22,6 +25,9 @@ class MOAD_splits_pdb_ids:
 
 @dataclass
 class MOAD_splits_smiles:
+
+    """MOAD splits in terms of SMILES."""
+
     train: Set[str]
     val: Set[str]
     test: Set[str]
@@ -37,7 +43,6 @@ def _split_seq_per_probability(seq: List, p: float) -> Tuple[List, List]:
     Returns:
         Tuple[List, List]: First and second parts of the sequence.
     """
-
     global split_rand_num_gen
     l = sorted_list(seq)
     size = len(l)
@@ -56,7 +61,6 @@ def _flatten(seq: List[List]) -> List:
     Returns:
         List: Flattened list.
     """
-
     a = []
     for s in seq:
         a += s
@@ -72,7 +76,6 @@ def _divide_into_two_parts(seq: List) -> Tuple[List, List]:
     Returns:
         Tuple[List, List]: First and second parts of the sequence.
     """
-
     global split_rand_num_gen
     l = sorted_list(seq)  # To make deterministic is same seed used
     size = len(l)
@@ -94,7 +97,6 @@ def _divide_into_three_parts(seq: List) -> Tuple[List, List, List]:
     Returns:
         Tuple[List, List, List]: First, second, and third parts of the sequence.
     """
-
     global split_rand_num_gen
     l = sorted_list(seq)
     size = len(l)
@@ -117,10 +119,9 @@ def _smiles_for(moad: "MOADInterface", targets: List[str]) -> Set[str]:
         moad (MOADInterface): MOADInterface object.
         targets (List[str]): List of targets.
         
-        Returns:
-            Set[str]: Set of SMILES strings.
+    Returns:
+        Set[str]: Set of SMILES strings.
     """
-
     smiles = set()
 
     for target in targets:
@@ -346,7 +347,6 @@ def compute_dataset_split(
     Returns:
         Tuple[MOAD_split, MOAD_split, MOAD_split]: train/val/test sets
     """
-
     if seed != 0:
         global split_rand_num_gen
         split_rand_num_gen = np.random.default_rng(seed)
@@ -402,7 +402,7 @@ def compute_dataset_split(
 
 
 def full_moad_split(moad: "MOADInterface") -> MOAD_split:
-    """Returns a split containing all targets and smiles strings."""
+    """Return a split containing all targets and smiles strings."""
     pdb_ids, all_smis = _generate_splits_from_scratch(
         moad,
         fraction_train=1.0,

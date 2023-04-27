@@ -26,7 +26,6 @@
 # Paper: Facebook FAIR's WMT19 News Translation Task Submission https://arxiv.org/abs/1907.06616
 #
 """PyTorch Fairseq model, ported from https://github.com/pytorch/fairseq/tree/master/examples/wmt19"""
-
 import math
 import random
 import warnings
@@ -111,7 +110,6 @@ _TOKENIZER_FOR_DOC = "FSMTTokenizer"
 # docstyle-ignore
 
 """
-
 Here is how to compare BLEU scores against fairseq implementation:
 
 # en-ru
@@ -179,9 +177,7 @@ PYTHONPATH="src:examples/seq2seq" python examples/seq2seq/run_eval.py facebook/w
 
 """
 
-
 FSMT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -215,7 +211,6 @@ FSMT_GENERATION_EXAMPLE = r"""
          # 1: Machine learning is great, isn't it? ...
 
 """
-
 FSMT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -263,7 +258,6 @@ FSMT_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 have_fused_layer_norm = False
 if torch.cuda.is_available():
@@ -417,7 +411,6 @@ class FSMTEncoder(nn.Module):
     Args:
         config: FSMTConfig
     """
-
     def __init__(self, config: FSMTConfig, embed_tokens):
         super().__init__()
         self.dropout = config.dropout
@@ -583,7 +576,6 @@ class FSMTDecoder(nn.Module):
         config: FSMTConfig
         embed_tokens (torch.nn.Embedding): output embedding
     """
-
     def __init__(self, config: FSMTConfig, embed_tokens: nn.Embedding):
         super().__init__()
         self.dropout = config.dropout
@@ -737,7 +729,6 @@ def _reorder_buffer(attn_cache, new_order):
 
 class Attention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
-
     def __init__(
         self,
         embed_dim,
@@ -1180,7 +1171,6 @@ class SinusoidalPositionalEmbedding(nn.Embedding):
 
     These embeddings get automatically extended in forward if more positions is needed.
     """
-
     def __init__(self, num_positions, embedding_dim, padding_idx):
         self.make_weight(num_positions, embedding_dim, padding_idx)
 

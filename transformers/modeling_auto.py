@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Model class. """
 
-
 import warnings
 from collections import OrderedDict
 
@@ -475,7 +474,6 @@ MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING = OrderedDict(
 )
 
 AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
-
         The model class to instantiate is selected based on the :obj:`model_type` property of the config object (either
         passed as an argument or loaded from :obj:`pretrained_model_name_or_path` if possible), or when it's missing,
         by falling back to using pattern matching on :obj:`pretrained_model_name_or_path`:
@@ -556,7 +554,6 @@ AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
                       attribute will be passed to the underlying model's ``__init__`` function.
 """
 
-
 class AutoModel:
     r"""
     This is a generic model class that will be instantiated as one of the base model classes of the library when
@@ -565,7 +562,6 @@ class AutoModel:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModel is designed to be instantiated "
@@ -613,7 +609,6 @@ class AutoModel:
     )
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
         r"""
-
         Examples::
 
             >>> from transformers import AutoConfig, AutoModel
@@ -657,7 +652,6 @@ class AutoModelForPreTraining:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForPreTraining is designed to be instantiated "
@@ -758,7 +752,6 @@ class AutoModelWithLMHead:
         :class:`~transformers.AutoModelForMaskedLM` for masked language models and
         :class:`~transformers.AutoModelForSeq2SeqLM` for encoder-decoder models.
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelWithLMHead is designed to be instantiated "
@@ -863,7 +856,6 @@ class AutoModelForCausalLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForCausalLM is designed to be instantiated "
@@ -957,7 +949,6 @@ class AutoModelForMaskedLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForMaskedLM is designed to be instantiated "
@@ -1051,7 +1042,6 @@ class AutoModelForSeq2SeqLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForSeq2SeqLM is designed to be instantiated "
@@ -1149,7 +1139,6 @@ class AutoModelForSequenceClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForSequenceClassification is designed to be instantiated "
@@ -1247,7 +1236,6 @@ class AutoModelForQuestionAnswering:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForQuestionAnswering is designed to be instantiated "
@@ -1346,7 +1334,6 @@ class AutoModelForTokenClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForTokenClassification is designed to be instantiated "
@@ -1445,7 +1432,6 @@ class AutoModelForMultipleChoice:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForMultipleChoice is designed to be instantiated "
@@ -1545,7 +1531,6 @@ class AutoModelForNextSentencePrediction:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForNextSentencePrediction is designed to be instantiated "

@@ -15,7 +15,6 @@
 # limitations under the License.
 """ Configuration base class and utilities."""
 
-
 import copy
 import json
 import os

@@ -9,6 +9,7 @@ from ..core.molecules.mol import Mol
 # TODO: NOT CURRENTLY USED
 
 class ZINCDataset(object):
+
     """
     A dataset that iterates over a raw ZINC directory.
 
@@ -105,7 +106,6 @@ class ZINCDatasetH5(object):
         in_mem (bool): If True, load the entire database file into memory. This can speed
             up iteration at the expense of RAM.
     """
-
     def __init__(
         self, db: str, make_3D: bool = True, in_mem: bool = False, transform=None
     ):

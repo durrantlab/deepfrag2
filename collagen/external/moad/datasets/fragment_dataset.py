@@ -1,3 +1,7 @@
+"""A Dataset that provides (receptor, parent, fragment) tuples by splitting
+ligands on single bonds. Used in DeepFrag, for example.
+"""
+
 import argparse
 from dataclasses import dataclass
 from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
@@ -12,6 +16,9 @@ import sys
 
 @dataclass
 class MOADFragmentDataset_entry(object):
+
+    """An entry in the MOADFragmentDataset."""
+
     pdb_id: str
     lig_to_frag_masses_chunk_idx: int
     ligand_id: str
@@ -19,6 +26,7 @@ class MOADFragmentDataset_entry(object):
 
 
 class MOADFragmentDataset(Dataset):
+
     """A Dataset that provides (receptor, parent, fragment) tuples by splitting
     ligands on single bonds. Used in DeepFrag, for example.
 
@@ -63,7 +71,7 @@ class MOADFragmentDataset(Dataset):
         transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
         args: argparse.Namespace = None,
     ):
-        """Initializes a MOADFragmentDataset.
+        """Initialize a MOADFragmentDataset.
         
         Args:
             moad (MOADInterface): An initialized MOADInterface object.
@@ -82,7 +90,6 @@ class MOADFragmentDataset(Dataset):
         Raises:
             ValueError: If the MOADInterface object is not initialized.
         """
-
         self.moad = moad
         self.split = split if split is not None else full_moad_split(moad)
         self.transform = transform
@@ -95,7 +102,7 @@ class MOADFragmentDataset(Dataset):
     def add_fragment_args(
         parent_parser: argparse.ArgumentParser,
     ) -> argparse.ArgumentParser:
-        """Adds user arguments so user can control how fragments are generated.
+        """Add user arguments so user can control how fragments are generated.
 
         Args:
             parent_parser (argparse.ArgumentParser): The parent parser to add
@@ -104,7 +111,6 @@ class MOADFragmentDataset(Dataset):
         Returns:
             argparse.ArgumentParser: The parent parser with added arguments.
         """
-
         # TODO: Refactor how this is done with defaults, etc.
 
         # For many of these, good to define default values in args_defaults.py
@@ -173,11 +179,10 @@ class MOADFragmentDataset(Dataset):
         Returns:
             bool: Always True.
         """
-
         return True
 
     def _get_and_validate_mol_props_param(self, args: argparse.Namespace) -> List[str]:
-        """Gets the mol_props parameter from the user arguments and validates
+        """Get the mol_props parameter from the user arguments and validates
         it.
 
         Args:
@@ -191,7 +196,6 @@ class MOADFragmentDataset(Dataset):
                 separates out string-list like "aromatic,charged" into
                 `["aromatic", "charged"]`.
         """
-
         mol_props = args.mol_props.split(",")
 
         if not self.mol_props_param_validated:
@@ -228,7 +232,7 @@ class MOADFragmentDataset(Dataset):
         frag_charged: bool,
         frag_smi: str,
     ) -> bool:
-        """This filter is passed to cache_filter.load_cache_and_filter via the
+        """Filter is passed to cache_filter.load_cache_and_filter via the
         make_dataset_entries_func parameter.
 
         Args:
@@ -243,7 +247,6 @@ class MOADFragmentDataset(Dataset):
         Returns:
             bool: Whether the fragment passes the filter.
         """
-
         if mass < args.min_frag_mass:
             # A fragment with no mass, so skip.
             if user_args.verbose:
@@ -307,7 +310,7 @@ class MOADFragmentDataset(Dataset):
     def _make_dataset_entries_func(
         self, args: argparse.Namespace, pdb_id: str, lig_name: str, lig_inf: Dict
     ) -> List[MOADFragmentDataset_entry]:
-        """This filter is passed to cache_filter.load_cache_and_filter as the
+        """Filter is passed to cache_filter.load_cache_and_filter as the
         make_dataset_entries_func parameter.
 
         Args:
@@ -320,7 +323,6 @@ class MOADFragmentDataset(Dataset):
             List[MOADFragmentDataset_entry]: The list of entries to add to the
                 dataset.
         """
-
         # Note that lig_inf contains all the data from the cache.
 
         # Here also doing some filtering of the fragments.
@@ -361,14 +363,13 @@ class MOADFragmentDataset(Dataset):
         return entries_to_return
 
     def _index(self, cache_file: Optional[Union[str, Path]] = None, cores: int = 1):
-        """Creates the cache and filtered cache, here referred to as an index.
+        """Create the cache and filtered cache, here referred to as an index.
 
         Args:
             cache_file (Optional[Union[str, Path]], optional): The path to the
                 cache file. Defaults to None.
             cores (int, optional): The number of cores to use. Defaults to 1.
         """
-
         cache, filtered_cache = load_cache_and_filter(
             self._lig_filter,
             self.moad,
@@ -394,16 +395,15 @@ class MOADFragmentDataset(Dataset):
         self._internal_index_valids_filtered = filtered_cache
 
     def __len__(self) -> int:
-        """Returns the number of entries in the dataset.
+        """Return the number of entries in the dataset.
         
         Returns:
             int: The number of entries in the dataset.
         """
-
         return len(self._internal_index_valids_filtered)
 
     def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
-        """Returns (receptor, parent, fragment)
+        """Return (receptor, parent, fragment)
         
         Args:
             idx (int): The index of the entry to return.
@@ -411,7 +411,6 @@ class MOADFragmentDataset(Dataset):
         Returns:
             Tuple[Mol, Mol, Mol]: (receptor, parent, fragment)
         """
-
         assert 0 <= idx <= len(self), "Index out of bounds"
         entry = None
         counter = 1

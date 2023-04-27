@@ -1,3 +1,5 @@
+"""A model for inference on a custom dataset."""
+
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
 from argparse import ArgumentParser, Namespace
 import os
@@ -13,7 +15,15 @@ import pickle
 
 
 class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
-    def __init__(self, model_parent):
+
+    """A model for inference on a custom set."""
+
+    def __init__(self, model_parent: Any):
+        """Initialize the model.
+
+        Args:
+            model_parent (Any): The parent model.
+        """
         MoadVoxelModelTest.__init__(self, model_parent)
 
     def _create_label_set(
@@ -30,7 +40,7 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
         voxel_params: VoxelParams = None,
         lbl_set_codes: List[str] = None,
     ) -> Tuple[torch.Tensor, List[Entry_info]]:
-        """Creates a label set (look-up) tensor and smiles list for inference
+        """Create a label set (look-up) tensor and smiles list for inference
         on custom label set. It can be comprised of the fingerprints in the
         BindingMOAD database, as well as SMILES strings from a file.
 
@@ -60,7 +70,6 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
             Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
                 tensor and smiles list.
         """
-
         if (
             "train" in args.inference_label_sets
             or "val" in args.inference_label_sets
@@ -161,7 +170,6 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
         Raises:
             ValueError: If the arguments are invalid.
         """
-
         if not ckpt:
             raise ValueError("Must specify a checkpoint in test mode")
         elif args.load_splits:
@@ -203,7 +211,6 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
         Returns:
             Tuple[PdbSdfDirInterface, MOADInterface]: The datasets.
         """
-
         print("Loading MOAD database.")
         moad = self._read_BindingMOAD_database(args, voxel_params)
 

@@ -1,3 +1,5 @@
+"""SMILES utilities."""
+
 from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import rdmolops
@@ -12,7 +14,6 @@ def neutralize_atoms(mol: Chem.Mol) -> Chem.Mol:
     Returns:
         Chem.Mol: Neutralized RDKit molecule.
     """
-
     pattern = Chem.MolFromSmarts("[+1!h0!$([*]~[-1,-2,-3,-4]),-1!$([*]~[+1,+2,+3,+4])]")
     at_matches = mol.GetSubstructMatches(pattern)
     at_matches_list = [y[0] for y in at_matches]
@@ -36,7 +37,6 @@ def standardize_smiles(smiles: str) -> str:
     Returns:
         str: Standardized SMILES string.
     """
-
     # Catch all errors
     try:
         # Convert smiles to rdkit mol

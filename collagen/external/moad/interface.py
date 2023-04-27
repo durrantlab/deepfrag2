@@ -1,3 +1,5 @@
+"""Interface for Binding MOAD data."""
+
 from dataclasses import field
 from pathlib import Path
 from typing import Dict, List, Union
@@ -9,6 +11,7 @@ import linecache
 
 
 class MOADInterface(object):
+
     """Base class for interacting with Binding MOAD data. Initialize by passing
     the path to "every.csv" and the path to a folder containing structure files
     (can be nested).
@@ -38,7 +41,7 @@ class MOADInterface(object):
         noh: bool,
         discard_distant_atoms: bool,
     ):
-        """Initializes a MOADInterface object.
+        """Initialize a MOADInterface object.
         
         Args:
             metadata (Union[str, Path]): Path to the metadata "every.csv" file.
@@ -49,7 +52,6 @@ class MOADInterface(object):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-
         self._load_classes_families_targets_ligands(
             metadata,
             cache_pdbs_to_disk,
@@ -67,8 +69,8 @@ class MOADInterface(object):
     def _init_lookup(self):
         """BindingMOAD is divided into clasess of proteins. These are dividied
         into families, which contain the individual targets. This iterates
-        through this hierarchy and just maps the pdb id to the target."""
-
+        through this hierarchy and just maps the pdb id to the target.
+        """
         for c in self.classes:
             for f in c.families:
                 for t in f.targets:
@@ -77,13 +79,12 @@ class MOADInterface(object):
         self._all_targets = list(self._lookup)
 
     @property
-    def targets(self) -> List["str"]:
-        """Returns a list of all targets (PDB IDs) in BindingMOAD.
+    def targets(self) -> List[str]:
+        """Get a list of all targets (PDB IDs) in BindingMOAD.
         
         Returns:
             List[str]: A list of all targets (PDB IDs) in BindingMOAD.
         """
-
         return self._all_targets
 
     def __getitem__(self, pdb_id: str) -> "MOAD_target":
@@ -96,7 +97,6 @@ class MOADInterface(object):
         Returns:
             MOAD_target: a MOAD_target object if found.
         """
-
         assert type(pdb_id) is str, f"PDB ID must be a str (got {type(pdb_id)})"
         k = pdb_id.lower()
         assert k in self._lookup, f'Target "{k}" not found.'
@@ -126,7 +126,6 @@ class MOADInterface(object):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-
         # Note that the output of this function gets put in self.classes.
 
 
@@ -199,14 +198,13 @@ class MOADInterface(object):
         self.classes = classes
 
     def _resolve_paths(self, path: Union[str, Path]):
-        """Resolves the paths to the PDBs for each target in the
+        """Resolve the paths to the PDBs for each target in the
         class=>family=>target hierarchy.
 
         Args:
             path (Union[str, Path]): Path to the directory containing the
                 PDBs.
         """
-
         path = Path(path)
 
         # Map the pdb to the file on disk.
@@ -256,6 +254,9 @@ class MOADInterface(object):
 
 
 class PdbSdfDirInterface(MOADInterface):
+
+    """Interface for data stored in a directory of PDBs and SDFs."""
+
     def __init__(
             self,
             structures_dir: Union[str, Path],
@@ -276,7 +277,6 @@ class PdbSdfDirInterface(MOADInterface):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-
         super().__init__(structures_dir, structures_dir, cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _load_classes_families_targets_ligands(
@@ -288,7 +288,7 @@ class PdbSdfDirInterface(MOADInterface):
         noh: bool,
         discard_distant_atoms: bool,
     ):
-        """Loads the classes, families, targets, and ligands from the
+        """Load the classes, families, targets, and ligands from the
         CSV file.
 
         Args:
@@ -300,7 +300,6 @@ class PdbSdfDirInterface(MOADInterface):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-
         classes = []
         curr_class = None
         curr_class_name = None
@@ -373,6 +372,9 @@ class PdbSdfDirInterface(MOADInterface):
 
 
 class SdfDirInterface(MOADInterface):
+
+    """Interface for data stored in a directory of SDFs."""
+
     def __init__(
             self,
             structures_dir: Union[str, Path],
@@ -382,6 +384,17 @@ class SdfDirInterface(MOADInterface):
             noh: bool,
             discard_distant_atoms: bool,
     ):
+        """Initialize the interface.
+        
+        Args:
+            structures_dir (Union[str, Path]): Path to the directory containing the
+                SDFs.
+            cache_pdbs_to_disk (bool): Whether to cache the PDBs to disk.
+            grid_width (int): Width of the grid.
+            grid_resolution (float): Resolution of the grid.
+            noh (bool): Whether to remove hydrogens.
+            discard_distant_atoms (bool): Whether to discard distant atoms.
+        """
         super().__init__(structures_dir, structures_dir, cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _load_classes_families_targets_ligands(
@@ -393,7 +406,7 @@ class SdfDirInterface(MOADInterface):
         noh: bool,
         discard_distant_atoms: bool,
     ):
-        """Loads the classes, families, targets, and ligands from the
+        """Load the classes, families, targets, and ligands from the
         CSV file.
 
         Args:
@@ -405,7 +418,6 @@ class SdfDirInterface(MOADInterface):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-
         # TODO: Concerned things like noh and dicard_distant_atoms not being
         # used. Need to investigate and understand this function better.
 

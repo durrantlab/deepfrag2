@@ -1,11 +1,12 @@
-# In order to enable both command-line and API use, we need to define default
-# values for the arguments independently of the argument parser. This is done by
-# defining a function that returns a dictionary of default values. The function
-# is called by the argument parser to set the default values and by the API to
-# get the default values.
+"""In order to enable both command-line and API use, we need to define default
+values for the arguments independently of the argument parser. This is done by
+defining a function that returns a dictionary of default values. The function is
+called by the argument parser to set the default values and by the API to get
+the default values.
 
-# I'm only going to define defaults here for select arguments. The rest will be
-# defined by the argparser or must be explicitly defined via the API.
+I'm only going to define defaults here for select arguments. The rest will be
+defined by the argparser or must be explicitly defined via the API.
+"""
 
 # TODO: Defaults should be defined in their respective modules and "hooked"
 # here.
@@ -16,12 +17,11 @@ from apps.deepfrag.AggregationOperators import Operator
 
 
 def get_default_args() -> dict:
-    """Returns a dictionary of default arguments for the deepfrag app.
+    """Return a dictionary of default arguments for the deepfrag app.
     
     Returns:
         dict: A dictionary of default arguments.
     """
-
     return {
         "fragment_representation": "rdk10",
         "aggregation_3x3_patches": Operator.MEAN.value,
@@ -69,7 +69,6 @@ def add_missing_args_to_namespace(args: argparse.Namespace) -> argparse.Namespac
     Returns:
         argparse.Namespace: The updated namespace.
     """
-
     defaults = get_default_args()
     for key, value in defaults.items():
         if not hasattr(args, key):

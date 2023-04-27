@@ -26,7 +26,6 @@ class TFBaseModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     last_hidden_state: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
     attentions: Optional[Tuple[tf.Tensor]] = None
@@ -59,7 +58,6 @@ class TFBaseModelOutputWithPooling(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     last_hidden_state: tf.Tensor = None
     pooler_output: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -95,7 +93,6 @@ class TFBaseModelOutputWithPast(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     last_hidden_state: tf.Tensor = None
     past_key_values: Optional[List[tf.Tensor]] = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -145,7 +142,6 @@ class TFSeq2SeqModelOutput(ModelOutput):
             Attentions weights of the encoder, after the attention softmax, used to compute the weighted average in the
             self-attention heads.
     """
-
     last_hidden_state: tf.Tensor = None
     past_key_values: Optional[List[tf.Tensor]] = None
     decoder_hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -177,7 +173,6 @@ class TFCausalLMOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -212,7 +207,6 @@ class TFCausalLMOutputWithPast(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     past_key_values: Optional[List[tf.Tensor]] = None
@@ -242,7 +236,6 @@ class TFMaskedLMOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -290,7 +283,6 @@ class TFSeq2SeqLMOutput(ModelOutput):
             Attentions weights of the encoder, after the attention softmax, used to compute the weighted average in the
             self-attention heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     past_key_values: Optional[List[tf.Tensor]] = None
@@ -322,7 +314,6 @@ class TFNextSentencePredictorOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
     attentions: Optional[Tuple[tf.Tensor]] = None
@@ -350,7 +341,6 @@ class TFSequenceClassifierOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -398,7 +388,6 @@ class TFSeq2SeqSequenceClassifierOutput(ModelOutput):
             Attentions weights of the encoder, after the attention softmax, used to compute the weighted average in the
             self-attention heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     past_key_values: Optional[List[tf.Tensor]] = None
@@ -433,7 +422,6 @@ class TFMultipleChoiceModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -462,7 +450,6 @@ class TFTokenClassifierOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -493,7 +480,6 @@ class TFQuestionAnsweringModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     start_logits: tf.Tensor = None
     end_logits: tf.Tensor = None
@@ -544,7 +530,6 @@ class TFSeq2SeqQuestionAnsweringModelOutput(ModelOutput):
             Attentions weights of the encoder, after the attention softmax, used to compute the weighted average in the
             self-attention heads.
     """
-
     loss: Optional[tf.Tensor] = None
     start_logits: tf.Tensor = None
     end_logits: tf.Tensor = None

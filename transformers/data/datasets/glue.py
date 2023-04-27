@@ -27,7 +27,6 @@ class GlueDataTrainingArguments:
     Using `HfArgumentParser` we can turn this class into argparse arguments to be able to specify them on the command
     line.
     """
-
     task_name: str = field(metadata={"help": "The name of the task to train on: " + ", ".join(glue_processors.keys())})
     data_dir: str = field(
         metadata={"help": "The input data dir. Should contain the .tsv files (or other data files) for the task."}
@@ -57,7 +56,6 @@ class GlueDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
-
     args: GlueDataTrainingArguments
     output_mode: str
     features: List[InputFeatures]

@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes."""
 
-
 import collections
 import copy
 import os
@@ -71,7 +70,6 @@ PRETRAINED_INIT_CONFIGURATION = {
 
 class BertJapaneseTokenizer(BertTokenizer):
     """BERT tokenizer for Japanese text"""
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -196,7 +194,6 @@ class BertJapaneseTokenizer(BertTokenizer):
 
 class MecabTokenizer:
     """Runs basic tokenization with MeCab morphological parser."""
-
     def __init__(
         self,
         do_lower_case=False,
@@ -304,7 +301,6 @@ class MecabTokenizer:
 
 class CharacterTokenizer:
     """Runs Character tokenziation."""
-
     def __init__(self, vocab, unk_token, normalize_text=True):
         """
         Constructs a CharacterTokenizer.

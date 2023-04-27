@@ -6,7 +6,6 @@
 
 3. Put those SVG texts into the row of an HTML table.
 """
-
 # NOTE: Considers only the first checkpoint.
 
 # Import the rdkit library
@@ -35,7 +34,6 @@ def DrawMol(mol, molSize: Tuple[int]=(450,150), kekulize: bool=True) -> str:
     Returns:
         str: The SVG text of the molecule.
     """
-
     mc = Chem.MolFromSmiles(mol)
     if kekulize:
         try:
@@ -62,7 +60,6 @@ def toHTMLTable(list_of_smi: List[str]) -> str:
     Returns:
         str: The HTML table.
     """
-
     # Create a list to store the SVG text
     svg_text = [DrawMol(smi.replace("[MATCH]", "")) for smi in list_of_smi]
     # Create a table row

@@ -1,5 +1,6 @@
-# Code to identify aromatic/aliphatic and charged/uncharged groups. Not perfect,
-# but pretty good.
+"""Code to identify aromatic/aliphatic and charged/uncharged groups. Not
+perfect, but pretty good.
+"""
 
 from rdkit import Chem
 
@@ -81,7 +82,7 @@ charged_substructs_to_ignore = [
 
 
 def is_aromatic(mol: Chem.Mol) -> bool:
-    """Determines if a molecule is aromatic. Below is overkill. Could probably
+    """Determine if a molecule is aromatic. Below is overkill. Could probably
     just keep the first one.
     
     Args:
@@ -90,7 +91,6 @@ def is_aromatic(mol: Chem.Mol) -> bool:
     Returns:
         True if aromatic, False if not.
     """
-
     return (
         len(mol.GetAromaticAtoms()) > 0
         or mol.HasSubstructMatch(Chem.MolFromSmarts("a"))
@@ -99,7 +99,7 @@ def is_aromatic(mol: Chem.Mol) -> bool:
 
 
 def is_charged(mol: Chem.Mol) -> bool:
-    """Determines if a molecule is charged or has the potential to be charged
+    """Determine if a molecule is charged or has the potential to be charged
     near neutral pH. 
 
     Args:
@@ -108,7 +108,6 @@ def is_charged(mol: Chem.Mol) -> bool:
     Returns:
         True if charged, False if not.
     """
-
     # If formal charge on any atom, then the molecule is charged. Easy solution.
     for atom in mol.GetAtoms():
         if atom.GetFormalCharge() != 0:

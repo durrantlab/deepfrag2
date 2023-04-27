@@ -14,7 +14,6 @@
 # limitations under the License.
 """ FSMT configuration """
 
-
 import copy
 
 from .configuration_utils import PretrainedConfig

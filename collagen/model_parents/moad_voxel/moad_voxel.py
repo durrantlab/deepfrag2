@@ -1,3 +1,5 @@
+"""Parent class for all MOAD voxel models."""
+
 from argparse import ArgumentParser, Namespace
 import json
 from typing import Type, TypeVar, List, Union
@@ -28,6 +30,9 @@ class MoadVoxelModelParent(
     MoadVoxelModelInference,
     MoadVoxelModelUtils,
 ):
+
+    """Parent class for all MOAD voxel models."""
+
     # TODO: I should not have done this multiple-inheritance thing. Need to
     # refactor. Very confusing. 
 
@@ -38,7 +43,7 @@ class MoadVoxelModelParent(
             model_cls: Type[pl.LightningModule],
             dataset_cls: Type[torch.utils.data.Dataset],
     ):
-        """Initializes the model parent.
+        """Initialize the model parent.
         
         Args:
             model_cls (Type[pl.LightningModule]): The model class. Soemthing 
@@ -46,7 +51,6 @@ class MoadVoxelModelParent(
             dataset_cls (Type[torch.utils.data.Dataset]): The dataset class.
                 Something like MOADFragmentDataset.
         """
-
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
 
@@ -54,7 +58,7 @@ class MoadVoxelModelParent(
 
     @staticmethod
     def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
-        """Adds the MOAD arguments to the parser.
+        """Add the MOAD arguments to the parser.
         
         Args:
             parent_parser (ArgumentParser): The parser to add the arguments to.
@@ -62,7 +66,6 @@ class MoadVoxelModelParent(
         Returns:
             ArgumentParser: The parser with the arguments added.
         """
-
         return arguments.add_moad_args(parent_parser)
 
     @staticmethod
@@ -76,14 +79,13 @@ class MoadVoxelModelParent(
         Returns:
             Namespace: The arguments with the MOAD arguments fixed.
         """
-
         return arguments.fix_moad_args(args)
 
     @staticmethod
     def pre_voxelize(
             args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T
     ) -> TMP_T:
-        """Preprocesses the entry before voxelization. Should be overwritten by
+        """Preprocess the entry before voxelization. Should be overwritten by
         child class.
         
         Args:
@@ -94,7 +96,6 @@ class MoadVoxelModelParent(
         Returns:
             TMP_T: The preprocessed entry.
         """
-
         return entry
 
     @staticmethod
@@ -104,7 +105,7 @@ class MoadVoxelModelParent(
             device: torch.device,
             batch: List[TMP_T],
     ) -> OUT_T:
-        """Voxelizes the batch. Should be overwritten by child class.
+        """Voxelize the batch. Should be overwritten by child class.
         
         Args:
             args (Namespace): The arguments parsed by argparse.
@@ -115,39 +116,35 @@ class MoadVoxelModelParent(
         Returns:
             OUT_T: The voxelized batch.
         """
-        
         raise NotImplementedError()
 
     @staticmethod
     def batch_eval(args: Namespace, batch: OUT_T):
-        """Evaluates the batch. Should be overwritten by child class.
+        """Evaluate the batch. Should be overwritten by child class.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
             batch (OUT_T): The batch to evaluate.
         """
-
         pass
 
     @staticmethod
     def custom_test(args: Namespace, predictions):
-        """Custom test. Should be overwritten by child class.
+        """Run custom test. Should be overwritten by child class.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
             predictions: The predictions.
         """
-
         pass
 
     @staticmethod
     def setup_fingerprint_scheme(args: Namespace):
-        """Sets up the fingerprint scheme.
+        """Set up the fingerprint scheme.
         
         Args:
             args (Namespace): The arguments parsed by argparse.
         """
-
         if args.fragment_representation == "rdk10":
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation == "rdkit_desc":
@@ -171,7 +168,7 @@ class MoadVoxelModelParent(
             raise Exception("The type of molecular descriptor to be used is wrong.")
 
     def load_checkpoint(self, args: Namespace = None, validate_args=True) -> Union[str, None]:
-        """Loads the checkpoint.
+        """Load the checkpoint.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
@@ -180,7 +177,6 @@ class MoadVoxelModelParent(
         Returns:
             Union[str, None]: The checkpoint filename to load.
         """
-
         ckpt_filename = self.get_checkpoint_filename(args, validate_args)
         if ckpt_filename is not None:
             print(f"Restoring from checkpoint: {ckpt_filename}")
@@ -188,12 +184,11 @@ class MoadVoxelModelParent(
         return ckpt_filename
 
     def run(self, args: Namespace = None):
-        """Runs the model.
+        """Run he model.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
         """
-
         self.disable_warnings()
         self.setup_fingerprint_scheme(args)
         ckpt_filename = self.load_checkpoint(args)
@@ -245,13 +240,12 @@ class MoadVoxelModelParent(
     #     return frag_counts
 
     def save_examples_used(self, model: pl.LightningModule, args: Namespace):
-        """Saves the examples used.
+        """Save the examples used.
         
         Args:
             model (pl.LightningModule): The model.
             args (Namespace): The arguments parsed by argparse.
         """
-
         if args.default_root_dir is None:
             pth = os.getcwd() + os.sep
         else:

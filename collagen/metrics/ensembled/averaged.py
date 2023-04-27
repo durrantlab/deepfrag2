@@ -1,30 +1,45 @@
-# ensemble averaged
+"""Given multiple predictions, this class can be used to average them. Much of
+the "meat" is in ParentEnsembled.
+"""
 
+from collagen.core.loader import DataLambda
 import torch
 from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
 
-# Given multiple predictions, this class can be used to average them. Much of
-# the "meat" is in ParentEnsembled.
-
 
 class AveragedEnsembled(ParentEnsembled):
+
+    """AveragedEnsembled is a class that can be used to average multiple
+    predictions. It is a child class of ParentEnsembled.
+    """
 
     dict_predictions_ensembled = {}
     aggregation = None
 
     def __init__(
         self,
-        trainer,
-        model,
-        test_data,
-        num_rotations,
-        device,
-        ckpt_name,
+        trainer: "pl.Trainer",
+        model: "pl.LightningModule",
+        test_data: DataLambda,
+        num_rotations: int,
+        device: torch.device,
+        ckpt_name: str,
         aggregation_function: Operator,
     ):
+        """Initialize the class.
+
+        Args:
+            trainer (pl.Trainer): The trainer object.
+            model (pl.LightningModule): The model object.
+            test_data (DataLambda): The test data.
+            num_rotations (int): The number of rotations to perform.
+            device (torch.device): The device to use.
+            ckpt_name (str): The name of the checkpoint.
+            aggregation_function (Operator): The aggregation function to use.
+        """
         if aggregation_function != Operator.MEAN.value and num_rotations == 1:
             raise Exception(
                 "Use more than one rotation to use an aggregation function other than Mean (average) function"
@@ -38,8 +53,13 @@ class AveragedEnsembled(ParentEnsembled):
         )
 
     def _create_initial_prediction_tensor(self) -> torch.Tensor:
-        # At this point, model is after inference on the first rotation. So it
-        # has a prediciton.
+        """Create the initial prediction tensor. This is the tensor that will
+        hold the predictions from all the rotations. At this point, model is
+        after inference on the first rotation. So it has a prediciton.
+        
+        Returns:
+            torch.Tensor: The initial prediction tensor.
+        """
         predictions_to_return = self.model.predictions.detach().clone()
 
         if self.num_rotations > 1 and self.aggregation is not None:
@@ -59,7 +79,6 @@ class AveragedEnsembled(ParentEnsembled):
                 rotation.
             idx (int): The index of the current rotation.
         """
-
         if self.num_rotations > 1 and self.aggregation is not None:
             predictions_ = predicitons_to_add.cpu().detach().clone()
             for i in range(len(predictions_)):
@@ -75,8 +94,8 @@ class AveragedEnsembled(ParentEnsembled):
 
     def _finalize_prediction_tensor(self):
         """Divide the predictions tensor by the number of rotations to get the
-        average."""
-
+        average.
+        """
         # TODO: Are we usig the alternate aggregation schemes?
 
         if self.num_rotations == 1 or self.aggregation is None:

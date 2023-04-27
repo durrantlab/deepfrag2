@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ PyTorch ProphetNet model, ported from ProphetNet repo(fairsequery_states version). """
-
 import copy
 import math
 import warnings
@@ -67,7 +66,6 @@ PROPHETNET_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 PROPHETNET_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -119,7 +117,6 @@ PROPHETNET_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 PROPHETNET_STANDALONE_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -147,7 +144,6 @@ PROPHETNET_STANDALONE_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 def softmax(hidden_state, dim, onnx_trace=False):
     if onnx_trace:
@@ -280,7 +276,6 @@ class ProphetNetSeq2SeqLMOutput(ModelOutput):
             encoder_sequence_length, encoder_sequence_length)`. Attentions weights of the encoder, after the attention
             softmax, used to compute the weighted average in the self-attention heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     logits_ngram: Optional[torch.FloatTensor] = None
@@ -366,7 +361,6 @@ class ProphetNetSeq2SeqModelOutput(ModelOutput):
             Attentions weights of the encoder, after the attention softmax, used to compute the weighted average in the
             self-attention heads.
     """
-
     last_hidden_state: torch.FloatTensor
     last_hidden_state_ngram: Optional[torch.FloatTensor] = None
     past_key_values: Optional[Tuple[torch.FloatTensor]] = None
@@ -437,7 +431,6 @@ class ProphetNetDecoderModelOutput(ModelOutput):
             Attentions weights of the cross-attention layer of the decoder, after the attention softmax, used to
             compute the weighted average in the
     """
-
     last_hidden_state: torch.FloatTensor
     last_hidden_state_ngram: Optional[torch.FloatTensor] = None
     past_key_values: Optional[Tuple[torch.FloatTensor]] = None
@@ -498,7 +491,6 @@ class ProphetNetDecoderLMOutput(ModelOutput):
             Attentions weights of the cross-attention layer of the decoder, after the attention softmax, used to
             compute the weighted average in the
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     logits_ngram: Optional[torch.FloatTensor] = None
@@ -563,7 +555,6 @@ class ProhpetNetPositionalEmbeddings(nn.Embedding):
     based on padding_idx or by setting padding_idx to None and ensuring that the appropriate position ids are passed to
     the forward function.
     """
-
     def __init__(self, config: ProphetNetConfig):
         super().__init__(config.max_position_embeddings, config.hidden_size, config.pad_token_id)
 
@@ -598,7 +589,6 @@ class ProhpetNetPositionalEmbeddings(nn.Embedding):
 
 class ProphetNetSelfAttention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
-
     def __init__(
         self,
         config: ProphetNetConfig,
@@ -721,7 +711,6 @@ class ProhpetNetFeedForward(nn.Module):
     """
     This is the residual two feed-forward layer block based on the original Transformer implementation.
     """
-
     def __init__(self, config: ProphetNetConfig, ffn_dim: int):
         super().__init__()
         self.activation_fn = ACT2FN[config.activation_function]
@@ -1033,7 +1022,6 @@ class ProphetNetEncoderLayer(nn.Module):
     """
     Encoder block for Prophetnet
     """
-
     def __init__(self, config: ProphetNetConfig):
         super().__init__()
         # 1st residual block
@@ -1062,7 +1050,6 @@ class ProphetNetDecoderLayer(nn.Module):
     """
     Decoder block for Prophetnet
     """
-
     def __init__(self, config: ProphetNetConfig):
         super().__init__()
         # 1st residual block
@@ -1138,7 +1125,6 @@ class ProphetNetEncoder(ProphetNetPreTrainedModel):
         The word embedding parameters. This can be used to initialize :class:`~transformers.ProphetNetEncoder` with
         pre-defined word embeddings instead of randomely initialized word embeddings.
     """
-
     def __init__(self, config: ProphetNetConfig, word_embeddings: nn.Embedding = None):
         super().__init__(config)
 
@@ -1186,7 +1172,6 @@ class ProphetNetEncoder(ProphetNetPreTrainedModel):
 
             >>> last_hidden_states = outputs.last_hidden_state
         """
-
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -1247,7 +1232,6 @@ class ProphetNetDecoder(ProphetNetPreTrainedModel):
         The word embedding parameters. This can be used to initialize :class:`~transformers.ProphetNetEncoder` with
         pre-defined word embeddings instead of randomely initialized word embeddings.
     """
-
     def __init__(self, config: ProphetNetConfig, word_embeddings: nn.Embedding = None):
         super().__init__(config)
 
@@ -1626,7 +1610,6 @@ class ProphetNetModel(ProphetNetPreTrainedModel):
             >>> last_hidden_states = outputs.last_hidden_state  # main stream hidden states
             >>> last_hidden_states_ngram = outputs.last_hidden_state_ngram  # predict hidden states
         """
-
         use_cache == use_cache if use_cache is not None else self.config.use_cache
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (

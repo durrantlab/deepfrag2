@@ -15,7 +15,6 @@
 # limitations under the License.
 """ PyTorch CTRL model."""
 
-
 import warnings
 
 import numpy as np
@@ -216,7 +215,6 @@ class CTRLPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = CTRLConfig
     base_model_prefix = "transformer"
 
@@ -234,7 +232,6 @@ class CTRLPreTrainedModel(PreTrainedModel):
 
 
 CTRL_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -249,7 +246,6 @@ CTRL_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 CTRL_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -311,7 +307,6 @@ CTRL_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare CTRL Model transformer outputting raw hidden-states without any specific head on top.",

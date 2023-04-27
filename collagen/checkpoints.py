@@ -1,3 +1,5 @@
+"""Contains classes and functions for saving and loading checkpoints."""
+
 import pytorch_lightning as pl
 import glob
 import os
@@ -8,8 +10,13 @@ import torch
 # and loads checkpoints in a way that respects previously saved checkpoints.
 
 class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
+    
+    """Save a checkpoint when the monitored metric improves. Inherits from the
+    ModelCheckpoint class.
+    """
+
     def on_save_checkpoint(self, trainer: "pl.Trainer", pl_module, checkpoint) -> dict:
-        """Called when saving a checkpoint.
+        """Run when saving a checkpoint.
 
         Args:
             trainer (pl.Trainer): Not used...
@@ -19,7 +26,6 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
         Returns:
             dict: The dictionary of values to save.
         """
-
         return {
             "monitor": self.monitor,
             "best_model_score": self.best_model_score,
@@ -32,14 +38,13 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
         }
 
     def on_load_checkpoint(self, trainer: "pl.Trainer", pl_module, callback_state):
-        """Called when loading a checkpoint.
+        """Run when loading a checkpoint.
 
         Args:
             trainer (pl.Trainer): Not used...
             pl_module (any): Not used...
             callback_state (dict): The state of values loaded.
         """
-
         self.best_model_score = callback_state["best_model_score"]
         self.best_model_path = callback_state["best_model_path"]
         self.best_model_score = callback_state["best_model_score"]
@@ -49,17 +54,18 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
 
 
 class MyModelCheckpointEveryEpoch(MyModelCheckpoint):
-    """Saves a checkpoint at the end of every epoch. Inherits from the
-    ModelCheckpoint class."""
+
+    """Save a checkpoint at the end of every epoch. Inherits from the
+    ModelCheckpoint class.
+    """
 
     def _save_checkpoint(self, trainer: "pl.Trainer", filepath: str) -> None:
-        """Saves a checkpoint.
+        """Save a checkpoint.
 
         Args:
             trainer (pl.Trainer): The trainer object.
             filepath (str): The path to save the checkpoint.
         """
-
         super()._save_checkpoint(trainer, filepath)
 
         state_dict_model = trainer._checkpoint_connector.dump_checkpoint(False)["state_dict"]
@@ -79,7 +85,6 @@ def get_last_checkpoint(args: "argparse.Namespace") -> str:
     Returns:
         str: The path to the last saved checkpoint.
     """
-
     saved_checkpoints = glob.glob(
         args.default_root_dir + os.sep + "last.ckpt", recursive=True
         # args.default_root_dir + os.sep + "**" + os.sep + "last.ckpt", recursive=True

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Flaubert configuration, based on XLM. """
-
 from .configuration_xlm import XLMConfig
 from .utils import logging
 
@@ -131,7 +130,6 @@ class FlaubertConfig(XLMConfig):
         lang_id (:obj:`int`, `optional`, defaults to 1):
             The ID of the language used by the model. This parameter is used when generating text in a given language.
     """
-
     model_type = "flaubert"
 
     def __init__(self, layerdrop=0.0, pre_norm=False, pad_token_id=2, bos_token_id=0, **kwargs):

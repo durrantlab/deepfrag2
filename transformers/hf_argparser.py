@@ -19,7 +19,6 @@ class HfArgumentParser(ArgumentParser):
     arguments to the parser after initialization and you'll get the output back after parsing as an additional
     namespace.
     """
-
     dataclass_types: Iterable[DataClassType]
 
     def __init__(self, dataclass_types: Union[DataClassType, Iterable[DataClassType]], **kwargs):

@@ -1,4 +1,6 @@
-# Given the json output file (test_results.json), find candidate bioisosteres.
+"""Given the json output file (test_results.json), find candidate
+bioisosteres.
+"""
 
 import json
 import sys
@@ -14,7 +16,7 @@ from rdkit.Chem import rdMolDescriptors
 
 
 def fix_smi(orig_smi: str) -> str:
-    """Fixes the SMILES string by removing the atom mapping numbers and
+    """Fix the SMILES string by removing the atom mapping numbers and
     adding hydrogens.
     
     Args:
@@ -23,7 +25,6 @@ def fix_smi(orig_smi: str) -> str:
     Returns:
         str: The fixed SMILES string.
     """
-
     smi = re.sub(r"\[[0-9]{0,5}\*\]", "*", orig_smi, 0, re.MULTILINE)
     mol = Chem.MolFromSmiles(smi)
     mol = AllChem.AddHs(mol)
@@ -75,7 +76,7 @@ TANIMOTO_CUTOFF = 0.2
 HEAVY_ATOM_COUNT_CUTOFF = 5
 
 def get_score(entry: dict) -> List[Tuple[str, float]]:
-    """Gets the score for a single entry.
+    """Get the score for a single entry.
     
     Args:
         entry (dict): The entry to get the score for.
@@ -84,7 +85,6 @@ def get_score(entry: dict) -> List[Tuple[str, float]]:
         List[Tuple[str, float]]: A list of tuples containing the SMILES string
             pair (correct, closest) and the score.
     """
-    
     correct_smi = fix_smi(entry["correct"]["fragmentSmiles"])
     closest_smiles = [
         fix_smi(e["smiles"]) for e in entry["averagedPrediction"]["closestFromLabelSet"]
@@ -125,7 +125,7 @@ colated.sort(key=lambda x: x[0], reverse=True)
 
 
 def calc_tanimoto(score, smi1: str, smi2: str) -> float:
-    """Calculates the tanimoto similarity between two SMILES strings.
+    """Calculate the tanimoto similarity between two SMILES strings.
 
     Args:
         smi1 (str): The first SMILES string.
@@ -134,7 +134,6 @@ def calc_tanimoto(score, smi1: str, smi2: str) -> float:
     Returns:
         float: The tanimoto similarity.
     """
-
     mol1 = Chem.MolFromSmiles(smi1)
     mol2 = Chem.MolFromSmiles(smi2)
 
@@ -150,7 +149,7 @@ with WorkerPool(n_jobs=12) as pool:
 colated = [[*c, t] for c, t in zip(colated, tanimotos) if t < TANIMOTO_CUTOFF]
 
 def mol_mass(smiles: str) -> float:
-    """Calculates the molecular mass of a SMILES string.
+    """Calculate the molecular mass of a SMILES string.
 
     Args:
         smiles (str): The SMILES string.
@@ -158,12 +157,11 @@ def mol_mass(smiles: str) -> float:
     Returns:
         float: The molecular mass.
     """
-
     mol = Chem.MolFromSmiles(smiles)
     return rdMolDescriptors.CalcExactMolWt(mol)
 
 def num_heavy_atoms(score: float, smi1: str, smi2: str, tanimoto: float) -> int:
-    """Calculates the number of heavy atoms in the largest molecule.
+    """Calculate the number of heavy atoms in the largest molecule.
 
     Args:
         score (float): The score. Not used.
@@ -174,7 +172,6 @@ def num_heavy_atoms(score: float, smi1: str, smi2: str, tanimoto: float) -> int:
     Returns:
         int: The number of heavy atoms in the largest molecule.
     """
-
     mol1 = Chem.MolFromSmiles(smi1)
     mol2 = Chem.MolFromSmiles(smi2)
     return max(mol1.GetNumHeavyAtoms(), mol2.GetNumHeavyAtoms())

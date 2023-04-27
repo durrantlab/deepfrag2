@@ -45,6 +45,7 @@ def _sample_inside(bmin, bmax, thresh, avoid):
 
 
 class MOADPocketDataset(Dataset):
+
     """
     A Dataset that provides (receptor, pos, neg) tuples where pos and neg are points in a binding pocket and outside of a binding pocket respectively.
 

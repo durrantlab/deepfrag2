@@ -1,8 +1,15 @@
+"""Sets up the default arguments for the app."""
+
 import argparse
 from multiprocessing import cpu_count
 
 
-def get_default_parser():
+def get_default_parser() -> argparse.ArgumentParser:
+    """Get the default parser for the app.
+
+    Returns:
+        argparse.ArgumentParser: The default parser.
+    """
     parser = argparse.ArgumentParser(conflict_handler='resolve')
 
     parser.add_argument('--train_file', default=None, type=str, required=True, help='The input train corpus.')
@@ -109,7 +116,11 @@ def get_default_parser():
     return parser
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
+    """Parse the arguments for the app.
+
+    Returns:
+        argparse.Namespace: The parsed arguments.
+    """
     parser = get_default_parser()
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()

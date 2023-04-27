@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tensorflow Longformer model. """
-
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
@@ -92,7 +91,6 @@ class TFLongformerBaseModelOutput(ModelOutput):
             self-attention heads. Those are the attention weights from every token with global attention to every token
             in the sequence.
     """
-
     last_hidden_state: tf.Tensor
     hidden_states: Optional[Tuple[tf.Tensor]] = None
     attentions: Optional[Tuple[tf.Tensor]] = None
@@ -139,7 +137,6 @@ class TFLongformerBaseModelOutputWithPooling(ModelOutput):
             self-attention heads. Those are the attention weights from every token with global attention to every token
             in the sequence.
     """
-
     last_hidden_state: tf.Tensor
     pooler_output: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -187,7 +184,6 @@ class TFLongformerQuestionAnsweringModelOutput(ModelOutput):
             self-attention heads. Those are the attention weights from every token with global attention to every token
             in the sequence.
     """
-
     loss: Optional[tf.Tensor] = None
     start_logits: tf.Tensor = None
     end_logits: tf.Tensor = None
@@ -201,7 +197,6 @@ def _compute_global_attention_mask(input_ids_shape, sep_token_indices, before_se
     Computes global attention mask by putting attention on all tokens before `sep_token_id` if `before_sep_token is
     True` else after `sep_token_id`.
     """
-
     assert sep_token_indices.shape[1] == 2, "`input_ids` should have two dimensions"
     question_end_index = tf.reshape(sep_token_indices, (input_ids_shape[0], 3, 2))[:, 0, 1]
     question_end_index = tf.cast(question_end_index[:, None], tf.dtypes.int32)  # size: batch_size x 1
@@ -229,7 +224,6 @@ def _compute_global_attention_mask(input_ids_shape, sep_token_indices, before_se
 # Copied from transformers.modeling_tf_roberta.TFRobertaLMHead
 class TFLongformerLMHead(tf.keras.layers.Layer):
     """Roberta Head for masked language modeling."""
-
     def __init__(self, config, input_embeddings, **kwargs):
         super().__init__(**kwargs)
 
@@ -265,7 +259,6 @@ class TFLongformerEmbeddings(tf.keras.layers.Layer):
     """
     Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
     """
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
 
@@ -854,7 +847,6 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         Same as _sliding_chunks_query_key_matmul but for attn_probs and value tensors. Returned tensor will be of the
         same shape as `attn_probs`
         """
-
         batch_size, seq_len, num_heads, head_dim = shape_list(value)
 
         tf.debugging.assert_equal(
@@ -1616,7 +1608,6 @@ class TFLongformerPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = LongformerConfig
     base_model_prefix = "longformer"
 
@@ -1634,7 +1625,6 @@ class TFLongformerPreTrainedModel(TFPreTrainedModel):
 
 
 LONGFORMER_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -1668,7 +1658,6 @@ LONGFORMER_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 
 LONGFORMER_INPUTS_DOCSTRING = r"""
     Args:
@@ -1728,14 +1717,12 @@ LONGFORMER_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
-
 @add_start_docstrings(
     "The bare Longformer Model outputting raw hidden-states without any specific head on top.",
     LONGFORMER_START_DOCSTRING,
 )
 class TFLongformerModel(TFLongformerPreTrainedModel):
     """
-
     This class copies code from :class:`~transformers.TFRobertaModel` and overwrites standard self-attention with
     longformer self-attention to provide the ability to process long sequences following the self-attention approach
     described in `Longformer: the Long-Document Transformer <https://arxiv.org/abs/2004.05150>`__ by Iz Beltagy,
@@ -1749,7 +1736,6 @@ class TFLongformerModel(TFLongformerPreTrainedModel):
     custom CUDA kernel to be memory and compute efficient.
 
     """
-
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
 

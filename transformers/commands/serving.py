@@ -48,7 +48,6 @@ class ServeModelInfoResult(BaseModel):
     """
     Expose model information
     """
-
     infos: dict
 
 
@@ -56,7 +55,6 @@ class ServeTokenizeResult(BaseModel):
     """
     Tokenize result model
     """
-
     tokens: List[str]
     tokens_ids: Optional[List[int]]
 
@@ -65,7 +63,6 @@ class ServeDeTokenizeResult(BaseModel):
     """
     DeTokenize result model
     """
-
     text: str
 
 
@@ -73,7 +70,6 @@ class ServeForwardResult(BaseModel):
     """
     Forward result model
     """
-
     output: Any
 
 
@@ -203,7 +199,6 @@ class ServeCommand(BaseTransformersCLICommand):
         **attention_mask**:
         **tokens_type_ids**:
         """
-
         # Check we don't have empty string
         if len(inputs) == 0:
             return ServeForwardResult(output=[], attention=[])

@@ -530,7 +530,6 @@ class SquadProcessor(DataProcessor):
     Processor for the SQuAD data set. overridden by SquadV1Processor and SquadV2Processor, used by the version 1.1 and
     version 2.0 of SQuAD, respectively.
     """
-
     train_file = None
     dev_file = None
 
@@ -577,7 +576,6 @@ class SquadProcessor(DataProcessor):
             >>> training_examples = get_examples_from_dataset(dataset, evaluate=False)
             >>> evaluation_examples = get_examples_from_dataset(dataset, evaluate=True)
         """
-
         if evaluate:
             dataset = dataset["validation"]
         else:
@@ -693,7 +691,6 @@ class SquadExample:
         answers: None by default, this is used during evaluation. Holds answers as well as their start positions.
         is_impossible: False by default, set to True if the example has no possible answer.
     """
-
     def __init__(
         self,
         qas_id,
@@ -766,7 +763,6 @@ class SquadFeatures:
         start_position: start of the answer token index
         end_position: end of the answer token index
     """
-
     def __init__(
         self,
         input_ids,
@@ -813,7 +809,6 @@ class SquadResult:
         start_logits: The logits corresponding to the start of the answer
         end_logits: The logits corresponding to the end of the answer
     """
-
     def __init__(self, unique_id, start_logits, end_logits, start_top_index=None, end_top_index=None, cls_logits=None):
         self.start_logits = start_logits
         self.end_logits = end_logits

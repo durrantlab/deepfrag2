@@ -1,3 +1,8 @@
+"""Calculating molecular properties for the many ligands and fragments in the
+BindingMOAD database is expensive. These classes cache the calculations for
+quick look-up later.
+"""
+
 import argparse
 from dataclasses import dataclass
 import json
@@ -12,15 +17,13 @@ from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
 from .moad_utils import fix_moad_smiles
 
-# Calculating molecular properties for the many ligands and fragments in the
-# BindingMOAD database is expensive. These classes cache the calculations for
-# quick look-up later.
-
 
 @dataclass
 class CacheItemsToUpdate(object):
+
     """Dataclass describing which calculated properties should be added to the
-    cache."""
+    cache.
+    """
 
     # Updatable
     lig_mass: bool = False
@@ -34,12 +37,11 @@ class CacheItemsToUpdate(object):
     frag_charged: bool = False
 
     def updatable(self) -> bool:
-        """Returns True if any of the properties are updatable.
+        """Return True if any of the properties are updatable.
         
         Returns:
             bool: True if any of the properties are updatable.
         """
-
         # Updatable
         return any(
             [
@@ -61,7 +63,7 @@ CACHE_ITEMS_TO_UPDATE = CacheItemsToUpdate()
 
 
 def _set_molecular_prop(func: function, func_input: Any, default_if_error: Any) -> Any:
-    """Provides a way to provide a default value if function fails.
+    """Provide a way to provide a default value if function fails.
 
     Args:
         func (function): The function to call.
@@ -73,7 +75,6 @@ def _set_molecular_prop(func: function, func_input: Any, default_if_error: Any) 
         Any: The result of the function, or the default value if the function
             fails.
     """
-
     try:
         return func(func_input)
     except Exception as e:
@@ -98,7 +99,6 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
         Tuple[str, dict]: A tuple containing the PDB ID and a dictionary with
             the associated information.
     """
-
     # global MOAD_REF
     # global CACHE_ITEMS_TO_UPDATE
 
@@ -202,13 +202,12 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
 
 
 def _set_cache_params_to_update(cache: dict):
-    """This looks at the current cache and determines which properties need to be
+    """Look at the current cache and determines which properties need to be
     added to it. Sets flags in CACHE_ITEMS_TO_UPDATE as appropriate.
 
     Args:
         cache (dict): The current cache.
     """
-
     pdb_ids_in_cache = list(cache.keys())
     if not pdb_ids_in_cache:  # empty
         return
@@ -254,7 +253,7 @@ def _build_moad_cache_file(
     cache_items_to_update: CacheItemsToUpdate,
     cores: int = None,
 ) -> dict:
-    """This builds/updates the whole BindingMOAD cache (on disk).
+    """Builds/updates the whole BindingMOAD cache (on disk).
 
     Args:
         filename (str): The filename to save the cache to.
@@ -265,7 +264,6 @@ def _build_moad_cache_file(
     Returns:
         dict: The cache.
     """
-
     # Load existing cache if it exists. So you can add to it.
     if filename and os.path.exists(filename):
         with open(filename) as f:
@@ -332,7 +330,7 @@ def load_cache_and_filter(
     cache_file: Optional[Union[str, Path]] = None,
     cores: int = 1,
 ) -> Tuple[dict, list]:
-    """This not only builds/gets the cache, but also filters the properties to
+    """Not only builds/gets the cache, but also filters the properties to
     retain only those BindingMOAD entries for training. For example, could
     filter by ligand mass.
     
@@ -351,7 +349,6 @@ def load_cache_and_filter(
     Returns:
         Tuple[dict, list]: The cache and the filtered cache.
     """
-
     # This function gets called from the dataset (e.g., fragment_dataset.py),
     # where the actual filters are set (via lig_filter_func).
 

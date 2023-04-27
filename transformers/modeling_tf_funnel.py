@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ TF 2.0 Funnel model. """
-
 import warnings
 from dataclasses import dataclass
 from typing import Optional, Tuple
@@ -76,7 +75,6 @@ INF = 1e6
 
 class TFFunnelEmbeddings(tf.keras.layers.Layer):
     """Construct the embeddings from word embeddings."""
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = config.vocab_size
@@ -163,7 +161,6 @@ class TFFunnelAttentionStructure:
     """
     Contains helpers for `TFFunnelRelMultiheadAttention `.
     """
-
     cls_token_type_id: int = 2
 
     def __init__(self, config):
@@ -760,7 +757,6 @@ class TFFunnelDecoder(tf.keras.layers.Layer):
 @keras_serializable
 class TFFunnelBaseLayer(tf.keras.layers.Layer):
     """ Base model without decoder """
-
     config_class = FunnelConfig
 
     def __init__(self, config, **kwargs):
@@ -851,7 +847,6 @@ class TFFunnelBaseLayer(tf.keras.layers.Layer):
 @keras_serializable
 class TFFunnelMainLayer(tf.keras.layers.Layer):
     """ Base model with decoder """
-
     config_class = FunnelConfig
 
     def __init__(self, config, **kwargs):
@@ -970,7 +965,6 @@ class TFFunnelMainLayer(tf.keras.layers.Layer):
 
 class TFFunnelDiscriminatorPredictions(tf.keras.layers.Layer):
     """Prediction module for the discriminator, made up of two dense layers."""
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         initializer = get_initializer(config.initializer_range)
@@ -1023,7 +1017,6 @@ class TFFunnelPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = FunnelConfig
     base_model_prefix = "funnel"
 
@@ -1048,14 +1041,12 @@ class TFFunnelForPreTrainingOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
     attentions: Optional[Tuple[tf.Tensor]] = None
 
 
 FUNNEL_START_DOCSTRING = r"""
-
     The Funnel Transformer model was proposed in `Funnel-Transformer: Filtering out Sequential Redundancy for Efficient
     Language Processing <https://arxiv.org/abs/2006.03236>`__ by Zihang Dai, Guokun Lai, Yiming Yang, Quoc V. Le.
 
@@ -1092,7 +1083,6 @@ FUNNEL_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 FUNNEL_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`({0})`):
@@ -1134,7 +1124,6 @@ FUNNEL_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     """

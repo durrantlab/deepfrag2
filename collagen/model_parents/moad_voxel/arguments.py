@@ -1,3 +1,5 @@
+"""Command-line arguments for the MOAD voxel model."""
+
 from argparse import Namespace, ArgumentParser
 from multiprocessing import cpu_count
 
@@ -13,7 +15,6 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     Returns:
         ArgumentParser: The parser with the MOAD arguments added.
     """
-
     parser = parent_parser.add_argument_group("Binding MOAD")
 
     parser.add_argument(
@@ -179,7 +180,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 
 
 def fix_moad_args(args: Namespace) -> Namespace:
-    """Fixes MOAD-specific arguments. Only works after arguments have been
+    """Fix MOAD-specific arguments. Only works after arguments have been
     parsed, so in a separate definition.
     
     Args:
@@ -188,7 +189,6 @@ def fix_moad_args(args: Namespace) -> Namespace:
     Returns:
         Namespace: The fixed arguments.
     """
-
     if args.cache is None:
         import os
         args.cache = f"{args.default_root_dir + os.sep}cache.json"

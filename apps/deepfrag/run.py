@@ -1,3 +1,5 @@
+"""Run DeepFrag."""
+
 import argparse
 import torch
 import pytorch_lightning as pl
@@ -22,7 +24,15 @@ def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
 
 
 class DeepFrag(MoadVoxelModelParent):
-    def __init__(self, args):
+
+    """DeepFrag model."""
+
+    def __init__(self, args: argparse.Namespace):
+        """Initialize the DeepFrag model parent.
+        
+        Args:
+            args (argparse.Namespace): The arguments.
+        """
         super().__init__(
             model_cls=DeepFragModelSDFData if args.additional_training_data_dir else DeepFragModel,
             dataset_cls=MOADFragmentDataset
@@ -32,6 +42,16 @@ class DeepFrag(MoadVoxelModelParent):
     def pre_voxelize(
         args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T
     ) -> TMP_T:
+        """Preprocess the entry before voxelization.
+        
+        Args:
+            args (argparse.Namespace): The arguments parsed by argparse.
+            voxel_params (VoxelParams): The voxelization parameters.
+            entry (ENTRY_T): The entry to preprocess.
+            
+        Returns:
+            TMP_T: The preprocessed entry.
+        """
         rec, parent, frag = entry
         rot = rand_rot()
         center = frag.connectors[0]
@@ -60,7 +80,17 @@ class DeepFrag(MoadVoxelModelParent):
         device: torch.device,
         batch: List[TMP_T]
     ) -> OUT_T:
-
+        """Voxelize the batch.
+        
+        Args:
+            args (argparse.Namespace): The arguments parsed by argparse.
+            voxel_params (VoxelParams): The voxelization parameters.
+            device (torch.device): The device to use.
+            batch (List[TMP_T]): The batch to voxelize.
+            
+        Returns:
+            OUT_T: The voxels, fingerprints, and fragment SMILES.
+        """
         voxels = torch.zeros(
             size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
             device=device,
@@ -95,7 +125,8 @@ class DeepFrag(MoadVoxelModelParent):
         return voxels, fingerprints, frag_smis
 
 
-def function_2run_deepfrag():
+def function_to_run_deepfrag():
+    """Run DeepFrag."""
     print("PyTorch", torch.__version__)
     print("PytorchLightning", pl.__version__)
 

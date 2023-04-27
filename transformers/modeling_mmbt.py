@@ -15,7 +15,6 @@
 # limitations under the License.
 """PyTorch MMBT model. """
 
-
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
@@ -33,7 +32,6 @@ _CONFIG_FOR_DOC = "MMBTConfig"
 
 class ModalEmbeddings(nn.Module):
     """Generic Modal Embeddings which takes in an encoder, and a transformer embedding."""
-
     def __init__(self, config, encoder, embeddings):
         super().__init__()
         self.config = config
@@ -99,7 +97,6 @@ MMBT_START_DOCSTRING = r"""
         encoder (:class: `~nn.Module`): Encoder for the second modality.
             It should take in a batch of modal inputs and return k, n dimension embeddings.
 """
-
 MMBT_INPUTS_DOCSTRING = r"""
     Args:
         input_modal (``torch.FloatTensor`` of shape ``(batch_size, ***)``):
@@ -174,7 +171,6 @@ MMBT_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare MMBT Model outputting raw hidden-states without any specific head on top.",
@@ -338,7 +334,6 @@ class MMBTForClassification(nn.Module):
         outputs = model(input_modal, input_ids, labels=labels)
         loss, logits = outputs[:2]
     """
-
     def __init__(self, config, transformer, encoder):
         super().__init__()
         self.num_labels = config.num_labels
