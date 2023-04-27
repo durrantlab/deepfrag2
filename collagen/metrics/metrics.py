@@ -147,7 +147,7 @@ def most_similar_matches(
     k: int,
     pca_project: PCAProject = None,
     ignore_duplicates=False,
-) -> List[List[str, float, List[float]]]:
+) -> List[Tuple[str, float, List[float]]]:
     """Identify most similar entires in fingerprint library.
 
     Args:
@@ -157,7 +157,7 @@ def most_similar_matches(
         ignore_duplicates (bool): If True, ignore duplicate fingerprints.
 
     Returns:
-        List[List[str, float, List[float]]]: List of [SMILES, distance,
+        List[Tuple[str, float, List[float]]]: List of [SMILES, distance,
             projected fingerprint] for each entry.
     """
     if ignore_duplicates:
