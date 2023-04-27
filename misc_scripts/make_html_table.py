@@ -23,7 +23,7 @@ test_json_filename = sys.argv[1]
 
 pattern = re.compile("<\?xml.*\?>")
 
-def DrawMol(mol, molSize: Tuple[int, int]=(450,150), kekulize: bool=True) -> str:
+def DrawMol(mol, molSize=(450,150), kekulize: bool=True) -> str:
     """Draw molecule in SVG format.
     
     Args:
