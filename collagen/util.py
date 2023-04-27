@@ -156,3 +156,5 @@ def sorted_list(st: set) -> List:
     Returns:
         List: Sorted list from a set.
     """
+    return sorted(st)
+
