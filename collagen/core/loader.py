@@ -76,7 +76,7 @@ class MultiLoader(object):
         num_dataloader_workers: int = 1,
         batch_size: int = 1,
         shuffle: bool = False,
-        collate_fn: function = _collate_none,
+        collate_fn: callable = _collate_none,
         max_voxels_in_memory: int = 80,
     ):
         """Initialize the MultiLoader.
@@ -89,7 +89,7 @@ class MultiLoader(object):
             batch_size (int, optional): The batch size. Defaults to 1.
             shuffle (bool, optional): Whether to shuffle the data. Defaults to
                 False.
-            collate_fn (function, optional): The collate function to use. 
+            collate_fn (callable, optional): The collate function to use. 
                 Defaults to _collate_none.
             max_voxels_in_memory (int, optional): The maximum number of voxels
                 to keep in memory. Defaults to 80.
@@ -333,11 +333,11 @@ class MultiLoader(object):
         """
         return DataBatch(self, batch_size)
 
-    def map(self, fn: function) -> "DataLambda":
+    def map(self, fn: callable) -> "DataLambda":
         """Apply a function to each item in the data.
 
         Args:
-            fn (function): The function to apply.
+            fn (callable): The function to apply.
 
         Returns:
             DataLambda: A DataLambda object.
@@ -349,12 +349,12 @@ class DataLambda(MultiLoader):
 
     """Apply a function to each item in the data."""
 
-    def __init__(self, data: Any, fn: function):
+    def __init__(self, data: Any, fn: callable):
         """Initialize a DataLambda object.
         
         Args:
             data (Any): The data.
-            fn (function): The function to apply to each item in the data.
+            fn (callable): The function to apply to each item in the data.
         """
         self.data = data
         self.fn = fn

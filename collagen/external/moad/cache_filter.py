@@ -62,11 +62,11 @@ class CacheItemsToUpdate(object):
 CACHE_ITEMS_TO_UPDATE = CacheItemsToUpdate()
 
 
-def _set_molecular_prop(func: function, func_input: Any, default_if_error: Any) -> Any:
+def _set_molecular_prop(func: callable, func_input: Any, default_if_error: Any) -> Any:
     """Provide a way to provide a default value if function fails.
 
     Args:
-        func (function): The function to call.
+        func (callable): The function to call.
         func_input (Any): The input to the function.
         default_if_error (Any): The default value to return if the function
             fails.
@@ -321,11 +321,11 @@ def _build_moad_cache_file(
 
 
 def load_cache_and_filter(
-    lig_filter_func: function,  # The function used to filter the ligands
+    lig_filter_func: callable,  # The function used to filter the ligands
     moad: "MOADInterface",
     split: "MOAD_split",
     args: argparse.Namespace,
-    make_dataset_entries_func: function,
+    make_dataset_entries_func: callable,
     cache_items_to_update: CacheItemsToUpdate,
     cache_file: Optional[Union[str, Path]] = None,
     cores: int = 1,
