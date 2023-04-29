@@ -34,6 +34,7 @@ def get_default_args() -> dict:
         "max_frag_mass": 150,
         "max_frag_dist_to_recep": 4,
         "min_frag_num_heavy_atoms": 1,
+        "max_frag_num_heavy_atoms": 9999,
         "fraction_train": 0.6,
         "fraction_val": 0.5,
         "noh": True,

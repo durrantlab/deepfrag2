@@ -147,6 +147,14 @@ class MOADFragmentDataset(Dataset):
         )
 
         parser.add_argument(
+            "--max_frag_num_heavy_atoms",
+            required=False,
+            type=int,
+            # default=1,
+            help="Consider only fragments that have at most this number of heavy atoms. Default is 1.",
+        )
+
+        parser.add_argument(
             "--mol_props",
             required=False,
             type=str,
@@ -269,6 +277,13 @@ class MOADFragmentDataset(Dataset):
             if user_args.verbose:
                 print(
                     f"Fragment rejected; has too few heavy atoms: {frag_num_heavy_atom}"
+                )
+            return False
+        
+        if frag_num_heavy_atom > args.max_frag_num_heavy_atoms:
+            if user_args.verbose:
+                print(
+                    f"Fragment rejected; has too many heavy atoms: {frag_num_heavy_atom}"
                 )
             return False
 
