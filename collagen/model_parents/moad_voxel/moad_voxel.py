@@ -97,7 +97,7 @@ class MoadVoxelModelParent(
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()
         else:
-            raise Exception("The type of molecular descriptor to be used is wrong.")
+            raise Exception("The fragment representation is wrong.")
 
     def load_checkpoint(self, args: Namespace = None, validate_args=True):
         ckpt = self.get_checkpoint(args, validate_args)
