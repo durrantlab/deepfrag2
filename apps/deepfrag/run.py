@@ -34,8 +34,10 @@ class DeepFrag(MoadVoxelModelParent):
             args (argparse.Namespace): The arguments.
         """
         super().__init__(
-            model_cls=DeepFragModelSDFData if args.additional_training_data_dir else DeepFragModel,
-            dataset_cls=MOADFragmentDataset
+            model_cls=DeepFragModelSDFData
+            if args.additional_training_data_dir
+            else DeepFragModel,
+            dataset_cls=MOADFragmentDataset,
         )
 
     @staticmethod
@@ -60,7 +62,7 @@ class DeepFrag(MoadVoxelModelParent):
             fragment_smiles=frag.smiles(True),
             parent_smiles=parent.smiles(True),
             receptor_name=rec.meta["name"],
-            connection_pt=center
+            connection_pt=center,
         )
 
         # if rec.meta["name"] == "Receptor 2v0u":
@@ -70,7 +72,7 @@ class DeepFrag(MoadVoxelModelParent):
             rec.voxelize_delayed(voxel_params, center=center, rot=rot),
             parent.voxelize_delayed(voxel_params, center=center, rot=rot),
             _fingerprint_fn(args, frag),
-            payload
+            payload,
         )
 
     @staticmethod
@@ -78,7 +80,7 @@ class DeepFrag(MoadVoxelModelParent):
         args: argparse.Namespace,
         voxel_params: VoxelParams,
         device: torch.device,
-        batch: List[TMP_T]
+        batch: List[TMP_T],
     ) -> OUT_T:
         """Voxelize the batch.
         
@@ -91,15 +93,21 @@ class DeepFrag(MoadVoxelModelParent):
         Returns:
             OUT_T: The voxels, fingerprints, and fragment SMILES.
         """
-        voxels = torch.zeros(
-            size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
-            device=device,
-        ) if voxel_params.calc_voxels else None
+        voxels = (
+            torch.zeros(
+                size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
+                device=device,
+            )
+            if voxel_params.calc_voxels
+            else None
+        )
 
-        fingerprints = torch.zeros(
-            size=(len(batch), args.fp_size), device=device
-        ) if voxel_params.calc_fps else None
-        
+        fingerprints = (
+            torch.zeros(size=(len(batch), args.fp_size), device=device)
+            if voxel_params.calc_fps
+            else None
+        )
+
         frag_smis = []
 
         for i in range(len(batch)):
@@ -119,7 +127,7 @@ class DeepFrag(MoadVoxelModelParent):
 
             if voxel_params.calc_fps:
                 fingerprints[i] = frag
-            
+
             frag_smis.append(smi)
 
         return voxels, fingerprints, frag_smis
@@ -132,8 +140,9 @@ def function_to_run_deepfrag():
 
     args = get_args(
         parser_funcs=[
-            MoadVoxelModelParent.add_moad_args, DeepFragModel.add_model_args, 
-            MOADFragmentDataset.add_fragment_args
+            MoadVoxelModelParent.add_moad_args,
+            DeepFragModel.add_model_args,
+            MOADFragmentDataset.add_fragment_args,
         ],
         post_parse_args_funcs=[MoadVoxelModelParent.fix_moad_args],
         is_pytorch_lightning=True,

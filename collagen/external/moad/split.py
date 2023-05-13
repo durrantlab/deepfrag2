@@ -67,7 +67,7 @@ def _flatten(seq: List[List]) -> List:
     return a
 
 
-def _divide_into_two_parts(seq: List) -> Tuple[List, List]:
+def _random_divide_two_prts(seq: List) -> Tuple[List, List]:
     """Divide a sequence into two parts.
 
     Args:
@@ -88,7 +88,7 @@ def _divide_into_two_parts(seq: List) -> Tuple[List, List]:
     return (set(l[:half_size]), set(l[half_size:]))
 
 
-def _divide_into_three_parts(seq: List) -> Tuple[List, List, List]:
+def _random_divide_three_prts(seq: List) -> Tuple[List, List, List]:
     """Divide a sequence into three parts.
 
     Args:
@@ -165,19 +165,18 @@ def _generate_splits_from_scratch(
     butina_cluster_cutoff: float = 0.4,
 ):
     if not butina_cluster_cutoff:
-        print("Building training/validation/test sets in a random way")
-        # Not loading previously determined splits from disk, so generate based on
-        # random seed.
+        print("Building training/validation/test sets via random selection")
+        # Not loading previously determined splits from disk, so generate based
+        # on random seed.
 
         # First, get a flat list of all the families (not grouped by class).
         families: List[List[str]] = []
         for c in moad.classes:
-            for f in c.families:
-                families.append([x.pdb_id for x in f.targets])
+            families.extend([x.pdb_id for x in f.targets] for f in c.families)
 
         # Note that we're working with families (not individual targets in those
-        # families) so members of same family are shared across train, val, test
-        # sets.
+        # families) so members of same family are not shared across train, val,
+        # test sets.
 
         # Divide the families into train/val/test sets.
         train_families, other_families = _split_seq_per_probability(
@@ -208,7 +207,7 @@ def _generate_splits_from_scratch(
     # impose those limits here.
     pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
 
-    # Get all the smiles associated with the targets in each set.
+    # Get all the ligand SMILES associated with the targets in each set.
     all_smis = MOAD_splits_smiles(
         train=_smiles_for(moad, pdb_ids.train),
         val=_smiles_for(moad, pdb_ids.val),
@@ -217,19 +216,28 @@ def _generate_splits_from_scratch(
 
     if prevent_smiles_overlap:
         # Reassign overlapping SMILES.
+
+        # Find the overlaps (intersections) between pairs of sets.
         train_val = all_smis.train & all_smis.val
         val_test = all_smis.val & all_smis.test
         train_test = all_smis.train & all_smis.test
+
+        # Find the SMILES that are in two sets but not in the third one
         train_val_not_test = train_val - all_smis.test
         val_test_not_train = val_test - all_smis.train
         train_test_not_val = train_test - all_smis.val
+
+        # Find SMILES that are present in all three sets
         train_test_val = all_smis.train & all_smis.val & all_smis.test
 
-        a_train, a_val = _divide_into_two_parts(train_val_not_test)
-        b_val, b_test = _divide_into_two_parts(val_test_not_train)
-        c_train, c_test = _divide_into_two_parts(train_test_not_val)
-        d_train, d_val, d_test = _divide_into_three_parts(train_test_val)
+        # Overlapping SMILES are reassigned to temporary sets
+        a_train, a_val = _random_divide_two_prts(train_val_not_test)
+        b_val, b_test = _random_divide_two_prts(val_test_not_train)
+        c_train, c_test = _random_divide_two_prts(train_test_not_val)
+        d_train, d_val, d_test = _random_divide_three_prts(train_test_val)
 
+        # Update SMILES sets to include the reassigned SMILES and exclude the
+        # overlapping ones
         all_smis.train = (
             (all_smis.train - (all_smis.val | all_smis.test))
             | a_train
@@ -242,6 +250,49 @@ def _generate_splits_from_scratch(
         all_smis.test = (
             (all_smis.test - (all_smis.train | all_smis.val)) | b_test | c_test | d_test
         )
+
+    # TODO: Consider this GPT4 suggestion:
+
+    # The problem with this approach is that even if smiles are independent, the
+    # corresponding pdb ids are not also moved into the appropriate
+    # train/test/val sets, so this data is thrown out elsewhere in the code. I
+    # need some code that moves pdbs and the associated smiles together. And
+    # yet, at the same time, it is still important that pdbs of the same family
+    # are not split across the three sets, and it is still important that
+    # identical smiles do not appear in the train/test/val sets. What new
+    # approach do you recommend?
+
+    # To address this issue, you can modify the approach to first group the data
+    # by both protein family and ligand identity (SMILES) and then split the
+    # groups into training, validation, and testing sets. This will ensure that
+    # PDB IDs and their associated SMILES are moved together while maintaining
+    # the required constraints. Here's a recommended approach:
+
+    # 1. Group the data by protein family and ligand identity (SMILES):
+
+    #   a. Create a dictionary with keys as tuples of protein family and SMILES,
+    #   and values as lists of corresponding PDB IDs.
+
+    # 2. Split the groups into training, validation, and testing sets:
+
+    #   a. Use the same splitting function (e.g., `_split_seq_per_probability`)
+    #   or any other method to split the dictionary keys (protein family, SMILES
+    #   tuples) into training, validation, and testing groups.
+
+    # 3. Flatten the PDB ID lists for each set:
+
+    #   a. For each set (training, validation, testing), go through the
+    #   corresponding (protein family, SMILES) keys and collect their PDB IDs,
+    #   creating a list of PDB IDs for each set.
+
+    # 4. Create SMILES sets for each split:
+
+    #   a. Extract unique SMILES from the (protein family, SMILES) keys for each
+    #   set.
+
+    # By following this approach, you ensure that PDB IDs and their associated
+    # SMILES are moved together while keeping protein families and identical
+    # SMILES from being split across the training, validation, and testing sets.
 
     return pdb_ids, all_smis
 
@@ -368,8 +419,8 @@ def compute_dataset_split(
     # test_all_smis = None
 
     if load_splits is None:
-        # Not loading previously determined splits from disk, so generate
-        # based on random seed.
+        # Not loading previously determined splits from disk, so generate based
+        # on random seed.
         pdb_ids, all_smis = _generate_splits_from_scratch(
             dataset,
             fraction_train,
@@ -390,9 +441,9 @@ def compute_dataset_split(
         # Save spits and seed to json (for record keeping).
         _save_split(save_splits, seed, pdb_ids, all_smis)
 
-    print("Training dataset size: " + str(len(pdb_ids.train)))
-    print("Validation dataset size: " + str(len(pdb_ids.val)))
-    print("Test dataset size: " + str(len(pdb_ids.test)))
+    print(f"Training dataset size: {len(pdb_ids.train)}")
+    print(f"Validation dataset size: {len(pdb_ids.val)}")
+    print(f"Test dataset size: {len(pdb_ids.test)}")
 
     return (
         MOAD_split(name="TRAIN", targets=pdb_ids.train, smiles=all_smis.train),
