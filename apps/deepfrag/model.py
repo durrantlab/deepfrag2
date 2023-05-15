@@ -295,7 +295,8 @@ class DeepFragModel(pl.LightningModule):
                     # Don't use set here. If one ligand has multiple identical
                     # fragments, I want them all listed.
                     self._examples_used[lbl][entry_info.receptor_name] = []
-                self._examples_used[lbl][entry_info.receptor_name].append(entry_info.fragment_smiles)
+                if entry_info.fragment_smiles not in self._examples_used[lbl][entry_info.receptor_name]:
+                    self._examples_used[lbl][entry_info.receptor_name].append(entry_info.fragment_smiles)
 
     def get_examples_used(self):
         to_return = {"counts": {}}

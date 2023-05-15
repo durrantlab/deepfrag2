@@ -409,6 +409,11 @@ class PdbSdfDir_ligand(MOAD_ligand):
 
 
 @dataclass
+class PdbSdfCsv_ligand(PdbSdfDir_ligand):
+    fragments: Any
+
+
+@dataclass
 class MOAD_split(object):
     name: str
     targets: List[str]

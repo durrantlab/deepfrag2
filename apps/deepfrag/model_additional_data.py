@@ -7,15 +7,48 @@ from rdkit import Chem
 import numpy as np
 import random
 import torch
+from collagen.metrics import cos_loss
 
 
-class DeepFragModelSDFData(DeepFragModel):
+class DeepFragModelGoodBadDataFinetune(DeepFragModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.is_cpu = kwargs["cpu"]
         self.fragment_representation = kwargs["fragment_representation"]
-        self.fragments = DeepFragModelSDFData.__get_train_val_sdf_sets(**kwargs)
+        self.moad = None
+
+    def set_moad_database(self, moad):
+        self.moad = moad
+
+    def loss(self, pred, fps, entry_infos, batch_size):
+        if self.sigmoid_on_fps:
+            fps = self.sigmoid_on_fps(fps)
+
+        # Closer to 1 means more dissimilar, closer to 0 means more similar.
+        cos_loss_vector = cos_loss(pred, fps)
+        idx = 0
+        for entry in entry_infos:
+            value = self.moad.is_good_bad_or_both_fragment(entry.receptor_name.split(" ")[1], entry.parent_smiles, entry.fragment_smiles)
+            if value == 0:  # it is a bad fragment
+                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.9
+            elif value == 1:  # it is a good fragment
+                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.4
+            elif value == 2:  # it is both a good and bad fragment
+                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.1
+
+            idx = idx + 1
+
+        return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
+
+
+class DeepFragModelBadData(DeepFragModel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.is_cpu = kwargs["cpu"]
+        self.fragment_representation = kwargs["fragment_representation"]
+        self.fragments = DeepFragModelBadData.__get_train_val_sdf_sets(**kwargs)
 
     def loss(self, pred, fps, entry_infos, batch_size):
         # Look up the bad fragments that correspond to the good fragments fps.
@@ -48,7 +81,7 @@ class DeepFragModelSDFData(DeepFragModel):
 
         print("Building/updating additional SDF dataset to train DeepFrag")
         sdf_data = SdfDirInterface(
-            structures=kwargs["additional_training_data_dir"],
+            structures=kwargs["bad_data_dir"],
             cache_pdbs_to_disk=None,
             grid_width=None,
             grid_resolution=None,

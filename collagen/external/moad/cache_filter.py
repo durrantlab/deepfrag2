@@ -11,6 +11,7 @@ import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
 from .moad_utils import fix_moad_smiles
+from collagen.external.moad.types import PdbSdfCsv_ligand
 
 # Calculating molecular properties for the many ligands and fragments in the
 # BindingMOAD database is expensive. These classes cache the calculations for
@@ -133,8 +134,15 @@ def get_info_given_pdb_id(arguments) -> Tuple[str, dict]:
                     or cache_items_to_update.frag_aromatic
                     or cache_items_to_update.frag_charged
             ):
-                # Get all the fragments
-                frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
+                moad_ligand_ = lig.meta["moad_ligand"]
+                if isinstance(moad_ligand_, PdbSdfCsv_ligand):
+                    # Get all the fragments from an additional csv file
+                    frags = []
+                    for rdmol_ in moad_ligand_.fragments:
+                        frags.append([None, rdmol_])
+                else:
+                    # Get all the fragments
+                    frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
 
                 if cache_items_to_update.frag_masses:
                     lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(

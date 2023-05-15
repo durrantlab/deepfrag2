@@ -8,6 +8,8 @@ from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
 from .... import Mol
 import sys
+from collagen.external.moad.interface import PdbSdfCsvInterface
+from collagen.core.molecules.mol import BackedMol
 
 
 @dataclass
@@ -262,7 +264,6 @@ class MOADFragmentDataset(Dataset):
         frag_chargeds = lig_inf["frag_charged"]
         frag_smiles = lig_inf["frag_smiles"]  # Uses Chem.MolToSmiles, so should be cannonical
 
-
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):
             mass = frag_masses[frag_idx]
@@ -271,7 +272,6 @@ class MOADFragmentDataset(Dataset):
             frag_aromatic = frag_aromatics[frag_idx]
             frag_charged = frag_chargeds[frag_idx]
             frag_smi = frag_smiles[frag_idx]
-            
 
             if self._frag_filter(args, mass, dist_to_recep, num_heavy_atom, frag_aromatic, frag_charged, frag_smi):
                 entries_to_return.append(
@@ -341,9 +341,19 @@ class MOADFragmentDataset(Dataset):
                 # Once you find it, actually do the fragmenting.
                 for ligand in ligands:
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
-                        pairs = ligand.split_bonds()
-                        parent, fragment = pairs[entry.frag_idx]
-                        break
+                        if isinstance(self.moad, PdbSdfCsvInterface):
+                            try:
+                                fragment = self.moad.frg_x_good_lig[entry.ligand_id][entry.frag_idx]
+                            except:
+                                fragment = self.moad.frg_x_bad_lig[entry.ligand_id][entry.frag_idx]
+
+                            parent = BackedMol(rdmol=ligand.rdmol)
+                            fragment = BackedMol(rdmol=fragment.rdmol)
+                            break
+                        else:
+                            pairs = ligand.split_bonds()
+                            parent, fragment = pairs[entry.frag_idx]
+                            break
                 else:
                     raise Exception(
                         "Ligand not found: " + str(receptor) + " -- " + str(ligands)
