@@ -117,6 +117,7 @@ class MoadVoxelModelTrain(object):
             seed=args.split_seed,
             fraction_train=args.fraction_train,
             fraction_val=args.fraction_val,
+            prevent_smiles_overlap=False,
             save_splits=args.save_splits,
             load_splits=args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
