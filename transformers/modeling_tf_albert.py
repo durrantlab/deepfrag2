@@ -15,7 +15,6 @@
 # limitations under the License.
 """ TF 2.0 ALBERT model. """
 
-
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
@@ -75,7 +74,6 @@ TF_ALBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 class TFAlbertEmbeddings(tf.keras.layers.Layer):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
 
@@ -211,7 +209,6 @@ class TFAlbertSelfOutput(tf.keras.layers.Layer):
 
 class TFAlbertAttention(tf.keras.layers.Layer):
     """ Contains the complete attention sublayer, including both dropouts and layer norm. """
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
 
@@ -438,7 +435,6 @@ class TFAlbertPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = AlbertConfig
     base_model_prefix = "albert"
 
@@ -648,7 +644,6 @@ class TFAlbertForPreTrainingOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     prediction_logits: tf.Tensor = None
     sop_logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -656,7 +651,6 @@ class TFAlbertForPreTrainingOutput(ModelOutput):
 
 
 ALBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -690,7 +684,6 @@ ALBERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 ALBERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`({0})`):
@@ -743,7 +736,6 @@ ALBERT_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     "The bare Albert Model transformer outputting raw hidden-states without any specific head on top.",

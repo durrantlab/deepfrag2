@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization class for model Reformer."""
 
-
 import os
 from shutil import copyfile
 from typing import Optional, Tuple
@@ -89,7 +88,6 @@ class ReformerTokenizerFast(PreTrainedTokenizerFast):
         additional_special_tokens (:obj:`List[str]`, `optional`):
             Additional special tokens used by the tokenizer.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

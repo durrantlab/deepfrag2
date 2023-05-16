@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch CamemBERT model. """
-
 from .configuration_camembert import CamembertConfig
 from .file_utils import add_start_docstrings
 from .modeling_roberta import (
@@ -41,7 +40,6 @@ CAMEMBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 ]
 
 CAMEMBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -57,7 +55,6 @@ CAMEMBERT_START_DOCSTRING = r"""
             weights.
 """
 
-
 @add_start_docstrings(
     "The bare CamemBERT Model transformer outputting raw hidden-states without any specific head on top.",
     CAMEMBERT_START_DOCSTRING,
@@ -67,7 +64,6 @@ class CamembertModel(RobertaModel):
     This class overrides :class:`~transformers.RobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -80,7 +76,6 @@ class CamembertForMaskedLM(RobertaForMaskedLM):
     This class overrides :class:`~transformers.RobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -96,7 +91,6 @@ class CamembertForSequenceClassification(RobertaForSequenceClassification):
     This class overrides :class:`~transformers.RobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -112,7 +106,6 @@ class CamembertForMultipleChoice(RobertaForMultipleChoice):
     This class overrides :class:`~transformers.RobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -128,7 +121,6 @@ class CamembertForTokenClassification(RobertaForTokenClassification):
     This class overrides :class:`~transformers.RobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -144,7 +136,6 @@ class CamembertForQuestionAnswering(RobertaForQuestionAnswering):
     This class overrides :class:`~transformers.RobertaForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -156,5 +147,4 @@ class CamembertForCausalLM(RobertaForCausalLM):
     This class overrides :class:`~transformers.RobertaForCausalLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = CamembertConfig

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """TF Marian model, ported from the fairseq repo."""
-
 from .configuration_marian import MarianConfig
 from .file_utils import add_start_docstrings, is_tf_available
 from .modeling_tf_bart import BART_START_DOCSTRING, LARGE_NEGATIVE, TFBartForConditionalGeneration

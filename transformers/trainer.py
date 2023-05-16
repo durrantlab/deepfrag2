@@ -15,7 +15,6 @@
 """
 The Trainer class, to easily train a 🤗 Transformers from scratch or finetune it on a new task.
 """
-
 import collections
 import inspect
 import math
@@ -216,7 +215,6 @@ class Trainer:
         kwargs:
             Deprecated keyword arguments.
     """
-
     def __init__(
         self,
         model: Union[PreTrainedModel, torch.nn.Module] = None,
@@ -1190,7 +1188,6 @@ class Trainer:
 
         Will only save from the world_master process (unless in TPUs).
         """
-
         if is_torch_tpu_available():
             self._save_tpu(output_dir)
         elif self.is_world_process_zero():
@@ -1550,7 +1547,6 @@ class Trainer:
         Returns:
             :obj:`int`: The number of floating-point operations.
         """
-
         model = self._actual_model(self.model)
 
         if hasattr(model, "floating_point_ops"):
@@ -1564,7 +1560,6 @@ class Trainer:
         model: Union[torch.nn.DataParallel, torch.nn.parallel.DistributedDataParallel, torch.nn.modules.Module]
     ) -> torch.nn.modules.Module:
         """
-
         Args:
             model: (:obj:`Union[torch.nn.DataParallel, torch.nn.parallel.DistributedDataParallel, torch.nn.modules.Module]`):
                 Model object used during training

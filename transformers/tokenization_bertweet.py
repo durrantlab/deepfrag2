@@ -15,7 +15,6 @@
 # limitations under the License.
 """ Tokenization classes for BERTweet """
 
-
 import html
 import os
 import re
@@ -109,7 +108,6 @@ class BertweetTokenizer(PreTrainedTokenizer):
             The token used for masking values. This is the token used when training this model with masked language
             modeling. This is the token which the model will try to predict.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
@@ -193,7 +191,6 @@ class BertweetTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: List of `input IDs <../glossary.html#input-ids>`__ with the appropriate special tokens.
         """
-
         if token_ids_1 is None:
             return [self.cls_token_id] + token_ids_0 + [self.sep_token_id]
         cls = [self.cls_token_id]
@@ -218,7 +215,6 @@ class BertweetTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(
@@ -247,7 +243,6 @@ class BertweetTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: List of zeros.
         """
-
         sep = [self.sep_token_id]
         cls = [self.cls_token_id]
 
@@ -458,7 +453,6 @@ Twitter-aware tokenizer, designed to be flexible and easy to adapt to new domain
 
 """
 
-
 ######################################################################
 #
 # import regex  # https://github.com/nltk/nltk/issues/2409
@@ -495,7 +489,6 @@ EMOTICONS = r"""
       |
       <3                         # heart
     )"""
-
 # URL pattern due to John Gruber, modified by Tom Winzig. See
 # https://gist.github.com/winzig/8894715
 # docstyle-ignore
@@ -541,7 +534,6 @@ URLS = r"""			# Capture 1: entire matched URL
                             # avoid matching "foo.na" in "foo.na@example.com"
   )
 """
-
 # docstyle-ignore
 # The components of the tokenizer:
 REGEXPS = (
@@ -639,7 +631,6 @@ def _replace_html_entities(text, keep=(), remove_illegal=True, encoding="utf-8")
         >>> from nltk.tokenize.casual import _replace_html_entities >>> _replace_html_entities(b'Price: &pound;100')
         'Price: \\xa3100' >>> print(_replace_html_entities(b'Price: &pound;100')) Price: £100 >>>
     """
-
     def _convert_entity(match):
         entity_body = match.group(3)
         if match.group(1):
@@ -692,7 +683,6 @@ class TweetTokenizer:
         >>> tknzr.tokenize(s1)
         [':', 'This', 'is', 'waaayyy', 'too', 'much', 'for', 'you', '!', '!', '!']
     """
-
     def __init__(self, preserve_case=True, reduce_len=False, strip_handles=False):
         self.preserve_case = preserve_case
         self.reduce_len = reduce_len

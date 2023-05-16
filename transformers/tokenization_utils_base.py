@@ -17,7 +17,6 @@ Base classes common to both the slow and the fast tokenization classes: PreTrain
 fronting encoding methods) Special token mixing (host the special tokens logic) and BatchEncoding (wrap the dictionary
 of output with special method for the Fast tokenizers)
 """
-
 import copy
 import json
 import os
@@ -64,7 +63,6 @@ else:
         AddedToken represents a token to be added to a Tokenizer An AddedToken can have special options defining the
         way it should behave.
         """
-
         content: str = field(default_factory=str)
         single_word: bool = False
         lstrip: bool = False
@@ -77,7 +75,6 @@ else:
     @dataclass
     class EncodingFast:
         """ This is dummy class because without the `tokenizers` library we don't have these objects anyway """
-
         pass
 
 
@@ -108,7 +105,6 @@ class ExplicitEnum(Enum):
     """
     Enum with more explicit error message for missing values.
     """
-
     @classmethod
     def _missing_(cls, value):
         raise ValueError(
@@ -122,7 +118,6 @@ class TruncationStrategy(ExplicitEnum):
     Possible values for the ``truncation`` argument in :meth:`PreTrainedTokenizerBase.__call__`. Useful for
     tab-completion in an IDE.
     """
-
     ONLY_FIRST = "only_first"
     ONLY_SECOND = "only_second"
     LONGEST_FIRST = "longest_first"
@@ -134,7 +129,6 @@ class PaddingStrategy(ExplicitEnum):
     Possible values for the ``padding`` argument in :meth:`PreTrainedTokenizerBase.__call__`. Useful for tab-completion
     in an IDE.
     """
-
     LONGEST = "longest"
     MAX_LENGTH = "max_length"
     DO_NOT_PAD = "do_not_pad"
@@ -145,7 +139,6 @@ class TensorType(ExplicitEnum):
     Possible values for the ``return_tensors`` argument in :meth:`PreTrainedTokenizerBase.__call__`. Useful for
     tab-completion in an IDE.
     """
-
     PYTORCH = "pt"
     TENSORFLOW = "tf"
     NUMPY = "np"
@@ -160,7 +153,6 @@ class CharSpan(NamedTuple):
         start (:obj:`int`): Index of the first character in the original string.
         end (:obj:`int`): Index of the character following the last character in the original string.
     """
-
     start: int
     end: int
 
@@ -173,7 +165,6 @@ class TokenSpan(NamedTuple):
         start (:obj:`int`): Index of the first token in the span.
         end (:obj:`int`): Index of the token following the last token in the span.
     """
-
     start: int
     end: int
 
@@ -217,7 +208,6 @@ class BatchEncoding(UserDict):
         prepend_batch_axis (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to add a batch axis when converting to tensors (see :obj:`tensor_type` above).
     """
-
     def __init__(
         self,
         data: Optional[Dict[str, Any]] = None,
@@ -351,7 +341,6 @@ class BatchEncoding(UserDict):
         Returns:
             :obj:`int`: Index of the word in the input sequence.
         """
-
         if not self._encodings:
             raise ValueError("token_to_word() is not available when using Python based tokenizers")
         if token_index is not None:
@@ -395,7 +384,6 @@ class BatchEncoding(UserDict):
             Optional :class:`~transformers.tokenization_utils_base.TokenSpan` Span of tokens in the encoded sequence.
             Returns :obj:`None` if no tokens correspond to the word.
         """
-
         if not self._encodings:
             raise ValueError("word_to_tokens() is not available when using Python based tokenizers")
         if word_index is not None:
@@ -436,7 +424,6 @@ class BatchEncoding(UserDict):
         Returns:
             :class:`~transformers.tokenization_utils_base.CharSpan`: Span of characters in the original string.
         """
-
         if not self._encodings:
             raise ValueError("token_to_chars() is not available when using Python based tokenizers")
         if token_index is not None:
@@ -472,7 +459,6 @@ class BatchEncoding(UserDict):
         Returns:
             :obj:`int`: Index of the token.
         """
-
         if not self._encodings:
             raise ValueError("char_to_token() is not available when using Python based tokenizers")
         if char_index is not None:
@@ -512,7 +498,6 @@ class BatchEncoding(UserDict):
                 - end: index of the character following the last character associated to the token in the original
                   string
         """
-
         if not self._encodings:
             raise ValueError("word_to_chars() is not available when using Python based tokenizers")
         if word_index is not None:
@@ -548,7 +533,6 @@ class BatchEncoding(UserDict):
         Returns:
             :obj:`int` or :obj:`List[int]`: Index or indices of the associated encoded token(s).
         """
-
         if not self._encodings:
             raise ValueError("char_to_word() is not available when using Python based tokenizers")
         if char_index is not None:
@@ -673,7 +657,6 @@ class SpecialTokensMixin:
         additional_special_tokens (tuple or list of :obj:`str` or :obj:`tokenizers.AddedToken`, `optional`):
             A tuple or a list of additional special tokens.
     """
-
     SPECIAL_TOKENS_ATTRIBUTES = [
         "bos_token",
         "eos_token",
@@ -1193,7 +1176,6 @@ ENCODE_KWARGS_DOCSTRING = r"""
                 * :obj:`'pt'`: Return PyTorch :obj:`torch.Tensor` objects.
                 * :obj:`'np'`: Return Numpy :obj:`np.ndarray` objects.
 """
-
 ENCODE_PLUS_ADDITIONAL_KWARGS_DOCSTRING = r"""
             return_token_type_ids (:obj:`bool`, `optional`):
                 Whether to return token type IDs. If left to the default, will return the token type IDs according to
@@ -1246,7 +1228,6 @@ ENCODE_PLUS_ADDITIONAL_KWARGS_DOCSTRING = r"""
               regular sequence tokens (when :obj:`add_special_tokens=True` and :obj:`return_special_tokens_mask=True`).
             - **length** -- The length of the inputs (when :obj:`return_length=True`)
 """
-
 INIT_TOKENIZER_DOCSTRING = r"""
     Class attributes (overridden by derived classes)
 
@@ -1309,7 +1290,6 @@ INIT_TOKENIZER_DOCSTRING = r"""
             ``self.additional_special_tokens_ids``.
 """
 
-
 PREPARE_SEQ2SEQ_BATCH_DOCSTRING = """
         Prepare model inputs for translation. For best performance, translate one sentence at a time.
 
@@ -1371,7 +1351,6 @@ PREPARE_SEQ2SEQ_BATCH_DOCSTRING = """
 
 """
 
-
 @add_end_docstrings(INIT_TOKENIZER_DOCSTRING)
 class PreTrainedTokenizerBase(SpecialTokensMixin):
     """
@@ -1379,7 +1358,6 @@ class PreTrainedTokenizerBase(SpecialTokensMixin):
 
     Handles shared (mostly boiler plate) methods for those two classes.
     """
-
     vocab_files_names: Dict[str, str] = {}
     pretrained_vocab_files_map: Dict[str, Dict[str, str]] = {}
     pretrained_init_configuration: Dict[str, Dict[str, Any]] = {}
@@ -2273,7 +2251,6 @@ class PreTrainedTokenizerBase(SpecialTokensMixin):
                 the ``tokenize`` method) or a list of integers (tokenized string ids using the
                 ``convert_tokens_to_ids`` method).
         """
-
         # Backward compatibility for 'truncation_strategy', 'pad_to_max_length'
         padding_strategy, truncation_strategy, max_length, kwargs = self._get_padding_truncation_strategies(
             padding=padding,
@@ -2368,7 +2345,6 @@ class PreTrainedTokenizerBase(SpecialTokensMixin):
                 string/string-sequences/int-sequences or a list of pair of string/string-sequences/int-sequence (see
                 details in ``encode_plus``).
         """
-
         # Backward compatibility for 'truncation_strategy', 'pad_to_max_length'
         padding_strategy, truncation_strategy, max_length, kwargs = self._get_padding_truncation_strategies(
             padding=padding,
@@ -2652,7 +2628,6 @@ class PreTrainedTokenizerBase(SpecialTokensMixin):
                 Tokenized input ids of the second sequence. Can be obtained from a string by chaining the ``tokenize``
                 and ``convert_tokens_to_ids`` methods.
         """
-
         if "return_lengths" in kwargs:
             if verbose:
                 warnings.warn(

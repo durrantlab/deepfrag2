@@ -14,7 +14,6 @@
 # limitations under the License
 """ Tokenization classes for XLM-RoBERTa model."""
 
-
 import os
 from shutil import copyfile
 from typing import List, Optional, Tuple
@@ -110,7 +109,6 @@ class XLMRobertaTokenizerFast(PreTrainedTokenizerFast):
     Attributes: sp_model (:obj:`SentencePieceProcessor`): The `SentencePiece` processor that is used for every
     conversion (string, tokens and IDs).
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
@@ -164,7 +162,6 @@ class XLMRobertaTokenizerFast(PreTrainedTokenizerFast):
         Returns:
             :obj:`List[int]`: List of `input IDs <../glossary.html#input-ids>`__ with the appropriate special tokens.
         """
-
         if token_ids_1 is None:
             return [self.cls_token_id] + token_ids_0 + [self.sep_token_id]
         cls = [self.cls_token_id]
@@ -189,7 +186,6 @@ class XLMRobertaTokenizerFast(PreTrainedTokenizerFast):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(
@@ -219,7 +215,6 @@ class XLMRobertaTokenizerFast(PreTrainedTokenizerFast):
             :obj:`List[int]`: List of zeros.
 
         """
-
         sep = [self.sep_token_id]
         cls = [self.cls_token_id]
 

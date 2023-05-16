@@ -14,7 +14,6 @@
 # limitations under the License.
 """ XLM-ProphetNet model configuration """
 
-
 from .configuration_prophetnet import ProphetNetConfig
 from .utils import logging
 
@@ -31,5 +30,4 @@ class XLMProphetNetConfig(ProphetNetConfig):
     This class overrides :class:`~transformers.ProphetNetConfig`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     model_type = "xlm-prophetnet"

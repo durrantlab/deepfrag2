@@ -33,7 +33,6 @@ class SuperPositionalEmbedding(PositionalEmbedding):
     Same as PositionalEmbedding in XLTransformer, BUT
     has a different handling of the batch dimension that avoids cumbersome dimension shuffling
     """
-
     def forward(self, pos_seq, bsz=None):
         sinusoid_inp = torch.ger(pos_seq, self.inv_freq)
         pos_emb = torch.cat([sinusoid_inp.sin(), sinusoid_inp.cos()], dim=-1)
@@ -48,7 +47,6 @@ class SuperPositionalBertEmbeddings(nn.Module):
     Same as BertEmbeddings, BUT
     uses non-learnt (computed) positional embeddings
     """
-
     def __init__(self, config):
         super(SuperPositionalBertEmbeddings, self).__init__()
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=0)
@@ -87,7 +85,6 @@ class SuperPositionalBertModel(BertModel):
     Same as BertModel, BUT
     uses SuperPositionalBertEmbeddings instead of BertEmbeddings
     """
-
     def __init__(self, config):
         super(BertModel, self).__init__(config)
 
@@ -101,7 +98,6 @@ class FlexibleBertModel(BertPreTrainedModel):
     """
     General BERT model with tasks to specify
     """
-
     def __init__(self, config, tasks: nn.ModuleList):
         super().__init__(config)
         self.bert = SuperPositionalBertModel(config)

@@ -251,7 +251,6 @@ class TensorBoardCallback(TrainerCallback):
         tb_writer (:obj:`SummaryWriter`, `optional`):
             The writer to use. Will instantiate one if not set.
     """
-
     def __init__(self, tb_writer=None):
         assert (
             _has_tensorboard
@@ -317,7 +316,6 @@ class WandbCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `Weight and Biases <https://www.wandb.com/>`__.
     """
-
     def __init__(self):
         assert _has_wandb, "WandbCallback requires wandb to be installed. Run `pip install wandb`."
         self._initialized = False
@@ -386,7 +384,6 @@ class CometCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `Comet ML <https://www.comet.ml/site/>`__.
     """
-
     def __init__(self):
         assert _has_comet, "CometCallback requires comet-ml to be installed. Run `pip install comet-ml`."
         self._initialized = False
@@ -442,7 +439,6 @@ class AzureMLCallback(TrainerCallback):
     A :class:`~transformers.TrainerCallback` that sends the logs to `AzureML
     <https://pypi.org/project/azureml-sdk/>`__.
     """
-
     def __init__(self, azureml_run=None):
         assert _has_azureml, "AzureMLCallback requires azureml to be installed. Run `pip install azureml-sdk`."
         self.azureml_run = azureml_run
@@ -462,7 +458,6 @@ class MLflowCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `MLflow <https://www.mlflow.org/>`__.
     """
-
     MAX_LOG_SIZE = 100
 
     def __init__(self):

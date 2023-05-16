@@ -29,7 +29,6 @@ def default_data_collator(features: List[InputDataClass]) -> Dict[str, torch.Ten
     Des not do any additional preprocessing: property names of the input object will be used as corresponding inputs to
     the model. See glue and ner for example of how it's useful.
     """
-
     # In this function we'll make the assumption that all `features` in the batch
     # have the same attributes.
     # So we will look at the first element as a proxy for what attributes exist
@@ -92,7 +91,6 @@ class DataCollatorWithPadding:
             This is especially useful to enable the use of Tensor Cores on NVIDIA hardware with compute capability >=
             7.5 (Volta).
     """
-
     tokenizer: PreTrainedTokenizerBase
     padding: Union[bool, str, PaddingStrategy] = True
     max_length: Optional[int] = None
@@ -143,7 +141,6 @@ class DataCollatorForTokenClassification:
         label_pad_token_id (:obj:`int`, `optional`, defaults to -100):
             The id to use when padding the labels (-100 will be automatically ignore by PyTorch loss functions).
     """
-
     tokenizer: PreTrainedTokenizerBase
     padding: Union[bool, str, PaddingStrategy] = True
     max_length: Optional[int] = None
@@ -233,7 +230,6 @@ class DataCollatorForLanguageModeling:
         :class:`~transformers.PreTrainedTokenizer` or a :class:`~transformers.PreTrainedTokenizerFast` with the
         argument :obj:`return_special_tokens_mask=True`.
     """
-
     tokenizer: PreTrainedTokenizerBase
     mlm: bool = True
     mlm_probability: float = 0.15
@@ -309,7 +305,6 @@ class DataCollatorForWholeWordMask(DataCollatorForLanguageModeling):
     - collates batches of tensors, honoring their tokenizer's pad_token
     - preprocesses batches for masked language modeling
     """
-
     def __call__(
         self, examples: List[Union[List[int], torch.Tensor, Dict[str, torch.Tensor]]]
     ) -> Dict[str, torch.Tensor]:
@@ -344,7 +339,6 @@ class DataCollatorForWholeWordMask(DataCollatorForLanguageModeling):
         """
         Get 0/1 labels for masked tokens with whole word mask proxy
         """
-
         cand_indexes = []
         for (i, token) in enumerate(input_tokens):
             if token == "[CLS]" or token == "[SEP]":
@@ -386,7 +380,6 @@ class DataCollatorForWholeWordMask(DataCollatorForLanguageModeling):
         Prepare masked tokens inputs/labels for masked language modeling: 80% MASK, 10% random, 10% original. Set
         'mask_labels' means we use whole word mask (wwm), we directly mask idxs according to it's ref.
         """
-
         if self.tokenizer.mask_token is None:
             raise ValueError(
                 "This tokenizer does not have a mask token which is necessary for masked language modeling. Remove the --mlm flag if you want to use this tokenizer."
@@ -428,7 +421,6 @@ class DataCollatorForSOP(DataCollatorForLanguageModeling):
     - collates batches of tensors, honoring their tokenizer's pad_token
     - preprocesses batches for both masked language modeling and sentence order prediction
     """
-
     def __init__(self, *args, **kwargs):
         warnings.warn(
             "DataCollatorForSOP is deprecated and will be removed in a future version, you can now use "
@@ -505,7 +497,6 @@ class DataCollatorForPermutationLanguageModeling:
     - collates batches of tensors, honoring their tokenizer's pad_token
     - preprocesses batches for permutation language modeling with procedures specific to XLNet
     """
-
     tokenizer: PreTrainedTokenizerBase
     plm_probability: float = 1 / 6
     max_span_length: int = 5  # maximum length of a span of masked tokens
@@ -533,7 +524,6 @@ class DataCollatorForPermutationLanguageModeling:
             4. Set ``cur_len = cur_len + context_length``. If ``cur_len < max_len`` (i.e. there are tokens remaining in
                the sequence to be processed), repeat from Step 1.
         """
-
         if self.tokenizer.mask_token is None:
             raise ValueError(
                 "This tokenizer does not have a mask token which is necessary for permutation language modeling. Please add a mask token if you want to use this tokenizer."

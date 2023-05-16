@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ CamemBERT configuration """
-
 from .configuration_roberta import RobertaConfig
 from .utils import logging
 
@@ -33,5 +32,4 @@ class CamembertConfig(RobertaConfig):
     This class overrides :class:`~transformers.RobertaConfig`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     model_type = "camembert"

@@ -7,7 +7,6 @@ additional na_prob.json file is provided. This file is expected to map question 
 probability that a question is unanswerable.
 """
 
-
 import collections
 import json
 import math
@@ -24,7 +23,6 @@ logger = logging.get_logger(__name__)
 
 def normalize_answer(s):
     """Lower text and remove punctuation, articles and extra whitespace."""
-
     def remove_articles(text):
         regex = re.compile(r"\b(a|an|the)\b", re.UNICODE)
         return re.sub(regex, " ", text)
@@ -242,7 +240,6 @@ def squad_evaluate(examples, preds, no_answer_probs=None, no_answer_probability_
 
 def get_final_text(pred_text, orig_text, do_lower_case, verbose_logging=False):
     """Project the tokenized prediction back to the original text."""
-
     # When we created the data, we kept track of the alignment between original
     # (whitespace tokenized) tokens and our WordPiece tokenized tokens. So
     # now `orig_text` contains the span of our original text corresponding to the

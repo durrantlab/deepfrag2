@@ -1,3 +1,5 @@
+"""Run DeepFrag."""
+
 import argparse
 import torch
 import pytorch_lightning as pl
@@ -22,7 +24,15 @@ def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
 
 
 class DeepFrag(MoadVoxelModelParent):
-    def __init__(self, args):
+
+    """DeepFrag model."""
+
+    def __init__(self, args: argparse.Namespace):
+        """Initialize the DeepFrag model parent.
+        
+        Args:
+            args (argparse.Namespace): The arguments.
+        """
         super().__init__(
             model_cls=DeepFragModelBadData if args.bad_data_dir else (DeepFragModelGoodBadDataFinetune if args.good_bad_data_csv else DeepFragModel),
             dataset_cls=MOADFragmentDataset
@@ -32,6 +42,16 @@ class DeepFrag(MoadVoxelModelParent):
     def pre_voxelize(
         args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T
     ) -> TMP_T:
+        """Preprocess the entry before voxelization.
+        
+        Args:
+            args (argparse.Namespace): The arguments parsed by argparse.
+            voxel_params (VoxelParams): The voxelization parameters.
+            entry (ENTRY_T): The entry to preprocess.
+            
+        Returns:
+            TMP_T: The preprocessed entry.
+        """
         rec, parent, frag = entry
         rot = rand_rot()
         center = frag.connectors[0]
@@ -40,7 +60,7 @@ class DeepFrag(MoadVoxelModelParent):
             fragment_smiles=frag.smiles(True),
             parent_smiles=parent.smiles(True),
             receptor_name=rec.meta["name"],
-            connection_pt=center
+            connection_pt=center,
         )
 
         # if rec.meta["name"] == "Receptor 2v0u":
@@ -50,7 +70,7 @@ class DeepFrag(MoadVoxelModelParent):
             rec.voxelize_delayed(voxel_params, center=center, rot=rot),
             parent.voxelize_delayed(voxel_params, center=center, rot=rot),
             _fingerprint_fn(args, frag),
-            payload
+            payload,
         )
 
     @staticmethod
@@ -58,18 +78,34 @@ class DeepFrag(MoadVoxelModelParent):
         args: argparse.Namespace,
         voxel_params: VoxelParams,
         device: torch.device,
-        batch: List[TMP_T]
+        batch: List[TMP_T],
     ) -> OUT_T:
-
-        voxels = torch.zeros(
-            size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
-            device=device,
-        ) if voxel_params.calc_voxels else None
-
-        fingerprints = torch.zeros(
-            size=(len(batch), args.fp_size), device=device
-        ) if voxel_params.calc_fps else None
+        """Voxelize the batch.
         
+        Args:
+            args (argparse.Namespace): The arguments parsed by argparse.
+            voxel_params (VoxelParams): The voxelization parameters.
+            device (torch.device): The device to use.
+            batch (List[TMP_T]): The batch to voxelize.
+            
+        Returns:
+            OUT_T: The voxels, fingerprints, and fragment SMILES.
+        """
+        voxels = (
+            torch.zeros(
+                size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
+                device=device,
+            )
+            if voxel_params.calc_voxels
+            else None
+        )
+
+        fingerprints = (
+            torch.zeros(size=(len(batch), args.fp_size), device=device)
+            if voxel_params.calc_fps
+            else None
+        )
+
         frag_smis = []
 
         for i in range(len(batch)):
@@ -89,20 +125,22 @@ class DeepFrag(MoadVoxelModelParent):
 
             if voxel_params.calc_fps:
                 fingerprints[i] = frag
-            
+
             frag_smis.append(smi)
 
         return voxels, fingerprints, frag_smis
 
 
-def function_2run_deepfrag():
+def function_to_run_deepfrag():
+    """Run DeepFrag."""
     print("PyTorch", torch.__version__)
     print("PytorchLightning", pl.__version__)
 
     args = get_args(
         parser_funcs=[
-            MoadVoxelModelParent.add_moad_args, DeepFragModel.add_model_args, 
-            MOADFragmentDataset.add_fragment_args
+            MoadVoxelModelParent.add_moad_args,
+            DeepFragModel.add_model_args,
+            MOADFragmentDataset.add_fragment_args,
         ],
         post_parse_args_funcs=[MoadVoxelModelParent.fix_moad_args],
         is_pytorch_lightning=True,

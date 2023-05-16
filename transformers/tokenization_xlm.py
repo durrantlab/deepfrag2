@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for XLM."""
 
-
 import json
 import os
 import re
@@ -579,7 +578,6 @@ class XLMTokenizer(PreTrainedTokenizer):
         do_lowercase_and_remove_accent (:obj:`bool`, `optional`, defaults to :obj:`True`):
             Whether to lowercase and remove accents when tokenizing.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -904,7 +902,6 @@ class XLMTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(

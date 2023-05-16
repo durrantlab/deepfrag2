@@ -15,7 +15,6 @@
 # limitations under the License.
 """ Transformer XL configuration """
 
-
 import warnings
 
 from .configuration_utils import PretrainedConfig
@@ -106,7 +105,6 @@ class TransfoXLConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
-
     model_type = "transfo-xl"
 
     def __init__(

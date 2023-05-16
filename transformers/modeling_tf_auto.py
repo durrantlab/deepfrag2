@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Model class. """
 
-
 import warnings
 from collections import OrderedDict
 
@@ -357,7 +356,6 @@ TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING = OrderedDict(
 
 
 TF_AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
-
         The model class to instantiate is selected based on the :obj:`model_type` property of the config object (either
         passed as an argument or loaded from :obj:`pretrained_model_name_or_path` if possible), or when it's missing,
         by falling back to using pattern matching on :obj:`pretrained_model_name_or_path`:
@@ -439,7 +437,6 @@ TF_AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
                       attribute will be passed to the underlying model's ``__init__`` function.
 """
 
-
 class TFAutoModel(object):
     r"""
     This is a generic model class that will be instantiated as one of the base model classes of the library when
@@ -448,7 +445,6 @@ class TFAutoModel(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModel is designed to be instantiated "
@@ -496,7 +492,6 @@ class TFAutoModel(object):
     )
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
         r"""
-
         Examples::
 
             >>> from transformers import AutoConfig, AutoModel
@@ -540,7 +535,6 @@ class TFAutoModelForPreTraining(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForPreTraining is designed to be instantiated "
@@ -641,7 +635,6 @@ class TFAutoModelWithLMHead(object):
         :class:`~transformers.TFAutoModelForMaskedLM` for masked language models and
         :class:`~transformers.TFAutoModelForSeq2SeqLM` for encoder-decoder models.
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelWithLMHead is designed to be instantiated "
@@ -747,7 +740,6 @@ class TFAutoModelForCausalLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForCausalLM is designed to be instantiated "
@@ -841,7 +833,6 @@ class TFAutoModelForMaskedLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForMaskedLM is designed to be instantiated "
@@ -935,7 +926,6 @@ class TFAutoModelForSeq2SeqLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForSeq2SeqLM is designed to be instantiated "
@@ -1033,7 +1023,6 @@ class TFAutoModelForSequenceClassification(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForSequenceClassification is designed to be instantiated "
@@ -1131,7 +1120,6 @@ class TFAutoModelForQuestionAnswering(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForQuestionAnswering is designed to be instantiated "
@@ -1228,7 +1216,6 @@ class TFAutoModelForTokenClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForTokenClassification is designed to be instantiated "
@@ -1325,7 +1312,6 @@ class TFAutoModelForMultipleChoice:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForMultipleChoice is designed to be instantiated "

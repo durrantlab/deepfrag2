@@ -17,7 +17,6 @@
  Tokenization classes for Transformer XL model. Adapted from https://github.com/kimiyoung/transformer-xl.
 """
 
-
 import glob
 import os
 import pickle
@@ -147,7 +146,6 @@ class TransfoXLTokenizer(PreTrainedTokenizer):
         language (:obj:`str`, `optional`, defaults to :obj:`"en"`):
             The language of this tokenizer (used for mose preprocessing).
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

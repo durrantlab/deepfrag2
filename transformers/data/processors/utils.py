@@ -41,7 +41,6 @@ class InputExample:
         label: (Optional) string. The label of the example. This should be
             specified for train and dev examples, but not for test examples.
     """
-
     guid: str
     text_a: str
     text_b: Optional[str] = None
@@ -67,7 +66,6 @@ class InputFeatures:
         label: (Optional) Label corresponding to the input. Int for classification problems,
             float for regression problems.
     """
-
     input_ids: List[int]
     attention_mask: Optional[List[int]] = None
     token_type_ids: Optional[List[int]] = None
@@ -80,7 +78,6 @@ class InputFeatures:
 
 class DataProcessor:
     """Base class for data converters for sequence classification data sets."""
-
     def get_example_from_tensor_dict(self, tensor_dict):
         """
         Gets an example from a dict with tensorflow tensors.
@@ -125,7 +122,6 @@ class DataProcessor:
 
 class SingleSentenceClassificationProcessor(DataProcessor):
     """ Generic processor for a single sentence classification data set."""
-
     def __init__(self, labels=None, examples=None, mode="classification", verbose=False):
         self.labels = [] if labels is None else labels
         self.examples = [] if examples is None else examples

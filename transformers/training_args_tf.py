@@ -106,7 +106,6 @@ class TFTrainingArguments(TrainingArguments):
         xla (:obj:`bool`, `optional`):
             Whether to activate the XLA compilation or not.
     """
-
     tpu_name: str = field(
         default=None,
         metadata={"help": "Name of TPU"},

@@ -14,7 +14,6 @@
 # limitations under the License.
 """PyTorch BERT model specific for generation. """
 
-
 import torch
 import torch.utils.checkpoint
 from torch import nn
@@ -131,7 +130,6 @@ def load_tf_weights_in_bert_generation(
 
 class BertGenerationEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
@@ -170,7 +168,6 @@ class BertGenerationPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = BertGenerationConfig
     base_model_prefix = "bert"
     authorized_missing_keys = [r"position_ids"]
@@ -189,7 +186,6 @@ class BertGenerationPreTrainedModel(PreTrainedModel):
 
 
 BERT_GENERATION_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -204,7 +200,6 @@ BERT_GENERATION_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 BERT_GENERATION_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -247,14 +242,12 @@ BERT_GENERATION_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
 @add_start_docstrings(
     "The bare BertGeneration model transformer outputting raw hidden-states without any specific head on top.",
     BERT_GENERATION_START_DOCSTRING,
 )
 class BertGenerationEncoder(BertGenerationPreTrainedModel):
     """
-
     The model can behave as an encoder (with only self-attention) as well as a decoder, in which case a layer of
     cross-attention is added between the self-attention layers, following the architecture described in `Attention is
     all you need <https://arxiv.org/abs/1706.03762>`__ by Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit,
@@ -269,7 +262,6 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
     argument and :obj:`add_cross_attention` set to :obj:`True`; an :obj:`encoder_hidden_states` is then expected as an
     input to the forward pass.
     """
-
     def __init__(self, config):
         super().__init__(config)
         self.config = config

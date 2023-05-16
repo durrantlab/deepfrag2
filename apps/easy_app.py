@@ -6,6 +6,8 @@ from datetime import datetime
 import time
 import glob
 
+# TODO: Not used?
+
 print(
     "\nThis script serves to simplify use on Durrant-lab computer systems. It may not work on other systems.\n"
 )

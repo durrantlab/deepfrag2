@@ -26,7 +26,6 @@ class SquadDataTrainingArguments:
     """
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
-
     model_type: str = field(
         default=None, metadata={"help": "Model type selected in the list: " + ", ".join(MODEL_TYPES)}
     )
@@ -88,7 +87,6 @@ class SquadDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
-
     args: SquadDataTrainingArguments
     features: List[SquadFeatures]
     mode: Split

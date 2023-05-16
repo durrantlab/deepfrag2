@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 class InputFeatures(object):
     """A single set of original_features of data."""
-
     def __init__(self, input_ids, input_mask, segment_ids, is_next, lm_label_ids):
         self.input_ids = input_ids
         self.input_mask = input_mask
@@ -21,9 +20,8 @@ class InputFeatures(object):
 
 class InputExample(object):
     """A single training/test example for the language model."""
-
     def __init__(self, guid, tokens_a, tokens_b=None, is_next=None, lm_labels=None):
-        """Constructs a InputExample.
+        """Construct a InputExample.
 
         Args:
             guid: Unique id for the example.
@@ -218,8 +216,7 @@ def convert_example_to_features(example, max_seq_length, tokenizer, inference_mo
 
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
-    """Truncates a sequence pair in place to the maximum length."""
-
+    """Truncate a sequence pair in place to the maximum length."""
     # This is a simple heuristic which will always truncate the longer sequence
     # one token at a time. This makes more sense than truncating an equal percent
     # of tokens from each, since if one sequence is very short then each token
@@ -239,7 +236,6 @@ class BertConfigExtras(BertConfig):
     Same as BertConfig, BUT
     adds any kwarg as a member field
     """
-
     def __init__(
         self,
         vocab_size_or_config_json_file,

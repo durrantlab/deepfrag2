@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """TF BART model, ported from the fairseq repo."""
-
 import math
 import random
 import warnings
@@ -46,7 +45,6 @@ from .utils import logging
 _CONFIG_FOR_DOC = "BartConfig"
 
 BART_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -80,7 +78,6 @@ BART_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.TFPreTrainedModel.from_pretrained` method to load the
             model weights.
 """
-
 
 BART_INPUTS_DOCSTRING = r"""
     Args:
@@ -281,7 +278,6 @@ class TFBartEncoder(Layer):
     Args:
         config: BartConfig
     """
-
     def __init__(self, config: BartConfig, embed_tokens: TFSharedEmbeddings, **kwargs):
         super().__init__(**kwargs)
 
@@ -497,7 +493,6 @@ class TFBartDecoder(Layer):
         config: BartConfig
         embed_tokens: output embedding
     """
-
     def __init__(self, config: BartConfig, embed_tokens, **kwargs):
         super().__init__(**kwargs)
         self.layerdrop = config.decoder_layerdrop
@@ -640,7 +635,6 @@ def _reorder_buffer(attn_cache, new_order):
 
 class TFAttention(Layer):
     """Multi-headed attention from "Attention Is All You Need"""
-
     def __init__(
         self,
         embed_dim,
@@ -776,7 +770,6 @@ class TFLearnedPositionalEmbedding(TFSharedEmbeddings):
     based on padding_idx or by setting padding_idx to None and ensuring that the appropriate position ids are passed to
     the forward function.
     """
-
     def __init__(self, num_embeddings: int, embedding_dim: int, padding_idx: int, offset, **kwargs):
         # Bart is set up so that if padding_idx is specified then offset the embedding ids by 2
         # and adjust num_embeddings appropriately. Other models dont have this hack
@@ -798,8 +791,7 @@ class TFLearnedPositionalEmbedding(TFSharedEmbeddings):
 
 
 class TFSinusoidalPositionalEmbedding(tf.keras.layers.Embedding):
-    """This module produces sinusoidal positional embeddings of any length."""
-
+    """Produces sinusoidal positional embeddings of any length."""
     def __init__(self, num_positions, embedding_dim, **kwargs):
 
         if embedding_dim % 2 != 0:

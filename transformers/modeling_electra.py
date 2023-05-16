@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch ELECTRA model. """
-
 import math
 import os
 import warnings
@@ -152,7 +151,6 @@ def load_tf_weights_in_electra(model, config, tf_checkpoint_path, discriminator_
 
 class ElectraEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         self.word_embeddings = nn.Embedding(config.vocab_size, config.embedding_size, padding_idx=config.pad_token_id)
@@ -503,7 +501,6 @@ class ElectraEncoder(nn.Module):
 
 class ElectraDiscriminatorPredictions(nn.Module):
     """Prediction module for the discriminator, made up of two dense layers."""
-
     def __init__(self, config):
         super().__init__()
 
@@ -521,7 +518,6 @@ class ElectraDiscriminatorPredictions(nn.Module):
 
 class ElectraGeneratorPredictions(nn.Module):
     """Prediction module for the generator, made up of two dense layers."""
-
     def __init__(self, config):
         super().__init__()
 
@@ -541,7 +537,6 @@ class ElectraPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = ElectraConfig
     load_tf_weights = load_tf_weights_in_electra
     base_model_prefix = "electra"
@@ -584,7 +579,6 @@ class ElectraForPreTrainingOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -592,7 +586,6 @@ class ElectraForPreTrainingOutput(ModelOutput):
 
 
 ELECTRA_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -607,7 +600,6 @@ ELECTRA_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 ELECTRA_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -667,7 +659,6 @@ ELECTRA_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare Electra Model transformer outputting raw hidden-states without any specific head on top. Identical to "
@@ -768,7 +759,6 @@ class ElectraModel(ElectraPreTrainedModel):
 
 class ElectraClassificationHead(nn.Module):
     """Head for sentence-level classification tasks."""
-
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)

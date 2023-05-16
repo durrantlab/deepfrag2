@@ -3,7 +3,6 @@
 """
 Utilities for working with the local dataset cache.
 """
-
 import copy
 import csv
 import linecache
@@ -71,7 +70,6 @@ def separate_process_wrapper_fn(func: Callable[[], None], do_multi_processing: b
         - `func`: (`callable`): function() -> ... generic function which will be executed in its own separate process
         - `do_multi_processing`: (`bool`) Whether to run function on separate process or not
     """
-
     def multi_process_func(*args, **kwargs):
         # run function in an individual
         # process to get correct memory
@@ -113,7 +111,6 @@ class Frame(NamedTuple):
         - 'event' (string): Event that triggered the tracing (default will be "line")
         - 'line_text' (string): Text of the line in the python script
     """
-
     filename: str
     module: str
     line_number: int
@@ -131,7 +128,6 @@ class UsedMemoryState(NamedTuple):
         - 'gpu_memory': GPU used memory *before* executing the line (sum for all GPUs or for only `gpus_to_trace` if
           provided)
     """
-
     frame: Frame
     cpu_memory: int
     gpu_memory: int
@@ -144,7 +140,6 @@ class Memory(NamedTuple):
 
         - `byte` (integer): number of bytes,
     """
-
     bytes: int
 
     def __repr__(self) -> str:
@@ -160,7 +155,6 @@ class MemoryState(NamedTuple):
         - `gpu`: GPU memory consumed at during the current frame as a `Memory` named tuple
         - `cpu_gpu`: CPU + GPU memory consumed at during the current frame as a `Memory` named tuple
     """
-
     frame: Frame
     cpu: Memory
     gpu: Memory
@@ -180,7 +174,6 @@ class MemorySummary(NamedTuple):
         - `total`: total memory increase during the full tracing as a `Memory` named tuple (see below). Line with
           memory release (negative consumption) are ignored if `ignore_released_memory` is `True` (default).
     """
-
     sequential: List[MemoryState]
     cumulative: List[MemoryState]
     current: List[MemoryState]
@@ -210,7 +203,6 @@ def measure_peak_memory_cpu(function: Callable[[], None], interval=0.5, device_i
 
         - `max_memory`: (`int`) consumed memory peak in Bytes
     """
-
     def get_cpu_memory(process_id: int) -> int:
         """
         measures current cpu memory usage of a given `process_id`
@@ -245,7 +237,6 @@ def measure_peak_memory_cpu(function: Callable[[], None], interval=0.5, device_i
             `MemoryMeasureProcess` inherits from `Process` and overwrites its `run()` method. Used to measure the
             memory usage of a process
             """
-
             def __init__(self, process_id: int, child_connection: Connection, interval: float):
                 super().__init__()
                 self.process_id = process_id
@@ -591,7 +582,6 @@ class Benchmark(ABC):
     Benchmarks is a simple but feature-complete benchmarking script to compare memory and time performance of models in
     Transformers.
     """
-
     args: BenchmarkArguments
     configs: PretrainedConfig
     framework: str

@@ -16,7 +16,6 @@
  TF 2.0 DistilBERT model
 """
 
-
 import tensorflow as tf
 
 from .activations_tf import get_tf_activation
@@ -488,13 +487,11 @@ class TFDistilBertPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = DistilBertConfig
     base_model_prefix = "distilbert"
 
 
 DISTILBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -528,7 +525,6 @@ DISTILBERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 DISTILBERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`({0})`):
@@ -568,7 +564,6 @@ DISTILBERT_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     "The bare DistilBERT encoder/transformer outputting raw hidden-states without any specific head on top.",

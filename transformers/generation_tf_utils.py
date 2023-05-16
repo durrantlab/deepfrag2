@@ -28,7 +28,6 @@ class TFGenerationMixin:
     A class containing all of the functions supporting generation, to be used as a mixin in
     :class:`~transformers.TFPreTrainedModel`.
     """
-
     def prepare_inputs_for_generation(self, inputs, **kwargs):
         """
         Implement in subclasses of :class:`~transformers.TFPreTrainedModel` for custom behavior to prepare inputs in
@@ -182,7 +181,6 @@ class TFGenerationMixin:
             input_ids = tokenizer.encode(input_context, return_tensors='tf')  # encode input context
             outputs = model.generate(input_ids=input_ids, max_length=100, do_sample=True, bad_words_ids=bad_words_ids)  # generate sequences without allowing bad_words to be generated
         """
-
         # We cannot generate if the model does not have a LM head
         if self.get_output_embeddings() is None:
             raise AttributeError(
@@ -431,7 +429,6 @@ class TFGenerationMixin:
         Generate sequences for each example without beam search (num_beams == 1). All returned sequence are generated
         independantly.
         """
-
         # length of generated sentences / unfinished sentences
         unfinished_sents = tf.ones_like(input_ids[:, 0])
         sent_lengths = tf.ones_like(input_ids[:, 0]) * max_length
@@ -594,7 +591,6 @@ class TFGenerationMixin:
         use_cache,
     ):
         """Generate sequences for each example with beam search."""
-
         # generated hypotheses
         generated_hyps = [
             BeamHypotheses(num_beams, max_length, length_penalty, early_stopping=early_stopping)
@@ -1098,7 +1094,6 @@ class BeamHypotheses(object):
         If there are enough hypotheses and that none of the hypotheses being generated can become better than the worst
         one in the heap, then we are done with this sentence.
         """
-
         if len(self) < self.num_beams:
             return False
         elif self.early_stopping:

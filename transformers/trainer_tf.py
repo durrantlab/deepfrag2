@@ -1,5 +1,4 @@
 """Tensorflow trainer class."""
-
 import datetime
 import math
 import os
@@ -69,7 +68,6 @@ class TFTrainer:
         kwargs:
             Deprecated keyword arguments.
     """
-
     def __init__(
         self,
         model: TFPreTrainedModel,
@@ -200,7 +198,6 @@ class TFTrainer:
 
         Subclass and override this method if you want to inject some custom behavior.
         """
-
         num_examples = tf.data.experimental.cardinality(test_dataset).numpy()
 
         if num_examples < 0:

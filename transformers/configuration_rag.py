@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ RAG model configuration """
-
 import copy
 
 from .configuration_utils import PretrainedConfig
@@ -73,7 +72,6 @@ RAG_CONFIG_DOC = r"""
             If set to ``True``, :obj:`retrieved_doc_embeds`, :obj:`retrieved_doc_ids`, :obj:`context_input_ids` and
             :obj:`context_attention_mask` are returned. See returned tensors for more detail.
 """
-
 
 @add_start_docstrings(RAG_CONFIG_DOC)
 class RagConfig(PretrainedConfig):

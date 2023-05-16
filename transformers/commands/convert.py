@@ -21,7 +21,6 @@ transformers can only be used from the commandline to convert TensorFlow models 
 TensorFlow to be installed. Please see https://www.tensorflow.org/install/ for installation instructions.
 """
 
-
 class ConvertCommand(BaseTransformersCLICommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):

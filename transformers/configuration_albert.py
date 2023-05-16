@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ ALBERT model configuration """
-
 from .configuration_utils import PretrainedConfig
 
 
@@ -98,7 +97,6 @@ class AlbertConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
-
     model_type = "albert"
 
     def __init__(

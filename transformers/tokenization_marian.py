@@ -74,7 +74,6 @@ class MarianTokenizer(PreTrainedTokenizer):
         >>> # keys  [input_ids, attention_mask, labels].
         >>> # model(**batch) should work
     """
-
     vocab_files_names = vocab_files_names
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION

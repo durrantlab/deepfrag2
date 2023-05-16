@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Auto Config class. """
-
 import re
 from collections import OrderedDict
 
@@ -234,7 +233,6 @@ class AutoConfig:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoConfig is designed to be instantiated "

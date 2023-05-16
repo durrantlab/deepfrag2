@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Salesforce CTRL configuration """
-
 from .configuration_utils import PretrainedConfig
 from .utils import logging
 
@@ -75,7 +74,6 @@ class CTRLConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
-
     model_type = "ctrl"
 
     def __init__(

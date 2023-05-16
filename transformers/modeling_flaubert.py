@@ -14,7 +14,6 @@
 # limitations under the License.
 """ PyTorch Flaubert model, based on XLM. """
 
-
 import random
 
 import torch
@@ -51,7 +50,6 @@ FLAUBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 
 FLAUBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -66,7 +64,6 @@ FLAUBERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 FLAUBERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -125,7 +122,6 @@ FLAUBERT_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare Flaubert Model transformer outputting raw hidden-states without any specific head on top.",
@@ -318,7 +314,6 @@ class FlaubertWithLMHeadModel(XLMWithLMHeadModel):
     This class overrides :class:`~transformers.XLMWithLMHeadModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -339,7 +334,6 @@ class FlaubertForSequenceClassification(XLMForSequenceClassification):
     This class overrides :class:`~transformers.XLMForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -360,7 +354,6 @@ class FlaubertForTokenClassification(XLMForTokenClassification):
     This class overrides :class:`~transformers.XLMForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -381,7 +374,6 @@ class FlaubertForQuestionAnsweringSimple(XLMForQuestionAnsweringSimple):
     This class overrides :class:`~transformers.XLMForQuestionAnsweringSimple`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -402,7 +394,6 @@ class FlaubertForQuestionAnswering(XLMForQuestionAnswering):
     This class overrides :class:`~transformers.XLMForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -423,7 +414,6 @@ class FlaubertForMultipleChoice(XLMForMultipleChoice):
     This class overrides :class:`~transformers.XLMForMultipleChoice`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = FlaubertConfig
 
     def __init__(self, config):

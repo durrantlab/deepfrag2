@@ -17,7 +17,6 @@
  Utilities for PyTorch Transformer XL model. Directly adapted from https://github.com/kimiyoung/transformer-xl.
 """
 
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -95,7 +94,6 @@ class ProjectedAdaptiveLogSoftmax(nn.Module):
             their's had an option to set bias on all clusters in the native one. here:
             https://github.com/pytorch/pytorch/blob/dbe6a7a9ff1a364a8706bf5df58a1ca96d2fd9da/torch/nn/modules/adaptive.py#L138
         """
-
         if labels is not None:
             # Shift so that tokens < n predict n
             hidden = hidden[..., :-1, :].contiguous()

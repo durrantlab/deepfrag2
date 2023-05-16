@@ -5,6 +5,7 @@ from collagen.external.moad.split import compute_dataset_split
 # Code to identify the best learning rate for the model. I ended up not using
 # it.
 
+# TODO: Note used. Good to remove.
 
 class MoadVoxelModelLRFinder(object):
     def run_lr_finder(self: "MoadVoxelModelParent", args: Namespace):

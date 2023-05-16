@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch XLM-RoBERTa model. """
-
 from .configuration_xlm_roberta import XLMRobertaConfig
 from .file_utils import add_start_docstrings
 from .modeling_roberta import (
@@ -43,7 +42,6 @@ XLM_ROBERTA_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 
 XLM_ROBERTA_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -59,7 +57,6 @@ XLM_ROBERTA_START_DOCSTRING = r"""
             weights.
 """
 
-
 @add_start_docstrings(
     "The bare XLM-RoBERTa Model transformer outputting raw hidden-states without any specific head on top.",
     XLM_ROBERTA_START_DOCSTRING,
@@ -69,7 +66,6 @@ class XLMRobertaModel(RobertaModel):
     This class overrides :class:`~transformers.RobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -82,7 +78,6 @@ class XLMRobertaForCausalLM(RobertaForCausalLM):
     This class overrides :class:`~transformers.RobertaForCausalLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -95,7 +90,6 @@ class XLMRobertaForMaskedLM(RobertaForMaskedLM):
     This class overrides :class:`~transformers.RobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -111,7 +105,6 @@ class XLMRobertaForSequenceClassification(RobertaForSequenceClassification):
     This class overrides :class:`~transformers.RobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -127,7 +120,6 @@ class XLMRobertaForMultipleChoice(RobertaForMultipleChoice):
     This class overrides :class:`~transformers.RobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -143,7 +135,6 @@ class XLMRobertaForTokenClassification(RobertaForTokenClassification):
     This class overrides :class:`~transformers.RobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -159,5 +150,4 @@ class XLMRobertaForQuestionAnswering(RobertaForQuestionAnswering):
     This class overrides :class:`~transformers.RobertaForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig

@@ -31,7 +31,6 @@ class RepoObj:
     """
     HuggingFace git-based system, data structure that represents a file belonging to the current user.
     """
-
     def __init__(self, filename: str, lastModified: str, commit: str, size: int, **kwargs):
         self.filename = filename
         self.lastModified = lastModified
@@ -43,7 +42,6 @@ class S3Obj:
     """
     HuggingFace S3-based system, data structure that represents a file belonging to the current user.
     """
-
     def __init__(self, filename: str, LastModified: str, ETag: str, Size: int, **kwargs):
         self.filename = filename
         self.LastModified = LastModified
@@ -62,7 +60,6 @@ class ModelSibling:
     """
     Data structure that represents a public file inside a model, accessible from huggingface.co
     """
-
     def __init__(self, rfilename: str, **kwargs):
         self.rfilename = rfilename  # filename relative to the model root
         for k, v in kwargs.items():
@@ -73,7 +70,6 @@ class ModelInfo:
     """
     Info about a public model accessible from huggingface.co
     """
-
     def __init__(
         self,
         modelId: Optional[str] = None,  # id of model
@@ -259,7 +255,6 @@ class TqdmProgressFileReader:
 
     see github.com/huggingface/transformers/pull/2078#discussion_r354739608 for implementation details.
     """
-
     def __init__(self, f: io.BufferedReader):
         self.f = f
         self.total_size = os.fstat(f.fileno()).st_size

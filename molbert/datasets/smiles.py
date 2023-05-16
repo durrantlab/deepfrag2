@@ -45,7 +45,6 @@ class BertSmilesDataset(BaseBertDataset):
         """
         Returns a permuted SMILES given a position index
         """
-
         sequence = self.sequences[index]
         if sequence is None:
             return None, False

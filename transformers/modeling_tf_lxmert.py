@@ -16,7 +16,6 @@
 # limitations under the License.
 """ TF 2.0 LXMERT model. """
 
-
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
@@ -82,7 +81,6 @@ class TFLxmertModelOutput(ModelOutput):
             sequence_length)`. Attentions weights after the attention softmax, used to compute the weighted average in
             the self-attention heads.
     """
-
     language_output: Optional[tf.Tensor] = None
     vision_output: Optional[tf.Tensor] = None
     pooled_output: Optional[tf.Tensor] = None
@@ -129,7 +127,6 @@ class TFLxmertForPreTrainingOutput(ModelOutput):
             the self-attention heads.
 
     """
-
     loss: [tf.Tensor] = None
     prediction_logits: Optional[tf.Tensor] = None
     cross_relationship_score: Optional[tf.Tensor] = None
@@ -180,7 +177,6 @@ class TFLxmertVisualFeatureEncoder(tf.keras.layers.Layer):
 
 class TFLxmertEmbeddings(tf.keras.layers.Layer):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = config.vocab_size
@@ -853,7 +849,6 @@ class TFLxmertPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = LxmertConfig
     base_model_prefix = "lxmert"
 
@@ -863,7 +858,6 @@ class TFLxmertPreTrainedModel(TFPreTrainedModel):
 
 
 LXMERT_START_DOCSTRING = r"""
-
     The LXMERT model was proposed in `LXMERT: Learning Cross-Modality Encoder Representations from Transformers
     <https://arxiv.org/abs/1908.07490>`__ by Hao Tan and Mohit Bansal. It's a vision and language transformer model,
     pre-trained on a variety of multi-modal datasets comprising of GQA, VQAv2.0, MCSCOCO captions, and Visual genome,
@@ -899,7 +893,6 @@ LXMERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 LXMERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`np.ndarray` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -959,7 +952,6 @@ LXMERT_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     "The bare Lxmert Model transformer outputting raw hidden-states without any specific head on top.",

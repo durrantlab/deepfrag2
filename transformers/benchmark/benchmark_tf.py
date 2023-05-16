@@ -17,7 +17,6 @@
     Benchmarking the library on inference and training in PyTorch.
 """
 
-
 import random
 import timeit
 from functools import wraps

@@ -38,7 +38,6 @@ class BenchmarkArguments:
     Using `HfArgumentParser` we can turn this class into argparse arguments to be able to specify them on the command
     line.
     """
-
     models: List[str] = list_field(
         default=[],
         metadata={

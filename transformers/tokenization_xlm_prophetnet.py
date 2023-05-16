@@ -100,7 +100,6 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
     Attributes: sp_model (:obj:`SentencePieceProcessor`): The `SentencePiece` processor that is used for every
     conversion (string, tokens and IDs).
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
@@ -197,7 +196,6 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(
@@ -227,7 +225,6 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
             :obj:`List[int]`: List of zeros.
 
         """
-
         sep = [self.sep_token_id]
 
         if token_ids_1 is None:
@@ -298,7 +295,6 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: list of `input IDs <../glossary.html#input-ids>`__ with the appropriate special tokens.
         """
-
         if token_ids_1 is None:
             return token_ids_0 + [self.sep_token_id]
         sep = [self.sep_token_id]
