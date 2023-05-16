@@ -103,10 +103,6 @@ def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     return molbert_fp_norm
 
 
-def _molbert_sig(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
-    return _molbert(m, size, smiles)
-
-
 def _molbert_norm2(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     molbert_fp = _molbert(m, size, smiles)
 
@@ -144,7 +140,8 @@ FINGERPRINTS = {
     "molbert": _molbert, 
     "molbert_pos": _molbert_pos, 
     "molbert_norm": _molbert_norm,
-    "molbert_sig": _molbert_sig,
+    "molbert_sig": _molbert,  # the application of the Sigmoid function is applied in model.py to avoid device conflicts
+    "molbert_sig_v2": _molbert,  # the application of the Sigmoid function is applied in model.py to avoid device conflicts
     "molbert_norm2": _molbert_norm2,
     "molbert_x_rdk10": _molbert_x_rdk10, 
     "molbert_x_morgan": _molbert_x_morgan
