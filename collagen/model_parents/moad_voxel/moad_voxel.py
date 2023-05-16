@@ -151,8 +151,6 @@ class MoadVoxelModelParent(
             args.__setattr__("fp_size", 208)
         elif args.fragment_representation == "maccs":
             args.__setattr__("fp_size", 167)
-        elif args.fragment_representation == "morgan":
-            args.__setattr__("fp_size", 2048)
         elif args.fragment_representation in [
             "molbert",
             "molbert_x_rdk10",
@@ -160,12 +158,13 @@ class MoadVoxelModelParent(
             "molbert_pos",
             "molbert_norm",
             "molbert_sig",
+            "molbert_sig_v2",
             "molbert_norm2",
         ]:
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()
         else:
-            raise Exception("The type of molecular descriptor to be used is wrong.")
+            raise Exception("The fragment representation is wrong.")
 
     def load_checkpoint(self, args: Namespace = None, validate_args=True) -> Union[str, None]:
         """Load the checkpoint.

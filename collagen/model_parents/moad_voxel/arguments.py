@@ -25,12 +25,24 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--data_dir",
         required=False,  # Not required if running in --mode "inference"
-        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
+        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter can be used for both training and fine-tuning."
     )
     parser.add_argument(
-        "--additional_training_data_dir",
+        "--bad_data_dir",
         required=False,  # Not required if running in --mode "inference"
-        help="Path to a folder containing a SDF files"
+        help="Path to a folder containing bad ligands. This parameter is to be only used in the training mode as additional information to the data contained in --data_dir"
+    )
+    parser.add_argument(
+        "--good_bad_data_csv",
+        required=False,  # Not required if running in --mode "inference"
+        help="This parameter is to be only used in the fine-tuning mode. This parameter is a set of comma separated values in the next order:\n"
+             "1 - Path to the CSV file where information related to good/bad ligands, good/bad fragments, and PDB file names are stored\n"
+             "2 - Column name related to the PDB file names\n"
+             "3 - Column name related to the good ligand SMILES strings\n"
+             "4 - Column name related to the good fragment SMILES strings\n"
+             "5 - Column name related to the bad ligand SMILES strings\n"
+             "6 - Column name related to the bad fragment SMILES strings\n"
+             "7 - Path to the PDB file folder"
     )
 
     # For many of these, good to define default values in args_defaults.py

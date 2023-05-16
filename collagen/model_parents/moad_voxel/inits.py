@@ -9,8 +9,10 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch
 import os
+from apps.deepfrag.model_additional_data import DeepFragModelGoodBadDataFinetune
 
 
+# A few function to initialize the trainer, model, voxel parameters, and device.
 class MoadVoxelModelInits(object):
 
     """A few function to initialize the trainer, model, voxel parameters, and
@@ -133,4 +135,6 @@ class MoadVoxelModelInits(object):
         model = self.model_cls(**vars(args))
         state_dict = torch.load(args.model_for_warm_starting)
         model.load_state_dict(state_dict)
+        if isinstance(model, DeepFragModelGoodBadDataFinetune):
+            model.set_moad_database(moad)
         return model

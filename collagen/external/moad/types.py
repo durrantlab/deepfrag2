@@ -469,6 +469,11 @@ class PdbSdfDir_ligand(MOAD_ligand):
 
 
 @dataclass
+class PdbSdfCsv_ligand(PdbSdfDir_ligand):
+    fragments: Any
+
+
+@dataclass
 class MOAD_split(object):
 
     """Class to hold information about a split of the MOAD database."""

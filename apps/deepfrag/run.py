@@ -12,7 +12,7 @@ from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
-from apps.deepfrag.model_additional_data import DeepFragModelSDFData
+from apps.deepfrag.model_additional_data import DeepFragModelBadData, DeepFragModelGoodBadDataFinetune
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
@@ -34,10 +34,8 @@ class DeepFrag(MoadVoxelModelParent):
             args (argparse.Namespace): The arguments.
         """
         super().__init__(
-            model_cls=DeepFragModelSDFData
-            if args.additional_training_data_dir
-            else DeepFragModel,
-            dataset_cls=MOADFragmentDataset,
+            model_cls=DeepFragModelBadData if args.bad_data_dir else (DeepFragModelGoodBadDataFinetune if args.good_bad_data_csv else DeepFragModel),
+            dataset_cls=MOADFragmentDataset
         )
 
     @staticmethod

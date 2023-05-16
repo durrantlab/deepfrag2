@@ -4,8 +4,8 @@ from argparse import Namespace
 from typing import Any, Optional, Tuple
 from collagen.core.loader import DataLambda
 from torchinfo import summary
-from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
-from collagen.external.moad.split import compute_dataset_split, full_moad_split
+from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PdbSdfCsvInterface
+from collagen.external.moad.split import compute_dataset_split
 
 
 class MoadVoxelModelTrain(object):
@@ -54,7 +54,7 @@ class MoadVoxelModelTrain(object):
         trainer = self.init_trainer(args)
         moad, train_data, val_data = self.get_train_val_sets(args, False)
 
-        model = self.init_warm_model(args)
+        model = self.init_warm_model(args, moad)
 
         model_stats = summary(model, (16, 10, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
@@ -85,7 +85,15 @@ class MoadVoxelModelTrain(object):
         device = self.init_device(args)
 
         if train:
-            if args.every_csv is None:
+            if args.good_bad_data_csv:
+                raise ValueError(
+                    "For 'train' mode, you must not specify the '--good_bad_data_csv' parameter."
+                )
+            if not args.data_dir:
+                raise ValueError(
+                    "For 'train' mode, you must specify the '--data_dir' parameter."
+                )
+            if not args.every_csv:
                 raise ValueError(
                     "For 'train' mode, you must specify the '--every_csv' parameter."
                 )
@@ -115,15 +123,40 @@ class MoadVoxelModelTrain(object):
             )
 
         else:
-            raise ValueError(
-                "For 'warm_starting' mode is not required to specify the '--every_csv' parameter."
-            )
+            if args.every_csv:
+                raise ValueError(
+                    "For 'fine-tuning' mode, you must not specify the '--every_csv' parameter."
+                )
+            if (args.data_dir and args.good_bad_data_csv) or (not args.data_dir and not args.good_bad_data_csv):
+                raise ValueError(
+                    "For 'fine-tuning' mode, you must specify the '--data_dir' parameter or the '--good_bad_data_csv' parameter."
+                )
+
+            if args.data_dir:
+                moad = PdbSdfDirInterface(
+                    structures=args.data_dir,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms
+                )
+            else:
+                moad = PdbSdfCsvInterface(
+                    structures=args.good_bad_data_csv,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms
+                )
 
         train, val, _ = compute_dataset_split(
             moad,
             seed=args.split_seed,
             fraction_train=args.fraction_train,
             fraction_val=args.fraction_val,
+            prevent_smiles_overlap=False,
             save_splits=args.save_splits,
             load_splits=args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
