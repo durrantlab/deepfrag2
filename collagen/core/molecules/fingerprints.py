@@ -190,23 +190,6 @@ def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.arra
     molbert_fp_norm = np.nan_to_num(molbert_fp_norm, nan=0.0, posinf=0.0, neginf=0.0)
     return molbert_fp_norm
 
-
-def _molbert_sig(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Molbert fingerprints with sigmoid applied. TODO: Candidate for removal.
-
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
-        size (int): Size of the fingerprint.
-        smiles (str): SMILES string.
-
-    Returns:
-        np.array: Fingerprint.
-    """
-    # TODO: Is sigmoid function really applied here?
-
-    return _molbert(m, size, smiles)
-
-
 def _molbert_norm2(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints normalized between -6 and 6. Rationale: I calculated
     molbert fingerprints for 7574 unique fragments, and the min/max values for
