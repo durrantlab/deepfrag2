@@ -147,13 +147,6 @@ class MOADFragmentDataset(Dataset):
             # default=1,
             help="Consider only fragments that have at least this number of heavy atoms. Default is 1.",
         )
-        parser.add_argument(
-            "--max_instead_min_frag_num_heavy_atoms",
-            required=False,
-            # default=False,
-            action="store_true",
-            help="Consider the argument --min_frag_num_heavy_atoms as --max_frag_num_heavy_atoms to only consider fragments with a number of heavy atoms less than --min_frag_num_heavy_atoms."
-        )
 
         parser.add_argument(
             "--max_frag_num_heavy_atoms",
@@ -282,12 +275,10 @@ class MOADFragmentDataset(Dataset):
                 )
             return False
 
-        del_frag_by_heavy_atoms = (not args.max_instead_min_frag_num_heavy_atoms and frag_num_heavy_atom < args.min_frag_num_heavy_atoms) or\
-                                  (args.max_instead_min_frag_num_heavy_atoms and frag_num_heavy_atom >= args.min_frag_num_heavy_atoms)
-        if del_frag_by_heavy_atoms:
+        if frag_num_heavy_atom < args.min_frag_num_heavy_atoms:
             if user_args.verbose:
                 print(
-                    f"Fragment rejected; has too few (or much) heavy atoms: {frag_num_heavy_atom}"
+                    f"Fragment rejected; has too few heavy atoms: {frag_num_heavy_atom}"
                 )
             return False
         
