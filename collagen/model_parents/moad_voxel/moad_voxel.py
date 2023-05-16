@@ -77,14 +77,12 @@ class MoadVoxelModelParent(
 
     @staticmethod
     def setup_fingerprint_scheme(args):
-        if args.fragment_representation == "rdk10":
+        if args.fragment_representation in ["rdk10", "morgan"]:
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation == "rdkit_desc":
             args.__setattr__("fp_size", 208)
         elif args.fragment_representation == "maccs":
             args.__setattr__("fp_size", 167)
-        elif args.fragment_representation == "morgan":
-            args.__setattr__("fp_size", 2048)
         elif args.fragment_representation in [
             "molbert",
             "molbert_x_rdk10",
@@ -92,6 +90,7 @@ class MoadVoxelModelParent(
             "molbert_pos",
             "molbert_norm",
             "molbert_sig",
+            "molbert_sig_v2",
             "molbert_norm2",
         ]:
             args.__setattr__("fp_size", 1536)
