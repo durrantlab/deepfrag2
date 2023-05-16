@@ -16,7 +16,6 @@
 RetriBERT model
 """
 
-
 import math
 
 import torch
@@ -44,7 +43,6 @@ class RetriBertPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = RetriBertConfig
     load_tf_weights = None
     base_model_prefix = "retribert"
@@ -61,7 +59,6 @@ class RetriBertPreTrainedModel(PreTrainedModel):
 
 
 RETRIBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -76,7 +73,6 @@ RETRIBERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 
 @add_start_docstrings(
     """Bert Based model to embed queries or document for document retrieval. """,

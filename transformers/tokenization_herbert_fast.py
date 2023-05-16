@@ -51,7 +51,6 @@ class HerbertTokenizerFast(PreTrainedTokenizerFast):
         merges_file (:obj:`str`):
             Path to the merges file.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -92,7 +91,6 @@ class HerbertTokenizerFast(PreTrainedTokenizerFast):
         Returns:
             :obj:`List[int]`: List of `input IDs <../glossary.html#input-ids>`__ with the appropriate special tokens.
         """
-
         cls = [self.cls_token_id]
         sep = [self.sep_token_id]
         if token_ids_1 is None:

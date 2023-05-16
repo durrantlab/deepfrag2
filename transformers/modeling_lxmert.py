@@ -14,7 +14,6 @@
 # limitations under the License.
 """ PyTorch LXMERT model. """
 
-
 import math
 import os
 import warnings
@@ -91,7 +90,6 @@ class LxmertModelOutput(ModelOutput):
             sequence_length, sequence_length)`. Attentions weights after the attention softmax, used to compute the
             weighted average in the self-attention heads.
     """
-
     language_output: Optional[torch.FloatTensor] = None
     vision_output: Optional[torch.FloatTensor] = None
     pooled_output: Optional[torch.FloatTensor] = None
@@ -132,7 +130,6 @@ class LxmertForQuestionAnsweringOutput(ModelOutput):
             sequence_length, sequence_length)`. Attentions weights after the attention softmax, used to compute the
             weighted average in the self-attention heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     question_answering_score: Optional[torch.FloatTensor] = None
     language_hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -178,7 +175,6 @@ class LxmertForPreTrainingOutput(ModelOutput):
             weighted average in the self-attention heads.
 
     """
-
     loss: [torch.FloatTensor] = None
     prediction_logits: Optional[torch.FloatTensor] = None
     cross_relationship_score: Optional[torch.FloatTensor] = None
@@ -271,7 +267,6 @@ def load_tf_weights_in_lxmert(model, config, tf_checkpoint_path):
 
 class LxmertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=0)
@@ -776,7 +771,6 @@ class LxmertPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = LxmertConfig
     load_tf_weights = load_tf_weights_in_lxmert
     base_model_prefix = "lxmert"
@@ -795,7 +789,6 @@ class LxmertPreTrainedModel(PreTrainedModel):
 
 
 LXMERT_START_DOCSTRING = r"""
-
     The LXMERT model was proposed in `LXMERT: Learning Cross-Modality Encoder Representations from Transformers
     <https://arxiv.org/abs/1908.07490>`__ by Hao Tan and Mohit Bansal. It's a vision and language transformer model,
     pretrained on a variety of multi-modal datasets comprising of GQA, VQAv2.0, MCSCOCO captions, and Visual genome,
@@ -816,9 +809,7 @@ LXMERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 LXMERT_INPUTS_DOCSTRING = r"""
-
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
             Indices of input sequence tokens in the vocabulary.
@@ -874,7 +865,6 @@ LXMERT_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare Lxmert Model transformer outputting raw hidden-states without any specific head on top.",
@@ -1086,7 +1076,6 @@ class LxmertForPreTraining(LxmertPreTrainedModel):
         Return:
             :obj:`torch.nn.Linear`: Pointer to the resized Linear layer or the old Linear layer
         """
-
         cur_qa_logit_layer = self.get_qa_logit_layer()
         if num_labels is None or cur_qa_logit_layer is None:
             return
@@ -1184,7 +1173,6 @@ class LxmertForPreTraining(LxmertPreTrainedModel):
 
         Returns:
         """
-
         if "masked_lm_labels" in kwargs:
             warnings.warn(
                 "The `masked_lm_labels` argument is deprecated and will be removed in a future version, use `labels` instead.",
@@ -1316,7 +1304,6 @@ class LxmertForQuestionAnswering(LxmertPreTrainedModel):
         Return:
             :obj:`torch.nn.Linear`: Pointer to the resized Linear layer or the old Linear layer
         """
-
         cur_qa_logit_layer = self.get_qa_logit_layer()
         if num_labels is None or cur_qa_logit_layer is None:
             return
@@ -1340,7 +1327,6 @@ class LxmertForQuestionAnswering(LxmertPreTrainedModel):
             :obj:`nn.Module`: A torch module mapping the question answering prediction hidden states. :obj:`None`: A
             NoneType object if Lxmert does not have the visual answering head.
         """
-
         if hasattr(self, "answer_head"):
             return self.answer_head.logit_fc[-1]
 

@@ -66,7 +66,6 @@ class BartTokenizer(RobertaTokenizer):
         **kwargs,
     ) -> BatchEncoding:
         r"""
-
         Prepare a batch that can be passed directly to an instance of :class:`~transformers.BartModel`.
 
         Args:

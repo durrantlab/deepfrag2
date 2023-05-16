@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Configuration base class and utilities."""
 
-
 import copy
 import json
 import os
@@ -47,7 +46,6 @@ class ModelCard:
 
     Parameters:
     """
-
     def __init__(self, **kwargs):
         # Recommended attributes from https://arxiv.org/abs/1810.03993 (see papers)
         self.model_details = kwargs.pop("model_details", {})

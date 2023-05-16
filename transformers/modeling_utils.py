@@ -52,7 +52,6 @@ except ImportError:
     # Older PyTorch compatibility
     class Identity(nn.Module):
         r"""A placeholder identity operator that is argument-insensitive."""
-
         def __init__(self, *args, **kwargs):
             super().__init__()
 
@@ -90,7 +89,6 @@ class ModuleUtilsMixin:
     """
     A few utilities for :obj:`torch.nn.Modules`, to be used as a mixin.
     """
-
     @staticmethod
     def _hook_rss_memory_pre_forward(module, *args, **kwargs):
         try:
@@ -324,7 +322,6 @@ class ModuleUtilsMixin:
         Returns:
             :obj:`int`: The number of parameters.
         """
-
         def parameter_filter(x):
             return (x.requires_grad or not only_trainable) and not (
                 isinstance(x, torch.nn.Embedding) and exclude_embeddings
@@ -375,7 +372,6 @@ class ModuleUtilsMixin:
         Returns:
             :obj:`int`: The number of floating-point operations.
         """
-
         return 6 * self.estimate_tokens(input_dict) * self.num_parameters(exclude_embeddings=exclude_embeddings)
 
 
@@ -1105,7 +1101,6 @@ class Conv1D(nn.Module):
         nf (:obj:`int`): The number of output features.
         nx (:obj:`int`): The number of input features.
     """
-
     def __init__(self, nf, nx):
         super().__init__()
         self.nf = nf
@@ -1129,7 +1124,6 @@ class PoolerStartLogits(nn.Module):
         config (:class:`~transformers.PretrainedConfig`):
             The config used by the model, will be used to grab the :obj:`hidden_size` of the model.
     """
-
     def __init__(self, config: PretrainedConfig):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, 1)
@@ -1168,7 +1162,6 @@ class PoolerEndLogits(nn.Module):
             The config used by the model, will be used to grab the :obj:`hidden_size` of the model and the
             :obj:`layer_norm_eps` to use.
     """
-
     def __init__(self, config: PretrainedConfig):
         super().__init__()
         self.dense_0 = nn.Linear(config.hidden_size * 2, config.hidden_size)
@@ -1234,7 +1227,6 @@ class PoolerAnswerClass(nn.Module):
         config (:class:`~transformers.PretrainedConfig`):
             The config used by the model, will be used to grab the :obj:`hidden_size` of the model.
     """
-
     def __init__(self, config):
         super().__init__()
         self.dense_0 = nn.Linear(config.hidden_size * 2, config.hidden_size)
@@ -1311,7 +1303,6 @@ class SquadHeadOutput(ModelOutput):
             Log probabilities for the ``is_impossible`` label of the answers.
 
     """
-
     loss: Optional[torch.FloatTensor] = None
     start_top_log_probs: Optional[torch.FloatTensor] = None
     start_top_index: Optional[torch.LongTensor] = None
@@ -1329,7 +1320,6 @@ class SQuADHead(nn.Module):
             The config used by the model, will be used to grab the :obj:`hidden_size` of the model and the
             :obj:`layer_norm_eps` to use.
     """
-
     def __init__(self, config):
         super().__init__()
         self.start_n_top = config.start_n_top
@@ -1464,7 +1454,6 @@ class SequenceSummary(nn.Module):
             - **summary_last_dropout** (:obj:`float`)-- Optional dropout probability after the projection and
               activation.
     """
-
     def __init__(self, config: PretrainedConfig):
         super().__init__()
 
@@ -1666,7 +1655,6 @@ def apply_chunking_to_forward(
         def forward(self, hidden_states):
             return apply_chunking_to_forward(self.forward_chunk, self.chunk_size_lm_head, self.seq_len_dim, hidden_states)
     """
-
     assert len(input_tensors) > 0, "{} has to be a tuple/list of tensors".format(input_tensors)
     tensor_shape = input_tensors[0].shape
     assert all(

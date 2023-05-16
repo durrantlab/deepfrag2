@@ -1,3 +1,5 @@
+"""The inference mode for the MOAD voxel model."""
+
 from argparse import ArgumentParser, Namespace
 import cProfile
 from io import StringIO
@@ -6,7 +8,7 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
 import torch
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from collagen.core.molecules.mol import Mol, mols_from_smi_file
 from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import most_similar_matches
@@ -20,27 +22,29 @@ import os
 
 
 class MoadVoxelModelInference(object):
+
+    """A model for inference."""
+
     def create_inference_label_set(
         self: "MoadVoxelModelParent",
         args: ArgumentParser,
-        device: Any,
+        device: torch.device,
         smi_files: List[str],
     ) -> Tuple[torch.Tensor, List[Entry_info]]:
-        """Creates a label set (look-up) tensor and smiles list for testing.
+        """Create a label set (look-up) tensor and smiles list for testing.
         Can be comprised of the fingerprints in the train and/or test and/or
         val sets, as well as SMILES strings from a file.
 
         Args:
             self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
-            device (Any): The device to use.
+            device (torch.device): The device to use.
             smi_files (List[str]): The file(s) containing SMILES strings.
 
         Returns:
             Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
                 tensor and smiles list.
         """
-
         # Can we cache the label_set_fps and label_set_smis variables to a disk
         # to not have to recalculate them every time? It can be a pretty
         # expensive calculation.
@@ -76,6 +80,16 @@ class MoadVoxelModelInference(object):
     def _validate_run_inference(
         self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
     ):
+        """Validate the arguments for inference mode.
+        
+        Args:
+            self (MoadVoxelModelParent): This object
+            args (Namespace): The user arguments.
+            ckpt (Optional[str]): The checkpoint to load.
+            
+        Raises:
+            ValueError: If the arguments are invalid.
+        """
         if not ckpt:
             raise ValueError(
                 "Must specify a checkpoint (e.g., --load_checkpoint) in inference mode"
@@ -100,14 +114,30 @@ class MoadVoxelModelInference(object):
         if args.ligand is None:
             raise ValueError("Must specify a ligand (--ligand) in inference mode")
         if args.branch_atm_loc_xyz is None:
-            raise ValueError("Must specify a center (--branch_atm_loc_xyz) in inference mode")
+            raise ValueError(
+                "Must specify a center (--branch_atm_loc_xyz) in inference mode"
+            )
 
     def run_inference(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str], save_results_to_disk=True
-    ):
-        # Runs a model on the test and evaluates the output.
+        self: "MoadVoxelModelParent",
+        args: Namespace,
+        ckpt_filename: Optional[str],
+        save_results_to_disk=True,
+    ) -> Union[Dict[str, Any], None]:
+        """Run a model on the test and evaluates the output.
 
-        self._validate_run_inference(args, ckpt)
+        Args:
+            self (MoadVoxelModelParent): This object
+            args (Namespace): The user arguments.
+            ckpt_filename (Optional[str]): The checkpoint to load.
+            save_results_to_disk (bool): Whether to save the results to disk.
+                If false, the results are returned as a dictionary.
+
+        Returns:
+            Union[Dict[str, Any], None]: The results dictionary, or None if
+                save_results_to_disk is True.
+        """
+        self._validate_run_inference(args, ckpt_filename)
 
         print(
             f"Using the operator {args.aggregation_rotations} to aggregate the inferences."
@@ -124,7 +154,9 @@ class MoadVoxelModelInference(object):
             m = prody.parsePDBStream(StringIO(f.read()), model=1)
         prody_mol = m.select("all")
         recep = Mol.from_prody(prody_mol)
-        center = np.array([float(v.strip()) for v in args.branch_atm_loc_xyz.split(",")])
+        center = np.array(
+            [float(v.strip()) for v in args.branch_atm_loc_xyz.split(",")]
+        )
 
         # Load the ligand
         suppl = Chem.SDMolSupplier(str(args.ligand))
@@ -135,11 +167,11 @@ class MoadVoxelModelInference(object):
         # cpu = device.type == "cpu"
         cpu = True  # TODO: Required because model.device == "cpu", I think.
 
-        ckpts = [c.strip() for c in ckpt.split(",")]
+        ckpts = [c.strip() for c in ckpt_filename.split(",")]
         fps = []
-        for ckpt in ckpts:
-            print(f"Using checkpoint {ckpt}")
-            model = self.init_model(args, ckpt)
+        for ckpt_filename in ckpts:
+            print(f"Using checkpoint {ckpt_filename}")
+            model = self.init_model(args, ckpt_filename)
 
             # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
 
@@ -176,9 +208,7 @@ class MoadVoxelModelInference(object):
             label_set_fingerprints,
             label_set_entry_infos,
         ) = self.create_inference_label_set(
-            args,
-            device,
-            [l.strip() for l in args.inference_label_sets.split(",")],
+            args, device, [l.strip() for l in args.inference_label_sets.split(",")],
         )
 
         most_similar = most_similar_matches(
@@ -197,11 +227,7 @@ class MoadVoxelModelInference(object):
             # Return the results
             return {
                 "most_similar": most_similar[0],
-                "fps": {
-                    "per_rot": fps,
-                    "avg": avg_over_ckpts_of_avgs
-                },
-
+                "fps": {"per_rot": fps, "avg": avg_over_ckpts_of_avgs},
             }
 
         # If you get here, you are saving the results to disk (default).

@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ TF 2.0  XLM-RoBERTa model. """
-
 from .configuration_xlm_roberta import XLMRobertaConfig
 from .file_utils import add_start_docstrings
 from .modeling_tf_roberta import (
@@ -36,7 +35,6 @@ TF_XLM_ROBERTA_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 
 XLM_ROBERTA_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -71,7 +69,6 @@ XLM_ROBERTA_START_DOCSTRING = r"""
             weights.
 """
 
-
 @add_start_docstrings(
     "The bare XLM-RoBERTa Model transformer outputting raw hidden-states without any specific head on top.",
     XLM_ROBERTA_START_DOCSTRING,
@@ -81,7 +78,6 @@ class TFXLMRobertaModel(TFRobertaModel):
     This class overrides :class:`~transformers.TFRobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -94,7 +90,6 @@ class TFXLMRobertaForMaskedLM(TFRobertaForMaskedLM):
     This class overrides :class:`~transformers.TFRobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -110,7 +105,6 @@ class TFXLMRobertaForSequenceClassification(TFRobertaForSequenceClassification):
     This class overrides :class:`~transformers.TFRobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -126,7 +120,6 @@ class TFXLMRobertaForTokenClassification(TFRobertaForTokenClassification):
     This class overrides :class:`~transformers.TFRobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -142,7 +135,6 @@ class TFXLMRobertaForQuestionAnswering(TFRobertaForQuestionAnswering):
     This class overrides :class:`~transformers.TFRobertaForQuestionAnsweringSimple`. Please check the superclass for
     the appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig
 
 
@@ -158,5 +150,4 @@ class TFXLMRobertaForMultipleChoice(TFRobertaForMultipleChoice):
     This class overrides :class:`~transformers.TFRobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = XLMRobertaConfig

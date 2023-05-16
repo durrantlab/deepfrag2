@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch optimization for BERT model."""
-
 import math
 from typing import Callable, Iterable, Tuple
 
@@ -59,7 +58,6 @@ def get_constant_schedule_with_warmup(optimizer: Optimizer, num_warmup_steps: in
     Return:
         :obj:`torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
-
     def lr_lambda(current_step: int):
         if current_step < num_warmup_steps:
             return float(current_step) / float(max(1.0, num_warmup_steps))
@@ -86,7 +84,6 @@ def get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_st
     Return:
         :obj:`torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
-
     def lr_lambda(current_step: int):
         if current_step < num_warmup_steps:
             return float(current_step) / float(max(1, num_warmup_steps))
@@ -121,7 +118,6 @@ def get_cosine_schedule_with_warmup(
     Return:
         :obj:`torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
-
     def lr_lambda(current_step):
         if current_step < num_warmup_steps:
             return float(current_step) / float(max(1, num_warmup_steps))
@@ -154,7 +150,6 @@ def get_cosine_with_hard_restarts_schedule_with_warmup(
     Return:
         :obj:`torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
-
     def lr_lambda(current_step):
         if current_step < num_warmup_steps:
             return float(current_step) / float(max(1, num_warmup_steps))
@@ -196,7 +191,6 @@ def get_polynomial_decay_schedule_with_warmup(
         :obj:`torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
 
     """
-
     lr_init = optimizer.defaults["lr"]
     assert lr_init > lr_end, f"lr_end ({lr_end}) must be be smaller than initial lr ({lr_init})"
 
@@ -234,7 +228,6 @@ class AdamW(Optimizer):
         correct_bias (:obj:`bool`, `optional`, defaults to `True`):
             Whether ot not to correct bias in Adam (for instance, in Bert TF repository they use :obj:`False`).
     """
-
     def __init__(
         self,
         params: Iterable[torch.nn.parameter.Parameter],
@@ -381,7 +374,6 @@ class Adafactor(Optimizer):
             warmup_init=False
         )
     """
-
     def __init__(
         self,
         params,

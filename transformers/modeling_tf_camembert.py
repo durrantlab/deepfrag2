@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ TF 2.0 CamemBERT model. """
-
 from .configuration_camembert import CamembertConfig
 from .file_utils import add_start_docstrings
 from .modeling_tf_roberta import (
@@ -36,7 +35,6 @@ TF_CAMEMBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 
 CAMEMBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -71,7 +69,6 @@ CAMEMBERT_START_DOCSTRING = r"""
             weights.
 """
 
-
 @add_start_docstrings(
     "The bare CamemBERT Model transformer outputting raw hidden-states without any specific head on top.",
     CAMEMBERT_START_DOCSTRING,
@@ -81,7 +78,6 @@ class TFCamembertModel(TFRobertaModel):
     This class overrides :class:`~transformers.TFRobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -94,7 +90,6 @@ class TFCamembertForMaskedLM(TFRobertaForMaskedLM):
     This class overrides :class:`~transformers.TFRobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -110,7 +105,6 @@ class TFCamembertForSequenceClassification(TFRobertaForSequenceClassification):
     This class overrides :class:`~transformers.TFRobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -126,7 +120,6 @@ class TFCamembertForTokenClassification(TFRobertaForTokenClassification):
     This class overrides :class:`~transformers.TFRobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -142,7 +135,6 @@ class TFCamembertForMultipleChoice(TFRobertaForMultipleChoice):
     This class overrides :class:`~transformers.TFRobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig
 
 
@@ -158,5 +150,4 @@ class TFCamembertForQuestionAnswering(TFRobertaForQuestionAnswering):
     This class overrides :class:`~transformers.TFRobertaForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
-
     config_class = CamembertConfig

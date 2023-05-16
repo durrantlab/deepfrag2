@@ -42,7 +42,6 @@ class GenerationMixin:
     A class containing all of the functions supporting generation, to be used as a mixin in
     :class:`~transformers.PreTrainedModel`.
     """
-
     def prepare_inputs_for_generation(self, input_ids: torch.LongTensor, **kwargs) -> Dict[str, Any]:
         """
         Implement in subclasses of :class:`~transformers.PreTrainedModel` for custom behavior to prepare inputs in the
@@ -224,7 +223,6 @@ class GenerationMixin:
         This class returns a :obj:`~transformers.LogitsProcessorList` list object that contains all relevant
         :obj:`~transformers.LogitsWarper` instances used for multinomial sampling.
         """
-
         # init warp parameters
         top_k = top_k if top_k is not None else self.config.top_k
         top_p = top_p if top_p is not None else self.config.top_p
@@ -254,7 +252,6 @@ class GenerationMixin:
         This class returns a :obj:`~transformers.LogitsProcessorList` list object that contains all relevant
         :obj:`~transformers.LogitsProcessor` instances used to modify the scores of the language model head.
         """
-
         # init warp parameters
         repetition_penalty = repetition_penalty if repetition_penalty is not None else self.config.repetition_penalty
         no_repeat_ngram_size = (
@@ -428,7 +425,6 @@ class GenerationMixin:
             >>> outputs = model.generate(input_ids=input_ids, max_length=20, do_sample=True, bad_words_ids=bad_words_ids)
             >>> print("Generated:", tokenizer.decode(outputs[0], skip_special_tokens=True))
         """
-
         # set init values
         num_beams = num_beams if num_beams is not None else self.config.num_beams
         max_length = max_length if max_length is not None else self.config.max_length
@@ -659,7 +655,6 @@ class GenerationMixin:
 
             >>> print("Generated:", tokenizer.batch_decode(outputs, skip_special_tokens=True))
         """
-
         # init values
         logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
         max_length = max_length if max_length is not None else self.config.max_length
@@ -788,7 +783,6 @@ class GenerationMixin:
 
             >>> print("Generated:", tokenizer.batch_decode(outputs, skip_special_tokens=True))
         """
-
         # init values
         logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
         logits_warper = logits_warper if logits_warper is not None else LogitsProcessorList()
@@ -931,7 +925,6 @@ class GenerationMixin:
 
             >>> print("Generated:", tokenizer.batch_decode(outputs, skip_special_tokens=True))
         """
-
         # init values
         logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
         max_length = max_length if max_length is not None else self.config.max_length
@@ -1108,7 +1101,6 @@ class GenerationMixin:
 
             >>> print("Generated:", tokenizer.batch_decode(outputs, skip_special_tokens=True))
         """
-
         # init values
         logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
         max_length = max_length if max_length is not None else self.config.max_length

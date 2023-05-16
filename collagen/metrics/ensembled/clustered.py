@@ -9,38 +9,43 @@ from scipy import stats
 from scipy.spatial.distance import cdist
 import math
 
-# NOT USED. Part of early efforts to improve accuracy by filtering out outlier
-# predictions. Never got it to work. Might be worth revisiting.
+# TODO: NOT USED. Part of early efforts to improve accuracy by filtering out
+# outlier predictions. Never got it to work. Might be worth revisiting.
 
-def create_initial_prediction_tensor(model_after_first_rotation: Any, num_rotations: int, device: Any) -> torch.Tensor:
+
+def create_initial_prediction_tensor(
+    model_after_first_rotation: Any, num_rotations: int, device: torch.device
+) -> torch.Tensor:
     num_entries = model_after_first_rotation.predictions.shape[0]
     fp_size = model_after_first_rotation.predictions.shape[1]
     initial_tnsr = torch.zeros(
-        size=(num_rotations, num_entries, fp_size),
-        device=device,
+        size=(num_rotations, num_entries, fp_size), device=device,
     )
 
     initial_tnsr[0] = model_after_first_rotation.predictions
 
     return initial_tnsr
 
-def udpate_prediction_tensor(existing_tensor: torch.Tensor, data_to_add: torch.Tensor, idx: int):
+
+def udpate_prediction_tensor(
+    existing_tensor: torch.Tensor, data_to_add: torch.Tensor, idx: int
+):
     existing_tensor[idx] = data_to_add
 
+
 # Below also doesn't seem to improve anything.
-def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, device: Any):
+def finalize_prediction_tensor(
+    final_tensor: torch.Tensor, num_rotations: int, device: torch.device
+):
     num_entries = final_tensor.shape[1]
     final_arr = final_tensor.cpu().numpy()
 
-    final_tnsr = torch.zeros(
-        size=final_tensor.shape[1:],
-        device=device,
-    )
+    final_tnsr = torch.zeros(size=final_tensor.shape[1:], device=device,)
 
     for i in range(num_entries):
         # Get the fingerprints for each of the rotations corresponding to this
         # entry
-        fps_per_rot = final_arr[:,i]
+        fps_per_rot = final_arr[:, i]
         avg_fps = np.array([fps_per_rot.sum(axis=0) / float(fps_per_rot.shape[0])])
 
         # keep only those closest to mean as way of filtering out outliers.
@@ -85,7 +90,7 @@ def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, d
         #     idx_to_keep = np.nonzero(labels == most_common_label)[0]
         #     print(idx_to_keep)
         #     fps_per_rot = fps_per_rot[idx_to_keep]
-        
+
         # avg_fps = fps_per_rot.sum(axis=0) / float(fps_per_rot.shape[0])
 
         # final_tnsr[i] = torch.Tensor(avg_fps)
@@ -95,8 +100,9 @@ def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, d
 
     return final_tnsr
 
+
 # Using DBScan didn't seem to work
-# def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, device: Any):
+# def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, device: torch.device):
 #     num_entries = final_tensor.shape[1]
 #     final_arr = final_tensor.cpu().numpy()
 
@@ -138,7 +144,7 @@ def finalize_prediction_tensor(final_tensor: torch.Tensor, num_rotations: int, d
 #             idx_to_keep = np.nonzero(labels == most_common_label)[0]
 #             print(idx_to_keep)
 #             fps_per_rot = fps_per_rot[idx_to_keep]
-        
+
 #         avg_fps = fps_per_rot.sum(axis=0) / float(fps_per_rot.shape[0])
 
 #         final_tnsr[i] = torch.Tensor(avg_fps)

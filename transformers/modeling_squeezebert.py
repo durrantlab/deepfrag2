@@ -14,7 +14,6 @@
 # limitations under the License.
 """ PyTorch SqueezeBert model. """
 
-
 import math
 
 import torch
@@ -51,7 +50,6 @@ SQUEEZEBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 class SqueezeBertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         self.word_embeddings = nn.Embedding(config.vocab_size, config.embedding_size, padding_idx=config.pad_token_id)
@@ -96,13 +94,11 @@ class MatMulWrapper(torch.nn.Module):
     Wrapper for torch.matmul(). This makes flop-counting easier to implement. Note that if you directly call
     torch.matmul() in your code, the flop counter will typically ignore the flops of the matmul.
     """
-
     def __init__(self):
         super().__init__()
 
     def forward(self, mat1, mat2):
         """
-
         :param inputs: two torch tensors :return: matmul of these tensors
 
         Here are the typical dimensions found in BERT (the B is optional) mat1.shape: [B, <optional extra dims>, M, K]
@@ -117,7 +113,6 @@ class SqueezeBertLayerNorm(nn.LayerNorm):
 
     N = batch C = channels W = sequence length
     """
-
     def __init__(self, hidden_size, eps=1e-12):
         nn.LayerNorm.__init__(self, normalized_shape=hidden_size, eps=eps)  # instantiates self.{weight, bias, eps}
 
@@ -131,7 +126,6 @@ class ConvDropoutLayerNorm(nn.Module):
     """
     ConvDropoutLayerNorm: Conv, Dropout, LayerNorm
     """
-
     def __init__(self, cin, cout, groups, dropout_prob):
         super().__init__()
 
@@ -151,7 +145,6 @@ class ConvActivation(nn.Module):
     """
     ConvActivation: Conv, Activation
     """
-
     def __init__(self, cin, cout, groups, act):
         super().__init__()
         self.conv1d = nn.Conv1d(in_channels=cin, out_channels=cout, kernel_size=1, groups=groups)
@@ -378,7 +371,6 @@ class SqueezeBertPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = SqueezeBertConfig
     base_model_prefix = "transformer"
     authorized_missing_keys = [r"position_ids"]
@@ -397,7 +389,6 @@ class SqueezeBertPreTrainedModel(PreTrainedModel):
 
 
 SQUEEZEBERT_START_DOCSTRING = r"""
-
     The SqueezeBERT model was proposed in `SqueezeBERT: What can computer vision teach NLP about efficient neural
     networks? <https://arxiv.org/abs/2006.11316>`__ by Forrest N. Iandola, Albert E. Shaw, Ravi Krishna, and Kurt W.
     Keutzer
@@ -438,7 +429,6 @@ SQUEEZEBERT_START_DOCSTRING = r"""
 
         The final output of the encoder is in [batch, sequence_length, hidden_size] format.
 """
-
 SQUEEZEBERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -488,7 +478,6 @@ SQUEEZEBERT_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare SqueezeBERT Model transformer outputting raw hidden-states without any specific head on top.",

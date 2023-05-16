@@ -1,3 +1,5 @@
+"""Classes for abstract molecules."""
+
 from dataclasses import dataclass
 from typing import Any, List, Tuple
 
@@ -9,6 +11,9 @@ from ..types import AnyAtom
 
 @dataclass
 class AbstractAtom(object):
+
+    """An abstract atom."""
+
     coord: "numpy.ndarray"
     num: Any = None
     metadata: Any = None
@@ -16,15 +21,27 @@ class AbstractAtom(object):
 
 @dataclass
 class AbstractBond(object):
+
+    """An abstract bond."""
+
     edge: Tuple[int, int]
     metadata: Any = None
 
 
 class AbstractMol(Mol):
+
+    """An abstract molecule."""
+
+    # TODO: Is this used anywhere?
     _atoms: List[AbstractAtom]
     _bonds: List[AbstractBond]
 
     def __init__(self, meta: dict = None):
+        """Initialize an abstract molecule.
+        
+        Args:
+            meta (dict, optional): metadata for the molecule. Defaults to None.
+        """
         if meta is None:
             meta = {}
 
@@ -34,7 +51,7 @@ class AbstractMol(Mol):
 
     def add_atom(self, atom: AbstractAtom) -> int:
         """
-        Adds an atom to the mol, returning the new atom index.
+        Add an atom to the mol, returning the new atom index.
 
         Args:
             atom (AbstractAtom): The atom to add.
@@ -47,8 +64,10 @@ class AbstractMol(Mol):
         return len(self._atoms) - 1
 
     def add_bond(self, bond: AbstractBond):
-        """
-        Adds a bond to the mol.
+        """Add a bond to the mol.
+
+        Args:
+            bond (AbstractBond): The bond to add.
         """
         a, b = bond.edge
         assert a >= 0 and a < len(self._atoms), f"Atom index {a} is out of bounds"
@@ -57,7 +76,11 @@ class AbstractMol(Mol):
 
     def sdf(self) -> str:
         """Generate a fake carbon skeleton SDF for visualization of abstract
-        molecular topologies."""
+        molecular topologies.
+        
+        Returns:
+            str: The SDF string.
+        """
         sdf = "\n\n\n"
         sdf += f"{len(self.coords):3d}{len(self._bonds):3d}  0  0  0  0  0  0  0  0999 V2000\n"
 
@@ -76,8 +99,17 @@ class AbstractMol(Mol):
 
     @property
     def atoms(self) -> List[AnyAtom]:
+        """Return the atoms in the molecule.
+        
+        Returns:
+            List[AnyAtom]: The atoms in the molecule.
+        """
         return self._atoms
 
     @property
     def coords(self) -> "numpy.ndarray":
-        return np.stack([a.coord for a in self.atoms])
+        """Return the coordinates of the atoms in the molecule.
+        
+        Returns:
+            numpy.ndarray: The coordinates of the atoms in the molecule.
+        """

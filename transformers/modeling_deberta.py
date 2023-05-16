@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ PyTorch DeBERTa model. """
-
 import math
 from collections.abc import Sequence
 
@@ -81,7 +80,6 @@ class XSoftmax(torch.autograd.Function):
       mask = (x>0).int()
       y = XSoftmax.apply(x, mask, dim=-1)
     """
-
     @staticmethod
     def forward(self, input, mask, dim):
         self.dim = dim
@@ -135,7 +133,6 @@ def get_mask(input, local_context):
 
 class XDropout(torch.autograd.Function):
     """Optimized dropout function to save computation and memory by using mask operation instead of multiplication."""
-
     @staticmethod
     def forward(ctx, input, local_ctx):
         mask, dropout = get_mask(input, local_ctx)
@@ -164,7 +161,6 @@ class StableDropout(torch.nn.Module):
         drop_prob (float): the dropout probabilities
 
     """
-
     def __init__(self, drop_prob):
         super().__init__()
         self.drop_prob = drop_prob
@@ -210,7 +206,6 @@ class StableDropout(torch.nn.Module):
 
 class DebertaLayerNorm(nn.Module):
     """LayerNorm module in the TF style (epsilon inside the square root)."""
-
     def __init__(self, size, eps=1e-12):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(size))
@@ -345,7 +340,6 @@ class DebertaLayer(nn.Module):
 
 class DebertaEncoder(nn.Module):
     """Modified BertEncoder with relative position bias support"""
-
     def __init__(self, config):
         super().__init__()
         self.layer = nn.ModuleList([DebertaLayer(config) for _ in range(config.num_hidden_layers)])
@@ -449,7 +443,6 @@ def build_relative_position(query_size, key_size, device):
         :obj:`torch.LongTensor`: A tensor with shape [1, query_size, key_size]
 
     """
-
     q_ids = torch.arange(query_size, dtype=torch.long, device=device)
     k_ids = torch.arange(key_size, dtype=torch.long, device=device)
     rel_pos_ids = q_ids[:, None] - k_ids.view(1, -1).repeat(query_size, 1)
@@ -483,7 +476,6 @@ class DisentangledSelfAttention(torch.nn.Module):
             `BertConfig`, for more details, please refer :class:`~transformers.DebertaConfig`
 
     """
-
     def __init__(self, config):
         super().__init__()
         if config.hidden_size % config.num_attention_heads != 0:
@@ -675,7 +667,6 @@ class DisentangledSelfAttention(torch.nn.Module):
 
 class DebertaEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         pad_token_id = getattr(config, "pad_token_id", 0)
@@ -753,7 +744,6 @@ class DebertaPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = DebertaConfig
     base_model_prefix = "deberta"
     authorized_missing_keys = ["position_ids"]
@@ -785,7 +775,6 @@ DEBERTA_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 DEBERTA_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`{0}`):
@@ -829,7 +818,6 @@ DEBERTA_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare DeBERTa Model transformer outputting raw hidden-states without any specific head on top.",

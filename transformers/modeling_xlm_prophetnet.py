@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ PyTorch XLM-ProphetNet model."""
-
 from .configuration_xlm_prophetnet import XLMProphetNetConfig
 from .modeling_prophetnet import (
     ProphetNetDecoder,
@@ -53,7 +52,6 @@ class XLMProphetNetEncoder(ProphetNetEncoder):
 
         >>> last_hidden_states = outputs.last_hidden_state
     """
-
     config_class = XLMProphetNetConfig
 
 
@@ -75,7 +73,6 @@ class XLMProphetNetDecoder(ProphetNetDecoder):
 
         >>> last_hidden_states = outputs.last_hidden_state
     """
-
     config_class = XLMProphetNetConfig
 
 
@@ -98,7 +95,6 @@ class XLMProphetNetModel(ProphetNetModel):
         >>> last_hidden_states = outputs.last_hidden_state  # main stream hidden states
             >>> last_hidden_states_ngram = outputs.last_hidden_state_ngram  # predict hidden states
     """
-
     config_class = XLMProphetNetConfig
 
 
@@ -121,7 +117,6 @@ class XLMProphetNetForConditionalGeneration(ProphetNetForConditionalGeneration):
         >>> logits_next_token = outputs.logits  # logits to predict next token as usual
         >>> logits_ngram_next_tokens = outputs.logits_ngram  # logits to predict 2nd, 3rd, ... next tokens
     """
-
     config_class = XLMProphetNetConfig
 
 
@@ -162,5 +157,4 @@ class XLMProphetNetForCausalLM(ProphetNetForCausalLM):
 
         >>> loss = outputs.loss
     """
-
     config_class = XLMProphetNetConfig

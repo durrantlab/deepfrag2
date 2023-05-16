@@ -1,6 +1,12 @@
+"""Contains the Mol class, which wraps around RDKit and ProDy
+molecules. It also contains the BackedMol class, which inherits from Mol and
+adds the ability to load molecules from a database. A few other relevant classes
+as well.
+"""
+
 from dataclasses import dataclass
 from io import StringIO
-from typing import List, Tuple, Iterator, Any, Dict, Optional
+from typing import Generator, List, Tuple, Iterator, Any, Dict, Optional
 import warnings
 
 import numpy as np
@@ -19,30 +25,53 @@ import sys
 
 
 class UnparsableSMILESException(Exception):
+
+    """Exception raised when a SMILES string cannot be parsed."""
+
     pass
 
 
 class UnparsableGeometryException(Exception):
+
+    """Exception raised when a geometry cannot be parsed."""
+
     pass
 
 
 class TemplateGeometryMismatchException(Exception):
+
+    """Exception raised when a template geometry does not match the geometry of
+    the molecule.
+    """
+
     pass
 
 
 class Mol(object):
-    # This class wraps around rdkit and prody molecules. Also includes other
-    # functins to voxelize, fragment, etc. Some functions not implemented, so
-    # other classes (e.g., BackedMol) should inherit from this one.
+    
+    """Wraps around rdkit and prody molecules. Also includes other
+    functions to voxelize, fragment, etc. Some functions not implemented, so
+    other classes (e.g., BackedMol) should inherit from this one.
+    """
 
     meta: Dict[str, Any]
 
     _KW_MOL_NAME = "name"
 
     def __init__(self, meta: dict = None):
+        """Initialize a Mol object.
+
+        Args:
+            meta (dict, optional): metadata for the molecule. Defaults to None.
+        """
         self.meta = {} if meta is None else meta
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the molecule.
+        
+        Returns:
+            str: A string representation of the molecule.
+        """
         _cls = type(self).__name__
         if Mol._KW_MOL_NAME in self.meta:
             return f'{_cls}("{self.meta[Mol._KW_MOL_NAME]}")'
@@ -118,7 +147,6 @@ class Mol(object):
             [12.686 13.87   5.971]
             [12.89  12.509  4.056]]
         """
-
         pdb_txt = StringIO()
 
         prody.writePDBStream(pdb_txt, atoms)
@@ -128,8 +156,8 @@ class Mol(object):
         if rdmol is None:
             # See, for example, 4P3R:NAP:A:202
             raise UnparsableGeometryException(
-                "WARNING: Could not process ligand [LIGAND]. " +
-                "The geometry from the PDB file is not parsable."
+                "WARNING: Could not process ligand [LIGAND]. "
+                + "The geometry from the PDB file is not parsable."
             )
 
         if template != "":
@@ -142,8 +170,9 @@ class Mol(object):
                 ref_mol = Chem.RemoveAllHs(ref_mol)
             except:
                 raise UnparsableSMILESException(
-                    "WARNING: Could not process ligand [LIGAND]. " +
-                    "The SMILES is not parsable: " + template
+                    "WARNING: Could not process ligand [LIGAND]. "
+                    + "The SMILES is not parsable: "
+                    + template
                 )
 
             rdmol.UpdatePropertyCache()
@@ -155,10 +184,14 @@ class Mol(object):
                 # of error (TemplateGeometryMismatchException) will be caught in
                 # types.py.
                 raise TemplateGeometryMismatchException(
-                    "WARNING: Could not process ligand [LIGAND]. " +
-                    "The actual ligand geometry doesn't match the SMILES. " + 
-                    "Actual geometry: " + Chem.MolToSmiles(rdmol) + " . " + 
-                    "SMILES template: " + template + " ."
+                    "WARNING: Could not process ligand [LIGAND]. "
+                    + "The actual ligand geometry doesn't match the SMILES. "
+                    + "Actual geometry: "
+                    + Chem.MolToSmiles(rdmol)
+                    + " . "
+                    + "SMILES template: "
+                    + template
+                    + " ."
                 )
 
         rdmol.UpdatePropertyCache(strict=False)
@@ -178,9 +211,19 @@ class Mol(object):
         return BackedMol(rdmol=rdmol)
 
     def sdf(self) -> str:
+        """Compute an SDF string for this Mol.
+        
+        Returns:
+            str: An SDF string.
+        """
         raise NotImplementedError()
 
     def pdb(self) -> str:
+        """Compute a PDB string for this Mol.
+        
+        Returns:
+            str: A PDB string.
+        """
         raise NotImplementedError()
 
     def smiles(self, isomeric: bool = False) -> str:
@@ -197,49 +240,79 @@ class Mol(object):
 
     @property
     def coords(self) -> "numpy.ndarray":
-        """Atomic coordinates as a numpy array."""
+        """Atomic coordinates as a numpy array.
+
+        Returns:
+            numpy.ndarray: An Nx3 array of atomic coordinates.
+        """
         return NotImplementedError()
 
     @property
     def center(self) -> "numpy.ndarray":
-        """The average atomic coordinate of this Mol."""
+        """Average atomic coordinate of this Mol.
+        
+        Returns:
+            numpy.ndarray: The average atomic coordinate of this Mol.
+        """
         return np.mean(self.coords, axis=0)
 
     @property
     def atoms(self) -> List[AnyAtom]:
-        """Atoms in this Mol."""
+        """Atoms in this Mol.
+        
+        Returns:
+            List[AnyAtom]: A list of atoms.
+        """
         return NotImplementedError()
 
     @property
     def num_atoms(self) -> int:
-        """Number of atoms in this Mol."""
+        """Get number of atoms in this Mol.
+        
+        Returns:
+            int: Number of atoms in this Mol.
+        """
         return len(self.atoms)
 
     @property
     def num_heavy_atoms(self) -> int:
-        """Number of heavy atoms in this Mol."""
+        """Get number of heavy atoms in this Mol.
+        
+        Returns:
+            int: Number of heavy atoms in this Mol.
+        """
         raise NotImplementedError()
 
     @property
     def connectors(self) -> List["numpy.ndarray"]:
-        """Return a list of connector atom coordinates."""
+        """Return a list of connector atom coordinates.
+        
+        Returns:
+            List[numpy.ndarray]: A list of connector atom coordinates.
+        """
         raise NotImplementedError()
 
     @property
     def mass(self) -> float:
-        """Mass of this Mol in daltons."""
+        """Get mass of this Mol in daltons.
+        
+        Returns:
+            float: Mass of this Mol in daltons.
+        """
         raise NotImplementedError()
 
     def split_bonds(
         self, only_single_bonds: bool = True, max_frag_size: int = -1
     ) -> List[Tuple["Mol", "Mol"]]:
-        """
-        Iterate over all bonds in the Mol and try to split into two fragments, returning tuples of produced fragments.
-        Each returned tuple is of the form (parent, fragment).
+        """Iterate over all bonds in the Mol and try to split into two
+        fragments, returning tuples of produced fragments. Each returned
+        tuple is of the form (parent, fragment).
 
         Args:
-            only_single_bonds (bool): If True (default) only cut on single bonds.
-            max_frag_size (int): If set, only return fragments smaller or equal to this molecular weight.
+            only_single_bonds (bool): If True (default) only cut on single
+                bonds.
+            max_frag_size (int): If set, only return fragments smaller or equal
+                to this molecular weight.
 
         Examples:
             >>> mol = Mol.from_smiles('CC(C)CC1=CC=C(C=C1)C(C)C(=O)O')
@@ -262,8 +335,7 @@ class Mol(object):
         center: "numpy.ndarray" = None,
         rot: "numpy.ndarray" = np.array([0, 0, 0, 1]),
     ) -> "torch.Tensor":
-        """
-        Convert a Mol to a voxelized tensor.
+        """Convert a Mol to a voxelized tensor.
 
         Example:
             >>> m = Mol.from_smiles('CN1C=NC2=C1C(=O)N(C(=O)N2C)C', make_3d=True)
@@ -304,8 +376,7 @@ class Mol(object):
         center: "numpy.ndarray" = None,
         rot: "numpy.ndarray" = np.array([0, 0, 0, 1]),
     ):
-        """
-        Voxelize a Mol into an existing 5-D tensor.
+        """Voxelize a Mol into an existing 5-D tensor.
 
         Example:
             >>> smi = [
@@ -327,15 +398,22 @@ class Mol(object):
             torch.Size([4, 5, 24, 24, 24])
 
         Args:
-            tensor (torch.Tensor): A 5-D PyTorch Tensor that will receive atomic density information. The tensor
-                must have shape BxNxWxWxW. B = batch size, N = number of atom layers, W = width.
-            batch_idx (int): An integer specifying which index to write density into. (0 <= batch_idx < B)
-            params (VoxelParams): A VoxelParams object specifying how to perform voxelation.
+            tensor (torch.Tensor): A 5-D PyTorch Tensor that will receive
+                atomic density information. The tensor must have shape
+                BxNxWxWxW. B = batch size, N = number of atom layers, W =
+                width.
+            batch_idx (int): An integer specifying which index to write density
+                into. (0 <= batch_idx < B)
+            params (VoxelParams): A VoxelParams object specifying how to
+                perform voxelation.
             cpu (bool): If True, will force computation to run on the CPU.
-            layer_offset (int): An optional integer specifying a start layer for voxelation.
-            center (numpy.ndarray): A size 3 array containing the (x,y,z) coordinate of the grid center. If not specified,
-                will use the center of the molecule.
-            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w) describing a grid rotation.
+            layer_offset (int): An optional integer specifying a start layer
+                for voxelation.
+            center (numpy.ndarray): A size 3 array containing the (x,y,z)
+                coordinate of the grid center. If not specified, will use the
+                center of the molecule.
+            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w) 
+                describing a grid rotation.
         """
         grid = numba_ptr(tensor, cpu=cpu)
         atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
@@ -362,17 +440,21 @@ class Mol(object):
         center: "numpy.ndarray" = None,
         rot: "numpy.ndarray" = np.array([0, 0, 0, 1]),
     ) -> "DelayedMolVoxel":
-        """
-        Pre-compute voxelation parameters without actually invoking ``voxelize``.
+        """Pre-compute voxelation parameters without actually invoking
+        ``voxelize``.
 
         Args:
-            params (VoxelParams): A VoxelParams object specifying how to perform voxelation.
-            center (numpy.ndarray): A size 3 array containing the (x,y,z) coordinate of the grid center. If not specified,
-                will use the center of the molecule.
-            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w) describing a grid rotation.
+            params (VoxelParams): A VoxelParams object specifying how to
+                perform voxelation.
+            center (numpy.ndarray): A size 3 array containing the (x,y,z)
+                coordinate of the grid center. If not specified, will use the
+                center of the molecule.
+            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w) 
+                describing a grid rotation.
 
         Returns:
-            DelayedMolVoxel: An ephemeral, minimal Mol object with pre-computed voxelation arguments.
+            DelayedMolVoxel: An ephemeral, minimal Mol object with pre-computed
+                voxelation arguments.
         """
         params.validate()
         atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
@@ -409,7 +491,17 @@ class Mol(object):
 
 
 class DelayedMolVoxel(object):
-    def __init__(self, **kwargs):
+
+    """A DelayedMolVoxel is a thin wrapper over a Mol that has pre-computed
+    voxelation arguments.
+    """
+
+    def __init__(self, **kwargs: dict):
+        """Initialize a new DelayedMolVoxel.
+        
+        Args:
+            **kwargs: A dictionary of voxelation arguments.
+        """
         self.kwargs = kwargs
 
     def voxelize_into(
@@ -419,6 +511,19 @@ class DelayedMolVoxel(object):
         layer_offset: int = 0,
         cpu: bool = False,
     ):
+        """Voxelate a molecule into a pre-allocated tensor.
+        
+        Args:
+            tensor (torch.Tensor): A 5-D PyTorch Tensor that will receive
+                atomic density information. The tensor must have shape
+                BxNxWxWxW. B = batch size, N = number of atom layers, W =
+                width.
+            batch_idx (int): An integer specifying which index to write density
+                into. (0 <= batch_idx < B)
+            layer_offset (int): An optional integer specifying a start layer
+                for voxelation.
+            cpu (bool): If True, will force computation to run on the CPU.
+        """
         # Convert tensor to format numba can use.
         grid = numba_ptr(tensor, cpu=cpu)
 
@@ -432,17 +537,35 @@ class DelayedMolVoxel(object):
 
 
 class BackedMol(Mol):
+
     """A BackedMol is a thin wrapper over an RDKit molecule."""
 
-    def __init__(self, rdmol: "rdkit.Chem.rdchem.Mol", meta: dict = None, warn_no_confs: bool = True):
-        """Initialize a new BackedMol with an existing RDMol."""
+    def __init__(
+        self,
+        rdmol: "rdkit.Chem.rdchem.Mol",
+        meta: dict = None,
+        warn_no_confs: bool = True,
+    ):
+        """Initialize a new BackedMol with an existing RDMol.
+        
+        Args:
+            rdmol (rdkit.Chem.rdchem.Mol): An RDKit molecule.
+            meta (dict): An optional dictionary of metadata.
+            warn_no_confs (bool): If True, will warn if the RDMol has no
+                conformers.
+        """
         super(BackedMol, self).__init__(meta=meta)
         self.rdmol = rdmol
 
         if warn_no_confs and self.rdmol.GetNumConformers() == 0:
             warnings.warn("Internal rdmol has no conformers")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the molecule.
+        
+        Returns:
+            str: A string representation of the molecule.
+        """
         _cls = type(self).__name__
         if Mol._KW_MOL_NAME in self.meta:
             return f'{_cls}("{self.meta[Mol._KW_MOL_NAME]}")'
@@ -450,12 +573,17 @@ class BackedMol(Mol):
             return f'{_cls}(smiles="{self.smiles()}")'
 
     def _ensure_structure(self):
+        """Ensure that the molecule has a conformer."""
         assert (
             self.rdmol.GetNumConformers() > 0
         ), "Error: RDMol has no coordinate information."
 
     def sdf(self) -> str:
-        """Convert to SDF format."""
+        """Convert to SDF format.
+        
+        Returns:
+            str: A string containing the SDF representation of the molecule.
+        """
         self._ensure_structure()
         s = StringIO()
         w = Chem.SDWriter(s)
@@ -464,30 +592,48 @@ class BackedMol(Mol):
         return s.getvalue()
 
     def pdb(self) -> str:
+        """Convert to PDB format.
+
+        Returns:
+            str: A string containing the PDB representation of the molecule.
+        """
         self._ensure_structure()
         return Chem.MolToPDBBlock(self.rdmol)
 
     def smiles(self, isomeric: bool = False) -> str:
         """Convert the internal rdmol to a SMILES string.
 
+        Args:
+            isomeric (bool): If True, will return an isomeric SMILES.
+
         Note:
             This version returns a non-isomeric SMILES, even if isomeric = True
             (because standardize_smiles removes chirality). I believe
             rdkfingerprint does not account for chirality, so shouldn't matter.
         """
-
         smi = Chem.MolToSmiles(self.rdmol, isomericSmiles=isomeric)
         smi = standardize_smiles(smi)
         return smi
 
     @property
     def coords(self) -> "numpy.ndarray":
-        """Return atomic coordinates as a numpy array."""
+        """Return atomic coordinates as a numpy array.
+        
+        Returns:
+            numpy.ndarray: A numpy array of shape (N, 3) containing atomic
+                coordinates.
+        """
         self._ensure_structure()
         return self.rdmol.GetConformer().GetPositions()
 
     @property
     def connectors(self) -> List["numpy.ndarray"]:
+        """Return a list of connector coordinates as numpy arrays.
+
+        Returns:
+            List[numpy.ndarray]: A list of numpy arrays of shape (N, 3)
+                containing connector coordinates.
+        """
         self._ensure_structure()
         return [
             self.coords[atom.GetIdx()]
@@ -497,26 +643,43 @@ class BackedMol(Mol):
 
     @property
     def atoms(self) -> List[AnyAtom]:
+        """Return a list of atoms in the molecule.
+
+        Returns:
+            List[AnyAtom]: A list of atoms in the molecule.
+        """
         return list(self.rdmol.GetAtoms())
 
     @property
     def num_heavy_atoms(self) -> int:
+        """Return the number of heavy atoms in the molecule.
+
+        Returns:
+            int: The number of heavy atoms in the molecule.
+        """
         return self.rdmol.GetNumHeavyAtoms()
 
     @property
     def mass(self) -> float:
+        """Return the molecular mass of the molecule.
+
+        Returns:
+            float: The molecular mass of the molecule.
+        """
         return ExactMolWt(self.rdmol)
 
     def split_bonds(
         self, only_single_bonds: bool = True, max_frag_size: int = -1
     ) -> List[Tuple["Mol", "Mol"]]:
-        """
-        Iterate over all bonds in the Mol and try to split into two fragments, returning tuples of produced fragments.
-        Each returned tuple is of the form (parent, fragment).
+        """Iterate over all bonds in the Mol and try to split into two
+        fragments, returning tuples of produced fragments. Each returned tuple
+        is of the form (parent, fragment).
 
         Args:
-            only_single_bonds (bool): If True (default) only cut on single bonds.
-            max_frag_size (int): If set, only return fragments smaller or equal to this molecular weight.
+            only_single_bonds (bool): If True (default) only cut on single
+                bonds.
+            max_frag_size (int): If set, only return fragments smaller or equal
+                to this molecular weight.
 
         Examples:
             >>> mol = Mol.from_smiles('CC(C)CC1=CC=C(C=C1)C(C)C(=O)O')
@@ -575,33 +738,58 @@ class BackedMol(Mol):
         return pairs
 
     def fingerprint(self, fp_type: str, size: int) -> "numpy.ndarray":
+        """Return a fingerprint for the molecule.
+
+        Args:
+            fp_type (str): The type of fingerprint to compute.
+            size (int): The size of the fingerprint to compute.
+
+        Returns:
+            numpy.ndarray: The computed fingerprint.
+        """
         return fingerprint_for(self.rdmol, fp_type, size, self.smiles(True))
 
 
 class MolDataset(Dataset):
-    """
-    Abstract interface for a MolDataset object. Other classes should inherit
-    this, BUT I DON'T BELIEVE CURRENTLY USED ANYWHERE.
+
+    """Abstract interface for a MolDataset object. Other classes should inherit
+    this, TODO: BUT I DON'T BELIEVE CURRENTLY USED ANYWHERE.
 
     Subclasses should implement __len__ and __getitem__ to support enumeration
     over the data.
     """
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Return the number of molecules in the dataset."""
         raise NotImplementedError()
 
     def __getitem__(self, idx: int) -> "Mol":
+        """Return the molecule at the given index.
+        
+        Args:
+            idx (int): The index of the molecule to return.
+            
+        Returns:
+            Mol: The molecule at the given index.
+        """
         raise NotImplementedError()
 
 
-def mols_from_smi_file(filename):
-    # Serve up mols from a file with smiles.
+def mols_from_smi_file(filename: str) -> Generator[Tuple[str, "Mol"], None, None]:
+    """Serve up mols from a file with smiles.
+    
+    Args:
+        filename (str): The name of the file to read from.
+
+    Yields:
+        Tuple[str, Mol]: A tuple of the smiles and Mol object.
+    """
     with open(filename) as fl:
         lines = fl.readlines()
     for l in lines:
         prts = l.strip().split(maxsplit=2)
         smi = prts[0]
-        
+
         rdmol = Chem.MolFromSmiles(smi, sanitize=True)
         name = prts[1] if len(prts) > 1 else smi
         rdmol.SetProp("name", name)

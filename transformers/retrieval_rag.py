@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """RAG Retriever model implementation."""
-
 import os
 import pickle
 import time
@@ -52,7 +51,6 @@ class Index:
     """
     A base class for the Indices encapsulated by the :class:`~transformers.RagRetriever`.
     """
-
     def get_doc_dicts(self, doc_ids: np.ndarray) -> List[dict]:
         """
         Returns a list of dictionaries, containing titles and text of the retrieved documents.
@@ -107,7 +105,6 @@ class LegacyIndex(Index):
             A path to a `directory` containing index files compatible with
             :class:`~transformers.retrieval_rag.LegacyIndex`
     """
-
     INDEX_FILENAME = "hf_bert_base.hnswSQ8_correct_phi_128.c_index"
     PASSAGE_FILENAME = "psgs_w100.tsv.pkl"
 
@@ -252,7 +249,6 @@ class CanonicalHFIndex(HFIndexBase):
             The path to the serialized faiss index on disk.
         use_dummy_dataset (:obj:`bool`, optional, defaults to ``False``): If True, use the dummy configuration of the dataset for tests.
     """
-
     def __init__(
         self,
         vector_size: int,
@@ -306,7 +302,6 @@ class CustomHFIndex(HFIndexBase):
         index_path (:obj:`str`)
             The path to the serialized faiss index on disk.
     """
-
     def __init__(self, vector_size: int, dataset, index_path=None):
         super().__init__(vector_size, dataset, index_initialized=index_path is None)
         self.index_path = index_path
@@ -369,7 +364,6 @@ class RagRetriever:
         >>> retriever = RagRetriever.from_pretrained('facebook/dpr-ctx_encoder-single-nq-base', index_name='legacy')
 
     """
-
     _init_retrieval = True
 
     def __init__(self, config, question_encoder_tokenizer, generator_tokenizer, index=None):
@@ -454,7 +448,6 @@ class RagRetriever:
         """
         Retriever initalization function. It loads the index into memory.
         """
-
         logger.info("initializing retrieval")
         self.index.init_index()
 
@@ -474,7 +467,6 @@ class RagRetriever:
             :obj:`tuple(tensors)`: a tuple consisting of two elements: contextualized ``input_ids`` and a compatible
             ``attention_mask``.
         """
-
         def cat_input_and_doc(doc_title, doc_text, input_string, prefix):
             # TODO(Patrick): if we train more RAG models, I want to put the input first to take advantage of effortless truncation
             # TODO(piktus): better handling of truncation
@@ -551,7 +543,6 @@ class RagRetriever:
               index
             - **doc_dicts** (:obj:`List[dict]`): The :obj:`retrieved_doc_embeds` examples per query.
         """
-
         doc_ids, retrieved_doc_embeds = self._main_retrieve(question_hidden_states, n_docs)
         return retrieved_doc_embeds, doc_ids, self.index.get_doc_dicts(doc_ids)
 
@@ -596,7 +587,6 @@ class RagRetriever:
             - **retrieved_doc_embeds** -- List of embeddings of the retrieved documents
             - **doc_ids** -- List of ids of the retrieved documents
         """
-
         n_docs = n_docs if n_docs is not None else self.n_docs
         prefix = prefix if prefix is not None else self.config.generator.prefix
         retrieved_doc_embeds, doc_ids, docs = self.retrieve(question_hidden_states, n_docs)

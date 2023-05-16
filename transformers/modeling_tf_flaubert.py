@@ -15,7 +15,6 @@
 """
  TF 2.0 Flaubert model.
 """
-
 import itertools
 from dataclasses import dataclass
 from typing import Optional, Tuple
@@ -53,7 +52,6 @@ TF_FLAUBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 ]
 
 FLAUBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -87,7 +85,6 @@ FLAUBERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 FLAUBERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -160,7 +157,6 @@ FLAUBERT_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
-
 def get_masks(slen, lengths, causal, padding_mask=None, dtype=tf.float32):
     """
     Generate hidden states mask, and optionally an attention mask.
@@ -197,7 +193,6 @@ class TFFlaubertPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = FlaubertConfig
     base_model_prefix = "transformer"
 
@@ -637,7 +632,6 @@ class TFFlaubertPredLayer(tf.keras.layers.Layer):
     """
     Prediction layer (cross_entropy or adaptive_softmax).
     """
-
     def __init__(self, config, input_embeddings, **kwargs):
         super().__init__(**kwargs)
 
@@ -690,7 +684,6 @@ class TFFlaubertWithLMHeadModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
     attentions: Optional[Tuple[tf.Tensor]] = None

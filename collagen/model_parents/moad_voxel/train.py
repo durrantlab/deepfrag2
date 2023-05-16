@@ -1,5 +1,8 @@
+"""The MOAD voxel model for training."""
+
 from argparse import Namespace
-from typing import Optional
+from typing import Any, Optional, Tuple
+from collagen.core.loader import DataLambda
 from torchinfo import summary
 from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PdbSdfCsvInterface
 from collagen.external.moad.split import compute_dataset_split
@@ -7,8 +10,17 @@ from collagen.external.moad.split import compute_dataset_split
 
 class MoadVoxelModelTrain(object):
 
-    def run_train(self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]):
+    """A model for training on the MOAD dataset."""
 
+    def run_train(
+        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
+    ):
+        """Run training.
+        
+        Args:
+            args (Namespace): The arguments passed to the program.
+            ckpt_filename (Optional[str]): The checkpoint filename to use.
+        """
         # Runs training.
         trainer = self.init_trainer(args)
         moad, train_data, val_data = self.get_train_val_sets(args, True)
@@ -21,7 +33,7 @@ class MoadVoxelModelTrain(object):
         #     # import pdb; pdb.set_trace()
         #     continue
 
-        model = self.init_model(args, ckpt)
+        model = self.init_model(args, ckpt_filename)
 
         # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
 
@@ -29,12 +41,16 @@ class MoadVoxelModelTrain(object):
         summary_str = str(model_stats)
         print(summary_str)
 
-        trainer.fit(model, train_data, val_data, ckpt_path=ckpt)
+        trainer.fit(model, train_data, val_data, ckpt_path=ckpt_filename)
 
         self.save_examples_used(model, args)
 
-    def run_warm_starting(self, args):
-
+    def run_warm_starting(self, args: Namespace):
+        """Run warm starting.
+        
+        Args:
+            args (Namespace): The arguments passed to the program.
+        """
         trainer = self.init_trainer(args)
         moad, train_data, val_data = self.get_train_val_sets(args, False)
 
@@ -48,8 +64,20 @@ class MoadVoxelModelTrain(object):
 
         self.save_examples_used(model, args)
 
-    def get_train_val_sets(self, args, train: bool):
+    def get_train_val_sets(
+        self, args: Namespace, train: bool
+    ) -> Tuple[Any, DataLambda, DataLambda]:
+        """Get the training and validation sets.
 
+        Args:
+            args (Namespace): The arguments passed to the program.
+            train (bool): Whether to train or not. TODO: Very confusing. Needs
+                to be restructured.
+
+        Returns:
+            Tuple[Any, DataLambda, DataLambda]: The MOAD, training and
+                validation sets.
+        """
         if args.custom_test_set_dir:
             raise Exception("The custom test set can only be used in testing mode")
 
@@ -81,8 +109,19 @@ class MoadVoxelModelTrain(object):
                 grid_width=voxel_params.width,
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms
+                discard_distant_atoms=args.discard_distant_atoms,
             )
+        elif args.every_csv is None:
+            # TODO: Very confusing. Needs to be restructured.
+            moad = PdbSdfDirInterface(
+                structures_dir=args.data_dir,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms,
+            )
+
         else:
             if args.every_csv:
                 raise ValueError(
@@ -135,24 +174,24 @@ class MoadVoxelModelTrain(object):
         # ps.print_stats()
         # open('cProfilez.txt', 'w+').write(s.getvalue())
 
-        train_data = self.get_data_from_split(
-            cache_file=args.cache, 
-            args=args, 
-            dataset=moad, 
-            split=train, 
-            voxel_params=voxel_params, 
-            device=device
+        train_data: DataLambda = self.get_data_from_split(
+            cache_file=args.cache,
+            args=args,
+            dataset=moad,
+            split=train,
+            voxel_params=voxel_params,
+            device=device,
         )
 
         print(f"Number of batches for the training data: {len(train_data)}")
         if len(val.targets) > 0:
-            val_data = self.get_data_from_split(
-                cache_file=args.cache, 
-                args=args, 
-                dataset=moad, 
-                split=val, 
-                voxel_params=voxel_params, 
-                device=device
+            val_data: DataLambda = self.get_data_from_split(
+                cache_file=args.cache,
+                args=args,
+                dataset=moad,
+                split=val,
+                voxel_params=voxel_params,
+                device=device,
             )
             print(f"Number of batches for the validation data: {len(val_data)}")
         else:

@@ -19,7 +19,6 @@ class MolBertFeaturizer:
     This featurizer takes a molbert model and transforms the input data and
     returns the representation in the last layer (pooled output and sequence_output).
     """
-
     def __init__(
         self,
         checkpoint_path: str,

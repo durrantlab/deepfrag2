@@ -15,7 +15,6 @@
 # limitations under the License.
 """ TF 2.0 RoBERTa model. """
 
-
 import tensorflow as tf
 
 from .activations_tf import get_tf_activation
@@ -68,7 +67,6 @@ class TFRobertaEmbeddings(tf.keras.layers.Layer):
     """
     Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
     """
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
 
@@ -613,13 +611,11 @@ class TFRobertaPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = RobertaConfig
     base_model_prefix = "roberta"
 
 
 ROBERTA_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -653,7 +649,6 @@ ROBERTA_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 ROBERTA_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`({0})`):
@@ -707,7 +702,6 @@ ROBERTA_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
-
 @add_start_docstrings(
     "The bare RoBERTa Model transformer outputting raw hidden-states without any specific head on top.",
     ROBERTA_START_DOCSTRING,
@@ -731,7 +725,6 @@ class TFRobertaModel(TFRobertaPreTrainedModel):
 
 class TFRobertaLMHead(tf.keras.layers.Layer):
     """Roberta Head for masked language modeling."""
-
     def __init__(self, config, input_embeddings, **kwargs):
         super().__init__(**kwargs)
 
@@ -845,7 +838,6 @@ class TFRobertaForMaskedLM(TFRobertaPreTrainedModel, TFMaskedLanguageModelingLos
 
 class TFRobertaClassificationHead(tf.keras.layers.Layer):
     """Head for sentence-level classification tasks."""
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         self.dense = tf.keras.layers.Dense(

@@ -115,7 +115,6 @@ class PreTrainedTokenizer(PreTrainedTokenizerBase):
     This class also contain the added tokens in a unified way on top of all tokenizers so we don't have to handle the
     specific vocabulary augmentation methods of the various underlying dictionary structures (BPE, sentencepiece...).
     """
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -595,7 +594,6 @@ class PreTrainedTokenizer(PreTrainedTokenizerBase):
         Args:
             batch_ids_pairs: list of tokenized input ids or input ids pairs
         """
-
         batch_outputs = {}
         for first_ids, second_ids in batch_ids_pairs:
             outputs = self.prepare_for_model(
@@ -772,7 +770,6 @@ class PreTrainedTokenizer(PreTrainedTokenizerBase):
         **kwargs,
     ) -> BatchEncoding:
         r"""
-
         Prepare a batch that can be passed directly to an instance of :class:`~transformers.AutoModelForSeq2SeqLM`.
 
         Args:

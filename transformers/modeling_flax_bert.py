@@ -34,7 +34,6 @@ _TOKENIZER_FOR_DOC = "BertTokenizer"
 
 
 BERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -49,7 +48,6 @@ BERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 BERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -100,12 +98,10 @@ BERT_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
 class FlaxBertLayerNorm(nn.Module):
     """
     Layer normalization (https://arxiv.org/abs/1607.06450). Operates on the last axis of the input data.
     """
-
     epsilon: float = 1e-6
     dtype: jnp.dtype = jnp.float32  # the dtype of the computation
     bias: bool = True  # If True, bias (beta) is added.
@@ -146,7 +142,6 @@ class FlaxBertEmbedding(nn.Module):
     Specify a new class for doing the embedding stuff as Flax's one use 'embedding' for the parameter name and PyTorch
     use 'weight'
     """
-
     vocab_size: int
     hidden_size: int
     emb_init: Callable[..., np.ndarray] = nn.initializers.normal(stddev=0.1)
@@ -159,7 +154,6 @@ class FlaxBertEmbedding(nn.Module):
 
 class FlaxBertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     vocab_size: int
     hidden_size: int
     type_vocab_size: int
@@ -238,7 +232,6 @@ class FlaxBertLayerCollection(nn.Module):
     """
     Stores N BertLayer(s)
     """
-
     num_layers: int
     num_heads: int
     head_size: int
@@ -318,7 +311,6 @@ class FlaxBertModel(FlaxPreTrainedModel):
     all you need <https://arxiv.org/abs/1706.03762>`__ by Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit,
     Llion Jones, Aidan N. Gomez, Lukasz Kaiser and Illia Polosukhin.
     """
-
     model_class = FlaxBertModule
     config_class = BertConfig
     base_model_prefix = "bert"

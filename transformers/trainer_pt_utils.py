@@ -15,7 +15,6 @@
 """
 Torch utilities for the Trainer class.
 """
-
 import math
 import warnings
 from contextlib import contextmanager
@@ -180,7 +179,6 @@ class SequentialDistributedSampler(Sampler):
     extra samples to the sampler to make it evenly divisible (like in `DistributedSampler`) to make it easy to `gather`
     or `reduce` resulting tensors at the end of the loop.
     """
-
     def __init__(self, dataset, num_replicas=None, rank=None):
         if num_replicas is None:
             if not torch.distributed.is_available():
@@ -300,7 +298,6 @@ class DistributedTensorGatherer:
         padding_index (:obj:`int`, `optional`, defaults to -100):
             The padding index to use if the arrays don't all have the same sequence length.
     """
-
     def __init__(self, world_size, num_samples, make_multiple_of=None, padding_index=-100):
         self.world_size = world_size
         self.num_samples = num_samples

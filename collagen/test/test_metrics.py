@@ -7,6 +7,8 @@ from collagen import metrics
 
 
 class TestMetrics(unittest.TestCase):
+
+    """TestMetrics is a class for testing."""
     
     def test_topk(self):
         labels = [

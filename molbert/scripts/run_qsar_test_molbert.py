@@ -11,7 +11,6 @@ Module to to test the performance of the translation model to extract
     A. S. Pappu, K. Leswing and V. Pande, Chemical Science, 2018,
     9, 513–530.
  """
-
 import os
 import json
 from datetime import datetime
