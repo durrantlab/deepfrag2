@@ -204,43 +204,43 @@ def _generate_splits_from_scratch(
             current_cluster["items"].append(item)
 
         clusters = []
-        current_cluster = {
-            "family_idxs": set([]),
-            "smiles": set([]),
-            "items": [],
-        }
+        while len(complex_infos) > 0:
+            current_cluster = {
+                "family_idxs": set([]),
+                "smiles": set([]),
+                "items": [],
+            }
 
-        # Get started by adding the first one
-        move_to_current_cluster(complex_infos.pop())
+            # Get started by adding the first one
+            move_to_current_cluster(complex_infos.pop())
 
-        import pdb; pdb.set_trace()
-        while True:
-            any_complex_assigned = False
-            for complex_infos_idx, item in enumerate(complex_infos):
-                if item is None:
-                    continue
-                pdb_id, family_idx, smi = item
-                if family_idx in current_cluster["family_idxs"]:
-                    # This family already in current cluster, so must add this item
-                    # to same cluster.
-                    move_to_current_cluster(item)
-                    complex_infos[complex_infos_idx] = None
-                    print(f"Added {pdb_id} to current cluster")
-                    any_complex_assigned = True
-                elif smi in current_cluster["smiles"]:
-                    # This ligand already in current cluster, so must add this item
-                    # to same cluster.
-                    move_to_current_cluster(item)
-                    complex_infos[complex_infos_idx] = None
-                    print(f"Added {pdb_id} to current cluster")
-                    any_complex_assigned = True
-            complex_infos = [x for x in complex_infos if x is not None]
-            if not any_complex_assigned:
-                # No additional complexes assigned to current cluster, so must
-                # be done.
-                clusters.append(current_cluster)
-                break
-        import pdb; pdb.set_trace()
+            while True:
+                any_complex_assigned = False
+                for complex_infos_idx, item in enumerate(complex_infos):
+                    if item is None:
+                        continue
+                    pdb_id, family_idx, smi = item
+                    if family_idx in current_cluster["family_idxs"]:
+                        # This family already in current cluster, so must add this item
+                        # to same cluster.
+                        move_to_current_cluster(item)
+                        complex_infos[complex_infos_idx] = None
+                        print(f"Added {pdb_id} to current cluster")
+                        any_complex_assigned = True
+                    elif smi in current_cluster["smiles"]:
+                        # This ligand already in current cluster, so must add this item
+                        # to same cluster.
+                        move_to_current_cluster(item)
+                        complex_infos[complex_infos_idx] = None
+                        print(f"Added {pdb_id} to current cluster")
+                        any_complex_assigned = True
+                complex_infos = [x for x in complex_infos if x is not None]
+                if not any_complex_assigned:
+                    # No additional complexes assigned to current cluster, so must
+                    # be done.
+                    clusters.append(current_cluster)
+                    break
+            import pdb; pdb.set_trace()
                 
 
 
