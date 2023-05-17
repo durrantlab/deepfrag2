@@ -8,6 +8,7 @@ import numpy as np
 from collagen.util import sorted_list
 import json
 from collagen.external.moad.split_clustering import generate_splits_from_clustering
+from tqdm import tqdm
 
 
 split_rand_num_gen = None
@@ -256,7 +257,7 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     unique_smiles = list({d['smiles'] for d in data})
 
     # Iterate over unique families and ligands, allocating them to each set
-    for family in unique_families:
+    for family in tqdm(unique_families):
         for smi in unique_smiles:
             # Get all complexes with the current family and ligand
             complexes = [d for d in data if d['family_idx'] == family and d['smiles'] == smi]
