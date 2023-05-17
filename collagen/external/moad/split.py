@@ -259,19 +259,21 @@ def chat_gpt4_approach(moad: "MOADInterface"):
             complex_dict[key] = []
         complex_dict[key].append(complex)
 
-    # Iterate over complex_dict, allocating them to each set
-    for complexes in tqdm(complex_dict.values()):
-        # If there are any complexes, allocate them based on the sizes of the sets
-        if complexes:
-            total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
-            if len(train_set) / total_size < 0.6:
-                train_set.extend(complexes)
-            elif len(test_set) / total_size < 0.2:
-                test_set.extend(complexes)
-            elif len(val_set) / total_size < 0.2:
-                val_set.extend(complexes)
-            else:
-                train_set.extend(complexes)
+    # Prepare a list of keys sorted by the length of complexes in descending order
+    sorted_keys = sorted(complex_dict.keys(), key=lambda x: len(complex_dict[x]), reverse=True)
+
+    # Iterate over sorted_keys, allocating them to each set
+    for key in tqdm(sorted_keys):
+        complexes = complex_dict[key]
+        total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
+        if len(train_set) / total_size < 0.6:
+            train_set.extend(complexes)
+        elif len(test_set) / total_size < 0.2:
+            test_set.extend(complexes)
+        elif len(val_set) / total_size < 0.2:
+            val_set.extend(complexes)
+        else:
+            train_set.extend(complexes)
 
     print(f"Training set size: {len(train_set)}")
     print(f"Testing set size: {len(test_set)}")
