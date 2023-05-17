@@ -259,20 +259,20 @@ def chat_gpt4_approach(moad: "MOADInterface"):
             complex_dict[key] = []
         complex_dict[key].append(complex)
 
-    # Prepare a list of keys sorted by the length of complexes in descending order
-    sorted_keys = sorted(complex_dict.keys(), key=lambda x: len(complex_dict[x]), reverse=True)
-
-    # Iterate over sorted_keys, allocating them to each set
-    for key in tqdm(sorted_keys):
-        complexes = complex_dict[key]
+    # Iterate over the complex_dict, adding each unique combination of family and smiles
+    # to the smallest set, until it reaches its target proportion of the total size
+    for key, complexes in complex_dict.items():
         total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
+
+        # Add to the smallest set until it reaches its target size
         if len(train_set) / total_size < 0.6:
             train_set.extend(complexes)
-        elif len(test_set) / total_size < 0.2:
-            test_set.extend(complexes)
         elif len(val_set) / total_size < 0.2:
             val_set.extend(complexes)
+        elif len(test_set) / total_size < 0.2:
+            test_set.extend(complexes)
         else:
+            # If all sets are at their target sizes, add to the train set by default
             train_set.extend(complexes)
 
     print(f"Training set size: {len(train_set)}")
