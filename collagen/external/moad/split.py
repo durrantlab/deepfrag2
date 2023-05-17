@@ -300,6 +300,8 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     # What is the number that were not assigned to any cluster?
     print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
 
+    input("Press enter to continue...")
+    
     import pdb; pdb.set_trace()
 
 
