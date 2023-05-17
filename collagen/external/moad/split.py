@@ -164,7 +164,16 @@ def _generate_splits_from_scratch(
     max_pdbs_test: int = None,
     butina_cluster_cutoff: float = 0.4,
 ):
-    if not butina_cluster_cutoff:
+    if butina_cluster_cutoff:
+        print("Building training/validation/test sets based on Butina clustering")
+        train_families, val_families, test_families = generate_splits_from_clustering(
+            moad,
+            split_rand_num_gen,
+            fraction_train,
+            fraction_val,
+            butina_cluster_cutoff,
+        )
+    else:
         print("Building training/validation/test sets via random selection")
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
@@ -173,6 +182,61 @@ def _generate_splits_from_scratch(
         families: List[List[str]] = []
         for c in moad.classes:
             families.extend([x.pdb_id for x in f.targets] for f in c.families)
+
+        #### JDD EXPERIMENTING
+        import pdb
+
+        pdb.set_trace()
+
+        # For each of the familes, get the smiles strings for all the ligands
+        smiles = [_smiles_for(moad, family) for family in families]
+
+        # Now merge and flatten these lists into a list of lists, where the
+        # inner list is [pdb_id, family_idx, smiles]
+        complex_infos = []
+        for family_idx, family in enumerate(families):
+            complex_infos.extend(
+                [pdb_id, family_idx, smi]
+                for pdb_id, smi in zip(family, smiles[family_idx])
+            )
+
+        clusters = []
+        current_cluster = {
+            "family_idxs": set([]),
+            "smiles": set([]),
+            "items": [],
+        }
+        import pdb; pdb.set_trace()
+        while True:
+            any_complex_assigned = False
+            for item in complex_infos:
+                pdb_id, family_idx, smi = item
+                if family_idx in current_cluster["family_idxs"]:
+                    # This family already in current cluster, so must add this item
+                    # to same cluster.
+                    current_cluster["smiles"].add(smi)
+                    current_cluster["family_idxs"].add(family_idx)
+                    current_cluster["items"].append(item)
+                    print(f"Added {pdb_id} to current cluster")
+                    any_complex_assigned = True
+                elif smi in current_cluster["smiles"]:
+                    # This ligand already in current cluster, so must add this item
+                    # to same cluster.
+                    current_cluster["family_idxs"].add(family_idx)
+                    current_cluster["items"].append(item)
+                    print(f"Added {pdb_id} to current cluster")
+                    any_complex_assigned = True
+            if not any_complex_assigned:
+                # No additional complexes assigned to current cluster, so must
+                # be done.
+                clusters.append(current_cluster)
+                break
+        import pdb; pdb.set_trace()
+                
+
+
+
+        #### END JDD EXPERIMENTING
 
         # Note that we're working with families (not individual targets in those
         # families) so members of same family are not shared across train, val,
@@ -184,15 +248,6 @@ def _generate_splits_from_scratch(
         )
         val_families, test_families = _split_seq_per_probability(
             other_families, fraction_val
-        )
-    else:
-        print("Building training/validation/test sets based on Butina clustering")
-        train_families, val_families, test_families = generate_splits_from_clustering(
-            moad,
-            split_rand_num_gen,
-            fraction_train,
-            fraction_val,
-            butina_cluster_cutoff,
         )
 
     # Now that they are divided, we can keep only the targets themselves (no
@@ -215,41 +270,7 @@ def _generate_splits_from_scratch(
     )
 
     if prevent_smiles_overlap:
-        # Reassign overlapping SMILES.
-
-        # Find the overlaps (intersections) between pairs of sets.
-        train_val = all_smis.train & all_smis.val
-        val_test = all_smis.val & all_smis.test
-        train_test = all_smis.train & all_smis.test
-
-        # Find the SMILES that are in two sets but not in the third one
-        train_val_not_test = train_val - all_smis.test
-        val_test_not_train = val_test - all_smis.train
-        train_test_not_val = train_test - all_smis.val
-
-        # Find SMILES that are present in all three sets
-        train_test_val = all_smis.train & all_smis.val & all_smis.test
-
-        # Overlapping SMILES are reassigned to temporary sets
-        a_train, a_val = _random_divide_two_prts(train_val_not_test)
-        b_val, b_test = _random_divide_two_prts(val_test_not_train)
-        c_train, c_test = _random_divide_two_prts(train_test_not_val)
-        d_train, d_val, d_test = _random_divide_three_prts(train_test_val)
-
-        # Update SMILES sets to include the reassigned SMILES and exclude the
-        # overlapping ones
-        all_smis.train = (
-            (all_smis.train - (all_smis.val | all_smis.test))
-            | a_train
-            | c_train
-            | d_train
-        )
-        all_smis.val = (
-            (all_smis.val - (all_smis.train | all_smis.test)) | a_val | b_val | d_val
-        )
-        all_smis.test = (
-            (all_smis.test - (all_smis.train | all_smis.val)) | b_test | c_test | d_test
-        )
+        reassign_overlapping_smiles(all_smis)
 
     # TODO: Consider this GPT4 suggestion:
 
@@ -295,6 +316,41 @@ def _generate_splits_from_scratch(
     # SMILES from being split across the training, validation, and testing sets.
 
     return pdb_ids, all_smis
+
+
+def reassign_overlapping_smiles(all_smis):
+    # Reassign overlapping SMILES.
+
+    # Find the overlaps (intersections) between pairs of sets.
+    train_val = all_smis.train & all_smis.val
+    val_test = all_smis.val & all_smis.test
+    train_test = all_smis.train & all_smis.test
+
+    # Find the SMILES that are in two sets but not in the third one
+    train_val_not_test = train_val - all_smis.test
+    val_test_not_train = val_test - all_smis.train
+    train_test_not_val = train_test - all_smis.val
+
+    # Find SMILES that are present in all three sets
+    train_test_val = all_smis.train & all_smis.val & all_smis.test
+
+    # Overlapping SMILES are reassigned to temporary sets
+    a_train, a_val = _random_divide_two_prts(train_val_not_test)
+    b_val, b_test = _random_divide_two_prts(val_test_not_train)
+    c_train, c_test = _random_divide_two_prts(train_test_not_val)
+    d_train, d_val, d_test = _random_divide_three_prts(train_test_val)
+
+    # Update SMILES sets to include the reassigned SMILES and exclude the
+    # overlapping ones
+    all_smis.train = (
+        (all_smis.train - (all_smis.val | all_smis.test)) | a_train | c_train | d_train
+    )
+    all_smis.val = (
+        (all_smis.val - (all_smis.train | all_smis.test)) | a_val | b_val | d_val
+    )
+    all_smis.test = (
+        (all_smis.test - (all_smis.train | all_smis.val)) | b_test | c_test | d_test
+    )
 
 
 def _load_splits_from_disk(
