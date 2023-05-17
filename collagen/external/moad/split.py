@@ -186,7 +186,7 @@ def _generate_splits_from_scratch(
         #### JDD EXPERIMENTING
 
         # For each of the familes, get the smiles strings for all the ligands
-        smiles = [_smiles_for(moad, family) for family in families]
+        smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
 
         # Now merge and flatten these lists into a list of lists, where the
         # inner list is [pdb_id, family_idx, smiles]
@@ -196,6 +196,11 @@ def _generate_splits_from_scratch(
                 [pdb_id, family_idx, smi]
                 for pdb_id, smi in zip(family, smiles[family_idx])
             )
+
+        Unique PDB IDS (about 33,000). But 41,000 in directory and every.csv.
+        Why the difference? Which ones are missing? Some ligands may have no
+        fragments. Could that be it? I think you need to print out the lists
+        and compare.
 
         import pdb; pdb.set_trace()
 
