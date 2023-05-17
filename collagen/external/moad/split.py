@@ -243,7 +243,10 @@ def _generate_splits_from_scratch(
                     # be done.
                     clusters.append(current_cluster)
                     break
-        sdffdsfd
+        
+        counts = [len(cluster["items"]) for cluster in clusters]
+        
+        import pdb; pdb.set_trace()
 
 
 
