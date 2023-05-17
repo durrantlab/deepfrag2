@@ -204,12 +204,12 @@ def _generate_splits_from_scratch(
         current_cluster = {
             "family_idxs": set([]),
             "smiles": set([]),
-            "items": [],
+            "items": [complex_infos.pop(0)],
         }
         import pdb; pdb.set_trace()
         while True:
             any_complex_assigned = False
-            for item in complex_infos:
+            for complex_infos_idx, item in enumerate(complex_infos):
                 pdb_id, family_idx, smi = item
                 if family_idx in current_cluster["family_idxs"]:
                     # This family already in current cluster, so must add this item
@@ -217,6 +217,7 @@ def _generate_splits_from_scratch(
                     current_cluster["smiles"].add(smi)
                     current_cluster["family_idxs"].add(family_idx)
                     current_cluster["items"].append(item)
+                    complex_infos[complex_infos_idx] = None
                     print(f"Added {pdb_id} to current cluster")
                     any_complex_assigned = True
                 elif smi in current_cluster["smiles"]:
@@ -224,8 +225,10 @@ def _generate_splits_from_scratch(
                     # to same cluster.
                     current_cluster["family_idxs"].add(family_idx)
                     current_cluster["items"].append(item)
+                    complex_infos[complex_infos_idx] = None
                     print(f"Added {pdb_id} to current cluster")
                     any_complex_assigned = True
+            complex_infos = [x for x in complex_infos if x is not None]
             if not any_complex_assigned:
                 # No additional complexes assigned to current cluster, so must
                 # be done.
