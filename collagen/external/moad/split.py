@@ -197,6 +197,12 @@ def _generate_splits_from_scratch(
                 for pdb_id, smi in zip(family, smiles[family_idx])
             )
 
+        def move_to_current_cluster(item):
+            pdb_id, family_idx, smi = item
+            current_cluster["family_idxs"].add(family_idx)
+            current_cluster["smiles"].add(smi)
+            current_cluster["items"].append(item)
+
         clusters = []
         current_cluster = {
             "family_idxs": set([]),
@@ -205,30 +211,26 @@ def _generate_splits_from_scratch(
         }
 
         # Get started by adding the first one
-        pdb_id, family_idx, smi = complex_infos.pop()
-        current_cluster["family_idxs"].add(family_idx)
-        current_cluster["smiles"].add(smi)
-        current_cluster["items"].append([pdb_id, family_idx, smi])
+        move_to_current_cluster(complex_infos.pop())
 
         import pdb; pdb.set_trace()
         while True:
             any_complex_assigned = False
             for complex_infos_idx, item in enumerate(complex_infos):
+                if item is None:
+                    continue
                 pdb_id, family_idx, smi = item
                 if family_idx in current_cluster["family_idxs"]:
                     # This family already in current cluster, so must add this item
                     # to same cluster.
-                    current_cluster["smiles"].add(smi)
-                    current_cluster["family_idxs"].add(family_idx)
-                    current_cluster["items"].append(item)
+                    move_to_current_cluster(item)
                     complex_infos[complex_infos_idx] = None
                     print(f"Added {pdb_id} to current cluster")
                     any_complex_assigned = True
                 elif smi in current_cluster["smiles"]:
                     # This ligand already in current cluster, so must add this item
                     # to same cluster.
-                    current_cluster["family_idxs"].add(family_idx)
-                    current_cluster["items"].append(item)
+                    move_to_current_cluster(item)
                     complex_infos[complex_infos_idx] = None
                     print(f"Added {pdb_id} to current cluster")
                     any_complex_assigned = True
