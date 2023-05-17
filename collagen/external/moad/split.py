@@ -232,7 +232,7 @@ def jdd_approach_not_used(moad: "MOADInterface"):
     print(np.sum(counts))
     import pdb; pdb.set_trace()
 
-def chat_gpt4_approach(moad: "MOADInterface"):
+def chat_gpt4_optimized_approach(moad: "MOADInterface"):
     # First, get a flat list of all the families (not grouped by class).
     families: List[List[str]] = []
     for c in moad.classes:
@@ -252,30 +252,27 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     # Create three empty lists to hold your training, validation, and testing sets
     train_set, test_set, val_set = [], [], []
 
-    # Get unique families and ligands
-    unique_families = list({d['family_idx'] for d in data})
-    unique_smiles = list({d['smiles'] for d in data})
+    # Prepare a dict of family-smile keys, each mapping to a list of complexes
+    complex_dict = {}
+    for complex in data:
+        key = (complex['family_idx'], complex['smiles'])
+        if key not in complex_dict:
+            complex_dict[key] = []
+        complex_dict[key].append(complex)
 
-    # Iterate over unique families and ligands, allocating them to each set
-    for family in tqdm(unique_families):
-        for smi in unique_smiles:
-            # Get all complexes with the current family and ligand
-            complexes = [d for d in data if d['family_idx'] == family and d['smiles'] == smi]
-
-            # If there are any complexes, allocate them based on the sizes of the sets
-            if complexes:
-                total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
-                if len(train_set) / total_size < 0.6:
-                    train_set.extend(complexes)
-                elif len(test_set) / total_size < 0.2:
-                    test_set.extend(complexes)
-                elif len(val_set) / total_size < 0.2:
-                    val_set.extend(complexes)
-                else:
-                    train_set.extend(complexes)
-
-            # Remove complexes from the main data list
-            data = [d for d in data if d['family_idx'] != family or d['smiles'] != smi]
+    # Iterate over complex_dict, allocating them to each set
+    for complexes in tqdm(complex_dict.values()):
+        # If there are any complexes, allocate them based on the sizes of the sets
+        if complexes:
+            total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
+            if len(train_set) / total_size < 0.6:
+                train_set.extend(complexes)
+            elif len(test_set) / total_size < 0.2:
+                test_set.extend(complexes)
+            elif len(val_set) / total_size < 0.2:
+                val_set.extend(complexes)
+            else:
+                train_set.extend(complexes)
 
     print(f"Training set size: {len(train_set)}")
     print(f"Testing set size: {len(test_set)}")
