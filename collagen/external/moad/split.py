@@ -184,9 +184,6 @@ def _generate_splits_from_scratch(
             families.extend([x.pdb_id for x in f.targets] for f in c.families)
 
         #### JDD EXPERIMENTING
-        import pdb
-
-        pdb.set_trace()
 
         # For each of the familes, get the smiles strings for all the ligands
         smiles = [_smiles_for(moad, family) for family in families]
@@ -204,8 +201,15 @@ def _generate_splits_from_scratch(
         current_cluster = {
             "family_idxs": set([]),
             "smiles": set([]),
-            "items": [complex_infos.pop(0)],
+            "items": [],
         }
+
+        # Get started by adding the first one
+        pdb_id, family_idx, smi = complex_infos.pop()
+        current_cluster["family_idxs"].add(family_idx)
+        current_cluster["smiles"].add(smi)
+        current_cluster["items"].append([pdb_id, family_idx, smi])
+
         import pdb; pdb.set_trace()
         while True:
             any_complex_assigned = False
