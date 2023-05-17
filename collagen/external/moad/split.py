@@ -232,7 +232,7 @@ def jdd_approach_not_used(moad: "MOADInterface"):
     print(np.sum(counts))
     import pdb; pdb.set_trace()
 
-def chat_gpt4_optimized_approach(moad: "MOADInterface"):
+def chat_gpt4_approach(moad: "MOADInterface"):
     # First, get a flat list of all the families (not grouped by class).
     families: List[List[str]] = []
     for c in moad.classes:
