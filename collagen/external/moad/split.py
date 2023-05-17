@@ -197,6 +197,8 @@ def _generate_splits_from_scratch(
                 for pdb_id, smi in zip(family, smiles[family_idx])
             )
 
+        import pdb; pdb.set_trace()
+
         def move_to_current_cluster(item):
             pdb_id, family_idx, smi = item
             current_cluster["family_idxs"].add(family_idx)
