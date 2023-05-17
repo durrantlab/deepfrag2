@@ -287,6 +287,17 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     test_families = set([complex['family_idx'] for complex in test_set])
     val_families = set([complex['family_idx'] for complex in val_set])
 
+    # Verify that there is no overlap between the sets
+    print(f"Train and test overlap: {len(train_smiles & test_smiles)}")
+    print(f"Train and val overlap: {len(train_smiles & val_smiles)}")
+    print(f"Test and val overlap: {len(test_smiles & val_smiles)}")
+    print(f"Train and test overlap: {len(train_families & test_families)}")
+    print(f"Train and val overlap: {len(train_families & val_families)}")
+    print(f"Test and val overlap: {len(test_families & val_families)}")
+
+    # What is the number that were not assigned to any cluster?
+    print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
+
     import pdb; pdb.set_trace()
 
 
