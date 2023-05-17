@@ -153,6 +153,135 @@ def _limit_split_size(
 
     return pdb_ids
 
+def jdd_approach_not_used(moad: "MOADInterface"):
+    # First, get a flat list of all the families (not grouped by class).
+    families: List[List[str]] = []
+    for c in moad.classes:
+        families.extend([x.pdb_id for x in f.targets] for f in c.families)
+
+    #### JDD EXPERIMENTING
+
+    # For each of the familes, get the smiles strings for all the ligands
+    smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
+
+    # Now merge and flatten these lists into a list of lists, where the
+    # inner list is [pdb_id, family_idx, smiles]
+    complex_infos = []
+    for family_idx, family in enumerate(families):
+        complex_infos.extend(
+            [pdb_id, family_idx, smi]
+            for pdb_id, smi in zip(family, smiles[family_idx])
+        )
+
+    # Unique PDB IDS (about 33,000). But 41,000 in directory and every.csv.
+    # Why the difference? Which ones are missing? Some ligands may have no
+    # fragments. Could that be it? I think you need to print out the lists
+    # and compare.
+
+    # import pdb; pdb.set_trace()
+
+    def move_to_current_cluster(item):
+        pdb_id, family_idx, smi = item
+        current_cluster["family_idxs"].add(family_idx)
+        current_cluster["smiles"].add(smi)
+        current_cluster["items"].append(item)
+
+    clusters = []
+    while complex_infos:
+        current_cluster = {
+            "family_idxs": set([]),
+            "smiles": set([]),
+            "items": [],
+        }
+
+        # Get started by adding the first one
+        move_to_current_cluster(complex_infos.pop())
+
+        while True:
+            print("")
+            print("Number of clusters:", len(clusters))
+            print("Number of complexes left to assign:", len(complex_infos))
+            any_complex_assigned = False
+            for complex_infos_idx, item in enumerate(complex_infos):
+                if item is None:
+                    continue
+                pdb_id, family_idx, smi = item
+                if family_idx in current_cluster["family_idxs"]:
+                    # This family already in current cluster, so must add this item
+                    # to same cluster.
+                    move_to_current_cluster(item)
+                    complex_infos[complex_infos_idx] = None
+                    print(f"Added {pdb_id} to current cluster (same family)")
+                    any_complex_assigned = True
+                elif smi in current_cluster["smiles"]:
+                    # This ligand already in current cluster, so must add this item
+                    # to same cluster.
+                    move_to_current_cluster(item)
+                    complex_infos[complex_infos_idx] = None
+                    print(f"Added {pdb_id} to current cluster (same ligand)")
+                    any_complex_assigned = True
+            complex_infos = [x for x in complex_infos if x is not None]
+            if not any_complex_assigned:
+                # No additional complexes assigned to current cluster, so must
+                # be done.
+                clusters.append(current_cluster)
+                break
+    
+    counts = [len(cluster["items"]) for cluster in clusters]
+    print(np.sum(counts))
+    import pdb; pdb.set_trace()
+
+def chat_gpt4_approach(moad: "MOADInterface"):
+    # First, get a flat list of all the families (not grouped by class).
+    families: List[List[str]] = []
+    for c in moad.classes:
+        families.extend([x.pdb_id for x in f.targets] for f in c.families)
+
+    # For each of the familes, get the smiles strings for all the ligands
+    smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
+
+    # Flatten your data into a list of dictionaries for easier manipulation
+    data = []
+    for family_idx, family in enumerate(families):
+        data.extend(
+            {'pdb_id': pdb_id, 'family_idx': family_idx, 'smiles': smi}
+            for pdb_id, smi in zip(family, smiles[family_idx])
+        )
+
+    # Create three empty lists to hold your training, validation, and testing sets
+    train_set, test_set, val_set = [], [], []
+
+    # Get unique families and ligands
+    unique_families = list({d['family_idx'] for d in data})
+    unique_smiles = list({d['smiles'] for d in data})
+
+    # Iterate over unique families and ligands, allocating them to each set
+    for family in unique_families:
+        for smi in unique_smiles:
+            # Get all complexes with the current family and ligand
+            complexes = [d for d in data if d['family_idx'] == family and d['smiles'] == smi]
+
+            # If there are any complexes, allocate them based on the sizes of the sets
+            if complexes:
+                total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
+                if len(train_set) / total_size < 0.6:
+                    train_set.extend(complexes)
+                elif len(test_set) / total_size < 0.2:
+                    test_set.extend(complexes)
+                elif len(val_set) / total_size < 0.2:
+                    val_set.extend(complexes)
+                else:
+                    train_set.extend(complexes)
+
+            # Remove complexes from the main data list
+            data = [d for d in data if d['family_idx'] != family or d['smiles'] != smi]
+
+    print(f"Training set size: {len(train_set)}")
+    print(f"Testing set size: {len(test_set)}")
+    print(f"Validation set size: {len(val_set)}")
+
+    import pdb; pdb.set_trace()
+
 
 def _generate_splits_from_scratch(
     moad: "MOADInterface",
@@ -178,80 +307,8 @@ def _generate_splits_from_scratch(
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
 
-        # First, get a flat list of all the families (not grouped by class).
-        families: List[List[str]] = []
-        for c in moad.classes:
-            families.extend([x.pdb_id for x in f.targets] for f in c.families)
-
-        #### JDD EXPERIMENTING
-
-        # For each of the familes, get the smiles strings for all the ligands
-        smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
-
-        # Now merge and flatten these lists into a list of lists, where the
-        # inner list is [pdb_id, family_idx, smiles]
-        complex_infos = []
-        for family_idx, family in enumerate(families):
-            complex_infos.extend(
-                [pdb_id, family_idx, smi]
-                for pdb_id, smi in zip(family, smiles[family_idx])
-            )
-
-        Unique PDB IDS (about 33,000). But 41,000 in directory and every.csv.
-        Why the difference? Which ones are missing? Some ligands may have no
-        fragments. Could that be it? I think you need to print out the lists
-        and compare.
-
-        import pdb; pdb.set_trace()
-
-        def move_to_current_cluster(item):
-            pdb_id, family_idx, smi = item
-            current_cluster["family_idxs"].add(family_idx)
-            current_cluster["smiles"].add(smi)
-            current_cluster["items"].append(item)
-
-        clusters = []
-        while complex_infos:
-            current_cluster = {
-                "family_idxs": set([]),
-                "smiles": set([]),
-                "items": [],
-            }
-
-            # Get started by adding the first one
-            move_to_current_cluster(complex_infos.pop())
-
-            while True:
-                print("")
-                print("Number of clusters:", len(clusters))
-                print("Number of complexes left to assign:", len(complex_infos))
-                any_complex_assigned = False
-                for complex_infos_idx, item in enumerate(complex_infos):
-                    if item is None:
-                        continue
-                    pdb_id, family_idx, smi = item
-                    if family_idx in current_cluster["family_idxs"]:
-                        # This family already in current cluster, so must add this item
-                        # to same cluster.
-                        move_to_current_cluster(item)
-                        complex_infos[complex_infos_idx] = None
-                        print(f"Added {pdb_id} to current cluster (same family)")
-                        any_complex_assigned = True
-                    elif smi in current_cluster["smiles"]:
-                        # This ligand already in current cluster, so must add this item
-                        # to same cluster.
-                        move_to_current_cluster(item)
-                        complex_infos[complex_infos_idx] = None
-                        print(f"Added {pdb_id} to current cluster (same ligand)")
-                        any_complex_assigned = True
-                complex_infos = [x for x in complex_infos if x is not None]
-                if not any_complex_assigned:
-                    # No additional complexes assigned to current cluster, so must
-                    # be done.
-                    clusters.append(current_cluster)
-                    break
-        
-        counts = [len(cluster["items"]) for cluster in clusters]
+        jdd_approach_not_used(moad)
+        chat_gpt4_approach(moad)
         
         import pdb; pdb.set_trace()
 
