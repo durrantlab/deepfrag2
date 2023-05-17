@@ -204,7 +204,7 @@ def _generate_splits_from_scratch(
             current_cluster["items"].append(item)
 
         clusters = []
-        while len(complex_infos) > 0:
+        while complex_infos:
             current_cluster = {
                 "family_idxs": set([]),
                 "smiles": set([]),
@@ -215,6 +215,9 @@ def _generate_splits_from_scratch(
             move_to_current_cluster(complex_infos.pop())
 
             while True:
+                print("")
+                print("Number of clusters:", len(clusters))
+                print("Number of complexes left to assign:", len(complex_infos))
                 any_complex_assigned = False
                 for complex_infos_idx, item in enumerate(complex_infos):
                     if item is None:
@@ -225,14 +228,14 @@ def _generate_splits_from_scratch(
                         # to same cluster.
                         move_to_current_cluster(item)
                         complex_infos[complex_infos_idx] = None
-                        print(f"Added {pdb_id} to current cluster")
+                        print(f"Added {pdb_id} to current cluster (same family)")
                         any_complex_assigned = True
                     elif smi in current_cluster["smiles"]:
                         # This ligand already in current cluster, so must add this item
                         # to same cluster.
                         move_to_current_cluster(item)
                         complex_infos[complex_infos_idx] = None
-                        print(f"Added {pdb_id} to current cluster")
+                        print(f"Added {pdb_id} to current cluster (same ligand)")
                         any_complex_assigned = True
                 complex_infos = [x for x in complex_infos if x is not None]
                 if not any_complex_assigned:
@@ -240,8 +243,9 @@ def _generate_splits_from_scratch(
                     # be done.
                     clusters.append(current_cluster)
                     break
-            import pdb; pdb.set_trace()
-                
+        import pdb
+        pdb.set_trace()
+
 
 
 
