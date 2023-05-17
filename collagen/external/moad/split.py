@@ -229,8 +229,7 @@ def jdd_approach_not_used(moad: "MOADInterface"):
                 break
     
     counts = [len(cluster["items"]) for cluster in clusters]
-    print(np.sum(counts))
-    import pdb; pdb.set_trace()
+    print("All together:", np.sum(counts))
 
 def chat_gpt4_approach(moad: "MOADInterface"):
     # First, get a flat list of all the families (not grouped by class).
@@ -277,6 +276,16 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     print(f"Training set size: {len(train_set)}")
     print(f"Testing set size: {len(test_set)}")
     print(f"Validation set size: {len(val_set)}")
+
+    # Get the smiles in each of the sets
+    train_smiles = set([complex['smiles'] for complex in train_set])
+    test_smiles = set([complex['smiles'] for complex in test_set])
+    val_smiles = set([complex['smiles'] for complex in val_set])
+
+    # Get the families in each of the sets
+    train_families = set([complex['family_idx'] for complex in train_set])
+    test_families = set([complex['family_idx'] for complex in test_set])
+    val_families = set([complex['family_idx'] for complex in val_set])
 
     import pdb; pdb.set_trace()
 
