@@ -498,6 +498,7 @@ def compute_dataset_split(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
+    split_method: str = "random",  # random, butina, deterministic
     butina_cluster_cutoff=0.4,
 ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
     """Compute a TRAIN/VAL/TEST split.
