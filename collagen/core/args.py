@@ -49,15 +49,13 @@ def _add_generic_params(
             "test",
             "inference",
             "inference_custom_set",
-            "lr_finder",
         ],
-        help="Can be train, warm_starting, test, inference, inference_custom_set, or lr_finder.\n"
+        help="Can be train, warm_starting, test, inference, or inference_custom_set.\n"
         + "\tIf train, trains the model.\n"
         + "\tIf warm_starting, runs an incremental learning on a new dataset. It is suitable for fine tuning.\n"
         + "\tIf test, runs inference on the test set.\n"
         + "\tIf inference, runs inference on an external set by specifying the fragment coordinates.\n"
         + "\tIf inference_custom_set, runs inference on an external set comprised of protein-ligand pairs, that is, a SDF file per each ligand and a PDB file per each receptor.\n"
-        + "\tIf lr_finder, suggests the best learning rate to use. Defaults to train.",
         default="train",
     )
     parser.add_argument(

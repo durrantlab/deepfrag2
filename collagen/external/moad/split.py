@@ -7,7 +7,7 @@ from .types import MOAD_split
 import numpy as np
 from collagen.util import sorted_list
 import json
-from collagen.external.moad.split_clustering import generate_splits_from_clustering
+from collagen.external.moad.split_clustering import generate_splits_using_butina_clustering
 from tqdm import tqdm
 
 
@@ -326,7 +326,7 @@ def _generate_splits_from_scratch(
 ):
     if butina_cluster_cutoff:
         print("Building training/validation/test sets based on Butina clustering")
-        train_families, val_families, test_families = generate_splits_from_clustering(
+        train_families, val_families, test_families = generate_splits_using_butina_clustering(
             moad,
             split_rand_num_gen,
             fraction_train,

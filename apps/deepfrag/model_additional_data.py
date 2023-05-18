@@ -139,7 +139,7 @@ class DeepFragModelBadData(DeepFragModel):
             max_pdbs_train=None,
             max_pdbs_val=None,
             max_pdbs_test=None,
-            butina_cluster_cutoff=None,
+            butina_cluster_cutoff=None,  # TODO: Why hardcoded?
         )
 
         _, lig_infs = get_info_given_pdb_id(
