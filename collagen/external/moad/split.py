@@ -300,8 +300,26 @@ def chat_gpt4_approach(moad: "MOADInterface"):
             independent_groups.append(group)
 
     # Remove duplicates
+    independent_groups = [
+        group
+        for group in family_groups.values()
+        if len({complex['smiles'] for complex in group}) == 1
+    ]
+
+    for group in smiles_groups.values():
+        # If all the complexes in this group have the same family, then add it
+        if len({complex['family_idx'] for complex in group}) == 1:
+            independent_groups.append(group)
+
+    # Remove duplicates
     independent_groups = list(
-        {tuple(map(tuple, group)) for group in independent_groups}
+        {
+            tuple(
+                tuple(complex[key] for key in sorted(complex))
+                for complex in group
+            )
+            for group in independent_groups
+        }
     )
 
     # Sort by size so we distribute larger groups first
