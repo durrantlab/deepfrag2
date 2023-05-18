@@ -251,7 +251,7 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     # Create three empty lists to hold your training, validation, and testing sets
     train_set, test_set, val_set = [], [], []
 
-    # Prepare a dict of family-smile keys (binding pairs), each mapping to a list of complexes
+    # Prepare a dict of family-smile keys, each mapping to a list of complexes
     complex_dict = {}
     for complex in data:
         key = (complex['family_idx'], complex['smiles'])
@@ -259,17 +259,22 @@ def chat_gpt4_approach(moad: "MOADInterface"):
             complex_dict[key] = []
         complex_dict[key].append(complex)
 
-    # Iterate over the complex_dict, distributing the binding pairs into train, test, val sets
-    for binding_pair, complexes in complex_dict.items():
-        total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
-        if len(train_set) / total_size < 0.6:
-            train_set.extend(complexes)
-        elif len(test_set) / total_size < 0.2:
-            test_set.extend(complexes)
-        elif len(val_set) / total_size < 0.2:
-            val_set.extend(complexes)
-        else:
-            train_set.extend(complexes)
+    # Sort the complex_dict keys to process them in a specific order
+    sorted_keys = sorted(complex_dict.keys())
+
+    # Iterate over the sorted_keys, allocating them to each set
+    for key in sorted_keys:
+        complexes = complex_dict[key]
+        if complexes:
+            total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
+            if len(train_set) / total_size < 0.6:
+                train_set.extend(complexes)
+            elif len(test_set) / total_size < 0.2:
+                test_set.extend(complexes)
+            elif len(val_set) / total_size < 0.2:
+                val_set.extend(complexes)
+            else:
+                train_set.extend(complexes)
 
     print(f"Training set size: {len(train_set)}")
     print(f"Testing set size: {len(test_set)}")
