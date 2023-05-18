@@ -238,6 +238,7 @@ def jdd_approach(moad: "MOADInterface"):
     test_set = set()
     for i, cluster in enumerate(clusters):
         if i != idx_of_biggest:
+            import pdb; pdb.set_trace()
             test_set.update(cluster["items"])
 
     # Validation and testing set same in this case
