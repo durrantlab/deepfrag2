@@ -162,6 +162,7 @@ class MoadVoxelModelTrain(object):
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
+            split_method=args.split_method,
             butina_cluster_cutoff=args.butina_cluster_cutoff,
         )
 
