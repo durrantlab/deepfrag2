@@ -7,7 +7,9 @@ from .types import MOAD_split
 import numpy as np
 from collagen.util import sorted_list
 import json
-from collagen.external.moad.split_clustering import generate_splits_using_butina_clustering
+from collagen.external.moad.split_clustering import (
+    generate_splits_using_butina_clustering,
+)
 from tqdm import tqdm
 
 
@@ -154,13 +156,12 @@ def _limit_split_size(
 
     return pdb_ids
 
-def jdd_approach(moad: "MOADInterface"):
+
+def deterministic_approach(moad: "MOADInterface"):
     # First, get a flat list of all the families (not grouped by class).
     families: List[List[str]] = []
     for c in moad.classes:
         families.extend([x.pdb_id for x in f.targets] for f in c.families)
-
-    #### JDD EXPERIMENTING
 
     # For each of the familes, get the smiles strings for all the ligands
     smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
@@ -170,8 +171,7 @@ def jdd_approach(moad: "MOADInterface"):
     complex_infos = []
     for family_idx, family in enumerate(families):
         complex_infos.extend(
-            [pdb_id, family_idx, smi]
-            for pdb_id, smi in zip(family, smiles[family_idx])
+            [pdb_id, family_idx, smi] for pdb_id, smi in zip(family, smiles[family_idx])
         )
 
     # Unique PDB IDS (about 33,000). But 41,000 in directory and every.csv.
@@ -227,7 +227,7 @@ def jdd_approach(moad: "MOADInterface"):
                 # be done.
                 clusters.append(current_cluster)
                 break
-    
+
     counts = [len(cluster["items"]) for cluster in clusters]
 
     # Which cluster has the largest number of complexes?
@@ -236,11 +236,7 @@ def jdd_approach(moad: "MOADInterface"):
 
     # Convert it to another format
     train_set = [
-        {
-            "pdb_id": pdb_id,
-            "family_idx": family_idx,
-            "smiles": smi,
-        }
+        {"pdb_id": pdb_id, "family_idx": family_idx, "smiles": smi,}
         for pdb_id, family_idx, smi in train_set["items"]
     ]
 
@@ -250,11 +246,7 @@ def jdd_approach(moad: "MOADInterface"):
         if i != idx_of_biggest:
             for pdb_id, family_idx, smi in cluster["items"]:
                 test_set.append(
-                    {
-                        "pdb_id": pdb_id,
-                        "family_idx": family_idx,
-                        "smiles": smi,
-                    }
+                    {"pdb_id": pdb_id, "family_idx": family_idx, "smiles": smi,}
                 )
 
     # Validation and testing set same in this case
@@ -273,10 +265,11 @@ def jdd_approach(moad: "MOADInterface"):
         val=[x["smiles"] for x in val_set],
         test=[x["smiles"] for x in test_set],
     )
-    
+
     # print("All together:", np.sum(counts))
 
     return pdb_ids, all_smis
+
 
 def get_families_and_smiles(moad: "MOADInterface"):
     families: List[List[str]] = []
@@ -287,20 +280,21 @@ def get_families_and_smiles(moad: "MOADInterface"):
 
     return families, smiles
 
+
 def report_sizes(train_set, test_set, val_set):
     print(f"Training set size: {len(train_set)}")
     print(f"Testing set size: {len(test_set)}")
     print(f"Validation set size: {len(val_set)}")
 
     # Get the smiles in each of the sets
-    train_smiles = {complex['smiles'] for complex in train_set}
-    test_smiles = {complex['smiles'] for complex in test_set}
-    val_smiles = {complex['smiles'] for complex in val_set}
+    train_smiles = {complex["smiles"] for complex in train_set}
+    test_smiles = {complex["smiles"] for complex in test_set}
+    val_smiles = {complex["smiles"] for complex in val_set}
 
     # Get the families in each of the sets
-    train_families = {complex['family_idx'] for complex in train_set}
-    test_families = {complex['family_idx'] for complex in test_set}
-    val_families = {complex['family_idx'] for complex in val_set}
+    train_families = {complex["family_idx"] for complex in train_set}
+    test_families = {complex["family_idx"] for complex in test_set}
+    val_families = {complex["family_idx"] for complex in val_set}
 
     # Verify that there is no overlap between the sets
     print(f"Train and test overlap, SMILES: {len(train_smiles & test_smiles)}")
@@ -314,6 +308,29 @@ def report_sizes(train_set, test_set, val_set):
     # print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
 
 
+def _flatten_and_limit_pdb_ids(
+    train_families,
+    val_families,
+    test_families,
+    max_pdbs_train,
+    max_pdbs_val,
+    max_pdbs_test,
+):
+    # Now that they are divided, we can keep only the targets themselves (no
+    # longer organized into families).
+    pdb_ids = MOAD_splits_pdb_ids(
+        train=_flatten(train_families),
+        val=_flatten(val_families),
+        test=_flatten(test_families),
+    )
+
+    # If the user has asked to limit the size of the train, test, or val set,
+    # impose those limits here.
+    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
+
+    return pdb_ids
+
+
 def _generate_splits_from_scratch(
     moad: "MOADInterface",
     fraction_train: float = 0.6,
@@ -322,27 +339,49 @@ def _generate_splits_from_scratch(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
+    split_method: str = "random",
     butina_cluster_cutoff: float = 0.4,
 ):
-    if butina_cluster_cutoff:
+    if split_method == "butina":
+        assert butina_cluster_cutoff is not None
+
         print("Building training/validation/test sets based on Butina clustering")
-        train_families, val_families, test_families = generate_splits_using_butina_clustering(
+        (
+            train_families,
+            val_families,
+            test_families,
+        ) = generate_splits_using_butina_clustering(
             moad,
             split_rand_num_gen,
             fraction_train,
             fraction_val,
             butina_cluster_cutoff,
         )
-    else:
+
+        pdb_ids = _flatten_and_limit_pdb_ids(
+            train_families,
+            val_families,
+            test_families,
+            max_pdbs_train,
+            max_pdbs_val,
+            max_pdbs_test,
+        )
+
+        # Get all the ligand SMILES associated with the targets in each set.
+        all_smis = MOAD_splits_smiles(
+            train=_smiles_for(moad, pdb_ids.train),
+            val=_smiles_for(moad, pdb_ids.val),
+            test=_smiles_for(moad, pdb_ids.test),
+        )
+    elif split_method == "random":
         print("Building training/validation/test sets via random selection")
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
 
-        pdb_ids, all_smis = jdd_approach(moad)
-        return pdb_ids, all_smis
-        # chat_gpt4_approach(moad)
-        
-        import pdb; pdb.set_trace()
+        # First, get a flat list of all the families (not grouped by class).
+        families: List[List[str]] = []
+        for c in moad.classes:
+            families.extend([x.pdb_id for x in f.targets] for f in c.families)
 
         # Note that we're working with families (not individual targets in those
         # families) so members of same family are not shared across train, val,
@@ -356,27 +395,32 @@ def _generate_splits_from_scratch(
             other_families, fraction_val
         )
 
-    # Now that they are divided, we can keep only the targets themselves (no
-    # longer organized into families).
-    pdb_ids = MOAD_splits_pdb_ids(
-        train=_flatten(train_families),
-        val=_flatten(val_families),
-        test=_flatten(test_families),
-    )
+        pdb_ids = _flatten_and_limit_pdb_ids(
+            train_families,
+            val_families,
+            test_families,
+            max_pdbs_train,
+            max_pdbs_val,
+            max_pdbs_test,
+        )
 
-    # If the user has asked to limit the size of the train, test, or val set,
-    # impose those limits here.
-    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
+        # Get all the ligand SMILES associated with the targets in each set.
+        all_smis = MOAD_splits_smiles(
+            train=_smiles_for(moad, pdb_ids.train),
+            val=_smiles_for(moad, pdb_ids.val),
+            test=_smiles_for(moad, pdb_ids.test),
+        )
 
-    # Get all the ligand SMILES associated with the targets in each set.
-    all_smis = MOAD_splits_smiles(
-        train=_smiles_for(moad, pdb_ids.train),
-        val=_smiles_for(moad, pdb_ids.val),
-        test=_smiles_for(moad, pdb_ids.test),
-    )
+        if prevent_smiles_overlap:
+            reassign_overlapping_smiles(all_smis)
+    elif split_method == "deterministic":
+        print("Building training/validation/test sets determinictically. Will ignore user parameters such as --fraction_train, --fraction_val, --prevent_smiles_overlap, and --butina_cluster_cutoff.")
 
-    if prevent_smiles_overlap:
-        reassign_overlapping_smiles(all_smis)
+        pdb_ids, all_smis = deterministic_approach(moad)
+
+        # If the user has asked to limit the size of the train, test, or val
+        # set, impose those limits here.
+        pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
 
     return pdb_ids, all_smis
 
@@ -549,6 +593,7 @@ def compute_dataset_split(
             max_pdbs_train,
             max_pdbs_val,
             max_pdbs_test,
+            split_method,
             butina_cluster_cutoff,
         )
     else:
