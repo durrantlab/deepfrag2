@@ -260,13 +260,23 @@ def jdd_approach(moad: "MOADInterface"):
     # Validation and testing set same in this case
     val_set = test_set
 
-    import pdb; pdb.set_trace()
-
     report_sizes(train_set, test_set, val_set)
 
-    import pdb; pdb.set_trace()
+    pdb_ids = MOAD_splits_pdb_ids(
+        train=[x["pdb_id"] for x in train_set],
+        val=[x["pdb_id"] for x in val_set],
+        test=[x["pdb_id"] for x in test_set],
+    )
+
+    all_smis = MOAD_splits_smiles(
+        train=[x["smiles"] for x in train_set],
+        val=[x["smiles"] for x in val_set],
+        test=[x["smiles"] for x in test_set],
+    )
     
-    print("All together:", np.sum(counts))
+    # print("All together:", np.sum(counts))
+
+    return pdb_ids, all_smis
 
 def get_families_and_smiles(moad: "MOADInterface"):
     families: List[List[str]] = []
@@ -328,15 +338,11 @@ def _generate_splits_from_scratch(
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
 
-        jdd_approach(moad)
+        pdb_ids, all_smis = jdd_approach(moad)
+        return pdb_ids, all_smis
         # chat_gpt4_approach(moad)
         
         import pdb; pdb.set_trace()
-
-
-
-
-        #### END JDD EXPERIMENTING
 
         # Note that we're working with families (not individual targets in those
         # families) so members of same family are not shared across train, val,
@@ -371,49 +377,6 @@ def _generate_splits_from_scratch(
 
     if prevent_smiles_overlap:
         reassign_overlapping_smiles(all_smis)
-
-    # TODO: Consider this GPT4 suggestion:
-
-    # The problem with this approach is that even if smiles are independent, the
-    # corresponding pdb ids are not also moved into the appropriate
-    # train/test/val sets, so this data is thrown out elsewhere in the code. I
-    # need some code that moves pdbs and the associated smiles together. And
-    # yet, at the same time, it is still important that pdbs of the same family
-    # are not split across the three sets, and it is still important that
-    # identical smiles do not appear in the train/test/val sets. What new
-    # approach do you recommend?
-
-    # To address this issue, you can modify the approach to first group the data
-    # by both protein family and ligand identity (SMILES) and then split the
-    # groups into training, validation, and testing sets. This will ensure that
-    # PDB IDs and their associated SMILES are moved together while maintaining
-    # the required constraints. Here's a recommended approach:
-
-    # 1. Group the data by protein family and ligand identity (SMILES):
-
-    #   a. Create a dictionary with keys as tuples of protein family and SMILES,
-    #   and values as lists of corresponding PDB IDs.
-
-    # 2. Split the groups into training, validation, and testing sets:
-
-    #   a. Use the same splitting function (e.g., `_split_seq_per_probability`)
-    #   or any other method to split the dictionary keys (protein family, SMILES
-    #   tuples) into training, validation, and testing groups.
-
-    # 3. Flatten the PDB ID lists for each set:
-
-    #   a. For each set (training, validation, testing), go through the
-    #   corresponding (protein family, SMILES) keys and collect their PDB IDs,
-    #   creating a list of PDB IDs for each set.
-
-    # 4. Create SMILES sets for each split:
-
-    #   a. Extract unique SMILES from the (protein family, SMILES) keys for each
-    #   set.
-
-    # By following this approach, you ensure that PDB IDs and their associated
-    # SMILES are moved together while keeping protein families and identical
-    # SMILES from being split across the training, validation, and testing sets.
 
     return pdb_ids, all_smis
 
