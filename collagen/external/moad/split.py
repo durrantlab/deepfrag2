@@ -232,12 +232,10 @@ def jdd_approach_not_used(moad: "MOADInterface"):
     print("All together:", np.sum(counts))
 
 def chat_gpt4_approach(moad: "MOADInterface"):
-    # First, get a flat list of all the families (not grouped by class).
-    families: List[List[str]] = []
+    families = []
     for c in moad.classes:
         families.extend([x.pdb_id for x in f.targets] for f in c.families)
 
-    # For each of the familes, get the smiles strings for all the ligands
     smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
 
     # Flatten your data into a list of dictionaries for easier manipulation
@@ -247,35 +245,60 @@ def chat_gpt4_approach(moad: "MOADInterface"):
             {'pdb_id': pdb_id, 'family_idx': family_idx, 'smiles': smi}
             for pdb_id, smi in zip(family, smiles[family_idx])
         )
-
-    # Create three empty lists to hold your training, validation, and testing sets
-    train_set, test_set, val_set = [], [], []
-
-    # Prepare a dict of family-smile keys, each mapping to a list of complexes
-    complex_dict = {}
+    
+    # Group by family and V.S. Compute
+    family_groups = {idx: [] for idx in range(len(families))}
+    smiles_groups = {smi: [] for smi in smiles}
     for complex in data:
-        key = (complex['family_idx'], complex['smiles'])
-        if key not in complex_dict:
-            complex_dict[key] = []
-        complex_dict[key].append(complex)
+        family_groups[complex['family_idx']].append(complex)
+        smiles_groups[complex['smiles']].append(complex)
 
-    # Sort the complex_dict keys to process them in a specific order
-    sorted_keys = sorted(complex_dict.keys())
+    # Find the groups that have no overlap in family and smiles
+    independent_groups = []
+    for group in family_groups.values():
+        # If all the complexes in this group have the same smiles, then add it
+        if len(set(complex['smiles'] for complex in group)) == 1:
+            independent_groups.append(group)
+            
+    for group in smiles_groups.values():
+        # If all the complexes in this group have the same family, then add it
+        if len(set(complex['family_idx'] for complex in group)) == 1:
+            independent_groups.append(group)
+        
+    # Remove duplicates
+    independent_groups = list(set(tuple(map(tuple, group)) for group in independent_groups))
+    
+    # Sort by size so we distribute larger groups first
+    independent_groups.sort(key=len, reverse=True)
+    
+    train_set, test_set, val_set = [], [], []
+    total_size = sum(len(group) for group in independent_groups)
+    
+    # Distribute the independent groups across the datasets
+    for group in independent_groups:
+        current_size = len(train_set) + len(test_set) + len(val_set) + len(group)
+        if len(train_set) / current_size < 0.6:
+            train_set.extend(group)
+        elif len(test_set) / current_size < 0.2:
+            test_set.extend(group)
+        elif len(val_set) / current_size < 0.2:
+            val_set.extend(group)
+        else:
+            train_set.extend(group)
 
-    # Iterate over the sorted_keys, allocating them to each set
-    for key in sorted_keys:
-        complexes = complex_dict[key]
-        if complexes:
-            total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
-            if len(train_set) / total_size < 0.6:
-                train_set.extend(complexes)
-            elif len(test_set) / total_size < 0.2:
-                test_set.extend(complexes)
-            elif len(val_set) / total_size < 0.2:
-                val_set.extend(complexes)
-            else:
-                train_set.extend(complexes)
-
+    # Distribute the remaining complexes across the datasets
+    # for complex in data:
+    #     if complex not in train_set and complex not in test_set and complex not in val_set:
+    #         current_size = len(train_set) + len(test_set) + len(val_set) + 1
+    #         if len(train_set) / current_size < 0.6:
+    #             train_set.append(complex)
+    #         elif len(test_set) / current_size < 0.2:
+    #             test_set.append(complex)
+    #         elif len(val_set) / current_size < 0.2:
+    #             val_set.append(complex)
+    #         else:
+    #             train_set.append(complex)
+    
     print(f"Training set size: {len(train_set)}")
     print(f"Testing set size: {len(test_set)}")
     print(f"Validation set size: {len(val_set)}")
@@ -302,8 +325,7 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
 
     input("Press enter to continue...")
-    
-    import pdb; pdb.set_trace()
+
 
 
 def _generate_splits_from_scratch(
