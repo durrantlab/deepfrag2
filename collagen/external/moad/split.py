@@ -235,11 +235,16 @@ def jdd_approach(moad: "MOADInterface"):
     train_set = clusters[idx_of_biggest]
 
     # Merge all the remaining into a single set
-    test_set = set()
+    test_set = {
+        "family_idxs": set([]),
+        "smiles": set([]),
+        "items": [],
+    }
     for i, cluster in enumerate(clusters):
         if i != idx_of_biggest:
-            import pdb; pdb.set_trace()
-            test_set.update(cluster["items"])
+            test_set["family_idxs"].update(cluster["family_idxs"])
+            test_set["smiles"].update(cluster["smiles"])
+            test_set["items"].extend(cluster["items"])
 
     # Validation and testing set same in this case
     val_set = test_set
