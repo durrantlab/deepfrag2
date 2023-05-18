@@ -248,7 +248,14 @@ def jdd_approach(moad: "MOADInterface"):
     test_set = []
     for i, cluster in enumerate(clusters):
         if i != idx_of_biggest:
-            test_set.extend(cluster["items"])
+            for pdb_id, family_idx, smi in cluster["items"]:
+                test_set.append(
+                    {
+                        "pdb_id": pdb_id,
+                        "family_idx": family_idx,
+                        "smiles": smi,
+                    }
+                )
 
     # Validation and testing set same in this case
     val_set = test_set
