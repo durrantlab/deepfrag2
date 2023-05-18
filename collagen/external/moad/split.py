@@ -251,7 +251,7 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     # Create three empty lists to hold your training, validation, and testing sets
     train_set, test_set, val_set = [], [], []
 
-    # Prepare a dict of family-smile keys, each mapping to a list of complexes
+    # Prepare a dict of family-smile keys (binding pairs), each mapping to a list of complexes
     complex_dict = {}
     for complex in data:
         key = (complex['family_idx'], complex['smiles'])
@@ -259,20 +259,16 @@ def chat_gpt4_approach(moad: "MOADInterface"):
             complex_dict[key] = []
         complex_dict[key].append(complex)
 
-    # Iterate over the complex_dict, adding each unique combination of family and smiles
-    # to the smallest set, until it reaches its target proportion of the total size
-    for key, complexes in complex_dict.items():
+    # Iterate over the complex_dict, distributing the binding pairs into train, test, val sets
+    for binding_pair, complexes in complex_dict.items():
         total_size = len(train_set) + len(test_set) + len(val_set) + len(complexes)
-
-        # Add to the smallest set until it reaches its target size
         if len(train_set) / total_size < 0.6:
             train_set.extend(complexes)
-        elif len(val_set) / total_size < 0.2:
-            val_set.extend(complexes)
         elif len(test_set) / total_size < 0.2:
             test_set.extend(complexes)
+        elif len(val_set) / total_size < 0.2:
+            val_set.extend(complexes)
         else:
-            # If all sets are at their target sizes, add to the train set by default
             train_set.extend(complexes)
 
     print(f"Training set size: {len(train_set)}")
@@ -290,12 +286,12 @@ def chat_gpt4_approach(moad: "MOADInterface"):
     val_families = set([complex['family_idx'] for complex in val_set])
 
     # Verify that there is no overlap between the sets
-    print(f"Train and test overlap: {len(train_smiles & test_smiles)}")
+    print(f"Train and test overlap, SMILES: {len(train_smiles & test_smiles)}")
     print(f"Train and val overlap: {len(train_smiles & val_smiles)}")
-    print(f"Test and val overlap: {len(test_smiles & val_smiles)}")
-    print(f"Train and test overlap: {len(train_families & test_families)}")
-    print(f"Train and val overlap: {len(train_families & val_families)}")
-    print(f"Test and val overlap: {len(test_families & val_families)}")
+    print(f"Test and val overlap, SMILES: {len(test_smiles & val_smiles)}")
+    print(f"Train and test overlap, families: {len(train_families & test_families)}")
+    print(f"Train and val overlap, families: {len(train_families & val_families)}")
+    print(f"Test and val overlap, families: {len(test_families & val_families)}")
 
     # What is the number that were not assigned to any cluster?
     print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
