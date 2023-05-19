@@ -413,7 +413,7 @@ def load_cache_and_filter(
             # Add to filtered cache.
             examples_to_add = make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
             filtered_cache.extend(examples_to_add)
-            if len(examples_to_add):
+            if len(examples_to_add) == 0:
                 import pdb; pdb.set_trace()
             pdbs_that_passed.add(pdb_id)
 
