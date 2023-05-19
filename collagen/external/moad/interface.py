@@ -68,8 +68,6 @@ class MOADInterface(object):
         self._init_lookup()
         self._resolve_paths(structures_path)
 
-        import pdb; pdb.set_trace()
-
     def _init_lookup(self):
         """BindingMOAD is divided into clasess of proteins. These are dividied
         into families, which contain the individual targets. This iterates
