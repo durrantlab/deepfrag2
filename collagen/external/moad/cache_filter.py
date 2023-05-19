@@ -396,6 +396,7 @@ def load_cache_and_filter(
                 # You've found the ligand.
                 if lig.smiles not in split.smiles:
                     # It is not in the split, so always skip it.
+                    print(f"Skipping {pdb_id}:{lig_name} because ligand not allowed in this split to ensure independence.")
                     fails_filter = True
                     break
 
@@ -403,7 +404,7 @@ def load_cache_and_filter(
                     # You've found the ligand, but it doesn't pass the filter.
                     # (Note that lig_filter_func likely just returns true, so
                     # code never gets here, everything passes).
-
+                    print(f"Skipping {pdb_id}:{lig_name} because ligand did not pass whole-ligand filter.")
                     fails_filter = True
                     break
 
@@ -414,8 +415,9 @@ def load_cache_and_filter(
             examples_to_add = make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
             filtered_cache.extend(examples_to_add)
             if len(examples_to_add) == 0:
-                import pdb; pdb.set_trace()
-            pdbs_that_passed.add(pdb_id)
+                print(f"Skipping {pdb_id}:{lig_name} because no valid fragments for ligand found.")
+            else:
+                pdbs_that_passed.add(pdb_id)
 
     if not filtered_cache:
         raise Exception(
