@@ -370,8 +370,8 @@ def load_cache_and_filter(
     # prog_lig_examples_discarded_by_split = 0
     # prog_lig_examples_discarded_by_filters = 0
     # total_pdb_examples = 0
-    total_pdb_passed_examples = 0
-    pdbs_that_passed = {}
+    # total_pdb_passed_examples = 0
+    pdbs_that_passed = set([])
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
