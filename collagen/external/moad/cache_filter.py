@@ -393,28 +393,28 @@ def load_cache_and_filter(
                     # Not the ligand you're looking for. Continue searching.
                     continue
 
-                # total_prot_lig_examples += 1
-
                 # You've found the ligand.
                 if lig.smiles not in split.smiles:
                     # It is not in the split, so always skip it.
                     fails_filter = True
-                    # prog_lig_examples_discarded_by_split += 1
                     break
 
                 if not lig_filter_func(args, lig, lig_inf):
                     # You've found the ligand, but it doesn't pass the filter.
+                    # (Note that lig_filter_func likely just returns true, so
+                    # code never gets here, everything passes).
+
+                    import pdb; pdb.set_trace()
+
                     fails_filter = True
-                    # prog_lig_examples_discarded_by_filters += 1
                     break
 
             if fails_filter:
                 continue
 
             # Add to filtered cache.
-            filtered_cache.extend(
-                make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
-            )
+            examples_to_add = make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
+            filtered_cache.extend(examples_to_add)
             pdbs_that_passed.add(pdb_id)
 
     if not filtered_cache:
