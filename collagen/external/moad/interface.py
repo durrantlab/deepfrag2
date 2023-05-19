@@ -199,6 +199,8 @@ class MOADInterface(object):
 
         self.classes = classes
 
+        import pdb; pdb.set_trace()
+
     def _resolve_paths(self, path: Union[str, Path]):
         """Resolve the paths to the PDBs for each target in the
         class=>family=>target hierarchy.
