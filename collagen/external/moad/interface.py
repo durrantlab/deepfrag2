@@ -68,13 +68,6 @@ class MOADInterface(object):
         self._init_lookup()
         self._resolve_paths(structures_path)
 
-        cnts = 0
-        for c in self.classes:
-            for f in c.families:
-                for t in f.targets:
-                    cnts += 1
-        print(cnts)
-
         import pdb; pdb.set_trace()
 
     def _init_lookup(self):
