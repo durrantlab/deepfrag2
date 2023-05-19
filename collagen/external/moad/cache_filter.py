@@ -415,6 +415,7 @@ def load_cache_and_filter(
             examples_to_add = make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
             filtered_cache.extend(examples_to_add)
             if len(examples_to_add) == 0:
+                import pdb; pdb.set_trace()
                 print(f"Skipping {pdb_id}:{lig_name} [ {lig_inf.smiles} ] because no valid fragments for ligand found.")
             else:
                 pdbs_that_passed.add(pdb_id)
