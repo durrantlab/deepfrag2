@@ -370,6 +370,7 @@ def load_cache_and_filter(
     total_complexes_with_both_in_split = 0
     total_complexes_passed_lig_filter = 0
     total_complexes_with_useful_fragments = 0
+    pdbs_with_useful_fragments = set()
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
@@ -396,9 +397,10 @@ def load_cache_and_filter(
                     # Not the ligand you're looking for. Continue searching.
                     continue
 
+                # You've found the ligand.
+
                 total_complexes += 1
 
-                # You've found the ligand.
                 if lig.smiles not in split.smiles:
                     # It is not in the split, so always skip it.
                     print(f"Skipping {pdb_id}:{lig_name} because ligand not allowed in this split to ensure independence.")
@@ -427,6 +429,7 @@ def load_cache_and_filter(
                 print(f"Skipping {pdb_id}:{lig_name} because no valid fragments for ligand found.")
             else:
                 total_complexes_with_useful_fragments += 1
+                pdbs_with_useful_fragments.add(pdb_id)
 
     if not filtered_cache:
         raise Exception(
@@ -434,12 +437,13 @@ def load_cache_and_filter(
         )
 
     print(f"\nSPLIT SUMMARY: {split.name}")
-    print(f"Number of proteins considered: {len(split.targets)}")
-    print(f"Number of protein/ligand complexes considered: {total_complexes}")
+    print(f"Number of proteins considered (some with multiple ligands): {len(split.targets)}")
+    print(f"Number of unique protein/ligand complexes considered: {total_complexes}")
     print(f"Number of complexes with both receptor and ligand in this split: {total_complexes_with_both_in_split}")
     print(f"Number of those complexes that passed whole-ligand filter: {total_complexes_passed_lig_filter}")
     print(f"Number of those complexes with useful fragments: {total_complexes_with_useful_fragments}")
     print(f"Number of protein/parent/fragment examples: {len(filtered_cache)}")
+    print(f"Number of proteins with useful fragments (any ligand): {len(pdbs_with_useful_fragments)}")
 
 
 
