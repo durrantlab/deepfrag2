@@ -369,13 +369,14 @@ def load_cache_and_filter(
     # total_prot_lig_examples = 0
     # prog_lig_examples_discarded_by_split = 0
     # prog_lig_examples_discarded_by_filters = 0
-    # total_pdb_examples = 0
+    total_pdb_examples = 0
+    total_pdb_passed_examples = 0
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
         pdb_id = pdb_id.lower()
 
-        # total_pdb_examples += 1
+        total_pdb_examples += 1
 
         # If the PDB ID is not in the cache, throw an error. Cache probably
         # corrupt.
@@ -420,14 +421,18 @@ def load_cache_and_filter(
             filtered_cache.extend(
                 make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
             )
+            total_pdb_passed_examples += 1
 
     if not filtered_cache:
         raise Exception(
             "No ligands passed the moad filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Consider using `--verbose True` to debug."
         )
 
-    # print(f"\nSPLIT SUMMARY: {split.name}")
-    # print(f"Number of protein examples considered: {str(total_pdb_examples)}")
+    print(f"\nSPLIT SUMMARY: {split.name}")
+    print(f"Number of protein examples considered: {str(total_pdb_examples)}")
+    print(
+        f"Number of protein examples that passed: {str(total_pdb_passed_examples)}"
+    )
     # print(f"Number of protein/ligand complexes considered: {total_prot_lig_examples}")
     # print(
     #     f"Number of complexes discarded by split: {prog_lig_examples_discarded_by_split}"
