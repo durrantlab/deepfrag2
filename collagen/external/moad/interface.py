@@ -199,6 +199,14 @@ class MOADInterface(object):
 
         self.classes = classes
 
+        pdb_id_counts = 0
+        for c in self.classes:
+            for f in c.families:
+                for t in f.targets:
+                    pdb_id_counts += 1
+        print(pdb_id_counts)
+
+
         import pdb; pdb.set_trace()
 
     def _resolve_paths(self, path: Union[str, Path]):
