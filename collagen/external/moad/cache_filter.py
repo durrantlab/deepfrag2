@@ -369,14 +369,15 @@ def load_cache_and_filter(
     # total_prot_lig_examples = 0
     # prog_lig_examples_discarded_by_split = 0
     # prog_lig_examples_discarded_by_filters = 0
-    total_pdb_examples = 0
+    # total_pdb_examples = 0
     total_pdb_passed_examples = 0
+    pdbs_that_passed = {}
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
         pdb_id = pdb_id.lower()
 
-        total_pdb_examples += 1
+        # total_pdb_examples += 1
 
         # If the PDB ID is not in the cache, throw an error. Cache probably
         # corrupt.
@@ -421,7 +422,7 @@ def load_cache_and_filter(
             filtered_cache.extend(
                 make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
             )
-            total_pdb_passed_examples += 1
+            pdbs_that_passed.add(pdb_id)
 
     if not filtered_cache:
         raise Exception(
@@ -429,10 +430,8 @@ def load_cache_and_filter(
         )
 
     print(f"\nSPLIT SUMMARY: {split.name}")
-    print(f"Number of protein examples considered: {str(total_pdb_examples)}")
-    print(
-        f"Number of protein examples that passed: {str(total_pdb_passed_examples)}"
-    )
+    print(f"Number of protein examples considered: {str(split.targets)}")
+    print(f"Number of protein examples that passed: {len(pdbs_that_passed)}")
     # print(f"Number of protein/ligand complexes considered: {total_prot_lig_examples}")
     # print(
     #     f"Number of complexes discarded by split: {prog_lig_examples_discarded_by_split}"
