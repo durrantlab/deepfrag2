@@ -366,7 +366,10 @@ def load_cache_and_filter(
         cores=cores,
     )
 
-    pdbs_that_passed = set([])
+    total_complexes = 0
+    total_complexes_with_both_in_split = 0
+    total_complexes_passed_lig_filter = 0
+    total_complexes_with_useful_fragments = 0
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
@@ -393,12 +396,16 @@ def load_cache_and_filter(
                     # Not the ligand you're looking for. Continue searching.
                     continue
 
+                total_complexes += 1
+
                 # You've found the ligand.
                 if lig.smiles not in split.smiles:
                     # It is not in the split, so always skip it.
                     print(f"Skipping {pdb_id}:{lig_name} because ligand not allowed in this split to ensure independence.")
                     fails_filter = True
                     break
+
+                total_complexes_with_both_in_split += 1
 
                 if not lig_filter_func(args, lig, lig_inf):
                     # You've found the ligand, but it doesn't pass the filter.
@@ -407,6 +414,8 @@ def load_cache_and_filter(
                     print(f"Skipping {pdb_id}:{lig_name} because ligand did not pass whole-ligand filter.")
                     fails_filter = True
                     break
+                
+                total_complexes_passed_lig_filter += 1
 
             if fails_filter:
                 continue
@@ -417,7 +426,7 @@ def load_cache_and_filter(
             if len(examples_to_add) == 0:
                 print(f"Skipping {pdb_id}:{lig_name} because no valid fragments for ligand found.")
             else:
-                pdbs_that_passed.add(pdb_id)
+                total_complexes_with_useful_fragments += 1
 
     if not filtered_cache:
         raise Exception(
@@ -425,8 +434,16 @@ def load_cache_and_filter(
         )
 
     print(f"\nSPLIT SUMMARY: {split.name}")
-    print(f"Number of protein examples considered: {len(split.targets)}")
-    print(f"Number of protein examples that passed: {len(pdbs_that_passed)}")
+    print(f"Number of proteins considered: {len(split.targets)}")
+    print(f"Number of protein/ligand complexes considered: {total_complexes}")
+    print(f"Number of complexes with both receptor and ligand in this split: {total_complexes_with_both_in_split}")
+    print(f"Number of those complexes that passed whole-ligand filter: {total_complexes_passed_lig_filter}")
+    print(f"Number of those complexes with useful fragments: {total_complexes_with_useful_fragments}")
+    print(f"Number of protein/parent/fragment examples: {len(filtered_cache)}")
+
+
+
+    # print(f"Number of protein examples that passed: {len(pdbs_that_passed)}")
 
 
 
