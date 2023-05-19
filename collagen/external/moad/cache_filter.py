@@ -385,7 +385,7 @@ def load_cache_and_filter(
         for lig_name in receptor_inf.keys():
             lig_inf = receptor_inf[lig_name]
 
-            # Enforce filters.
+            # Enforce whole-ligand filters and not-in-same-split filters.
             fails_filter = False
             # Search for ligand_name.
             for lig in moad[pdb_id].ligands:
@@ -404,8 +404,6 @@ def load_cache_and_filter(
                     # (Note that lig_filter_func likely just returns true, so
                     # code never gets here, everything passes).
 
-                    import pdb; pdb.set_trace()
-
                     fails_filter = True
                     break
 
@@ -415,6 +413,8 @@ def load_cache_and_filter(
             # Add to filtered cache.
             examples_to_add = make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
             filtered_cache.extend(examples_to_add)
+            if len(examples_to_add):
+                import pdb; pdb.set_trace()
             pdbs_that_passed.add(pdb_id)
 
     if not filtered_cache:
