@@ -436,31 +436,14 @@ def load_cache_and_filter(
             "No ligands passed the moad filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Consider using `--verbose True` to debug."
         )
 
-    print(f"\nSPLIT SUMMARY: {split.name}")
-    print(f"Number of proteins considered (some with multiple ligands): {len(split.targets)}")
-    print(f"Number of unique protein/ligand complexes considered: {total_complexes}")
-    print(f"Number of complexes with both receptor and ligand in this split: {total_complexes_with_both_in_split}")
-    print(f"Number of those complexes that passed whole-ligand filter: {total_complexes_passed_lig_filter}")
-    print(f"Number of those complexes with useful fragments: {total_complexes_with_useful_fragments}")
-    print(f"Number of protein/parent/fragment examples: {len(filtered_cache)}")
-    print(f"Number of proteins with useful fragments (any ligand): {len(pdbs_with_useful_fragments)}")
-
-
-
-    # print(f"Number of protein examples that passed: {len(pdbs_that_passed)}")
-
-
-
-    # print(f"Number of protein/ligand complexes considered: {total_prot_lig_examples}")
-    # print(
-    #     f"Number of complexes discarded by split: {prog_lig_examples_discarded_by_split}"
-    # )
-    # print(
-    #     f"Number of complexes discarded by filters: {prog_lig_examples_discarded_by_filters}"
-    # )
-    # print(f"Number of fragments: {len(filtered_cache)}")
-    # print("")
-
-    import pdb; pdb.set_trace()
+    print(f"\nSPLIT SUMMARY AFTER FRAGMENTING/FILTERING: {split.name}")
+    print(f"Proteins (some with multiple ligands): {len(split.targets)}")
+    print(f"Unique protein/ligand complexes: {total_complexes}")
+    print(f"Complexes with both receptor and ligand in this split: {total_complexes_with_both_in_split}")
+    print(f"Complexes that also passed whole-ligand filter: {total_complexes_passed_lig_filter}")
+    print(f"Complexes that also had useful fragments: {total_complexes_with_useful_fragments}")
+    print(f"Protein/parent/fragment examples: {len(filtered_cache)}")
+    print(f"Proteins with useful fragments (any ligand): {len(pdbs_with_useful_fragments)}")
+    print("")
 
     return cache, filtered_cache

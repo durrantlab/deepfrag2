@@ -607,9 +607,11 @@ def compute_dataset_split(
         # Save spits and seed to json (for record keeping).
         _save_split(save_splits, seed, pdb_ids, all_smis)
 
+    print("\nSPLIT INFORMATION BEFORE FRAGMENTING/FILTERING")
     print(f"Training dataset size: {len(pdb_ids.train)}")
     print(f"Validation dataset size: {len(pdb_ids.val)}")
     print(f"Test dataset size: {len(pdb_ids.test)}")
+    print("")
 
     return (
         MOAD_split(name="TRAIN", targets=pdb_ids.train, smiles=all_smis.train),
