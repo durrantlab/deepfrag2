@@ -366,18 +366,11 @@ def load_cache_and_filter(
         cores=cores,
     )
 
-    # total_prot_lig_examples = 0
-    # prog_lig_examples_discarded_by_split = 0
-    # prog_lig_examples_discarded_by_filters = 0
-    # total_pdb_examples = 0
-    # total_pdb_passed_examples = 0
     pdbs_that_passed = set([])
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
         pdb_id = pdb_id.lower()
-
-        # total_pdb_examples += 1
 
         # If the PDB ID is not in the cache, throw an error. Cache probably
         # corrupt.
@@ -430,8 +423,11 @@ def load_cache_and_filter(
         )
 
     print(f"\nSPLIT SUMMARY: {split.name}")
-    print(f"Number of protein examples considered: {str(split.targets)}")
+    print(f"Number of protein examples considered: {len(split.targets)}")
     print(f"Number of protein examples that passed: {len(pdbs_that_passed)}")
+
+
+
     # print(f"Number of protein/ligand complexes considered: {total_prot_lig_examples}")
     # print(
     #     f"Number of complexes discarded by split: {prog_lig_examples_discarded_by_split}"
@@ -441,5 +437,7 @@ def load_cache_and_filter(
     # )
     # print(f"Number of fragments: {len(filtered_cache)}")
     # print("")
+
+    import pdb; pdb.set_trace()
 
     return cache, filtered_cache
