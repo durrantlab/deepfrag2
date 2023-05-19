@@ -369,10 +369,14 @@ def load_cache_and_filter(
     total_prot_lig_examples = 0
     prog_lig_examples_discarded_by_split = 0
     prog_lig_examples_discarded_by_filters = 0
+    total_pdb_examples = 0
+
 
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
         pdb_id = pdb_id.lower()
+
+        total_pdb_examples += 1
 
         # If the PDB ID is not in the cache, throw an error. Cache probably
         # corrupt.
@@ -387,8 +391,6 @@ def load_cache_and_filter(
         for lig_name in receptor_inf.keys():
             lig_inf = receptor_inf[lig_name]
 
-            total_prot_lig_examples += 1
-
             # Enforce filters.
             fails_filter = False
             # Search for ligand_name.
@@ -396,6 +398,8 @@ def load_cache_and_filter(
                 if lig.name != lig_name:
                     # Not the ligand you're looking for. Continue searching.
                     continue
+
+                total_prot_lig_examples += 1
 
                 # You've found the ligand.
                 if lig.smiles not in split.smiles:
@@ -424,14 +428,16 @@ def load_cache_and_filter(
         )
 
     print(f"\nSPLIT SUMMARY: {split.name}")
-    print(f"Number of fragments considered: {total_prot_lig_examples}")
+    print(f"Number of protein examples considered: {str(total_pdb_examples)}")
+    print(f"Number of protein/ligand complexes considered: {total_prot_lig_examples}")
     print(
-        f"Number of fragments discarded by split: {prog_lig_examples_discarded_by_split}"
+        f"Number of complexes discarded by split: {prog_lig_examples_discarded_by_split}"
     )
     print(
-        f"Number of fragments discarded by filters: {prog_lig_examples_discarded_by_filters}"
+        f"Number of complexes discarded by filters: {prog_lig_examples_discarded_by_filters}"
     )
-    print(f"Number of fragments left: {len(filtered_cache)}")
+    print(f"Number of fragments: {len(filtered_cache)}")
     print("")
-    import pdb; pdb.set_trace()
+    import pdb
+    pdb.set_trace()
     return cache, filtered_cache
