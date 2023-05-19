@@ -404,6 +404,8 @@ def _generate_splits_from_scratch(
             max_pdbs_test,
         )
 
+        import pdb; pdb.set_trace()
+
         # Get all the ligand SMILES associated with the targets in each set.
         all_smis = MOAD_splits_smiles(
             train=_smiles_for(moad, pdb_ids.train),
