@@ -16,7 +16,7 @@ import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
 from .moad_utils import fix_moad_smiles
-from collagen.external.moad.types import PdbSdfCsv_ligand
+from collagen.external.moad.types import PairedPdbSdfCsv_ligand
 
 
 @dataclass
@@ -162,11 +162,11 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                 or cache_items_to_update.frag_charged
             ):
                 moad_ligand_ = lig.meta["moad_ligand"]
-                if isinstance(moad_ligand_, PdbSdfCsv_ligand):
+                if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
                     # Get all the fragments from an additional csv file
                     frags = []
-                    for rdmol_ in moad_ligand_.fragments:
-                        frags.append([None, rdmol_])
+                    for _, _, backed_frag in moad_ligand_.fragment_and_act:
+                        frags.append([moad_ligand_.smiles, backed_frag])
                 else:
                     # Get all the fragments
                     frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])

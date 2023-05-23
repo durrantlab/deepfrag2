@@ -22,7 +22,7 @@ from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.metrics.ensembled import averaged as ensemble_helper
-from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
+from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface
 from collagen.external.moad.split import compute_dataset_split
 from collagen.metrics.metrics import (
     most_similar_matches,
@@ -39,7 +39,7 @@ from collagen.metrics.metrics import (
 
 
 def _return_paramter(object):
-    """Return a paramerter. For use in imap_unordered.
+    """Return a parameter. For use in imap_unordered.
 
     Args:
         object (Any): The parameter.
@@ -589,9 +589,17 @@ class MoadVoxelModelTest(object):
             raise Exception(
                 "To load the MOAD database, you must specify the --every_csv and --data_dir arguments"
             )
-        elif not args.every_csv and not args.data_dir:
+        elif not args.every_csv and not args.data_dir and not args.paired_data_csv:
             raise Exception(
-                "To run the test mode, you must specify the --every_csv and --data_dir arguments (for MOAD database), or the --data_dir argument only for a database other than MOAD"
+                "To run the test mode, you must specify the --every_csv and --data_dir arguments for the MOAD database, the --data_dir argument for a non-paired database other than MOAD, or the --paired_data_csv argument for a paired database other than MOAD."
+            )
+        elif args.paired_data_csv and (args.every_csv or args.data_dir):
+            raise Exception(
+                "To run the test mode using a paired database other than MOAD database, you must only specify the --paired_data_csv argument."
+            )
+        elif args.paired_data_csv and args.data_dir:
+            raise Exception(
+                "For the test mode, you must only specify the --paired_data_csv argument to use a paired database other than MOAD database, or the --data_dir argument  to use a non-paired database other than MOAD database."
             )
         elif args.custom_test_set_dir:
             raise Exception(
@@ -674,7 +682,7 @@ class MoadVoxelModelTest(object):
             # You're iterating through multiple checkpoints. This allows output
             # from multiple trained models to be averaged.
 
-            model = self.model_parent.init_model(args, ckpt_filename)
+            model = self.model_parent.init_model(args, ckpt_filename, fragment_set=set2run_test_on_single_checkpoint)
             model.eval()
 
             # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
@@ -775,13 +783,14 @@ class MoadVoxelModelTest(object):
             voxel_params: The voxel parameters.
 
         Returns:
-            A tuple of (dataset, dataset). The two are the same. TODO: Why
-                repeated twice?
+            A tuple of (dataset, dataset). The first coefficient contains the dataset to run test on,
+                whereas the second coefficient contains the fragments to be used in the prediction.
+                In test mode, both coefficients are the same ones, but in inference mode they are different.
         """
-        if args.every_csv and args.data_dir:
+        if args.every_csv and args.data_dir:  # test mode on MOAD database
             print("Loading MOAD database.")
             dataset = self._read_BindingMOAD_database(args, voxel_params)
-        else:
+        elif args.data_dir:  # test mode on a non-paired database other than MOAD database
             print("Loading a database other than MOAD database.")
             dataset = PdbSdfDirInterface(
                 structures_dir=args.data_dir,
@@ -790,6 +799,15 @@ class MoadVoxelModelTest(object):
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
+            )
+        else:  # test mode on a paired database other than MOAD database
+            dataset = PairedPdbSdfCsvInterface(
+                structures=args.paired_data_csv,
+                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                grid_width=voxel_params.width,
+                grid_resolution=voxel_params.resolution,
+                noh=args.noh,
+                discard_distant_atoms=args.discard_distant_atoms
             )
 
         return dataset, dataset

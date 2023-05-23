@@ -17,7 +17,7 @@ import torch
 from collagen.metrics import cos_loss
 
 
-class DeepFragModelGoodBadDataFinetune(DeepFragModel):
+class DeepFragModelPairedDataFinetune(DeepFragModel):
     def __init__(self, **kwargs):
         """Initialize the DeepFrag model.
         
@@ -28,12 +28,28 @@ class DeepFragModelGoodBadDataFinetune(DeepFragModel):
 
         self.is_cpu = kwargs["cpu"]
         self.fragment_representation = kwargs["fragment_representation"]
-        self.moad = None
+        self.database = None
 
-    def set_moad_database(self, moad):
-        self.moad = moad
+    def set_database(self, database):
+        """Method to specify the paired database.
+
+        Args:
+            database: The paired database.
+        """
+        self.database = database
 
     def loss(self, pred, fps, entry_infos, batch_size):
+        """Loss function.
+
+        Args:
+            pred: tensor with the fingerprint values obtained from voxels.
+            fps: tensor with the fingerprint values obtained from a given fragment representation.
+            entry_infos: list with each entry information.
+            batch_size: size of the tensors and list aforementioned.
+
+        Returns:
+            float: loss value
+        """
         if self.sigmoid_on_fps:
             fps = self.sigmoid_on_fps(fps)
 
@@ -41,14 +57,8 @@ class DeepFragModelGoodBadDataFinetune(DeepFragModel):
         cos_loss_vector = cos_loss(pred, fps)
         idx = 0
         for entry in entry_infos:
-            value = self.moad.is_good_bad_or_both_fragment(entry.receptor_name.split(" ")[1], entry.parent_smiles, entry.fragment_smiles)
-            if value == 0:  # it is a bad fragment
-                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.9
-            elif value == 1:  # it is a good fragment
-                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.4
-            elif value == 2:  # it is both a good and bad fragment
-                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.1
-
+            act_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][1])
+            cos_loss_vector[idx] = cos_loss_vector[idx] * act_value
             idx = idx + 1
 
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
