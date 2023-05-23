@@ -3,7 +3,7 @@
 from dataclasses import field
 from pathlib import Path
 from typing import Dict, List, Union
-from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, PdbSdfDir_target, PdbSdfDir_ligand, PdbSdfCsv_ligand
+from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, PdbSdfDir_target, PdbSdfDir_ligand, PairedPdbSdfCsv_ligand
 import glob
 import os
 from rdkit import Chem
@@ -130,7 +130,6 @@ class MOADInterface(object):
         """
         # Note that the output of this function gets put in self.classes.
 
-
         with open(every_csv_path, "r") as f:
             dat = f.read().strip().split("\n")
 
@@ -238,6 +237,10 @@ class MOADInterface(object):
                     # case. For custom MOAD-like data.
                     if k not in files:
                         k = targ.pdb_id
+                    if k not in files:
+                        k = k.split(".pdb")[0]
+                    if k not in files:
+                        k = k.split(".PDB")[0]
 
                     if k in files:
                         targ.files = sorted(files[k])
@@ -373,17 +376,12 @@ class PdbSdfDirInterface(MOADInterface):
         return "pdb"
 
 
-class PdbSdfCsvInterface(MOADInterface):
+class PairedPdbSdfCsvInterface(MOADInterface):
     pdb_files = []
-    all_lig_x_pdb = {}
-    all_frag_x_lig = {}
-    all_good_lig = []
-    all_bad_lig = []
-
-    good_lig_x_pdb = {}
-    bad_lig_x_pdb = {}
-    frg_x_good_lig = {}
-    frg_x_bad_lig = {}
+    sdf_x_pdb = {}
+    parent_x_sdf_x_pdb = {}
+    frag_and_act_x_parent_x_sdf_x_pdb = {}
+    backed_mol_x_parent = {}
 
     def __init__(
             self,
@@ -394,40 +392,7 @@ class PdbSdfCsvInterface(MOADInterface):
             noh: bool,
             discard_distant_atoms: bool,
     ):
-        super().__init__(structures, structures.split(",")[6], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
-
-    def get_original_pdb_name(self, name_lower):
-        for o_name in self.pdb_files:
-            l_name = o_name.lower()
-            if l_name == name_lower:
-                return o_name
-        return None
-
-    def is_good_bad_or_both_fragment(self, pdb_name_lower, ligand_id, frag_id):
-        pdb_name = self.get_original_pdb_name(pdb_name_lower)
-        key_pdb_ligand = pdb_name + "|SMI|" + ligand_id
-        good = self.__is_good_or_bad_fragment(pdb_name, ligand_id, frag_id, key_pdb_ligand, True)
-        bad = self.__is_good_or_bad_fragment(pdb_name, ligand_id, frag_id, key_pdb_ligand, False)
-
-        return 2 if good and bad else (1 if good else 0)
-
-    def __is_good_or_bad_fragment(self, pdb_name, ligand_id, frag_id, key_pdb_ligand, good):
-        try:
-            lig_x_pdb = self.good_lig_x_pdb[pdb_name] if good else self.bad_lig_x_pdb[pdb_name]
-            frg_x_lig = self.frg_x_good_lig[key_pdb_ligand] if good else self.frg_x_bad_lig[key_pdb_ligand]
-        except:
-            return False
-
-        for lig in lig_x_pdb:
-            smi_lig = lig.smiles(True)
-            if smi_lig == ligand_id:
-                for frag in frg_x_lig:
-                    smi_frag = frag.smiles(True)
-                    if smi_frag == frag_id:
-                        return True
-                break
-
-        return False
+        super().__init__(structures, structures.split(",")[8], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _load_classes_families_targets_ligands(
         self,
@@ -448,14 +413,7 @@ class PdbSdfCsvInterface(MOADInterface):
         curr_target = None
         curr_target_name = None
 
-        pdb_files = glob. glob(metadata.split(",")[6] + os.sep + "*.pdb", recursive=True)
-        pdb_files.sort()
-        for line in pdb_files:
-            url_parts = line.split(os.sep)
-            full_pdb_name = url_parts[len(url_parts) - 1].split(".")[0]
-            if full_pdb_name not in self.pdb_files:
-                continue
-
+        for full_pdb_name in self.pdb_files:
             if (curr_target is None) or (full_pdb_name != curr_target_name):
                 if curr_target is not None:
                     curr_family.targets.append(curr_target)
@@ -470,23 +428,23 @@ class PdbSdfCsvInterface(MOADInterface):
                     discard_distant_atoms=discard_distant_atoms,
                 )
 
-                for backed_ligand in self.all_lig_x_pdb[full_pdb_name]:
-                    key_lig_pdb = full_pdb_name + "|SMI|" + backed_ligand.smiles(True)
-                    fragments_ = []
-                    for backed_frag in self.all_frag_x_lig[key_lig_pdb]:
-                        fragments_.append(backed_frag)
-                    curr_target.ligands.append(
-                        PdbSdfCsv_ligand(
-                            name=key_lig_pdb,
-                            validity="valid",
-                            affinity_measure="",
-                            affinity_value="",
-                            affinity_unit="",
-                            smiles=backed_ligand.smiles(True),
-                            rdmol=backed_ligand.rdmol,
-                            fragments=fragments_,
+                for sdf_name in self.sdf_x_pdb[full_pdb_name]:
+                    key_sdf_pdb = self.__get_key_sdf_pdb(full_pdb_name, sdf_name)
+                    for parent_smi in self.parent_x_sdf_x_pdb[key_sdf_pdb]:
+                        key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(full_pdb_name, sdf_name, parent_smi)
+                        backed_parent = self.backed_mol_x_parent[parent_smi]
+                        curr_target.ligands.append(
+                            PairedPdbSdfCsv_ligand(
+                                name=key_parent_sdf_pdb,
+                                validity="valid",
+                                affinity_measure="",
+                                affinity_value="",
+                                affinity_unit="",
+                                smiles=parent_smi,
+                                rdmol=backed_parent.rdmol,
+                                fragment_and_act=self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb],
+                            )
                         )
-                    )
 
             if (curr_family is None) or (full_pdb_name != curr_family_name):
                 if curr_family is not None:
@@ -514,58 +472,58 @@ class PdbSdfCsvInterface(MOADInterface):
     def _extension_for_resolve_paths(self):
         return "pdb"
 
-    def __read_data_from_csv(self, good_bad_data_csv):
-        good_bad_data_csv_sep = good_bad_data_csv.split(",")
-        col_csv_file = good_bad_data_csv_sep[0]
-        col_pdb_name = good_bad_data_csv_sep[1]
-        col_good_lig = good_bad_data_csv_sep[2]
-        col_good_frag = good_bad_data_csv_sep[3]
-        col_bad_lig = good_bad_data_csv_sep[4]
-        col_bad_frag = good_bad_data_csv_sep[5]
+    def __read_data_from_csv(self, paired_data_csv):
+        paired_data_csv_sep = paired_data_csv.split(",")
+        col_csv_file = paired_data_csv_sep[0]
+        col_pdb_name = paired_data_csv_sep[1]
+        col_sdf_name = paired_data_csv_sep[2]
+        col_parent_smi = paired_data_csv_sep[3]
+        col_first_frag_smi = paired_data_csv_sep[4]
+        col_second_frag_smi = paired_data_csv_sep[5]
+        col_act_first_frag_smi = paired_data_csv_sep[6]
+        col_act_second_frag_smi = paired_data_csv_sep[7]
+        col_path_pdb_sdf_files = paired_data_csv_sep[8]
 
         with open(col_csv_file, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 pdb_name = row[col_pdb_name]
-                if pdb_name not in self.pdb_files:
-                    self.pdb_files.append(pdb_name)
-                    self.all_lig_x_pdb[pdb_name] = []
-                    self.good_lig_x_pdb[pdb_name] = []
-                    self.bad_lig_x_pdb[pdb_name] = []
+                sdf_name = row[col_sdf_name]
+                if os.path.exists(col_path_pdb_sdf_files + os.sep + pdb_name) and os.path.exists(col_path_pdb_sdf_files + os.sep + sdf_name):
+                    # This three code lines are temporal because the 3D coordinates must be taken from the SDF file
+                    backed_parent = Mol.from_smiles(row[col_parent_smi], sanitize=True, make_3d=True, add_h=True)
+                    backed_first_frag = Mol.from_smiles(row[col_first_frag_smi], sanitize=True, make_3d=True, add_h=True)
+                    backed_second_frag = Mol.from_smiles(row[col_second_frag_smi], sanitize=True, make_3d=True, add_h=True)
 
-                self.__add_dictionary(pdb_name, Mol.from_smiles(row[col_good_lig], sanitize=True, make_3d=True), Mol.from_smiles(row[col_good_frag], sanitize=True, make_3d=True), True)
-                self.__add_dictionary(pdb_name, Mol.from_smiles(row[col_bad_lig],  sanitize=True, make_3d=True), Mol.from_smiles(row[col_bad_frag],  sanitize=True, make_3d=True), False)
+                    parent_smi = backed_parent.smiles(True)
+                    first_frag_smi = backed_first_frag.smiles(True)
+                    second_frag_smi = backed_second_frag.smiles(True)
+                    act_first_frag_smi = row[col_act_first_frag_smi]
+                    act_second_frag_smi = row[col_act_second_frag_smi]
 
-    def __add_dictionary(self, pdb_name, backed_lig, backed_frag, good):
-        smi_lig = backed_lig.smiles(True)
-        smi_frag = backed_frag.smiles(True)
+                    key_sdf_pdb = self.__get_key_sdf_pdb(pdb_name, sdf_name)
+                    key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(pdb_name, sdf_name, parent_smi)
 
-        # Add ligand to the corresponding PDB
-        if smi_lig not in self.all_lig_x_pdb[pdb_name]:
-            self.all_lig_x_pdb[pdb_name].append(backed_lig)
+                    if pdb_name not in self.pdb_files:
+                        self.pdb_files.append(pdb_name)
+                        self.sdf_x_pdb[pdb_name] = []
+                    if sdf_name not in self.sdf_x_pdb[pdb_name]:
+                        self.sdf_x_pdb[pdb_name].append(sdf_name)
+                        self.parent_x_sdf_x_pdb[key_sdf_pdb] = []
+                    if parent_smi not in self.parent_x_sdf_x_pdb[key_sdf_pdb]:
+                        self.parent_x_sdf_x_pdb[key_sdf_pdb].append(parent_smi)
+                        self.backed_mol_x_parent[parent_smi] = backed_parent
+                        self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb] = []
+                        self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag])
+                        self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag])
 
-        # Add a ligand to the good (or bad) ligand list
-        all_lig = self.all_good_lig if good else self.all_bad_lig
-        if smi_lig not in all_lig:
-            all_lig.append(backed_lig)
+        self.pdb_files.sort()
 
-        # Create a key for a ligand and its corresponding to PDB
-        key_lig_pdb = pdb_name + "|SMI|" + smi_lig
+    def __get_key_sdf_pdb(self, pdb_name, sdf_name):
+        return pdb_name + "_" + sdf_name
 
-        # Add a fragment to the entry corresponding to a ligand and a given PDB
-        if key_lig_pdb not in self.all_frag_x_lig:
-            self.all_frag_x_lig[key_lig_pdb] = []
-        if smi_frag not in self.all_frag_x_lig[key_lig_pdb]:
-            self.all_frag_x_lig[key_lig_pdb].append(backed_frag)
-
-        lig_x_pdb = self.good_lig_x_pdb if good else self.bad_lig_x_pdb
-        frg_x_lig = self.frg_x_good_lig if good else self.frg_x_bad_lig
-        if smi_lig not in lig_x_pdb[pdb_name]:
-            lig_x_pdb[pdb_name].append(backed_lig)
-        if smi_lig not in frg_x_lig:
-            frg_x_lig[key_lig_pdb] = []
-        if smi_frag not in frg_x_lig[key_lig_pdb]:
-            frg_x_lig[key_lig_pdb].append(backed_frag)
+    def __get_key_parent_sdf_pdb(self, pdb_name, sdf_name, parent_smi):
+        return pdb_name + "_" + sdf_name + "_" + parent_smi
 
 
 class SdfDirInterface(MOADInterface):

@@ -12,7 +12,7 @@ from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
-from apps.deepfrag.model_additional_data import DeepFragModelBadData, DeepFragModelGoodBadDataFinetune
+from apps.deepfrag.model_additional_data import DeepFragModelBadData, DeepFragModelPairedDataFinetune
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
@@ -34,7 +34,7 @@ class DeepFrag(MoadVoxelModelParent):
             args (argparse.Namespace): The arguments.
         """
         super().__init__(
-            model_cls=DeepFragModelBadData if args.bad_data_dir else (DeepFragModelGoodBadDataFinetune if args.good_bad_data_csv else DeepFragModel),
+            model_cls=DeepFragModelBadData if args.bad_data_dir else (DeepFragModelPairedDataFinetune if args.paired_data_csv else DeepFragModel),
             dataset_cls=MOADFragmentDataset
         )
 
@@ -52,7 +52,7 @@ class DeepFrag(MoadVoxelModelParent):
         Returns:
             TMP_T: The preprocessed entry.
         """
-        rec, parent, frag = entry
+        rec, parent, frag, ligand_id, fragment_idx = entry
         rot = rand_rot()
         center = frag.connectors[0]
 
@@ -61,6 +61,8 @@ class DeepFrag(MoadVoxelModelParent):
             parent_smiles=parent.smiles(True),
             receptor_name=rec.meta["name"],
             connection_pt=center,
+            ligand_id=ligand_id,
+            fragment_idx=fragment_idx,
         )
 
         # if rec.meta["name"] == "Receptor 2v0u":

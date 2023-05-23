@@ -23,8 +23,6 @@ from .moad_utils import fix_moad_smiles
 import sys
 
 
-
-
 @dataclass
 class MOAD_class(object):
 
@@ -469,8 +467,8 @@ class PdbSdfDir_ligand(MOAD_ligand):
 
 
 @dataclass
-class PdbSdfCsv_ligand(PdbSdfDir_ligand):
-    fragments: Any
+class PairedPdbSdfCsv_ligand(PdbSdfDir_ligand):
+    fragment_and_act: {}
 
 
 @dataclass
@@ -496,6 +494,10 @@ class Entry_info(object):
 
     receptor_name: str
     connection_pt: List[float]
+
+    # these attributes are used when performing fine-tuning on paired data
+    ligand_id: str
+    fragment_idx: int
 
     def hashable_key(self) -> str:
         """Get a hashable key for this entry.
