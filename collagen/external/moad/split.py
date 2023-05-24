@@ -174,13 +174,6 @@ def deterministic_approach(moad: "MOADInterface"):
             [pdb_id, family_idx, smi] for pdb_id, smi in zip(family, smiles[family_idx])
         )
 
-    # Unique PDB IDS (about 33,000). But 41,000 in directory and every.csv.
-    # Why the difference? Which ones are missing? Some ligands may have no
-    # fragments. Could that be it? I think you need to print out the lists
-    # and compare.
-
-    # import pdb; pdb.set_trace()
-
     def move_to_current_cluster(item):
         pdb_id, family_idx, smi = item
         current_cluster["family_idxs"].add(family_idx)
@@ -239,6 +232,8 @@ def deterministic_approach(moad: "MOADInterface"):
         {"pdb_id": pdb_id, "family_idx": family_idx, "smiles": smi,}
         for pdb_id, family_idx, smi in train_set["items"]
     ]
+
+    Later, claims quite a bit of smiles remove from train set. How?
 
     # Merge all the remaining into a single set
     test_set = []
