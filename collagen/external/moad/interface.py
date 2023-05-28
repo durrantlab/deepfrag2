@@ -9,7 +9,9 @@ import os
 from rdkit import Chem
 import linecache
 import csv
-from collagen.core.molecules.mol import Mol
+from collagen.core.molecules.mol import BackedMol
+from rdkit.Geometry import Point3D
+import sys
 
 
 class MOADInterface(object):
@@ -490,16 +492,31 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 pdb_name = row[col_pdb_name]
                 sdf_name = row[col_sdf_name]
                 if os.path.exists(col_path_pdb_sdf_files + os.sep + pdb_name) and os.path.exists(col_path_pdb_sdf_files + os.sep + sdf_name):
-                    # This three code lines are temporal because the 3D coordinates must be taken from the SDF file
-                    backed_parent = Mol.from_smiles(row[col_parent_smi], sanitize=True, make_3d=True, add_h=True)
-                    backed_first_frag = Mol.from_smiles(row[col_first_frag_smi], sanitize=True, make_3d=True, add_h=True)
-                    backed_second_frag = Mol.from_smiles(row[col_second_frag_smi], sanitize=True, make_3d=True, add_h=True)
+                    backed_parent = None
+                    backed_first_frag = None
+                    backed_second_frag = None
+                    suppl = Chem.SDMolSupplier(col_path_pdb_sdf_files + os.sep + sdf_name)
+                    for ref_mol in suppl:
+                        r_parent = self.get_sub_mol(ref_mol, row[col_parent_smi])
+                        r_first_frag_smi = self.get_sub_mol(ref_mol, row[col_first_frag_smi])
+                        r_second_frag_smi = self.get_sub_mol(ref_mol, row[col_second_frag_smi])
+
+                        if r_parent:
+                            backed_parent = BackedMol(rdmol=r_parent)
+                        if r_first_frag_smi:
+                            backed_first_frag = BackedMol(rdmol=r_first_frag_smi)
+                        if r_second_frag_smi:
+                            backed_second_frag = BackedMol(rdmol=r_second_frag_smi)
+                        break
+
+                    if not backed_parent or (not backed_first_frag and not backed_second_frag):
+                        continue
 
                     parent_smi = backed_parent.smiles(True)
-                    first_frag_smi = backed_first_frag.smiles(True)
-                    second_frag_smi = backed_second_frag.smiles(True)
-                    act_first_frag_smi = row[col_act_first_frag_smi]
-                    act_second_frag_smi = row[col_act_second_frag_smi]
+                    first_frag_smi = backed_first_frag.smiles(True) if backed_first_frag else None
+                    second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
+                    act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
+                    act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
 
                     key_sdf_pdb = self.__get_key_sdf_pdb(pdb_name, sdf_name)
                     key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(pdb_name, sdf_name, parent_smi)
@@ -514,8 +531,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         self.parent_x_sdf_x_pdb[key_sdf_pdb].append(parent_smi)
                         self.backed_mol_x_parent[parent_smi] = backed_parent
                         self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb] = []
-                        self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag])
-                        self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag])
+                        if backed_first_frag:
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag])
+                        if backed_second_frag:
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag])
 
         self.pdb_files.sort()
 
@@ -524,6 +543,73 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
     def __get_key_parent_sdf_pdb(self, pdb_name, sdf_name, parent_smi):
         return pdb_name + "_" + sdf_name + "_" + parent_smi
+
+    # mol must be RWMol object
+    # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
+    def get_sub_mol(self, mol, smi_sub_mol, debug=False):
+        patt = Chem.MolFromSmarts(smi_sub_mol)
+        sub_atoms = mol.GetSubstructMatch(patt, useChirality=True)
+        if len(sub_atoms) == 0:
+            print("Molecule " + Chem.MolToSmiles(mol) + " has not the fragment " + Chem.MolToSmiles(patt), file=sys.stderr)
+            return None
+
+        new_mol = Chem.RWMol()
+        atom_map = {}
+        for idx in sub_atoms:
+            atom = mol.GetAtomWithIdx(idx)
+            atom_map[idx] = new_mol.AddAtom(atom)
+
+        sub_atoms = set(sub_atoms)
+        for idx in sub_atoms:
+            a = mol.GetAtomWithIdx(idx)
+            for b in a.GetNeighbors():
+                if b.GetIdx() not in sub_atoms:
+                    continue
+                bond = mol.GetBondBetweenAtoms(a.GetIdx(), b.GetIdx())
+                bt = bond.GetBondType()
+                if a.GetIdx() < b.GetIdx():  # each bond is enumerated twice
+                    new_mol.AddBond(atom_map[a.GetIdx()], atom_map[b.GetIdx()], bt)
+
+        try:
+            new_mol = new_mol.GetMol()
+            new_mol.UpdatePropertyCache(strict=False)
+            Chem.SanitizeMol(new_mol,
+                             Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_KEKULIZE | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
+                             catchErrors=False)
+            Chem.Kekulize(new_mol, clearAromaticFlags=False)
+            new_mol = Chem.MolToMolBlock(new_mol)
+            new_mol = Chem.MolFromMolBlock(new_mol)
+            conf = new_mol.GetConformer()
+            for idx in sub_atoms:
+                a = mol.GetAtomWithIdx(idx)
+                x, y, z = mol.GetConformer().GetAtomPosition(idx)
+                conf.SetAtomPosition(atom_map[a.GetIdx()], Point3D(x, y, z))
+        except Exception as e:
+            print("Molecule " + Chem.MolToSmiles(mol) + " and fragment " + Chem.MolToSmiles(new_mol) + " " + str(e), file=sys.stderr)
+            return None
+
+        if debug:
+            print(Chem.MolToSmiles(new_mol))
+            print(Chem.MolToSmiles(patt))
+
+        # find out the connector atom
+        # NOTE: according to several runs, the connector atom is always allocated in the position 0 into the recovered substructure ('new_mol' variable)
+        # but this was implemented just in case the connector atom is in a position other than 0.
+        # this implementation has linear complexity and it is so fast
+        for idx in sub_atoms:
+            a = mol.GetAtomWithIdx(idx)
+            if debug:
+                print(str(atom_map[a.GetIdx()]) + " " + new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() + " " + patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol())
+            if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
+                new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+
+        if debug:
+            for s in sub_atoms:
+                print(mol.GetAtoms()[s].GetSymbol(), list(mol.GetConformer().GetAtomPosition(s)), file=sys.stderr)
+            print("\n" + Chem.MolToMolBlock(new_mol), file=sys.stderr)
+            print("--------------------------------------------------------------------------------------------------------", file=sys.stderr)
+
+        return new_mol
 
 
 class SdfDirInterface(MOADInterface):
