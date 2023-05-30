@@ -648,13 +648,19 @@ class MoadVoxelModelTest(object):
             seed=None,
             fraction_train=0.0,
             fraction_val=0.0,
-            prevent_smiles_overlap=False,  # DEBUG
+
+            # Should be true to ensure independence when using
+            # split_method="random". TODO: Could remove this parameter, force it
+            # to be true. Also, could be user parameter.
+            prevent_smiles_overlap=True,
+
             save_splits=None,
             load_splits=self._get_load_splits(args),
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
-            butina_cluster_cutoff=0.0,
+            split_method=args.split_method,
+            butina_cluster_cutoff=0.0, # TODO: Why hardcoded?
         )
 
         # You'll always need the test data. Note that ligands are not fragmented
