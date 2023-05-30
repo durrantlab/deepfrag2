@@ -12,7 +12,7 @@ from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
 from .... import Mol
 import sys
-from collagen.external.moad.interface import PdbSdfCsvInterface
+from collagen.external.moad.interface import PairedPdbSdfCsvInterface
 from collagen.core.molecules.mol import BackedMol
 
 
@@ -147,7 +147,6 @@ class MOADFragmentDataset(Dataset):
             # default=1,
             help="Consider only fragments that have at least this number of heavy atoms. Default is 1.",
         )
-
         parser.add_argument(
             "--max_frag_num_heavy_atoms",
             required=False,
@@ -155,7 +154,6 @@ class MOADFragmentDataset(Dataset):
             # default=1,
             help="Consider only fragments that have at most this number of heavy atoms. Default is 1.",
         )
-
         parser.add_argument(
             "--mol_props",
             required=False,
@@ -455,14 +453,10 @@ class MOADFragmentDataset(Dataset):
                 # Once you find it, actually do the fragmenting.
                 for ligand in ligands:
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
-                        if isinstance(self.moad, PdbSdfCsvInterface):
-                            try:
-                                fragment = self.moad.frg_x_good_lig[entry.ligand_id][entry.frag_idx]
-                            except:
-                                fragment = self.moad.frg_x_bad_lig[entry.ligand_id][entry.frag_idx]
-
+                        if isinstance(self.moad, PairedPdbSdfCsvInterface):
+                            backed_frag = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.frag_idx][2]
                             parent = BackedMol(rdmol=ligand.rdmol)
-                            fragment = BackedMol(rdmol=fragment.rdmol)
+                            fragment = BackedMol(rdmol=backed_frag.rdmol)
                             break
                         else:
                             pairs = ligand.split_bonds()
@@ -471,7 +465,7 @@ class MOADFragmentDataset(Dataset):
                 else:
                     raise Exception(f"Ligand not found: {str(receptor)} -- {str(ligands)}")
 
-                sample = (receptor, parent, fragment)
+                sample = (receptor, parent, fragment, entry.ligand_id, entry.frag_idx)
 
                 # Actually performs voxelization and fingerprinting.
                 return self.transform(sample) if self.transform else sample

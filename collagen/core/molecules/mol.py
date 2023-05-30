@@ -80,7 +80,7 @@ class Mol(object):
 
     @staticmethod
     def from_smiles(
-        smiles: str, sanitize: bool = False, make_3d: bool = False
+        smiles: str, sanitize: bool = False, make_3d: bool = False, add_h: bool = False
     ) -> "BackedMol":
         """Construct a Mol from a SMILES string.
 
@@ -93,6 +93,7 @@ class Mol(object):
             sanitize (bool, optional): If True, attempt to sanitize the
                 internal RDKit molecule.
             make_3d (bool, optional): If True, generate 3D coordinates.
+            add_h (bool, optional): If True, add hydrigen atoms before generating 3D coordinates.
 
         Returns:
             collagen.core.molecules.mol.BackedMol: A new Mol object.
@@ -105,8 +106,11 @@ class Mol(object):
         """
         rdmol = Chem.MolFromSmiles(smiles, sanitize=sanitize)
         rdmol.UpdatePropertyCache()
+        if add_h:
+            rdmol = Chem.AddHs(rdmol)
+            rdmol.UpdatePropertyCache()
         if make_3d:
-            Chem.EmbedMolecule(rdmol)
+            Chem.EmbedMolecule(rdmol, randomSeed=0xf00d)
 
         return BackedMol(rdmol=rdmol)
 

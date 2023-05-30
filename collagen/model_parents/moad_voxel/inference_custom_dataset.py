@@ -209,7 +209,8 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
             voxel_params (VoxelParams): The voxel parameters.
 
         Returns:
-            Tuple[PdbSdfDirInterface, MOADInterface]: The datasets.
+            Tuple[PdbSdfDirInterface, MOADInterface]: PdbSdfDirInterface contains the dataset to run test on,
+                whereas MOADInterface contains the fragments to be used in the prediction.
         """
         print("Loading MOAD database.")
         moad = self._read_BindingMOAD_database(args, voxel_params)
