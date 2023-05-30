@@ -144,12 +144,18 @@ class MoadVoxelModelTrain(object):
             seed=args.split_seed,
             fraction_train=args.fraction_train,
             fraction_val=args.fraction_val,
-            prevent_smiles_overlap=True,
+
+            # Should be true to ensure independence when using
+            # split_method="random". TODO: Could remove this parameter, force it
+            # to be true. Also, could be user parameter.
+            prevent_smiles_overlap=True,  
+
             save_splits=args.save_splits,
             load_splits=args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
+            split_method=args.split_method,
             butina_cluster_cutoff=args.butina_cluster_cutoff,
         )
 

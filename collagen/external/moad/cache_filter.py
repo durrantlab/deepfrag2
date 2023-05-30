@@ -164,47 +164,43 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                 moad_ligand_ = lig.meta["moad_ligand"]
                 if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
                     # Get all the fragments from an additional csv file
-                    frags = []
-                    for _, _, backed_frag in moad_ligand_.fragment_and_act:
-                        frags.append([moad_ligand_.smiles, backed_frag])
+                    frags = [[None, rdmol_] for rdmol_ in moad_ligand_.fragments]
                 else:
                     # Get all the fragments
                     frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
 
-                if cache_items_to_update.frag_masses:
-                    lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
-                        lambda f: [x[1].mass for x in f], frags, []
-                    )
+            if cache_items_to_update.frag_masses:
+                lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
+                    lambda f: [x[1].mass for x in f], frags, []
+                )
 
-                if cache_items_to_update.frag_num_heavy_atoms:
-                    lig_infs[lig_name]["frag_num_heavy_atoms"] = _set_molecular_prop(
-                        lambda f: [x[1].num_heavy_atoms for x in f], frags, []
-                    )
+            if cache_items_to_update.frag_num_heavy_atoms:
+                lig_infs[lig_name]["frag_num_heavy_atoms"] = _set_molecular_prop(
+                    lambda f: [x[1].num_heavy_atoms for x in f], frags, []
+                )
 
-                if cache_items_to_update.frag_dists_to_recep:
-                    lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
-                        lambda f: [
-                            np.min(cdist(x[1].coords, receptor.coords)) for x in f
-                        ],
-                        frags,
-                        [],
-                    )
+            if cache_items_to_update.frag_dists_to_recep:
+                lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
+                    lambda f: [np.min(cdist(x[1].coords, receptor.coords)) for x in f],
+                    frags,
+                    [],
+                )
 
-                if cache_items_to_update.frag_smiles:
-                    # Helpful for debugging, mostly.
-                    lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
-                        lambda f: [x[1].smiles(True) for x in f], frags, [],
-                    )
+            if cache_items_to_update.frag_smiles:
+                # Helpful for debugging, mostly.
+                lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
+                    lambda f: [x[1].smiles(True) for x in f], frags, [],
+                )
 
-                if cache_items_to_update.frag_aromatic:
-                    lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
-                        lambda f: [is_aromatic(x[1].rdmol) for x in f], frags, []
-                    )
+            if cache_items_to_update.frag_aromatic:
+                lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
+                    lambda f: [is_aromatic(x[1].rdmol) for x in f], frags, []
+                )
 
-                if cache_items_to_update.frag_charged:
-                    lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
-                        lambda f: [is_charged(x[1].rdmol) for x in f], frags, []
-                    )
+            if cache_items_to_update.frag_charged:
+                lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
+                    lambda f: [is_charged(x[1].rdmol) for x in f], frags, []
+                )
 
     return pdb_id, lig_infs
 
@@ -370,6 +366,12 @@ def load_cache_and_filter(
         cores=cores,
     )
 
+    total_complexes = 0
+    total_complexes_with_both_in_split = 0
+    total_complexes_passed_lig_filter = 0
+    total_complexes_with_useful_fragments = 0
+    pdbs_with_useful_fragments = set()
+
     filtered_cache = []
     for pdb_id in tqdm(split.targets, desc="Runtime filters"):
         pdb_id = pdb_id.lower()
@@ -387,35 +389,61 @@ def load_cache_and_filter(
         for lig_name in receptor_inf.keys():
             lig_inf = receptor_inf[lig_name]
 
-            # Enforce filters.
+            # Enforce whole-ligand filters and not-in-same-split filters.
             fails_filter = False
+            # Search for ligand_name.
             for lig in moad[pdb_id].ligands:
                 if lig.name != lig_name:
+                    # Not the ligand you're looking for. Continue searching.
                     continue
 
                 # You've found the ligand.
+
+                total_complexes += 1
+
                 if lig.smiles not in split.smiles:
                     # It is not in the split, so always skip it.
+                    print(f"Skipping {pdb_id}:{lig_name} because ligand not allowed in this split to ensure independence.")
                     fails_filter = True
                     break
 
+                total_complexes_with_both_in_split += 1
+
                 if not lig_filter_func(args, lig, lig_inf):
                     # You've found the ligand, but it doesn't pass the filter.
+                    # (Note that lig_filter_func likely just returns true, so
+                    # code never gets here, everything passes).
+                    print(f"Skipping {pdb_id}:{lig_name} because ligand did not pass whole-ligand filter.")
                     fails_filter = True
                     break
+                
+                total_complexes_passed_lig_filter += 1
 
             if fails_filter:
                 continue
 
             # Add to filtered cache.
-            filtered_cache.extend(
-                make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
-            )
+            examples_to_add = make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
+            filtered_cache.extend(examples_to_add)
+            if len(examples_to_add) == 0:
+                print(f"Skipping {pdb_id}:{lig_name} because no valid fragments for ligand found.")
+            else:
+                total_complexes_with_useful_fragments += 1
+                pdbs_with_useful_fragments.add(pdb_id)
 
     if not filtered_cache:
         raise Exception(
             "No ligands passed the moad filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Consider using `--verbose True` to debug."
         )
 
-    print(f"Number of fragments in the {split.name} set: {len(filtered_cache)}")
+    print(f"\nSPLIT SUMMARY AFTER FRAGMENTING/FILTERING: {split.name}")
+    print(f"Proteins (some with multiple ligands): {len(split.targets)}")
+    print(f"Unique protein/ligand complexes: {total_complexes}")
+    print(f"Complexes with both receptor and ligand in this split: {total_complexes_with_both_in_split}")
+    print(f"Complexes that also passed whole-ligand filter: {total_complexes_passed_lig_filter}")
+    print(f"Complexes that also had useful fragments: {total_complexes_with_useful_fragments}")
+    print(f"Protein/parent/fragment examples: {len(filtered_cache)}")
+    print(f"Proteins with useful fragments (any ligand): {len(pdbs_with_useful_fragments)}")
+    print("")
+
     return cache, filtered_cache

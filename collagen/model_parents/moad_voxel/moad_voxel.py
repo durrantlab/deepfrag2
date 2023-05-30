@@ -6,7 +6,6 @@ from typing import Type, TypeVar, List, Union
 from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
 from collagen.model_parents.moad_voxel.inference_custom_dataset import MoadVoxelModelInferenceCustomSet
 from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
-from collagen.model_parents.moad_voxel.lr_finder import MoadVoxelModelLRFinder
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
 from collagen.model_parents.moad_voxel.train import MoadVoxelModelTrain
 from collagen.model_parents.moad_voxel import arguments
@@ -25,7 +24,6 @@ OUT_T = TypeVar("OUT_T")
 
 class MoadVoxelModelParent(
     MoadVoxelModelInits,
-    MoadVoxelModelLRFinder,
     MoadVoxelModelTrain,
     MoadVoxelModelInference,
     MoadVoxelModelUtils,
@@ -207,9 +205,6 @@ class MoadVoxelModelParent(
         elif args.mode == "inference_custom_set":
             print("Starting 'inference_custom_set' process")
             MoadVoxelModelInferenceCustomSet(self).run_test(args, ckpt_filename)
-        elif args.mode == "lr_finder":
-            print("Starting 'lr_finder' process")
-            self.run_lr_finder(args)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 

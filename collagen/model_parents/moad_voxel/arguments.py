@@ -80,6 +80,14 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         action="store_true",
         help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
     )
+
+    parser.add_argument(
+        "--split_method",
+        required=False,
+        type=str,
+        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If you use --prevent_smiles_overlap with this method, some data will be discarded. (2) If 'butina', butina clustering will be used. TODO: More details needed."
+    )
+
     parser.add_argument(
         "--butina_cluster_cutoff",
         required=False,
