@@ -156,116 +156,6 @@ def _limit_split_size(
 
     return pdb_ids
 
-
-def deterministic_approach(moad: "MOADInterface"):
-    # First, get a flat list of all the families (not grouped by class).
-    families: List[List[str]] = []
-    for c in moad.classes:
-        families.extend([x.pdb_id for x in f.targets] for f in c.families)
-
-    # For each of the familes, get the smiles strings for all the ligands
-    smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
-
-    # Now merge and flatten these lists into a list of lists, where the
-    # inner list is [pdb_id, family_idx, smiles]
-    complex_infos = []
-    for family_idx, family in enumerate(families):
-        complex_infos.extend(
-            [pdb_id, family_idx, smi] for pdb_id, smi in zip(family, smiles[family_idx])
-        )
-
-    def move_to_current_cluster(item):
-        pdb_id, family_idx, smi = item
-        current_cluster["family_idxs"].add(family_idx)
-        current_cluster["smiles"].add(smi)
-        current_cluster["items"].append(item)
-
-    clusters = []
-    while complex_infos:
-        current_cluster = {
-            "family_idxs": set([]),
-            "smiles": set([]),
-            "items": [],
-        }
-
-        # Get started by adding the first one
-        move_to_current_cluster(complex_infos.pop())
-
-        while True:
-            print("")
-            print("Number of clusters:", len(clusters))
-            print("Number of complexes left to assign:", len(complex_infos))
-            any_complex_assigned = False
-            for complex_infos_idx, item in enumerate(complex_infos):
-                if item is None:
-                    continue
-                pdb_id, family_idx, smi = item
-                if family_idx in current_cluster["family_idxs"]:
-                    # This family already in current cluster, so must add this item
-                    # to same cluster.
-                    move_to_current_cluster(item)
-                    complex_infos[complex_infos_idx] = None
-                    print(f"Added {pdb_id} to current cluster (same family)")
-                    any_complex_assigned = True
-                elif smi in current_cluster["smiles"]:
-                    # This ligand already in current cluster, so must add this item
-                    # to same cluster.
-                    move_to_current_cluster(item)
-                    complex_infos[complex_infos_idx] = None
-                    print(f"Added {pdb_id} to current cluster (same ligand)")
-                    any_complex_assigned = True
-            complex_infos = [x for x in complex_infos if x is not None]
-            if not any_complex_assigned:
-                # No additional complexes assigned to current cluster, so must
-                # be done.
-                clusters.append(current_cluster)
-                break
-
-    counts = [len(cluster["items"]) for cluster in clusters]
-
-    # Which cluster has the largest number of complexes?
-    idx_of_biggest = np.argmax(counts)
-    train_set = clusters[idx_of_biggest]
-
-    # Convert it to another format
-    train_set = [
-        {"pdb_id": pdb_id, "family_idx": family_idx, "smiles": smi,}
-        for pdb_id, family_idx, smi in train_set["items"]
-    ]
-
-    Later, claims quite a bit of smiles remove from train set. How?
-
-    # Merge all the remaining into a single set
-    test_set = []
-    for i, cluster in enumerate(clusters):
-        if i != idx_of_biggest:
-            for pdb_id, family_idx, smi in cluster["items"]:
-                test_set.append(
-                    {"pdb_id": pdb_id, "family_idx": family_idx, "smiles": smi,}
-                )
-
-    # Validation and testing set same in this case
-    val_set = test_set
-
-    report_sizes(train_set, test_set, val_set)
-
-    pdb_ids = MOAD_splits_pdb_ids(
-        train=[x["pdb_id"] for x in train_set],
-        val=[x["pdb_id"] for x in val_set],
-        test=[x["pdb_id"] for x in test_set],
-    )
-
-    all_smis = MOAD_splits_smiles(
-        train=[x["smiles"] for x in train_set],
-        val=[x["smiles"] for x in val_set],
-        test=[x["smiles"] for x in test_set],
-    )
-
-    # print("All together:", np.sum(counts))
-
-    return pdb_ids, all_smis
-
-
 def get_families_and_smiles(moad: "MOADInterface"):
     families: List[List[str]] = []
     for c in moad.classes:
@@ -408,14 +298,12 @@ def _generate_splits_from_scratch(
 
         if prevent_smiles_overlap:
             reassign_overlapping_smiles(all_smis)
-    elif split_method == "deterministic":
-        print("Building training/validation/test sets determinictically. Will ignore user parameters such as --fraction_train, --fraction_val, --prevent_smiles_overlap, and --butina_cluster_cutoff.")
-
-        pdb_ids, all_smis = deterministic_approach(moad)
-
-        # If the user has asked to limit the size of the train, test, or val
-        # set, impose those limits here.
-        pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
+    elif split_method == "SOME_NAME":
+        # Here, like "random," but if there is overlap with training, move
+        # always to training. Otherwise, if overlap with validation and testing,
+        # assign to validation.
+        # TODO: Cesar/César
+        pass
 
     return pdb_ids, all_smis
 
@@ -537,7 +425,7 @@ def compute_dataset_split(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
-    split_method: str = "random",  # random, butina, deterministic
+    split_method: str = "random",  # random, butina
     butina_cluster_cutoff=0.4,
 ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
     """Compute a TRAIN/VAL/TEST split.

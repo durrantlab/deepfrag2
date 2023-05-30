@@ -83,7 +83,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--split_method",
         required=False,
         type=str,
-        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If you use --prevent_smiles_overlap with this method, some data will be discarded. (2) If 'butina', butina clustering will be used. TODO: More details needed. (3) If 'deterministic', user-specified fractions will be ignored. Instead, the vast majority of the data will be placed in the training set. The testing and validation sets will be identical. But the training set will be entirely independent (in terms of family id and ligand) from the train/val sets, without throwing out any data, at least when training on the Binding MOAD."
+        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If you use --prevent_smiles_overlap with this method, some data will be discarded. (2) If 'butina', butina clustering will be used. TODO: More details needed."
     )
 
     parser.add_argument(
