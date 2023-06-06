@@ -164,7 +164,9 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                 moad_ligand_ = lig.meta["moad_ligand"]
                 if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
                     # Get all the fragments from an additional csv file
-                    frags = [[None, rdmol_] for rdmol_ in moad_ligand_.fragments]
+                    frags = []
+                    for _, _, backed_frag in moad_ligand_.fragment_and_act:
+                        frags.append([moad_ligand_.smiles, backed_frag])
                 else:
                     # Get all the fragments
                     frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
