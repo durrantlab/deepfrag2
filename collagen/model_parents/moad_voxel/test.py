@@ -659,8 +659,8 @@ class MoadVoxelModelTest(object):
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
-            split_method=args.split_method,
-            butina_cluster_cutoff=0.0, # Hardcoded because no need to split test set.
+            split_method=None,
+            butina_cluster_cutoff=0.0, # TODO: Why hardcoded?
         )
 
         # You'll always need the test data. Note that ligands are not fragmented
