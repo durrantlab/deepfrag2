@@ -448,4 +448,6 @@ def load_cache_and_filter(
     print(f"Proteins with useful fragments (any ligand): {len(pdbs_with_useful_fragments)}")
     print("")
 
+    # import pdb; pdb.set_trace()
+
     return cache, filtered_cache
