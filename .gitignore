@@ -57,3 +57,4 @@ tmp_working_dir/
 tests/core.*
 
 old*
+.idea
