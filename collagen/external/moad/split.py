@@ -156,6 +156,7 @@ def _limit_split_size(
 
     return pdb_ids
 
+
 def get_families_and_smiles(moad: "MOADInterface"):
     families: List[List[str]] = []
     for c in moad.classes:
@@ -298,8 +299,10 @@ def _generate_splits_from_scratch(
 
         if prevent_smiles_overlap:
             if split_method == "random":
+                print("    Reassigning overlapping SMILES randomly")
                 randomly_reassign_overlapping_smiles(all_smis)
             else:  # it is priority
+                print("    Reassigning overlapping SMILES by priority, favoring the training and validation sets")
                 priority_reassign_overlapping_smiles(all_smis)
     else:
         return None, None
@@ -355,20 +358,16 @@ def priority_reassign_overlapping_smiles(all_smis):
     size_expected_non_overlap = len(all_smis.train | all_smis.val | all_smis.test)
 
     # Update SMILES sets
-    all_smis.train = (
-        all_smis.train
-    )
-    all_smis.val = (
-        all_smis.val - train_val
-    )
-    all_smis.test = (
-        all_smis.test - (train_test | val_test)
-    )
+    all_smis.train = all_smis.train
+    all_smis.val = all_smis.val - train_val
+    all_smis.test = all_smis.test - (train_test | val_test)
 
     size_non_overlap = len(all_smis.train) + len(all_smis.val) + len(all_smis.test)
-    assert (size_non_overlap <= size_overlap) and (size_expected_non_overlap == size_non_overlap)
-    print("Total number of SMILES with overlapping: " + str(size_overlap))
-    print("Total number of SMILES without overlapping: " + str(size_non_overlap))
+    assert (size_non_overlap <= size_overlap) and (
+        size_expected_non_overlap == size_non_overlap
+    )
+    print(f"Total number of SMILES with overlapping: {str(size_overlap)}")
+    print(f"Total number of SMILES without overlapping: {str(size_non_overlap)}")
 
 
 def _load_splits_from_disk(
