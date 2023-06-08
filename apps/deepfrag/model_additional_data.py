@@ -50,9 +50,6 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         Returns:
             float: loss value
         """
-        if self.sigmoid_on_fps:
-            fps = self.sigmoid_on_fps(fps)
-
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
         cos_loss_vector = cos_loss(pred, fps)
         idx = 0
