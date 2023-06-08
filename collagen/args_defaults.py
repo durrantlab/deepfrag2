@@ -53,7 +53,7 @@ def get_default_args() -> dict:
         "save_every_epoch": False,
         "custom_test_set_dir": None,
         "every_csv": None,
-        "split_method": "random",
+        "split_method": "random_default",
         "butina_cluster_cutoff": None,
         "max_frag_repeats": None,
         "mol_props": "",

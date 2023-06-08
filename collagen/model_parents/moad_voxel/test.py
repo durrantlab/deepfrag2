@@ -617,6 +617,10 @@ class MoadVoxelModelTest(object):
             raise Exception(
                 "To run the test mode is required loading a previously saved test dataset"
             )
+        elif args.load_splits and args.split_method != "random_default":
+            raise Exception(
+                "You cannot specify --split_method if using --load_splits."
+            )
 
     def run_test(
         self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
@@ -627,6 +631,7 @@ class MoadVoxelModelTest(object):
             args (Namespace): The user arguments.
             ckpt_filename (Optional[str]): The checkpoint to use.
         """
+
         pr = cProfile.Profile()
         pr.enable()
 
