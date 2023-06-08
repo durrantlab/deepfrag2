@@ -260,7 +260,7 @@ def _generate_splits_from_scratch(
             test=_smiles_for(moad, pdb_ids.test),
         )
     elif split_method in ["random", "priority"]:
-        print("Building training/validation/test sets via random selection")
+        print("Building training/validation/test sets")
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
 
@@ -358,7 +358,7 @@ def priority_reassign_overlapping_smiles(all_smis):
     size_expected_non_overlap = len(all_smis.train | all_smis.val | all_smis.test)
 
     # Update SMILES sets
-    all_smis.train = all_smis.train
+    # all_smis.train = all_smis.train
     all_smis.val = all_smis.val - train_val
     all_smis.test = all_smis.test - (train_test | val_test)
 
