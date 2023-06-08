@@ -119,7 +119,7 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return np.array(fp[0][0])
 
 
-def _molbert_pos(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints with positive values. Any value less than 0 is just
     set to 0. TODO: Candidate for removal.
 
@@ -132,7 +132,8 @@ def _molbert_pos(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array
         np.array: Fingerprint.
     """
     molbert_fp = _molbert(m, size, smiles)
-    molbert_fp[molbert_fp < 0] = 0
+    molbert_fp[molbert_fp <= 0] = 0
+    molbert_fp[molbert_fp > 0] = 1
     return molbert_fp
 
 
@@ -196,7 +197,7 @@ def _molbert_x_rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.a
         np.array: Fingerprint.
     """
     rdk10_fp = _rdk10(m, size, smiles)
-    molbert_fp = _molbert_norm(m, size, smiles)
+    molbert_fp = _molbert(m, size, smiles)
     return np.multiply(molbert_fp, rdk10_fp)
 
 
@@ -204,11 +205,7 @@ FINGERPRINTS = {
     "rdk10": _rdk10,
     "rdkit_desc": _rdkit_2D_descriptors,
     "molbert": _molbert,
-    "molbert_pos": _molbert_pos,
-    "molbert_norm": _molbert_norm,
-    "molbert_sig": _molbert,  # the application of the Sigmoid function is applied in model.py to avoid device conflicts
-    "molbert_sig_v2": _molbert,  # the application of the Sigmoid function is applied in model.py to avoid device conflicts
-    "molbert_norm2": _molbert_norm2,
+    "molbert_binary": _molbert_binary,
     "molbert_x_rdk10": _molbert_x_rdk10,
 }
 

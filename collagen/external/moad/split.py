@@ -258,7 +258,7 @@ def _generate_splits_from_scratch(
             val=_smiles_for(moad, pdb_ids.val),
             test=_smiles_for(moad, pdb_ids.test),
         )
-    elif split_method == "random":
+    elif split_method in ["random", "priority"]:
         print("Building training/validation/test sets via random selection")
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
@@ -297,18 +297,17 @@ def _generate_splits_from_scratch(
         )
 
         if prevent_smiles_overlap:
-            reassign_overlapping_smiles(all_smis)
-    elif split_method == "SOME_NAME":
-        # Here, like "random," but if there is overlap with training, move
-        # always to training. Otherwise, if overlap with validation and testing,
-        # assign to validation.
-        # TODO: Cesar/César
-        pass
+            if split_method == "random":
+                randomly_reassign_overlapping_smiles(all_smis)
+            else:  # it is priority
+                priority_reassign_overlapping_smiles(all_smis)
+    else:
+        return None, None
 
     return pdb_ids, all_smis
 
 
-def reassign_overlapping_smiles(all_smis):
+def randomly_reassign_overlapping_smiles(all_smis):
     # Reassign overlapping SMILES.
 
     # Find the overlaps (intersections) between pairs of sets.
@@ -341,6 +340,35 @@ def reassign_overlapping_smiles(all_smis):
     all_smis.test = (
         (all_smis.test - (all_smis.train | all_smis.val)) | b_test | c_test | d_test
     )
+
+
+def priority_reassign_overlapping_smiles(all_smis):
+    # Reassign overlapping SMILES.
+
+    # Find the overlaps (intersections) between pairs of sets.
+    train_val = all_smis.train & all_smis.val
+    train_test = all_smis.train & all_smis.test
+    val_test = all_smis.val & all_smis.test
+
+    # Calculated to verify reassignments
+    size_overlap = len(all_smis.train) + len(all_smis.val) + len(all_smis.test)
+    size_expected_non_overlap = len(all_smis.train | all_smis.val | all_smis.test)
+
+    # Update SMILES sets
+    all_smis.train = (
+        all_smis.train
+    )
+    all_smis.val = (
+        all_smis.val - train_val
+    )
+    all_smis.test = (
+        all_smis.test - (train_test | val_test)
+    )
+
+    size_non_overlap = len(all_smis.train) + len(all_smis.val) + len(all_smis.test)
+    assert (size_non_overlap <= size_overlap) and (size_expected_non_overlap == size_non_overlap)
+    print("Total number of SMILES with overlapping: " + str(size_overlap))
+    print("Total number of SMILES without overlapping: " + str(size_non_overlap))
 
 
 def _load_splits_from_disk(
