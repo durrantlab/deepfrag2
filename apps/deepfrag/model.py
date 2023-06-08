@@ -211,7 +211,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of molecular descriptors to be calculated: rdk10, rdkit_desc, maccs, morgan, molbert, molbert_pos, molbert_norm, molbert_norm2, molbert_x_rdk10, and molbert_x_morgan",
+            help="The type of molecular descriptors to be calculated: rdk10, rdkit_desc, molbert, molbert_pos, molbert_norm, molbert_norm2, molbert_x_rdk10",
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",

@@ -2,7 +2,6 @@
 
 import numpy as np
 import rdkit.Chem.AllChem as Chem
-from rdkit.Chem import MACCSkeys
 from rdkit.Chem import DataStructs
 from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
@@ -103,41 +102,6 @@ def _rdkit_2D_descriptors(
     return fp
 
 
-def _MACCSkeys(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """MACCSkeys fingerprints. TODO: Candidate for removal.
-    
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule (not used).
-        size (int): Size of the fingerprint (not used).
-        smiles (str): SMILES string.
-        
-    Returns:
-        np.array: Fingerprint.
-    """
-    fp = MACCSkeys.GenMACCSKeys(Chem.MolFromSmiles(smiles))
-    n_fp = list(map(int, list(fp.ToBitString())))
-    return np.array(n_fp)
-
-
-def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Morgan fingerprints. TODO: Candidate for removal.
-    
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule (not used).
-        size (int): Size of the fingerprint.
-        smiles (str): SMILES string.
-        
-    Returns:
-        np.array: Fingerprint.
-    """
-    array = np.zeros((0,))
-    DataStructs.ConvertToNumpyArray(
-        AllChem.GetHashedMorganFingerprint(Chem.MolFromSmiles(smiles), 3, nBits=size),
-        array,
-    )
-    return array
-
-
 @lru_cache
 def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints. TODO: Candidate for removal.
@@ -190,6 +154,7 @@ def _molbert_norm(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.arra
     molbert_fp_norm = np.nan_to_num(molbert_fp_norm, nan=0.0, posinf=0.0, neginf=0.0)
     return molbert_fp_norm
 
+
 def _molbert_norm2(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints normalized between -6 and 6. Rationale: I calculated
     molbert fingerprints for 7574 unique fragments, and the min/max values for
@@ -235,28 +200,9 @@ def _molbert_x_rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.a
     return np.multiply(molbert_fp, rdk10_fp)
 
 
-def _molbert_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Molbert fingerprints multiplied by Morgan fingerprints. TODO: Candidate
-    for removal.
-    
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
-        size (int): Size of the fingerprint.
-        smiles (str): SMILES string.
-
-    Returns:
-        np.array: Fingerprint.
-    """
-    morgan_fp = _Morgan(m, size, smiles)
-    molbert_fp = _molbert_norm(m, size, smiles)
-    return np.multiply(molbert_fp, morgan_fp)
-
-
 FINGERPRINTS = {
     "rdk10": _rdk10,
     "rdkit_desc": _rdkit_2D_descriptors,
-    "maccs": _MACCSkeys,
-    "morgan": _Morgan,
     "molbert": _molbert,
     "molbert_pos": _molbert_pos,
     "molbert_norm": _molbert_norm,
@@ -264,7 +210,6 @@ FINGERPRINTS = {
     "molbert_sig_v2": _molbert,  # the application of the Sigmoid function is applied in model.py to avoid device conflicts
     "molbert_norm2": _molbert_norm2,
     "molbert_x_rdk10": _molbert_x_rdk10,
-    "molbert_x_morgan": _molbert_x_morgan,
 }
 
 

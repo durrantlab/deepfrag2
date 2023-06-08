@@ -147,12 +147,9 @@ class MoadVoxelModelParent(
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation == "rdkit_desc":
             args.__setattr__("fp_size", 208)
-        elif args.fragment_representation == "maccs":
-            args.__setattr__("fp_size", 167)
         elif args.fragment_representation in [
             "molbert",
             "molbert_x_rdk10",
-            "molbert_x_morgan",
             "molbert_pos",
             "molbert_norm",
             "molbert_sig",

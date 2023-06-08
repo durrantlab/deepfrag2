@@ -150,7 +150,7 @@ class DeepFragModelBadData(DeepFragModel):
             max_pdbs_val=None,
             max_pdbs_test=None,
             split_method="random",  # TODO: Wasn't sure what to put
-            butina_cluster_cutoff=None,  # Hardcoded because no need to split test set.
+            butina_cluster_cutoff=None,  # TODO: Why hardcoded?
         )
 
         _, lig_infs = get_info_given_pdb_id(
