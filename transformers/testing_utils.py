@@ -262,7 +262,6 @@ def require_torch_gpu(test_case):
 
 def require_datasets(test_case):
     """Decorator marking a test that requires datasets."""
-
     if not _datasets_available:
         return unittest.skip("test requires `datasets`")(test_case)
     else:
@@ -388,7 +387,6 @@ class CaptureStd:
             # but best use the stream-specific subclasses
 
     """
-
     def __init__(self, out=True, err=True):
         if out:
             self.out_buf = StringIO()
@@ -441,14 +439,12 @@ class CaptureStd:
 
 class CaptureStdout(CaptureStd):
     """ Same as CaptureStd but captures only stdout """
-
     def __init__(self):
         super().__init__(err=False)
 
 
 class CaptureStderr(CaptureStd):
     """ Same as CaptureStd but captures only stderr """
-
     def __init__(self):
         super().__init__(out=False)
 
@@ -475,7 +471,6 @@ class CaptureLogger:
         ...     logger.info(msg)
         >>> assert cl.out, msg+"\n"
     """
-
     def __init__(self, logger):
         self.logger = logger
         self.io = StringIO()
@@ -571,7 +566,6 @@ class TestCasePlus(unittest.TestCase):
             env = self.get_env()
 
     """
-
     def setUp(self):
         self.teardown_tmp_dirs = []
 

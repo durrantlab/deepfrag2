@@ -15,7 +15,6 @@
 # limitations under the License.
 """ TF 2.0 T5 model. """
 
-
 import copy
 import itertools
 import math
@@ -773,7 +772,6 @@ class TFT5PreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = T5Config
     base_model_prefix = "transformer"
 
@@ -818,7 +816,6 @@ class TFT5PreTrainedModel(TFPreTrainedModel):
 
 
 T5_START_DOCSTRING = r"""
-
     The T5 model was proposed in `Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer
     <https://arxiv.org/abs/1910.10683>`__ by Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang,
     Michael Matena, Yanqi Zhou, Wei Li, Peter J. Liu. It's an encoder decoder transformer pre-trained in a text-to-text
@@ -857,7 +854,6 @@ T5_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 T5_INPUTS_DOCSTRING = r"""
     Args:
         inputs (:obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -932,7 +928,6 @@ T5_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     "The bare T5 Model transformer outputting raw hidden-states" "without any specific head on top.",

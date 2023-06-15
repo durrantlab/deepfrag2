@@ -39,7 +39,6 @@ class TFModelUtilsMixin:
     """
     A few utilities for :obj:`tf.keras.Model`, to be used as a mixin.
     """
-
     def num_parameters(self, only_trainable: bool = False) -> int:
         """
         Get the number of (optionally, trainable) parameters in the model.
@@ -131,7 +130,6 @@ class TFCausalLanguageModelingLoss:
         Any label of -100 will be ignored (along with the corresponding logits) in the loss computation.
 
     """
-
     def compute_loss(self, labels, logits):
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction=tf.keras.losses.Reduction.NONE
@@ -147,7 +145,6 @@ class TFQuestionAnsweringLoss:
     """
     Loss function suitable for question answering.
     """
-
     def compute_loss(self, labels, logits):
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction=tf.keras.losses.Reduction.NONE
@@ -167,7 +164,6 @@ class TFTokenClassificationLoss:
         Any label of -100 will be ignored (along with the corresponding logits) in the loss computation.
 
     """
-
     def compute_loss(self, labels, logits):
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction=tf.keras.losses.Reduction.NONE
@@ -189,7 +185,6 @@ class TFSequenceClassificationLoss:
     """
     Loss function suitable for sequence classification.
     """
-
     def compute_loss(self, labels, logits):
         if len(shape_list(logits)) == 1 or shape_list(logits)[1] == 1:
             loss_fn = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.NONE)
@@ -204,7 +199,6 @@ class TFSequenceClassificationLoss:
 class TFMultipleChoiceLoss(TFSequenceClassificationLoss):
     """Loss function suitable for multiple choice tasks."""
 
-
 class TFMaskedLanguageModelingLoss(TFCausalLanguageModelingLoss):
     """
     Loss function suitable for masked language modeling (MLM), that is, the task of guessing the masked tokens.
@@ -213,7 +207,6 @@ class TFMaskedLanguageModelingLoss(TFCausalLanguageModelingLoss):
 
          Any label of -100 will be ignored (along with the corresponding logits) in the loss computation.
     """
-
 
 def detect_tf_missing_unexpected_layers(model, resolved_archive_file):
     """
@@ -775,7 +768,6 @@ class TFConv1D(tf.keras.layers.Layer):
         kwargs:
             Additional keyword arguments passed along to the :obj:`__init__` of :obj:`tf.keras.layers.Layer`.
     """
-
     def __init__(self, nf, nx, initializer_range=0.02, **kwargs):
         super().__init__(**kwargs)
         self.nf = nf
@@ -817,7 +809,6 @@ class TFSharedEmbeddings(tf.keras.layers.Layer):
         kwargs:
             Additional keyword arguments passed along to the :obj:`__init__` of :obj:`tf.keras.layers.Layer`.
     """
-
     def __init__(self, vocab_size: int, hidden_size: int, initializer_range: Optional[float] = None, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = vocab_size
@@ -928,7 +919,6 @@ class TFSequenceSummary(tf.keras.layers.Layer):
         kwargs:
             Additional keyword arguments passed along to the :obj:`__init__` of :obj:`tf.keras.layers.Layer`.
     """
-
     def __init__(self, config: PretrainedConfig, initializer_range: float = 0.02, **kwargs):
         super().__init__(**kwargs)
 
@@ -1072,7 +1062,6 @@ class TFWrappedEmbeddings:
     weight restoring. Also it makes sure that the layer is called from the correct scope to avoid problem with
     saving/storing the correct weights
     """
-
     def __init__(self, layer, abs_scope_name=None):
         self._layer = layer
         self._abs_scope_name = abs_scope_name

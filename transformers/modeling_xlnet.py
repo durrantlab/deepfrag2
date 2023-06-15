@@ -61,7 +61,6 @@ def build_tf_xlnet_to_pytorch_map(model, config, tf_weights=None):
     A map of modules from TF to PyTorch. I use a map to keep the PyTorch model as identical to the original PyTorch
     model as possible.
     """
-
     tf_to_pt_map = {}
 
     if hasattr(model, "transformer"):
@@ -278,7 +277,6 @@ class XLNetRelativeAttention(nn.Module):
         output_attentions=False,
     ):
         """Core relative positional attention operations."""
-
         # content based attention score
         ac = torch.einsum("ibnd,jbnd->bnij", q_head + self.r_w_bias, k_head_h)
 
@@ -544,7 +542,6 @@ class XLNetPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = XLNetConfig
     load_tf_weights = load_tf_weights_in_xlnet
     base_model_prefix = "transformer"
@@ -604,7 +601,6 @@ class XLNetModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     last_hidden_state: torch.FloatTensor
     mems: Optional[List[torch.FloatTensor]] = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -640,7 +636,6 @@ class XLNetLMHeadModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     mems: Optional[List[torch.FloatTensor]] = None
@@ -674,7 +669,6 @@ class XLNetForSequenceClassificationOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     mems: Optional[List[torch.FloatTensor]] = None
@@ -708,7 +702,6 @@ class XLNetForTokenClassificationOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     mems: Optional[List[torch.FloatTensor]] = None
@@ -744,7 +737,6 @@ class XLNetForMultipleChoiceOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     mems: Optional[List[torch.FloatTensor]] = None
@@ -780,7 +772,6 @@ class XLNetForQuestionAnsweringSimpleOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     start_logits: torch.FloatTensor = None
     end_logits: torch.FloatTensor = None
@@ -825,7 +816,6 @@ class XLNetForQuestionAnsweringOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     start_top_log_probs: Optional[torch.FloatTensor] = None
     start_top_index: Optional[torch.LongTensor] = None
@@ -838,7 +828,6 @@ class XLNetForQuestionAnsweringOutput(ModelOutput):
 
 
 XLNET_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -853,7 +842,6 @@ XLNET_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 XLNET_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`{0}`):
@@ -926,7 +914,6 @@ XLNET_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare XLNet Model transformer outputting raw hidden-states without any specific head on top.",

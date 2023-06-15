@@ -17,7 +17,6 @@
  part from HuggingFace PyTorch version of Google AI Bert model (https://github.com/google-research/bert)
 """
 
-
 import copy
 import math
 import warnings
@@ -335,7 +334,6 @@ class DistilBertPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = DistilBertConfig
     load_tf_weights = None
     base_model_prefix = "distilbert"
@@ -355,7 +353,6 @@ class DistilBertPreTrainedModel(PreTrainedModel):
 
 
 DISTILBERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -370,7 +367,6 @@ DISTILBERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 DISTILBERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -407,7 +403,6 @@ DISTILBERT_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare DistilBERT encoder/transformer outputting raw hidden-states without any specific head on top.",

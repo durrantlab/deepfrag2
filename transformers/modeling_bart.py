@@ -63,7 +63,6 @@ BART_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 
 BART_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -79,7 +78,6 @@ BART_START_DOCSTRING = r"""
             weights.
 
 """
-
 BART_GENERATION_EXAMPLE = r"""
     Summarization example::
 
@@ -97,7 +95,6 @@ BART_GENERATION_EXAMPLE = r"""
         >>> print([tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in summary_ids])
 
 """
-
 BART_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -150,9 +147,8 @@ BART_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
 def invert_mask(attention_mask):
-    """Turns 1->0, 0->1, False->True, True-> False"""
+    """Turn 1->0, 0->1, False->True, True-> False"""
     assert attention_mask.dim() == 2
     return attention_mask.eq(0)
 
@@ -299,7 +295,6 @@ class BartEncoder(nn.Module):
     Args:
         config: BartConfig
     """
-
     def __init__(self, config: BartConfig, embed_tokens):
         super().__init__()
 
@@ -490,7 +485,6 @@ class BartDecoder(nn.Module):
         config: BartConfig
         embed_tokens (torch.nn.Embedding): output embedding
     """
-
     def __init__(self, config: BartConfig, embed_tokens: nn.Embedding):
         super().__init__()
         self.dropout = config.dropout
@@ -653,7 +647,6 @@ def _reorder_buffer(attn_cache: Dict, new_order) -> Dict:
 
 class Attention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
-
     def __init__(
         self,
         embed_dim,
@@ -767,7 +760,6 @@ class Attention(nn.Module):
 
 class BartClassificationHead(nn.Module):
     """Head for sentence-level classification tasks."""
-
     # This can trivially be shared with RobertaClassificationHead
 
     def __init__(
@@ -797,7 +789,6 @@ class LearnedPositionalEmbedding(nn.Embedding):
     based on padding_idx or by setting padding_idx to None and ensuring that the appropriate position ids are passed to
     the forward function.
     """
-
     def __init__(self, num_embeddings: int, embedding_dim: int, padding_idx: int, offset):
         # Bart is set up so that if padding_idx is specified then offset the embedding ids by 2
         # and adjust num_embeddings appropriately. Other models dont have this hack
@@ -1338,8 +1329,7 @@ class BartForQuestionAnswering(PretrainedBartModel):
 
 
 class SinusoidalPositionalEmbedding(nn.Embedding):
-    """This module produces sinusoidal positional embeddings of any length."""
-
+    """Produces sinusoidal positional embeddings of any length."""
     def __init__(self, num_positions, embedding_dim, padding_idx=None):
         super().__init__(num_positions, embedding_dim)
         self.weight = self._init_weight(self.weight)

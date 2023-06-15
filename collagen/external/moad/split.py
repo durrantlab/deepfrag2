@@ -1,3 +1,5 @@
+"""Functions required to split the MOAD into train, val, and test sets."""
+
 import os
 from dataclasses import dataclass
 from typing import List, Set, Tuple
@@ -5,16 +7,20 @@ from .types import MOAD_split
 import numpy as np
 from collagen.util import sorted_list
 import json
-from collagen.external.moad.split_clustering import generate_splits_from_clustering
+from collagen.external.moad.split_clustering import (
+    generate_splits_using_butina_clustering,
+)
+from tqdm import tqdm
 
-# This module has functions required to split the MOAD into train, val, and test
-# sets.
 
 split_rand_num_gen = None
 
 
 @dataclass
 class MOAD_splits_pdb_ids:
+
+    """MOAD splits in terms of PDB IDs."""
+
     train: List
     val: List
     test: List
@@ -22,14 +28,24 @@ class MOAD_splits_pdb_ids:
 
 @dataclass
 class MOAD_splits_smiles:
+
+    """MOAD splits in terms of SMILES."""
+
     train: Set[str]
     val: Set[str]
     test: Set[str]
 
 
-def _split_seq_per_probability(seq, p):
-    # Divide a sequence according to a probability, p.
+def _split_seq_per_probability(seq: List, p: float) -> Tuple[List, List]:
+    """Divide a sequence according to a probability, p.
 
+    Args:
+        seq (List): Sequence to be divided.
+        p (float): Probability of the first part.
+
+    Returns:
+        Tuple[List, List]: First and second parts of the sequence.
+    """
     global split_rand_num_gen
     l = sorted_list(seq)
     size = len(l)
@@ -39,14 +55,30 @@ def _split_seq_per_probability(seq, p):
     return l[: int(size * p)], l[int(size * p) :]
 
 
-def _flatten(seq):
+def _flatten(seq: List[List]) -> List:
+    """Flatten a list of lists.
+
+    Args:
+        seq (List[List]): List of lists.
+
+    Returns:
+        List: Flattened list.
+    """
     a = []
     for s in seq:
         a += s
     return a
 
 
-def _divide_into_two_parts(seq):
+def _random_divide_two_prts(seq: List) -> Tuple[List, List]:
+    """Divide a sequence into two parts.
+
+    Args:
+        seq (List): Sequence to be divided.
+
+    Returns:
+        Tuple[List, List]: First and second parts of the sequence.
+    """
     global split_rand_num_gen
     l = sorted_list(seq)  # To make deterministic is same seed used
     size = len(l)
@@ -59,7 +91,15 @@ def _divide_into_two_parts(seq):
     return (set(l[:half_size]), set(l[half_size:]))
 
 
-def _divide_into_three_parts(seq):
+def _random_divide_three_prts(seq: List) -> Tuple[List, List, List]:
+    """Divide a sequence into three parts.
+
+    Args:
+        seq (List): Sequence to be divided.
+
+    Returns:
+        Tuple[List, List, List]: First, second, and third parts of the sequence.
+    """
     global split_rand_num_gen
     l = sorted_list(seq)
     size = len(l)
@@ -76,8 +116,15 @@ def _divide_into_three_parts(seq):
 
 
 def _smiles_for(moad: "MOADInterface", targets: List[str]) -> Set[str]:
-    """Return all the SMILES strings contained in the selected targets."""
-
+    """Return all the SMILES strings contained in the selected targets.
+    
+    Args:
+        moad (MOADInterface): MOADInterface object.
+        targets (List[str]): List of targets.
+        
+    Returns:
+        Set[str]: Set of SMILES strings.
+    """
     smiles = set()
 
     for target in targets:
@@ -109,43 +156,51 @@ def _limit_split_size(
 
     return pdb_ids
 
+def get_families_and_smiles(moad: "MOADInterface"):
+    families: List[List[str]] = []
+    for c in moad.classes:
+        families.extend([x.pdb_id for x in f.targets] for f in c.families)
 
-def _generate_splits_from_scratch(
-    moad: "MOADInterface",
-    fraction_train: float = 0.6,
-    fraction_val: float = 0.5,
-    prevent_smiles_overlap: bool = True,
-    max_pdbs_train: int = None,
-    max_pdbs_val: int = None,
-    max_pdbs_test: int = None,
-    butina_cluster_cutoff: float = 0.4,
+    smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
+
+    return families, smiles
+
+
+def report_sizes(train_set, test_set, val_set):
+    print(f"Training set size: {len(train_set)}")
+    print(f"Testing set size: {len(test_set)}")
+    print(f"Validation set size: {len(val_set)}")
+
+    # Get the smiles in each of the sets
+    train_smiles = {complex["smiles"] for complex in train_set}
+    test_smiles = {complex["smiles"] for complex in test_set}
+    val_smiles = {complex["smiles"] for complex in val_set}
+
+    # Get the families in each of the sets
+    train_families = {complex["family_idx"] for complex in train_set}
+    test_families = {complex["family_idx"] for complex in test_set}
+    val_families = {complex["family_idx"] for complex in val_set}
+
+    # Verify that there is no overlap between the sets
+    print(f"Train and test overlap, SMILES: {len(train_smiles & test_smiles)}")
+    print(f"Train and val overlap: {len(train_smiles & val_smiles)}")
+    print(f"Test and val overlap, SMILES: {len(test_smiles & val_smiles)}")
+    print(f"Train and test overlap, families: {len(train_families & test_families)}")
+    print(f"Train and val overlap, families: {len(train_families & val_families)}")
+    print(f"Test and val overlap, families: {len(test_families & val_families)}")
+
+    # What is the number that were not assigned to any cluster?
+    # print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
+
+
+def _flatten_and_limit_pdb_ids(
+    train_families,
+    val_families,
+    test_families,
+    max_pdbs_train,
+    max_pdbs_val,
+    max_pdbs_test,
 ):
-    if not butina_cluster_cutoff:
-        print("Building training/validation/test sets in a random way")
-        # Not loading previously determined splits from disk, so generate based on
-        # random seed.
-
-        # First, get a flat list of all the families (not grouped by class).
-        families: List[List[str]] = []
-        for c in moad.classes:
-            for f in c.families:
-                families.append([x.pdb_id for x in f.targets])
-
-        # Note that we're working with families (not individual targets in those
-        # families) so members of same family are shared across train, val, test
-        # sets.
-
-        # Divide the families into train/val/test sets.
-        train_families, other_families = _split_seq_per_probability(
-            families, fraction_train
-        )
-        val_families, test_families = _split_seq_per_probability(
-            other_families, fraction_val
-        )
-    else:
-        print("Building training/validation/test sets based on Butina clustering")
-        train_families, val_families, test_families = generate_splits_from_clustering(moad, split_rand_num_gen, fraction_train, fraction_val, butina_cluster_cutoff,)
-
     # Now that they are divided, we can keep only the targets themselves (no
     # longer organized into families).
     pdb_ids = MOAD_splits_pdb_ids(
@@ -156,49 +211,164 @@ def _generate_splits_from_scratch(
 
     # If the user has asked to limit the size of the train, test, or val set,
     # impose those limits here.
-    pdb_ids = _limit_split_size(
-        max_pdbs_train,
-        max_pdbs_val,
-        max_pdbs_test,
-        pdb_ids,
-    )
+    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
 
-    # Get all the smiles associated with the targets in each set.
-    all_smis = MOAD_splits_smiles(
-        train=_smiles_for(moad, pdb_ids.train),
-        val=_smiles_for(moad, pdb_ids.val),
-        test=_smiles_for(moad, pdb_ids.test),
-    )
+    return pdb_ids
 
-    if prevent_smiles_overlap:
-        # Reassign overlapping SMILES.
-        train_val = all_smis.train & all_smis.val
-        val_test = all_smis.val & all_smis.test
-        train_test = all_smis.train & all_smis.test
-        train_val_not_test = train_val - all_smis.test
-        val_test_not_train = val_test - all_smis.train
-        train_test_not_val = train_test - all_smis.val
-        train_test_val = all_smis.train & all_smis.val & all_smis.test
 
-        a_train, a_val = _divide_into_two_parts(train_val_not_test)
-        b_val, b_test = _divide_into_two_parts(val_test_not_train)
-        c_train, c_test = _divide_into_two_parts(train_test_not_val)
-        d_train, d_val, d_test = _divide_into_three_parts(train_test_val)
+def _generate_splits_from_scratch(
+    moad: "MOADInterface",
+    fraction_train: float = 0.6,
+    fraction_val: float = 0.5,
+    prevent_smiles_overlap: bool = True,
+    max_pdbs_train: int = None,
+    max_pdbs_val: int = None,
+    max_pdbs_test: int = None,
+    split_method: str = "random",
+    butina_cluster_cutoff: float = 0.4,
+):
+    if split_method == "butina":
+        assert butina_cluster_cutoff is not None
 
-        all_smis.train = (
-            (all_smis.train - (all_smis.val | all_smis.test))
-            | a_train
-            | c_train
-            | d_train
+        print("Building training/validation/test sets based on Butina clustering")
+        (
+            train_families,
+            val_families,
+            test_families,
+        ) = generate_splits_using_butina_clustering(
+            moad,
+            split_rand_num_gen,
+            fraction_train,
+            fraction_val,
+            butina_cluster_cutoff,
         )
-        all_smis.val = (
-            (all_smis.val - (all_smis.train | all_smis.test)) | a_val | b_val | d_val
+
+        pdb_ids = _flatten_and_limit_pdb_ids(
+            train_families,
+            val_families,
+            test_families,
+            max_pdbs_train,
+            max_pdbs_val,
+            max_pdbs_test,
         )
-        all_smis.test = (
-            (all_smis.test - (all_smis.train | all_smis.val)) | b_test | c_test | d_test
+
+        # Get all the ligand SMILES associated with the targets in each set.
+        all_smis = MOAD_splits_smiles(
+            train=_smiles_for(moad, pdb_ids.train),
+            val=_smiles_for(moad, pdb_ids.val),
+            test=_smiles_for(moad, pdb_ids.test),
         )
+    elif split_method in ["random", "priority"]:
+        print("Building training/validation/test sets via random selection")
+        # Not loading previously determined splits from disk, so generate based
+        # on random seed.
+
+        # First, get a flat list of all the families (not grouped by class).
+        families: List[List[str]] = []
+        for c in moad.classes:
+            families.extend([x.pdb_id for x in f.targets] for f in c.families)
+
+        # Note that we're working with families (not individual targets in those
+        # families) so members of same family are not shared across train, val,
+        # test sets.
+
+        # Divide the families into train/val/test sets.
+        train_families, other_families = _split_seq_per_probability(
+            families, fraction_train
+        )
+        val_families, test_families = _split_seq_per_probability(
+            other_families, fraction_val
+        )
+
+        pdb_ids = _flatten_and_limit_pdb_ids(
+            train_families,
+            val_families,
+            test_families,
+            max_pdbs_train,
+            max_pdbs_val,
+            max_pdbs_test,
+        )
+
+        # Get all the ligand SMILES associated with the targets in each set.
+        all_smis = MOAD_splits_smiles(
+            train=_smiles_for(moad, pdb_ids.train),
+            val=_smiles_for(moad, pdb_ids.val),
+            test=_smiles_for(moad, pdb_ids.test),
+        )
+
+        if prevent_smiles_overlap:
+            if split_method == "random":
+                randomly_reassign_overlapping_smiles(all_smis)
+            else:  # it is priority
+                priority_reassign_overlapping_smiles(all_smis)
+    else:
+        return None, None
 
     return pdb_ids, all_smis
+
+
+def randomly_reassign_overlapping_smiles(all_smis):
+    # Reassign overlapping SMILES.
+
+    # Find the overlaps (intersections) between pairs of sets.
+    train_val = all_smis.train & all_smis.val
+    val_test = all_smis.val & all_smis.test
+    train_test = all_smis.train & all_smis.test
+
+    # Find the SMILES that are in two sets but not in the third one
+    train_val_not_test = train_val - all_smis.test
+    val_test_not_train = val_test - all_smis.train
+    train_test_not_val = train_test - all_smis.val
+
+    # Find SMILES that are present in all three sets
+    train_test_val = all_smis.train & all_smis.val & all_smis.test
+
+    # Overlapping SMILES are reassigned to temporary sets
+    a_train, a_val = _random_divide_two_prts(train_val_not_test)
+    b_val, b_test = _random_divide_two_prts(val_test_not_train)
+    c_train, c_test = _random_divide_two_prts(train_test_not_val)
+    d_train, d_val, d_test = _random_divide_three_prts(train_test_val)
+
+    # Update SMILES sets to include the reassigned SMILES and exclude the
+    # overlapping ones
+    all_smis.train = (
+        (all_smis.train - (all_smis.val | all_smis.test)) | a_train | c_train | d_train
+    )
+    all_smis.val = (
+        (all_smis.val - (all_smis.train | all_smis.test)) | a_val | b_val | d_val
+    )
+    all_smis.test = (
+        (all_smis.test - (all_smis.train | all_smis.val)) | b_test | c_test | d_test
+    )
+
+
+def priority_reassign_overlapping_smiles(all_smis):
+    # Reassign overlapping SMILES.
+
+    # Find the overlaps (intersections) between pairs of sets.
+    train_val = all_smis.train & all_smis.val
+    train_test = all_smis.train & all_smis.test
+    val_test = all_smis.val & all_smis.test
+
+    # Calculated to verify reassignments
+    size_overlap = len(all_smis.train) + len(all_smis.val) + len(all_smis.test)
+    size_expected_non_overlap = len(all_smis.train | all_smis.val | all_smis.test)
+
+    # Update SMILES sets
+    all_smis.train = (
+        all_smis.train
+    )
+    all_smis.val = (
+        all_smis.val - train_val
+    )
+    all_smis.test = (
+        all_smis.test - (train_test | val_test)
+    )
+
+    size_non_overlap = len(all_smis.train) + len(all_smis.val) + len(all_smis.test)
+    assert (size_non_overlap <= size_overlap) and (size_expected_non_overlap == size_non_overlap)
+    print("Total number of SMILES with overlapping: " + str(size_overlap))
+    print("Total number of SMILES without overlapping: " + str(size_non_overlap))
 
 
 def _load_splits_from_disk(
@@ -234,12 +404,7 @@ def _load_splits_from_disk(
     # If you get here, the user has asked to limit the number of pdbs in the
     # train/test/val set(s), so also don't get the smiles from the cache as
     # above.
-    pdb_ids = _limit_split_size(
-        max_pdbs_train,
-        max_pdbs_val,
-        max_pdbs_test,
-        pdb_ids,
-    )
+    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
 
     all_smis = MOAD_splits_smiles(
         train=_smiles_for(moad, pdb_ids.train),
@@ -264,19 +429,10 @@ def _save_split(
                 "pdbs": len(set(pdb_ids.train)),
                 "frags": len(set(all_smis.train)),
             },
-            "val": {
-                "pdbs": len(set(pdb_ids.val)),
-                "frags": len(set(all_smis.val)),
-            },
-            "test": {
-                "pdbs": len(set(pdb_ids.test)),
-                "frags": len(set(all_smis.test)),
-            },
+            "val": {"pdbs": len(set(pdb_ids.val)), "frags": len(set(all_smis.val)),},
+            "test": {"pdbs": len(set(pdb_ids.test)), "frags": len(set(all_smis.test)),},
         },
-        "train": {
-            "pdbs": pdb_ids.train,
-            "smiles": [smi for smi in all_smis.train],
-        },
+        "train": {"pdbs": pdb_ids.train, "smiles": [smi for smi in all_smis.train],},
         "val": {"pdbs": pdb_ids.val, "smiles": [smi for smi in all_smis.val]},
         "test": {"pdbs": pdb_ids.test, "smiles": [smi for smi in all_smis.test]},
     }
@@ -297,7 +453,8 @@ def compute_dataset_split(
     max_pdbs_train: int = None,
     max_pdbs_val: int = None,
     max_pdbs_test: int = None,
-    butina_cluster_cutoff = 0.4,
+    split_method: str = "random",  # random, butina
+    butina_cluster_cutoff=0.4,
 ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
     """Compute a TRAIN/VAL/TEST split.
 
@@ -312,11 +469,11 @@ def compute_dataset_split(
             TRAIN set.
         p_val (float, optional): Percentage of (non-train) targets to use
             in the VAL set.
+        TODO: Missing arguments
 
     Returns:
         Tuple[MOAD_split, MOAD_split, MOAD_split]: train/val/test sets
     """
-
     if seed != 0:
         global split_rand_num_gen
         split_rand_num_gen = np.random.default_rng(seed)
@@ -338,8 +495,8 @@ def compute_dataset_split(
     # test_all_smis = None
 
     if load_splits is None:
-        # Not loading previously determined splits from disk, so generate
-        # based on random seed.
+        # Not loading previously determined splits from disk, so generate based
+        # on random seed.
         pdb_ids, all_smis = _generate_splits_from_scratch(
             dataset,
             fraction_train,
@@ -348,25 +505,24 @@ def compute_dataset_split(
             max_pdbs_train,
             max_pdbs_val,
             max_pdbs_test,
+            split_method,
             butina_cluster_cutoff,
         )
     else:
         # User has asked to load splits from file on disk. Get from the file.
         pdb_ids, all_smis, seed = _load_splits_from_disk(
-            dataset,
-            load_splits,
-            max_pdbs_train,
-            max_pdbs_val,
-            max_pdbs_test,
+            dataset, load_splits, max_pdbs_train, max_pdbs_val, max_pdbs_test,
         )
 
     if save_splits is not None:
         # Save spits and seed to json (for record keeping).
         _save_split(save_splits, seed, pdb_ids, all_smis)
 
-    print("Training dataset size: " + str(len(pdb_ids.train)))
-    print("Validation dataset size: " + str(len(pdb_ids.val)))
-    print("Test dataset size: " + str(len(pdb_ids.test)))
+    print("\nSPLIT INFORMATION BEFORE FRAGMENTING/FILTERING")
+    print(f"Training dataset size: {len(pdb_ids.train)}")
+    print(f"Validation dataset size: {len(pdb_ids.val)}")
+    print(f"Test dataset size: {len(pdb_ids.test)}")
+    print("")
 
     return (
         MOAD_split(name="TRAIN", targets=pdb_ids.train, smiles=all_smis.train),
@@ -376,7 +532,7 @@ def compute_dataset_split(
 
 
 def full_moad_split(moad: "MOADInterface") -> MOAD_split:
-    """Returns a split containing all targets and smiles strings."""
+    """Return a split containing all targets and smiles strings."""
     pdb_ids, all_smis = _generate_splits_from_scratch(
         moad,
         fraction_train=1.0,

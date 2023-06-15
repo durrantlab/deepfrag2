@@ -1,11 +1,20 @@
+"""Command-line arguments for the MOAD voxel model."""
+
 from argparse import Namespace, ArgumentParser
 from multiprocessing import cpu_count
 
 
 def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
-    # Add user-defined command-line parameters to control how the MOAD data is
-    # processed.
-
+    """Add user-defined command-line parameters to control how the MOAD data is
+    processed.
+    
+    Args:
+        parent_parser (ArgumentParser): The parent parser to add the MOAD
+            arguments to.
+            
+    Returns:
+        ArgumentParser: The parser with the MOAD arguments added.
+    """
     parser = parent_parser.add_argument_group("Binding MOAD")
 
     parser.add_argument(
@@ -16,12 +25,27 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--data_dir",
         required=False,  # Not required if running in --mode "inference"
-        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs)"
+        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter can be used for both training and fine-tuning."
     )
     parser.add_argument(
-        "--additional_training_data_dir",
+        "--bad_data_dir",
         required=False,  # Not required if running in --mode "inference"
-        help="Path to a folder containing a SDF files"
+        help="Path to a folder containing bad ligands. This parameter is to be only used in the training mode as additional information to the data contained in --data_dir"
+    )
+    parser.add_argument(
+        "--paired_data_csv",
+        required=False,  # Not required if running in --mode "inference"
+        help="This parameter is to be only used in the fine-tuning mode. This parameter is a set of comma separated values in the next order:\n"
+             "1 - Path to the CSV file where information related to the paired data are stored\n"
+             "2 - Column related to the PDB files\n"
+             "3 - Column related to the SDF files\n"
+             "4 - Column related to the parent SMILES strings\n"
+             "5 - Column related to the SMILES strings of the first fragment\n"
+             "6 - Column related to the SMILES strings of the second fragment\n"
+             "7 - Column related to the activity value of the first fragment\n"
+             "8 - Column related to the activity value of the second fragment\n"
+             "9 - Column related to the receptor prevalence"
+             "10 - Path to the PDB and SDF files"
     )
 
     # For many of these, good to define default values in args_defaults.py
@@ -57,6 +81,14 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         action="store_true",
         help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
     )
+
+    parser.add_argument(
+        "--split_method",
+        required=False,
+        type=str,
+        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If you use --prevent_smiles_overlap with this method, some data will be discarded. (2) If 'butina', butina clustering will be used. TODO: More details needed."
+    )
+
     parser.add_argument(
         "--butina_cluster_cutoff",
         required=False,
@@ -171,7 +203,15 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 
 
 def fix_moad_args(args: Namespace) -> Namespace:
-    # Only works after arguments have been parsed, so in a separate definition.
+    """Fix MOAD-specific arguments. Only works after arguments have been
+    parsed, so in a separate definition.
+    
+    Args:
+        args (Namespace): The arguments to fix.
+        
+    Returns:
+        Namespace: The fixed arguments.
+    """
     if args.cache is None:
         import os
         args.cache = f"{args.default_root_dir + os.sep}cache.json"

@@ -15,7 +15,6 @@
 # limitations under the License.
 """ TF 2.0 BERT model. """
 
-
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
@@ -90,7 +89,6 @@ TF_BERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 class TFBertEmbeddings(tf.keras.layers.Layer):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
 
@@ -658,7 +656,6 @@ class TFBertPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = BertConfig
     base_model_prefix = "bert"
 
@@ -686,7 +683,6 @@ class TFBertForPreTrainingOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     prediction_logits: tf.Tensor = None
     seq_relationship_logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -694,7 +690,6 @@ class TFBertForPreTrainingOutput(ModelOutput):
 
 
 BERT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -728,7 +723,6 @@ BERT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.TFPreTrainedModel.from_pretrained` method to load the
             model weights.
 """
-
 BERT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`({0})`):
@@ -781,7 +775,6 @@ BERT_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     "The bare Bert Model transformer outputting raw hidden-states without any specific head on top.",

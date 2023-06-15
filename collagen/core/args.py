@@ -1,11 +1,12 @@
+"""It would be tedious to get the user args to some places in the code (e.g.,
+MOAD_target). Let's just make some of the variables globally availble here.
+There arguments are broadly applicable, so it makes sense to separate them
+anyway.
+"""
+
 import argparse
 import json
 from ..args_defaults import get_default_args
-
-# It would be tedious to get the user args to some places in the code (e.g.,
-# MOAD_target). Let's just make some of the variables globally availble here.
-# There arguments are broadly applicable, so it makes sense to separate them
-# anyway.
 
 verbose = False
 
@@ -13,7 +14,7 @@ verbose = False
 def _add_generic_params(
     parent_parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
-    """Adds parameters (args) that are common to all collagen apps.
+    """Add parameters (args) that are common to all collagen apps.
 
     Args:
         parent_parser (argparse.ArgumentParser): The argparser.
@@ -22,7 +23,6 @@ def _add_generic_params(
         argparse.ArgumentParser: The updated argparser with the generic
         parameters added.
     """
-
     # TODO: Some of these arguments are not common, but specific to deepfrag.
     # Good to refactor some of this.
 
@@ -43,16 +43,22 @@ def _add_generic_params(
         "-m",
         "--mode",
         type=str,
-        choices=["train", "warm_starting", "test", "inference", "inference_custom_set", "lr_finder"],
-        help="Can be train, warm_starting, test, inference, inference_custom_set, or lr_finder.\n" +
-             "\tIf train, trains the model.\n" +
-             "\tIf warm_starting, runs an incremental learning on a new dataset. It is suitable for fine tuning.\n" +
-             "\tIf test, runs inference on the test set.\n" +
-             "\tIf inference, runs inference on an external set by specifying the fragment coordinates.\n" +
-             "\tIf inference_custom_set, runs inference on an external set comprised of protein-ligand pairs, that is, a SDF file per each ligand and a PDB file per each receptor.\n" +
-             "\tIf lr_finder, suggests the best learning rate to use. Defaults to train.",
+        choices=[
+            "train",
+            "warm_starting",
+            "test",
+            "inference",
+            "inference_custom_set"
+        ],
+        help="Can be train, warm_starting, test, inference, or inference_custom_set.\n"
+        + "\tIf train, trains the model.\n"
+        + "\tIf warm_starting, runs an incremental learning on a new dataset. It is suitable for fine tuning.\n"
+        + "\tIf test, runs inference on the test set.\n"
+        + "\tIf inference, runs inference on an external set by specifying the fragment coordinates.\n"
+        + "\tIf inference_custom_set, runs inference on an external set comprised of protein-ligand pairs, that is, a SDF file per each ligand and a PDB file per each receptor.\n",
         default="train",
     )
+
     parser.add_argument(
         "--receptor",
         type=str,
@@ -78,7 +84,6 @@ def _add_generic_params(
         help="The number of top-k matching fragments (SMILES strings) to return when running DeepFrag in inference mode.",
         default=25,
     )
-    
 
     parser.add_argument(
         "--load_checkpoint",
@@ -126,7 +131,7 @@ def _add_generic_params(
         type=str,
         required=False,
         default=None,
-        help="Path to .pt file where the model to be used for incremental learning is saved"
+        help="Path to .pt file where the model to be used for incremental learning is saved",
     )
 
     return parent_parser
@@ -135,7 +140,7 @@ def _add_generic_params(
 def _get_arg_parser(
     parser_funcs: list, is_pytorch_lightning=False
 ) -> argparse.ArgumentParser:
-    """Constructs an arg parser.
+    """Construct an arg parser.
 
     Args:
         parser_funcs (list): A list of functions that add arguments to a 
@@ -146,7 +151,6 @@ def _get_arg_parser(
     Returns:
         argparse.ArgumentParser: A parser with all the arguments added.
     """
-
     # Create the parser
     parent_parser = argparse.ArgumentParser()
 
@@ -166,8 +170,10 @@ def _get_arg_parser(
     return parent_parser
 
 
-def get_args(parser_funcs = None, post_parse_args_funcs = None, is_pytorch_lightning=False) -> argparse.Namespace:
-    """The function creates a parser and gets the associated parameters.
+def get_args(
+    parser_funcs=None, post_parse_args_funcs=None, is_pytorch_lightning=False
+) -> argparse.Namespace:
+    """Create a parser and gets the associated parameters.
 
     Args:
         parser_funcs (list, optional): A list of functions that add arguments to
@@ -182,7 +188,6 @@ def get_args(parser_funcs = None, post_parse_args_funcs = None, is_pytorch_light
     Returns:
         argparse.Namespace: The parsed and updated args.
     """
-
     if parser_funcs is None:
         parser_funcs = []
     if post_parse_args_funcs is None:

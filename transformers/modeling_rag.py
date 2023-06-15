@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """RAG model implementation."""
-
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -103,7 +102,6 @@ class RetrievAugLMMarginOutput(ModelOutput):
             Attentions weights of the generator decoder, after the attention softmax, used to compute the weighted
             average in the self-attention heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     doc_scores: torch.FloatTensor = None
@@ -187,7 +185,6 @@ class RetrievAugLMOutput(ModelOutput):
             Attentions weights of the generator decoder, after the attention softmax, used to compute the weighted
             average in the self-attention heads.
     """
-
     logits: torch.FloatTensor = None
     doc_scores: torch.FloatTensor = None
     past_key_values: Optional[List[torch.FloatTensor]] = None
@@ -289,7 +286,6 @@ class RagPreTrainedModel(PreTrainedModel):
             >>> model = RagModel.from_pretrained("./rag")
 
         """
-
         kwargs_question_encoder = {
             argument[len("question_question_encoder_") :]: value
             for argument, value in kwargs.items()
@@ -356,7 +352,6 @@ class RagPreTrainedModel(PreTrainedModel):
 
 
 RAG_START_DOCSTRING = r"""
-
     RAG is a seq2seq model which encapsulates two core components: a question encoder and a generator. During a forward
     pass, we encode the input with the question encoder and pass it to the retriever to extract relevant context
     documents. The documents are then prepended to the input. Such contextualized inputs is passed to the generator.
@@ -391,7 +386,6 @@ RAG_START_DOCSTRING = r"""
         retriever (:class:`~transformers.RagRetriever`):
             A retriever class encapsulating a faiss index queried to obtain context documents for current inputs.
 """
-
 
 RAG_FORWARD_INPUTS_DOCSTRING = r"""
     Args:
@@ -458,7 +452,6 @@ RAG_FORWARD_INPUTS_DOCSTRING = r"""
         n_docs (:obj:`int`, `optional`, defaults to :obj:`config.n_docs`)
             Number of documents to retrieve and/or number of documents for which to generate an answer.
 """
-
 
 @add_start_docstrings_to_model_forward(RAG_START_DOCSTRING)
 class RagModel(RagPreTrainedModel):
@@ -865,7 +858,6 @@ class RagSequenceForGeneration(RagPreTrainedModel):
             sequences. The second dimension (sequence length) is either equal to :obj:`max_length` or shorter if all
             batches finished early due to the :obj:`eos_token_id`.
         """
-
         n_docs = n_docs if n_docs is not None else self.config.n_docs
         do_deduplication = do_deduplication if do_deduplication is not None else self.config.do_deduplication
         num_doc_return_sequences = (
@@ -1054,7 +1046,6 @@ class RagTokenForGeneration(RagPreTrainedModel):
     @staticmethod
     def _reorder_cache(past, beam_idx):
         """Reorders cache for generation. BART-inspired but we need to take care of the extra dimension for docs"""
-
         def _reorder_stacked(hidden_states):
             n_docs = hidden_states.shape[0] // beam_idx.shape[0]
             hidden_states = hidden_states.view(-1, n_docs, *hidden_states.shape[1:])

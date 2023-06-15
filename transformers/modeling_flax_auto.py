@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Model class. """
 
-
 from collections import OrderedDict
 
 from .configuration_auto import AutoConfig, BertConfig, RobertaConfig
@@ -52,7 +51,6 @@ class FlaxAutoModel(object):
 
     This class cannot be instantiated using `__init__()` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "FlaxAutoModel is designed to be instantiated "

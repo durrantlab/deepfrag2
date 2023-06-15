@@ -15,7 +15,6 @@
 # limitations under the License.
 """ PyTorch - TF 2.0 general utilities."""
 
-
 import os
 import re
 

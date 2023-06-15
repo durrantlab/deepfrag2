@@ -14,7 +14,6 @@
 # limitations under the License.
 """ PyTorch DPR model for Open Domain Question Answering."""
 
-
 from dataclasses import dataclass
 from typing import Optional, Tuple, Union
 
@@ -79,7 +78,6 @@ class DPRContextEncoderOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     pooler_output: torch.FloatTensor
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
@@ -107,7 +105,6 @@ class DPRQuestionEncoderOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     pooler_output: torch.FloatTensor
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
@@ -138,7 +135,6 @@ class DPRReaderOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     start_logits: torch.FloatTensor
     end_logits: torch.FloatTensor = None
     relevance_logits: torch.FloatTensor = None
@@ -275,7 +271,6 @@ class DPRPretrainedContextEncoder(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = DPRConfig
     load_tf_weights = None
     base_model_prefix = "ctx_encoder"
@@ -290,7 +285,6 @@ class DPRPretrainedQuestionEncoder(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = DPRConfig
     load_tf_weights = None
     base_model_prefix = "question_encoder"
@@ -305,7 +299,6 @@ class DPRPretrainedReader(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = DPRConfig
     load_tf_weights = None
     base_model_prefix = "span_predictor"
@@ -323,7 +316,6 @@ class DPRPretrainedReader(PreTrainedModel):
 
 
 DPR_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -338,7 +330,6 @@ DPR_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 DPR_ENCODERS_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -388,7 +379,6 @@ DPR_ENCODERS_INPUTS_DOCSTRING = r"""
             See ``hidden_states`` under returned tensors for more detail. return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 DPR_READER_INPUTS_DOCSTRING = r"""
     Args:
         input_ids: (:obj:`Tuple[torch.LongTensor]` of shapes :obj:`(n_passages, sequence_length)`):
@@ -424,7 +414,6 @@ DPR_READER_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
 @add_start_docstrings(
     "The bare DPRContextEncoder transformer outputting pooler outputs as context representations.",
     DPR_START_DOCSTRING,
@@ -459,7 +448,6 @@ class DPRContextEncoder(DPRPretrainedContextEncoder):
             >>> input_ids = tokenizer("Hello, is my dog cute ?", return_tensors='pt')["input_ids"]
             >>> embeddings = model(input_ids).pooler_output
         """
-
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states

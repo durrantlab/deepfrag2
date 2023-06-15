@@ -6,7 +6,8 @@
 
 3. Create a heat map of those coordinates using the matplotlib python library. Bins that have many points should be colored red, and bins with fewer should be blue.
 
-4. Save the heat map to a PNG file."""
+4. Save the heat map to a PNG file.
+"""
 
 # 1. Import the matplotlib library
 import matplotlib

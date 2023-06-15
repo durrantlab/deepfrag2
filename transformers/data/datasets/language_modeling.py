@@ -28,7 +28,6 @@ class TextDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
-
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
@@ -105,7 +104,6 @@ class LineByLineTextDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
-
     def __init__(self, tokenizer: PreTrainedTokenizer, file_path: str, block_size: int):
         warnings.warn(
             DEPRECATION_WARNING.format(
@@ -137,7 +135,6 @@ class LineByLineWithRefDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
-
     def __init__(self, tokenizer: PreTrainedTokenizer, file_path: str, block_size: int, ref_path: str):
         warnings.warn(
             DEPRECATION_WARNING.format(
@@ -179,7 +176,6 @@ class LineByLineWithSOPTextDataset(Dataset):
     """
     Dataset for sentence order prediction task, prepare sentence pairs for SOP task
     """
-
     def __init__(self, tokenizer: PreTrainedTokenizer, file_dir: str, block_size: int):
         warnings.warn(
             DEPRECATION_WARNING.format(
@@ -221,7 +217,6 @@ class LineByLineWithSOPTextDataset(Dataset):
 
     def create_examples_from_document(self, document, block_size, tokenizer, short_seq_prob=0.1):
         """Creates examples for a single document."""
-
         # Account for special tokens
         max_num_tokens = block_size - tokenizer.num_special_tokens_to_add(pair=True)
 
@@ -326,7 +321,6 @@ class TextDatasetForNextSentencePrediction(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
-
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
@@ -418,7 +412,6 @@ class TextDatasetForNextSentencePrediction(Dataset):
 
     def create_examples_from_document(self, document: List[List[int]], doc_index: int):
         """Creates examples for a single document."""
-
         max_num_tokens = self.block_size - self.tokenizer.num_special_tokens_to_add(pair=True)
 
         # We *usually* want to fill up the entire sequence since we are padding

@@ -15,7 +15,6 @@
 """
 Utilities for the Trainer and TFTrainer class. Should be independent from PyTorch and TensorFlow.
 """
-
 import copy
 import random
 from typing import Any, Dict, NamedTuple, Optional, Tuple, Union
@@ -56,7 +55,6 @@ class EvalPrediction(NamedTuple):
         predictions (:obj:`np.ndarray`): Predictions of the model.
         label_ids (:obj:`np.ndarray`): Targets to be matched.
     """
-
     predictions: Union[np.ndarray, Tuple[np.ndarray]]
     label_ids: np.ndarray
 
@@ -94,7 +92,6 @@ class BestRun(NamedTuple):
         hyperparameters (:obj:`Dict[str, Any]`):
             The hyperparameters picked to get this run.
     """
-
     run_id: str
     objective: float
     hyperparameters: Dict[str, Any]

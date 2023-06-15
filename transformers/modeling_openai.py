@@ -15,7 +15,6 @@
 # limitations under the License.
 """PyTorch OpenAI GPT model."""
 
-
 import json
 import math
 import os
@@ -276,7 +275,6 @@ class OpenAIGPTPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = OpenAIGPTConfig
     load_tf_weights = load_tf_weights_in_openai_gpt
     base_model_prefix = "transformer"
@@ -321,7 +319,6 @@ class OpenAIGPTDoubleHeadsModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     mc_loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
@@ -331,7 +328,6 @@ class OpenAIGPTDoubleHeadsModelOutput(ModelOutput):
 
 
 OPENAI_GPT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -346,7 +342,6 @@ OPENAI_GPT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 OPENAI_GPT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -396,7 +391,6 @@ OPENAI_GPT_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare OpenAI GPT transformer model outputting raw hidden-states without any specific head on top.",

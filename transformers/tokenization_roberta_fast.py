@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Fast Tokenization classes for RoBERTa."""
-
 from typing import List, Optional
 
 from .tokenization_gpt2_fast import GPT2TokenizerFast
@@ -133,7 +132,6 @@ class RobertaTokenizerFast(GPT2TokenizerFast):
         trim_offsets (:obj:`bool`, `optional`, defaults to :obj:`True`):
             Whether the post processing step should trim offsets to avoid including whitespaces.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

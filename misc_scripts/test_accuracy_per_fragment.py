@@ -1,3 +1,5 @@
+"""Test the accuracy of the model on the test set, per fragment."""
+
 import rdkit
 from rdkit import Chem
 import json

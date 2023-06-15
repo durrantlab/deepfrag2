@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch Longformer model. """
-
 import math
 import warnings
 from dataclasses import dataclass
@@ -95,7 +94,6 @@ class LongformerBaseModelOutput(ModelOutput):
             self-attention heads. Those are the attention weights from every token with global attention to every token
             in the sequence.
     """
-
     last_hidden_state: torch.FloatTensor
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
@@ -143,7 +141,6 @@ class LongformerBaseModelOutputWithPooling(ModelOutput):
             self-attention heads. Those are the attention weights from every token with global attention to every token
             in the sequence.
     """
-
     last_hidden_state: torch.FloatTensor
     pooler_output: torch.FloatTensor = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -192,7 +189,6 @@ class LongformerMultipleChoiceModelOutput(ModelOutput):
             self-attention heads. Those are the attention weights from every token with global attention to every token
             in the sequence.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -241,7 +237,6 @@ class LongformerQuestionAnsweringModelOutput(ModelOutput):
             self-attention heads. Those are the attention weights from every token with global attention to every token
             in the sequence.
     """
-
     loss: Optional[torch.FloatTensor] = None
     start_logits: torch.FloatTensor = None
     end_logits: torch.FloatTensor = None
@@ -254,7 +249,6 @@ def _get_question_end_index(input_ids, sep_token_id):
     """
     Computes the index of the first occurance of `sep_token_id`.
     """
-
     sep_token_indices = (input_ids == sep_token_id).nonzero()
     batch_size = input_ids.shape[0]
 
@@ -306,7 +300,6 @@ class LongformerEmbeddings(nn.Module):
     """
     Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
     """
-
     # Copied from transformers.modeling_bert.BertEmbeddings.__init__
     def __init__(self, config):
         super().__init__()
@@ -605,7 +598,6 @@ class LongformerSelfAttention(nn.Module):
     @staticmethod
     def _chunk(hidden_states, window_overlap):
         """convert into overlapping chunks. Chunk size = 2w, overlap size = w"""
-
         # non-overlapping chunks of size = 2w
         hidden_states = hidden_states.view(
             hidden_states.size(0),
@@ -1133,7 +1125,6 @@ class LongformerPooler(nn.Module):
 # Copied from transformers.modeling_roberta.RobertaLMHead with Roberta->Longformer
 class LongformerLMHead(nn.Module):
     """Longformer Head for masked language modeling."""
-
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
@@ -1161,7 +1152,6 @@ class LongformerPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = LongformerConfig
     base_model_prefix = "longformer"
     authorized_missing_keys = [r"position_ids"]
@@ -1180,7 +1170,6 @@ class LongformerPreTrainedModel(PreTrainedModel):
 
 
 LONGFORMER_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -1195,7 +1184,6 @@ LONGFORMER_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 LONGFORMER_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -1251,7 +1239,6 @@ LONGFORMER_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
 @add_start_docstrings(
     "The bare Longformer Model outputting raw hidden-states without any specific head on top.",
     LONGFORMER_START_DOCSTRING,
@@ -1271,7 +1258,6 @@ class LongformerModel(LongformerPreTrainedModel):
     custom CUDA kernel to be memory and compute efficient.
 
     """
-
     def __init__(self, config, add_pooling_layer=True):
         super().__init__(config)
         self.config = config
@@ -1380,7 +1366,6 @@ class LongformerModel(LongformerPreTrainedModel):
         return_dict=None,
     ):
         r"""
-
         Returns:
 
         Examples::
@@ -1406,7 +1391,6 @@ class LongformerModel(LongformerPreTrainedModel):
             >>> sequence_output = outputs.last_hidden_state
             >>> pooled_output = outputs.pooler_output
         """
-
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -1538,7 +1522,6 @@ class LongformerForMaskedLM(LongformerPreTrainedModel):
             >>> loss = outputs.loss
             >>> prediction_logits = output.logits
         """
-
         if "masked_lm_labels" in kwargs:
             warnings.warn(
                 "The `masked_lm_labels` argument is deprecated and will be removed in a future version, use `labels` instead.",
@@ -1671,7 +1654,6 @@ class LongformerForSequenceClassification(LongformerPreTrainedModel):
 
 class LongformerClassificationHead(nn.Module):
     """Head for sentence-level classification tasks."""
-
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)

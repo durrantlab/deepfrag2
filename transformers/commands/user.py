@@ -76,7 +76,6 @@ class ANSI:
     """
     Helper for en.wikipedia.org/wiki/ANSI_escape_code
     """
-
     _bold = "\u001b[1m"
     _red = "\u001b[31m"
     _gray = "\u001b[90m"

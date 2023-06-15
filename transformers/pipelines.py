@@ -167,7 +167,6 @@ class PipelineException(Exception):
         model (:obj:`str`): The model used by the pipeline.
         reason (:obj:`str`): The error message to display.
     """
-
     def __init__(self, task: str, model: str, reason: str):
         super().__init__(reason)
 
@@ -179,7 +178,6 @@ class ArgumentHandler(ABC):
     """
     Base interface for handling arguments for each :class:`~transformers.pipelines.Pipeline`.
     """
-
     @abstractmethod
     def __call__(self, *args, **kwargs):
         raise NotImplementedError()
@@ -204,7 +202,6 @@ class PipelineDataFormat:
         overwrite (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to overwrite the :obj:`output_path`.
     """
-
     SUPPORTED_FORMATS = ["json", "csv", "pipe"]
 
     def __init__(
@@ -311,7 +308,6 @@ class CsvPipelineDataFormat(PipelineDataFormat):
         overwrite (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to overwrite the :obj:`output_path`.
     """
-
     def __init__(
         self,
         output_path: Optional[str],
@@ -356,7 +352,6 @@ class JsonPipelineDataFormat(PipelineDataFormat):
         overwrite (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to overwrite the :obj:`output_path`.
     """
-
     def __init__(
         self,
         output_path: Optional[str],
@@ -400,7 +395,6 @@ class PipedPipelineDataFormat(PipelineDataFormat):
         overwrite (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to overwrite the :obj:`output_path`.
     """
-
     def __iter__(self):
         for line in sys.stdin:
             # Split for multi-columns
@@ -440,7 +434,6 @@ class _ScikitCompat(ABC):
     """
     Interface layer for the Scikit and Keras compatibility.
     """
-
     @abstractmethod
     def transform(self, X):
         raise NotImplementedError()
@@ -479,7 +472,6 @@ PIPELINE_INIT_ARGS = r"""
             Flag indicating if the output the pipeline should happen in a binary format (i.e., pickle) or as raw text.
 """
 
-
 @add_end_docstrings(PIPELINE_INIT_ARGS)
 class Pipeline(_ScikitCompat):
     """
@@ -498,7 +490,6 @@ class Pipeline(_ScikitCompat):
     provide the :obj:`binary_output` constructor argument. If set to :obj:`True`, the output will be stored in the
     pickle format.
     """
-
     default_input_names = None
 
     def __init__(
@@ -699,7 +690,6 @@ class FeatureExtractionPipeline(Pipeline):
             Device ordinal for CPU/GPU supports. Setting this to -1 will leverage CPU, a positive will run the model on
             the associated CUDA device id.
     """
-
     def __init__(
         self,
         model: Union["PreTrainedModel", "TFPreTrainedModel"],
@@ -747,7 +737,6 @@ class TextGenerationPipeline(Pipeline):
     objective, which includes the uni-directional models in the library (e.g. gpt2). See the list of available
     community models on `huggingface.co/models <https://huggingface.co/models?filter=causal-lm>`__.
     """
-
     # Prefix text to help Transformer-XL and XLNet with short prompts as proposed by Aman Rusia
     # in https://github.com/rusiaaman/XLNet-gen#methodology
     # and https://medium.com/@amanrusia/xlnet-speaks-comparison-to-gpt-2-ea1a4e9ba39e
@@ -761,7 +750,6 @@ class TextGenerationPipeline(Pipeline):
     the Virgin Mary, prompting him to become a priest. Rasputin quickly becomes famous, with people, even a bishop,
     begging for his blessing. <eod> </s> <eos>
     """
-
     ALLOWED_MODELS = [
         "XLNetLMHeadModel",
         "TransfoXLLMHeadModel",
@@ -836,7 +824,6 @@ class TextGenerationPipeline(Pipeline):
             - **generated_token_ids** (:obj:`torch.Tensor` or :obj:`tf.Tensor`, present when ``return_tensors=True``)
               -- The token ids of the generated text.
         """
-
         if isinstance(text_inputs, str):
             text_inputs = [text_inputs]
         results = []
@@ -944,7 +931,6 @@ class TextClassificationPipeline(Pipeline):
     the up-to-date list of available models on `huggingface.co/models
     <https://huggingface.co/models?filter=text-classification>`__.
     """
-
     def __init__(self, return_all_scores: bool = False, **kwargs):
         super().__init__(**kwargs)
 
@@ -994,7 +980,6 @@ class ZeroShotClassificationArgumentHandler(ArgumentHandler):
     Handles arguments for zero-shot for text classification by turning each possible label into an NLI
     premise/hypothesis pair.
     """
-
     def _parse_labels(self, labels):
         if isinstance(labels, str):
             labels = [label.strip() for label in labels.split(",")]
@@ -1039,7 +1024,6 @@ class ZeroShotClassificationPipeline(Pipeline):
     The models that this pipeline can use are models that have been fine-tuned on an NLI task. See the up-to-date list
     of available models on `huggingface.co/models <https://huggingface.co/models?search=nli>`__.
     """
-
     def __init__(self, args_parser=ZeroShotClassificationArgumentHandler(), *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._args_parser = args_parser
@@ -1171,7 +1155,6 @@ class FillMaskPipeline(Pipeline):
 
         This pipeline only works for inputs with exactly one token masked.
     """
-
     def __init__(
         self,
         model: Union["PreTrainedModel", "TFPreTrainedModel"],
@@ -1329,7 +1312,6 @@ class TokenClassificationArgumentHandler(ArgumentHandler):
     """
     Handles arguments for token classification.
     """
-
     def __call__(self, *args, **kwargs):
 
         if args is not None and len(args) > 0:
@@ -1369,7 +1351,6 @@ class TokenClassificationPipeline(Pipeline):
     up-to-date list of available models on `huggingface.co/models
     <https://huggingface.co/models?filter=token-classification>`__.
     """
-
     default_input_names = "sequences"
 
     def __init__(
@@ -1433,7 +1414,6 @@ class TokenClassificationPipeline(Pipeline):
             - **index** (:obj:`int`, only present when ``self.grouped_entities=False``) -- The index of the
               corresponding token in the sentence.
         """
-
         inputs, offset_mappings = self._args_parser(inputs, **kwargs)
 
         answers = []
@@ -1543,7 +1523,6 @@ class TokenClassificationPipeline(Pipeline):
         Args:
             entities (:obj:`dict`): The entities predicted by the pipeline.
         """
-
         entity_groups = []
         entity_group_disagg = []
 
@@ -1601,7 +1580,6 @@ class QuestionAnsweringArgumentHandler(ArgumentHandler):
     QuestionAnsweringArgumentHandler manages all the possible to create a :class:`~transformers.SquadExample` from the
     command-line supplied arguments.
     """
-
     def normalize(self, item):
         if isinstance(item, SquadExample):
             return item
@@ -1665,7 +1643,6 @@ class QuestionAnsweringPipeline(Pipeline):
     up-to-date list of available models on `huggingface.co/models
     <https://huggingface.co/models?filter=question-answering>`__.
     """
-
     default_input_names = "question,context"
 
     def __init__(
@@ -1960,7 +1937,6 @@ class SummarizationPipeline(Pipeline):
         summarizer = pipeline("summarization", model="t5-base", tokenizer="t5-base", framework="tf")
         summarizer("Sam Shleifer writes the best docstring examples in the whole world.", min_length=5, max_length=20)
     """
-
     def __init__(self, *args, **kwargs):
         kwargs.update(task="summarization")
         super().__init__(*args, **kwargs)
@@ -2081,7 +2057,6 @@ class TranslationPipeline(Pipeline):
         en_fr_translator = pipeline("translation_en_to_fr")
         en_fr_translator("How old are you?")
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -2190,7 +2165,6 @@ class Text2TextGenerationPipeline(Pipeline):
         text2text_generator = pipeline("text2text-generation")
         text2text_generator("question: What is 42 ? context: 42 is the answer to life, the universe and everything")
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -2299,7 +2273,6 @@ class Conversation:
 
         conversation.add_user_input("Is it good?")
     """
-
     def __init__(self, text: str = None, conversation_id: UUID = None):
         if not conversation_id:
             conversation_id = uuid.uuid4()
@@ -2415,7 +2388,6 @@ class ConversationalPipeline(Pipeline):
 
         conversational_pipeline([conversation_1, conversation_2])
     """
-
     def __init__(self, min_length_for_response=32, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -2448,7 +2420,6 @@ class ConversationalPipeline(Pipeline):
             :class:`~transformers.Conversation` or a list of :class:`~transformers.Conversation`: Conversation(s) with
             updated generated responses for those containing a new user input.
         """
-
         if isinstance(conversations, Conversation):
             conversations = [conversations]
         # Input validation

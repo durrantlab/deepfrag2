@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ XLNet configuration """
-
 from .configuration_utils import PretrainedConfig
 from .utils import logging
 
@@ -126,7 +125,6 @@ class XLNetConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
-
     model_type = "xlnet"
 
     def __init__(

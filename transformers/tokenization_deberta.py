@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Tokenization class for model DeBERTa."""
-
 import os
 import pathlib
 import random
@@ -314,7 +313,6 @@ class GPT2Tokenizer(object):
         special_tokens (:obj:`list`, optional):
             List of special tokens to be added to the end of the vocabulary.
     """
-
     def __init__(self, vocab_file=None, special_tokens=None):
         self.pad_token = "[PAD]"
         self.sep_token = "[SEP]"
@@ -375,7 +373,6 @@ class GPT2Tokenizer(object):
         Returns:
           List of ids
         """
-
         return [self.vocab[t] for t in tokens]
 
     def convert_ids_to_tokens(self, ids):
@@ -388,7 +385,6 @@ class GPT2Tokenizer(object):
         Returns:
           List of tokens
         """
-
         tokens = []
         for i in ids:
             tokens.append(self.ids_to_tokens[i])
@@ -512,7 +508,6 @@ class DebertaTokenizer(PreTrainedTokenizer):
             The token used for masking values. This is the token used when training this model with masked language
             modeling. This is the token which the model will try to predict.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -595,7 +590,6 @@ class DebertaTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: List of `input IDs <../glossary.html#input-ids>`__ with the appropriate special tokens.
         """
-
         if token_ids_1 is None:
             return [self.cls_token_id] + token_ids_0 + [self.sep_token_id]
         cls = [self.cls_token_id]
@@ -618,7 +612,6 @@ class DebertaTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(

@@ -14,7 +14,6 @@
 # limitations under the License.
 """Convert T5 checkpoint."""
 
-
 import argparse
 
 import torch

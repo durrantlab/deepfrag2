@@ -1,3 +1,5 @@
+"""__init__.py"""
+
 __all__ = [
     "Mol",
     "BackedMol",
@@ -23,6 +25,6 @@ from .loader import MultiLoader
 
 try:
     from .molecules.graph_mol import GraphMol
-except:
+except Exception:
     GraphMol = None
     print("collagen.GraphMol requires torch_geometric!")

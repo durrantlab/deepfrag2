@@ -42,10 +42,8 @@ LOGITS_PROCESSOR_INPUTS_DOCSTRING = r"""
 
 """
 
-
 class LogitsProcessor(ABC):
     """Abstract base class for all logit processors that can be applied during generation."""
-
     @add_start_docstrings(LOGITS_PROCESSOR_INPUTS_DOCSTRING)
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         """Torch method for processing logits."""
@@ -56,7 +54,6 @@ class LogitsProcessor(ABC):
 
 class LogitsWarper(ABC):
     """Abstract base class for all logit warpers that can be applied during generation with multinomial sampling."""
-
     @add_start_docstrings(LOGITS_PROCESSOR_INPUTS_DOCSTRING)
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         """Torch method for warping logits."""
@@ -72,7 +69,6 @@ class LogitsProcessorList(list):
     list and adds a specific `__call__` method to apply each :class:`~transformers.LogitsProcessor` or
     :class:`~transformers.LogitsProcessor` to the inputs.
     """
-
     @add_start_docstrings(LOGITS_PROCESSOR_INPUTS_DOCSTRING)
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         for processor in self:
@@ -90,7 +86,6 @@ class MinLengthLogitsProcessor(LogitsProcessor):
         eos_token_id (:obj:`int`):
             The id of the `end-of-sequence` token.
     """
-
     def __init__(self, min_length: int, eos_token_id: int):
         if not isinstance(min_length, int) or min_length < 0:
             raise ValueError(f"`min_length` has to be a positive integer, but is {min_length}")
@@ -116,7 +111,6 @@ class TemperatureLogitsWarper(LogitsWarper):
         temperature (:obj:`float`):
             The value used to module the logits distribution.
     """
-
     def __init__(self, temperature: float):
         if not isinstance(temperature, float) or not (temperature > 0):
             raise ValueError(f"`temperature` has to be a strictly positive float, but is {temperature}")
@@ -137,7 +131,6 @@ class RepetitionPenaltyLogitsProcessor(LogitsProcessor):
             The parameter for repetition penalty. 1.0 means no penalty. See `this paper
             <https://arxiv.org/pdf/1909.05858.pdf>`__ for more details.
     """
-
     def __init__(self, penalty: float):
         if not isinstance(penalty, float) or not (penalty > 0):
             raise ValueError(f"`penalty` has to be a strictly positive float, but is {penalty}")
@@ -169,7 +162,6 @@ class TopPLogitsWarper(LogitsWarper):
         min_tokens_to_keep (:obj:`int`, `optional`, defaults to 1):
             Minimum number of tokens that cannot be filtered.
     """
-
     def __init__(self, top_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if not isinstance(top_p, float) or (top_p < 0 or top_p > 1.0):
             raise ValueError(f"`top_p` has to be a float > 0 and < 1, but is {top_p}")
@@ -209,7 +201,6 @@ class TopKLogitsWarper(LogitsWarper):
         min_tokens_to_keep (:obj:`int`, `optional`, defaults to 1):
             Minimum number of tokens that cannot be filtered.
     """
-
     def __init__(self, top_k: int, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if not isinstance(top_k, int) or top_k <= 0:
             raise ValueError(f"`top_k` has to be a strictly positive integer, but is {top_k}")
@@ -235,7 +226,6 @@ class NoRepeatNGramLogitsProcessor(LogitsProcessor):
         ngram_size (:obj:`int`):
             All ngrams of size :obj:`ngram_size` can only occur once.
     """
-
     def __init__(self, ngram_size: int):
         if not isinstance(ngram_size, int) or ngram_size <= 0:
             raise ValueError(f"`ngram_size` has to be a strictly positive integer, but is {ngram_size}")
@@ -288,7 +278,6 @@ class NoBadWordsLogitsProcessor(LogitsProcessor):
         eos_token_id (:obj:`int`):
             The id of the `end-of-sequence` token.
     """
-
     def __init__(self, bad_words_ids: Iterable[Iterable[int]], eos_token_id: int):
 
         if not isinstance(bad_words_ids, List) or len(bad_words_ids) == 0:

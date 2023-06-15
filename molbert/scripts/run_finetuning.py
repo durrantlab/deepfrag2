@@ -39,7 +39,6 @@ def finetune(
         num_workers: how many workers to use
         batch_size: what batch size to use for training
     """
-
     default_path = os.path.join('./logs/', datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
     output_dir = os.path.join(default_path, dataset)
     raw_args_str = (

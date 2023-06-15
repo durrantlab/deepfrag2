@@ -14,7 +14,6 @@
 # limitations under the License.
 """ LXMERT model configuration """
 
-
 from .configuration_utils import PretrainedConfig
 from .utils import logging
 
@@ -111,7 +110,6 @@ class LxmertConfig(PretrainedConfig):
             Whether or not the model should return the hidden states from the vision, language, and cross-modality
             layers should be returned.
     """
-
     model_type = "lxmert"
 
     def __init__(

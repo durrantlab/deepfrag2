@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ GLUE processors and helpers """
-
 import os
 import warnings
 from dataclasses import asdict
@@ -169,7 +168,6 @@ class OutputMode(Enum):
 
 class MrpcProcessor(DataProcessor):
     """Processor for the MRPC data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -216,7 +214,6 @@ class MrpcProcessor(DataProcessor):
 
 class MnliProcessor(DataProcessor):
     """Processor for the MultiNLI data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -262,7 +259,6 @@ class MnliProcessor(DataProcessor):
 
 class MnliMismatchedProcessor(MnliProcessor):
     """Processor for the MultiNLI Mismatched data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -278,7 +274,6 @@ class MnliMismatchedProcessor(MnliProcessor):
 
 class ColaProcessor(DataProcessor):
     """Processor for the CoLA data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -325,7 +320,6 @@ class ColaProcessor(DataProcessor):
 
 class Sst2Processor(DataProcessor):
     """Processor for the SST-2 data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -371,7 +365,6 @@ class Sst2Processor(DataProcessor):
 
 class StsbProcessor(DataProcessor):
     """Processor for the STS-B data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -417,7 +410,6 @@ class StsbProcessor(DataProcessor):
 
 class QqpProcessor(DataProcessor):
     """Processor for the QQP data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -469,7 +461,6 @@ class QqpProcessor(DataProcessor):
 
 class QnliProcessor(DataProcessor):
     """Processor for the QNLI data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -515,7 +506,6 @@ class QnliProcessor(DataProcessor):
 
 class RteProcessor(DataProcessor):
     """Processor for the RTE data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
@@ -561,7 +551,6 @@ class RteProcessor(DataProcessor):
 
 class WnliProcessor(DataProcessor):
     """Processor for the WNLI data set (GLUE version)."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         warnings.warn(DEPRECATION_WARNING.format("processor"), FutureWarning)
