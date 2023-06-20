@@ -394,7 +394,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             noh: bool,
             discard_distant_atoms: bool,
     ):
-        super().__init__(structures, structures.split(",")[8], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
+        super().__init__(structures, structures.split(",")[9], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _load_classes_families_targets_ligands(
         self,
@@ -484,7 +484,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         col_second_frag_smi = paired_data_csv_sep[5]
         col_act_first_frag_smi = paired_data_csv_sep[6]
         col_act_second_frag_smi = paired_data_csv_sep[7]
-        col_path_pdb_sdf_files = paired_data_csv_sep[8]
+        col_prevalence = paired_data_csv_sep[8]
+        col_path_pdb_sdf_files = paired_data_csv_sep[9]
 
         with open(col_csv_file, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -517,6 +518,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
                     act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
                     act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
+                    prevalence_receptor = row[col_prevalence]
 
                     key_sdf_pdb = self.__get_key_sdf_pdb(pdb_name, sdf_name)
                     key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(pdb_name, sdf_name, parent_smi)
@@ -532,9 +534,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         self.backed_mol_x_parent[parent_smi] = backed_parent
                         self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb] = []
                         if backed_first_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag])
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor])
                         if backed_second_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag])
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
 
         self.pdb_files.sort()
 

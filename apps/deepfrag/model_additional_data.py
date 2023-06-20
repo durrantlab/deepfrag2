@@ -15,6 +15,7 @@ import numpy as np
 import random
 import torch
 from collagen.metrics import cos_loss
+from math import e
 
 
 class DeepFragModelPairedDataFinetune(DeepFragModel):
@@ -55,7 +56,13 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         idx = 0
         for entry in entry_infos:
             act_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][1])
-            cos_loss_vector[idx] = cos_loss_vector[idx] * act_value
+            prv_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][3])
+            # the greater the prevalence, the greater the result to raise euler to the prevalence.
+            exp_value = e ** prv_value
+            # the activity with the receptor is penalized by increasing its value
+            # this increase makes its tendency to 0 more difficult when multiplying by the probability obtained from the cosine similarity function
+            act_euler = act_value * exp_value
+            cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
             idx = idx + 1
 
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
