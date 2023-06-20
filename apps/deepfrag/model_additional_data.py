@@ -15,9 +15,11 @@ import numpy as np
 import random
 import torch
 from collagen.metrics import cos_loss
+from math import e
 
 
-class DeepFragModelGoodBadDataFinetune(DeepFragModel):
+class DeepFragModelPairedDataFinetune(DeepFragModel):
+
     def __init__(self, **kwargs):
         """Initialize the DeepFrag model.
         
@@ -28,27 +30,40 @@ class DeepFragModelGoodBadDataFinetune(DeepFragModel):
 
         self.is_cpu = kwargs["cpu"]
         self.fragment_representation = kwargs["fragment_representation"]
-        self.moad = None
+        self.database = None
 
-    def set_moad_database(self, moad):
-        self.moad = moad
+    def set_database(self, database):
+        """Method to specify the paired database.
+
+        Args:
+            database: The paired database.
+        """
+        self.database = database
 
     def loss(self, pred, fps, entry_infos, batch_size):
-        if self.sigmoid_on_fps:
-            fps = self.sigmoid_on_fps(fps)
+        """Loss function.
 
+        Args:
+            pred: tensor with the fingerprint values obtained from voxels.
+            fps: tensor with the fingerprint values obtained from a given fragment representation.
+            entry_infos: list with each entry information.
+            batch_size: size of the tensors and list aforementioned.
+
+        Returns:
+            float: loss value
+        """
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
         cos_loss_vector = cos_loss(pred, fps)
         idx = 0
         for entry in entry_infos:
-            value = self.moad.is_good_bad_or_both_fragment(entry.receptor_name.split(" ")[1], entry.parent_smiles, entry.fragment_smiles)
-            if value == 0:  # it is a bad fragment
-                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.9
-            elif value == 1:  # it is a good fragment
-                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.4
-            elif value == 2:  # it is both a good and bad fragment
-                cos_loss_vector[idx] = cos_loss_vector[idx] * 0.1
-
+            act_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][1])
+            prv_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][3])
+            # the greater the prevalence, the greater the result to raise euler to the prevalence.
+            exp_value = e ** prv_value
+            # the activity with the receptor is penalized by increasing its value
+            # this increase makes its tendency to 0 more difficult when multiplying by the probability obtained from the cosine similarity function
+            act_euler = act_value * exp_value
+            cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
             idx = idx + 1
 
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
@@ -139,7 +154,8 @@ class DeepFragModelBadData(DeepFragModel):
             max_pdbs_train=None,
             max_pdbs_val=None,
             max_pdbs_test=None,
-            butina_cluster_cutoff=None,
+            split_method="random",  # TODO: Wasn't sure what to put
+            butina_cluster_cutoff=None,  # TODO: Why hardcoded?
         )
 
         _, lig_infs = get_info_given_pdb_id(

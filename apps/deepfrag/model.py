@@ -211,7 +211,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of molecular descriptors to be calculated: rdk10, rdkit_desc, maccs, morgan, molbert, molbert_pos, molbert_norm, molbert_norm2, molbert_x_rdk10, and molbert_x_morgan",
+            help="The type of fragment representations to be calculated: rdk10, morgan, rdk10_x_morgan, molbert, molbert_binary, molbert_x_rdk10, and molbert_x_morgan",
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",
@@ -266,9 +266,6 @@ class DeepFragModel(pl.LightningModule):
         Returns:
             torch.Tensor: The loss.
         """
-        if self.sigmoid_on_fps:
-            fps = self.sigmoid_on_fps(fps)
-
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
 
     def training_step(

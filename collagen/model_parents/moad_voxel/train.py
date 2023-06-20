@@ -4,7 +4,7 @@ from argparse import Namespace
 from typing import Any, Optional, Tuple
 from collagen.core.loader import DataLambda
 from torchinfo import summary
-from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PdbSdfCsvInterface
+from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface
 from collagen.external.moad.split import compute_dataset_split
 
 
@@ -71,23 +71,22 @@ class MoadVoxelModelTrain(object):
 
         Args:
             args (Namespace): The arguments passed to the program.
-            train (bool): Whether to train or not. TODO: Very confusing. Needs
-                to be restructured.
+            train (bool): Whether to train or fine-tune.
 
         Returns:
             Tuple[Any, DataLambda, DataLambda]: The MOAD, training and
                 validation sets.
         """
         if args.custom_test_set_dir:
-            raise Exception("The custom test set can only be used in testing mode")
+            raise Exception("The custom test set can only be used in inference mode")
 
         voxel_params = self.init_voxel_params(args)
         device = self.init_device(args)
 
         if train:
-            if args.good_bad_data_csv:
+            if args.paired_data_csv:
                 raise ValueError(
-                    "For 'train' mode, you must not specify the '--good_bad_data_csv' parameter."
+                    "For 'train' mode, you must not specify the '--paired_data_csv' parameter."
                 )
             if not args.data_dir:
                 raise ValueError(
@@ -111,39 +110,28 @@ class MoadVoxelModelTrain(object):
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
             )
-        elif args.every_csv is None:
-            # TODO: Very confusing. Needs to be restructured.
-            moad = PdbSdfDirInterface(
-                structures_dir=args.data_dir,
-                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-                grid_width=voxel_params.width,
-                grid_resolution=voxel_params.resolution,
-                noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms,
-            )
-
         else:
             if args.every_csv:
                 raise ValueError(
                     "For 'fine-tuning' mode, you must not specify the '--every_csv' parameter."
                 )
-            if (args.data_dir and args.good_bad_data_csv) or (not args.data_dir and not args.good_bad_data_csv):
+            if (args.data_dir and args.paired_data_csv) or (not args.data_dir and not args.paired_data_csv):
                 raise ValueError(
-                    "For 'fine-tuning' mode, you must specify the '--data_dir' parameter or the '--good_bad_data_csv' parameter."
+                    "For 'fine-tuning' mode, you must specify the '--data_dir' parameter or the '--paired_data_csv' parameter."
                 )
 
-            if args.data_dir:
+            if args.data_dir:  # for fine-tuning mode using a non-paired database other than MOAD
                 moad = PdbSdfDirInterface(
-                    structures=args.data_dir,
+                    structures_dir=args.data_dir,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
                     grid_resolution=voxel_params.resolution,
                     noh=args.noh,
                     discard_distant_atoms=args.discard_distant_atoms
                 )
-            else:
-                moad = PdbSdfCsvInterface(
-                    structures=args.good_bad_data_csv,
+            else:  # for fine-tuning mode using a paired database other than MOAD
+                moad = PairedPdbSdfCsvInterface(
+                    structures=args.paired_data_csv,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
                     grid_resolution=voxel_params.resolution,
@@ -156,12 +144,18 @@ class MoadVoxelModelTrain(object):
             seed=args.split_seed,
             fraction_train=args.fraction_train,
             fraction_val=args.fraction_val,
-            prevent_smiles_overlap=False,
+
+            # Should be true to ensure independence when using
+            # split_method="random". TODO: Could remove this parameter, force it
+            # to be true. Also, could be user parameter.
+            prevent_smiles_overlap=True,  
+
             save_splits=args.save_splits,
             load_splits=args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
+            split_method=args.split_method,
             butina_cluster_cutoff=args.butina_cluster_cutoff,
         )
 
@@ -182,8 +176,8 @@ class MoadVoxelModelTrain(object):
             voxel_params=voxel_params,
             device=device,
         )
-
         print(f"Number of batches for the training data: {len(train_data)}")
+
         if len(val.targets) > 0:
             val_data: DataLambda = self.get_data_from_split(
                 cache_file=args.cache,

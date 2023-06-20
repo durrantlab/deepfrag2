@@ -9,7 +9,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch
 import os
-from apps.deepfrag.model_additional_data import DeepFragModelGoodBadDataFinetune
+from apps.deepfrag.model_additional_data import DeepFragModelPairedDataFinetune
 
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
@@ -80,7 +80,7 @@ class MoadVoxelModelInits(object):
         return pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
 
     def init_model(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
+        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str], fragment_set=None,
     ) -> pl.LightningModule:
         """Initialize the model.
 
@@ -88,6 +88,7 @@ class MoadVoxelModelInits(object):
             args: The arguments parsed by argparse.
             ckpt_filename: The checkpoint to load from. If None, a new model is
                 initialized.
+            fragment_set (optional): the fragment database to be used in test or inference mode
 
         Returns:
             pl.LightningModule: The model.
@@ -96,7 +97,10 @@ class MoadVoxelModelInits(object):
             return self.model_cls(**vars(args))
 
         print(f"\nLoading model from checkpoint {ckpt_filename}\n")
-        return self.model_cls.load_from_checkpoint(ckpt_filename)
+        model = self.model_cls.load_from_checkpoint(ckpt_filename)
+        if fragment_set and isinstance(model, DeepFragModelPairedDataFinetune):
+            model.set_database(fragment_set)
+        return model
 
     @staticmethod
     def init_voxel_params(args: Namespace) -> VoxelParams:
@@ -123,7 +127,7 @@ class MoadVoxelModelInits(object):
         """
         return torch.device("cpu") if args.cpu else torch.device("cuda")
 
-    def init_warm_model(self, args: Namespace) -> pl.LightningModule:
+    def init_warm_model(self, args: Namespace, moad) -> pl.LightningModule:
         """Initialize the model for warm starting (finetuning).
 
         Args:
@@ -135,6 +139,6 @@ class MoadVoxelModelInits(object):
         model = self.model_cls(**vars(args))
         state_dict = torch.load(args.model_for_warm_starting)
         model.load_state_dict(state_dict)
-        if isinstance(model, DeepFragModelGoodBadDataFinetune):
-            model.set_moad_database(moad)
+        if isinstance(model, DeepFragModelPairedDataFinetune):
+            model.set_database(moad)
         return model
