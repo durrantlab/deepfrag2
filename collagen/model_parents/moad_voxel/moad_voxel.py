@@ -143,7 +143,7 @@ class MoadVoxelModelParent(
         Args:
             args (Namespace): The arguments parsed by argparse.
         """
-        if args.fragment_representation in ["rdk10", "morgan"]:
+        if args.fragment_representation in ["rdk10", "morgan", "rdk10_x_morgan"]:
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation in [
             "molbert",

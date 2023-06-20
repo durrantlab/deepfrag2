@@ -102,6 +102,24 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return array
 
 
+def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+    """A vector with RDK and Morgan Fingerprints.
+
+    Args:
+        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
+        size (int): Size of the fingerprint.
+        smiles (str): SMILES string (not used).
+
+    Returns:
+        np.array: Fingerprint.
+    """
+    rdk10_vals = _rdk10(m, size, smiles)
+    morgan_vals = _Morgan(m, size, smiles)
+    rdk10_morgan_vals = np.add(rdk10_vals, morgan_vals)
+    rdk10_morgan_vals[rdk10_morgan_vals > 0] = 1
+    return rdk10_morgan_vals
+
+
 @lru_cache
 def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints. TODO: Candidate for removal.
@@ -174,6 +192,7 @@ def _molbert_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.
 FINGERPRINTS = {
     "rdk10": _rdk10,
     "morgan": _Morgan,
+    "rdk10_x_morgan": _rdk10_x_morgan,
     "molbert": _molbert,
     "molbert_binary": _molbert_binary,
     "molbert_x_rdk10": _molbert_x_rdk10,
