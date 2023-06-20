@@ -33,16 +33,19 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="Path to a folder containing bad ligands. This parameter is to be only used in the training mode as additional information to the data contained in --data_dir"
     )
     parser.add_argument(
-        "--good_bad_data_csv",
+        "--paired_data_csv",
         required=False,  # Not required if running in --mode "inference"
         help="This parameter is to be only used in the fine-tuning mode. This parameter is a set of comma separated values in the next order:\n"
-             "1 - Path to the CSV file where information related to good/bad ligands, good/bad fragments, and PDB file names are stored\n"
-             "2 - Column name related to the PDB file names\n"
-             "3 - Column name related to the good ligand SMILES strings\n"
-             "4 - Column name related to the good fragment SMILES strings\n"
-             "5 - Column name related to the bad ligand SMILES strings\n"
-             "6 - Column name related to the bad fragment SMILES strings\n"
-             "7 - Path to the PDB file folder"
+             "1 - Path to the CSV file where information related to the paired data are stored\n"
+             "2 - Column related to the PDB files\n"
+             "3 - Column related to the SDF files\n"
+             "4 - Column related to the parent SMILES strings\n"
+             "5 - Column related to the SMILES strings of the first fragment\n"
+             "6 - Column related to the SMILES strings of the second fragment\n"
+             "7 - Column related to the activity value of the first fragment\n"
+             "8 - Column related to the activity value of the second fragment\n"
+             "9 - Column related to the receptor prevalence"
+             "10 - Path to the PDB and SDF files"
     )
 
     # For many of these, good to define default values in args_defaults.py
@@ -78,6 +81,14 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         action="store_true",
         help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
     )
+
+    parser.add_argument(
+        "--split_method",
+        required=False,
+        type=str,
+        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If you use --prevent_smiles_overlap with this method, some data will be discarded. (2) If 'butina', butina clustering will be used. TODO: More details needed."
+    )
+
     parser.add_argument(
         "--butina_cluster_cutoff",
         required=False,

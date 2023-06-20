@@ -27,7 +27,7 @@ def _cluster_fps(fps: List[List[float]], cutoff: float=0.2) -> Any:
     return Butina.ClusterData(dists, nfps, cutoff, isDistData=True, reordering=True)
 
 
-def generate_splits_from_clustering(
+def generate_splits_using_butina_clustering(
     moad: "MOADInterface",
     split_rand_num_gen: Any,
     fraction_train: float = 0.6,
