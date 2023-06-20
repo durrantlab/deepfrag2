@@ -276,7 +276,14 @@ class MOADFragmentDataset(Dataset):
         if frag_num_heavy_atom < args.min_frag_num_heavy_atoms:
             if user_args.verbose:
                 print(
-                    f"Fragment rejected; has too few heavy atoms: {frag_num_heavy_atom}"
+                    f"Fragment rejected; has too few (or much) heavy atoms: {frag_num_heavy_atom}"
+                )
+            return False
+        
+        if frag_num_heavy_atom > args.max_frag_num_heavy_atoms:
+            if user_args.verbose:
+                print(
+                    f"Fragment rejected; has too many heavy atoms: {frag_num_heavy_atom}"
                 )
             return False
         

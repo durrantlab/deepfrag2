@@ -156,6 +156,37 @@ class DeepFragModel(pl.LightningModule):
             nn.Sigmoid(),
         )
 
+        self.sigmoid_on_fps = None
+        if kwargs["fragment_representation"] == "molbert_sig":
+            # This function will be applied on the fragment representation vector
+            self.sigmoid_on_fps = nn.Sequential(
+                # Applies sigmoid activation function. See
+                # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
+                # Values ranging between 0 and 1
+                nn.Sigmoid(),
+            )
+        elif kwargs["fragment_representation"] == "molbert_sig_v2":
+            # This function will be applied on the fragment representation vector
+            self.sigmoid_on_fps = nn.Sequential(
+                # Linear transform (fully connected). Increases features to 512.
+                nn.Linear(self.fp_size, 512),
+
+                # Activation function. Output 0 if negative, same if positive.
+                nn.ReLU(),
+
+                # Randomly zero some values
+                nn.Dropout(),
+
+                # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
+                # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+                nn.Linear(512, self.fp_size),
+
+                # Applies sigmoid activation function. See
+                # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
+                # Values ranging between 0 and 1
+                nn.Sigmoid(),
+            )
+
     @staticmethod
     def add_model_args(
         parent_parser: argparse.ArgumentParser,

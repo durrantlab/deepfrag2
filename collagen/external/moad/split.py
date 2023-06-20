@@ -304,6 +304,49 @@ def _generate_splits_from_scratch(
     else:
         return None, None
 
+    # TODO: Consider this GPT4 suggestion:
+
+    # The problem with this approach is that even if smiles are independent, the
+    # corresponding pdb ids are not also moved into the appropriate
+    # train/test/val sets, so this data is thrown out elsewhere in the code. I
+    # need some code that moves pdbs and the associated smiles together. And
+    # yet, at the same time, it is still important that pdbs of the same family
+    # are not split across the three sets, and it is still important that
+    # identical smiles do not appear in the train/test/val sets. What new
+    # approach do you recommend?
+
+    # To address this issue, you can modify the approach to first group the data
+    # by both protein family and ligand identity (SMILES) and then split the
+    # groups into training, validation, and testing sets. This will ensure that
+    # PDB IDs and their associated SMILES are moved together while maintaining
+    # the required constraints. Here's a recommended approach:
+
+    # 1. Group the data by protein family and ligand identity (SMILES):
+
+    #   a. Create a dictionary with keys as tuples of protein family and SMILES,
+    #   and values as lists of corresponding PDB IDs.
+
+    # 2. Split the groups into training, validation, and testing sets:
+
+    #   a. Use the same splitting function (e.g., `_split_seq_per_probability`)
+    #   or any other method to split the dictionary keys (protein family, SMILES
+    #   tuples) into training, validation, and testing groups.
+
+    # 3. Flatten the PDB ID lists for each set:
+
+    #   a. For each set (training, validation, testing), go through the
+    #   corresponding (protein family, SMILES) keys and collect their PDB IDs,
+    #   creating a list of PDB IDs for each set.
+
+    # 4. Create SMILES sets for each split:
+
+    #   a. Extract unique SMILES from the (protein family, SMILES) keys for each
+    #   set.
+
+    # By following this approach, you ensure that PDB IDs and their associated
+    # SMILES are moved together while keeping protein families and identical
+    # SMILES from being split across the training, validation, and testing sets.
+
     return pdb_ids, all_smis
 
 
