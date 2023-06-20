@@ -44,7 +44,8 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
              "6 - Column related to the SMILES strings of the second fragment\n"
              "7 - Column related to the activity value of the first fragment\n"
              "8 - Column related to the activity value of the second fragment\n"
-             "9 - Path to the PDB and SDF files"
+             "9 - Column related to the receptor prevalence"
+             "10 - Path to the PDB and SDF files"
     )
 
     # For many of these, good to define default values in args_defaults.py

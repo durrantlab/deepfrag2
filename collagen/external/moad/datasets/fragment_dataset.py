@@ -286,6 +286,13 @@ class MOADFragmentDataset(Dataset):
                     f"Fragment rejected; has too many heavy atoms: {frag_num_heavy_atom}"
                 )
             return False
+        
+        if frag_num_heavy_atom > args.max_frag_num_heavy_atoms:
+            if user_args.verbose:
+                print(
+                    f"Fragment rejected; has too many heavy atoms: {frag_num_heavy_atom}"
+                )
+            return False
 
         if args.max_frag_repeats is not None:
             if frag_smi not in self.smi_counts:
