@@ -455,7 +455,7 @@ class MoadVoxelModelTest(object):
                 )
 
         # Calculate top_k metric for this checkpoint
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         top_k_results = top_k(
             predictions_ensembled,
             torch.tensor(
