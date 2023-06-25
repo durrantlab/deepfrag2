@@ -180,7 +180,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of fragment representations to be calculated: rdk10, morgan, rdk10_x_morgan, molbert, molbert_binary, molbert_x_rdk10, and molbert_x_morgan",
+            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, molbert_binary",
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",
