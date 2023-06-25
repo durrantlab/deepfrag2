@@ -318,7 +318,7 @@ def _generate_splits_from_scratch(
             val=_smiles_for(moad, pdb_ids.val),
             test=_smiles_for(moad, pdb_ids.test),
         )
-    elif split_method in ["random", "random_default", "priority"]:
+    elif split_method in ["random", "random_default", "high_priority", "low_priority"]:
         print("Building training/validation/test sets")
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
@@ -360,9 +360,12 @@ def _generate_splits_from_scratch(
             if split_method in ["random", "random_default"]:
                 print("    Reassigning overlapping SMILES randomly")
                 randomly_reassign_overlapping_smiles(all_smis)
-            else:  # it is priority
+            elif split_method == "high_priority":
                 print("    Reassigning overlapping SMILES by priority, favoring the training and validation sets")
-                priority_reassign_overlapping_smiles(all_smis)
+                __priority_reassign_overlapping_smiles(all_smis)
+            else:  # it is low priority
+                print("    Reassigning overlapping SMILES by priority, favoring the testing and validation sets")
+                __priority_reassign_overlapping_smiles(all_smis, False)
     else:
         return None, None
 
@@ -404,7 +407,7 @@ def randomly_reassign_overlapping_smiles(all_smis):
     )
 
 
-def priority_reassign_overlapping_smiles(all_smis):
+def __priority_reassign_overlapping_smiles(all_smis, high_prior: bool = True):
     # Reassign overlapping SMILES.
 
     # Find the overlaps (intersections) between pairs of sets.
@@ -417,9 +420,14 @@ def priority_reassign_overlapping_smiles(all_smis):
     size_expected_non_overlap = len(all_smis.train | all_smis.val | all_smis.test)
 
     # Update SMILES sets
-    # all_smis.train = all_smis.train
-    all_smis.val = all_smis.val - train_val
-    all_smis.test = all_smis.test - (train_test | val_test)
+    if high_prior:
+        # all_smis.train = all_smis.train
+        all_smis.val = all_smis.val - train_val
+        all_smis.test = all_smis.test - (train_test | val_test)
+    else:
+        all_smis.train = all_smis.train - (train_val | train_test)
+        all_smis.val = all_smis.val - val_test
+        # all_smis.test = all_smis.test
 
     size_non_overlap = len(all_smis.train) + len(all_smis.val) + len(all_smis.test)
     assert (size_non_overlap <= size_overlap) and (

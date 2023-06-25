@@ -617,7 +617,7 @@ class MoadVoxelModelTest(object):
             raise Exception(
                 "To run the test mode is required loading a previously saved test dataset"
             )
-        elif args.load_splits and args.split_method != "random_default":
+        elif args.load_splits and args.split_method:
             raise Exception(
                 "You cannot specify --split_method if using --load_splits."
             )
