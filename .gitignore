@@ -58,3 +58,5 @@ tests/core.*
 
 old*
 .idea
+
+misc_scripts/output/
