@@ -2,7 +2,19 @@ import sys
 import json
 from collections import defaultdict
 import pandas as pd
+import os
 
+from rdkit import Chem
+from rdkit.Chem import Draw
+
+def _save_svg(mol, filepath: str):
+    Draw.MolToFile(mol, filepath, size=(200, 200))
+
+def _csv_to_markdown(csv: str) -> str:
+    data_markdown = csv.replace(",", "|")
+    data_markdown = data_markdown.replace("\n", "|\n|")
+    data_markdown = "|" + data_markdown + "|"
+    return data_markdown
 
 def main():
     with open(sys.argv[1]) as f:
@@ -85,16 +97,21 @@ def main():
     # Save as a csv string
     data_csv = df.to_csv()
 
+    # Convert that into a markdown table
+    data_markdown = _csv_to_markdown(data_csv)
+
     # Collect other statistics.
     num_uniq_frags = len(df)
     num_frags_never_accurately_predicted_top_4 = len(df[df["accuracy_4"] == 0])
     num_frags_never_present_in_predictions_top_4 = len(df[df["present_4"] == 0])
 
-    data_csv = f"""unique frags:,{num_uniq_frags}
+    summary_csv = f"""unique frags:,{num_uniq_frags}
 never accurately predicted in top 4:,{num_frags_never_accurately_predicted_top_4}
-never present in top-4 predictions regardless of accuracy:,{num_frags_never_present_in_predictions_top_4}
+never present in top-4 predictions regardless of accuracy:,{num_frags_never_present_in_predictions_top_4}"""
 
-Note: values below are percents.
+    summary_markdown = _csv_to_markdown(summary_csv)
+
+    notes = """Note: values below are percents.
 
 "correct" is the actual fragment derived from the source structures.
 "present_1" is the percent of the time the fragment is the top prediction even if it is not the correct fragment.
@@ -102,18 +119,39 @@ Note: values below are percents.
 "accuracy_1" is the percent of the time the fragment is correctly selected as the top fragment.
 "accuracy_4" is the percent of the time the fragment is correctly selected as one of the top 4 fragments.
 "present_4_enrichment" is "present_4" divided by "correct".
-"accuracy_4_enrichment" is "accuracy_4" divided by "correct".
+"accuracy_4_enrichment" is "accuracy_4" divided by "correct"."""
 
-""" + data_csv
+    csv = f"""{summary_csv}
+
+{notes}
+
+{data_csv}"""
+
+    markdown = f"""{summary_markdown}
+
+{notes}
+
+{data_markdown}"""
 
     # import pdb; pdb.set_trace()
 
     # df.to_csv("frag_smiles_biases.csv")
 
+    wrk_dir = "./output/"
+    img_dir = f"{wrk_dir}/imgs/"
+
+    # If already exists, delete it.
+    if os.path.exists(wrk_dir):
+        os.system(f"rm -rf {wrk_dir}")
+    os.mkdir(wrk_dir)
+    os.mkdir(img_dir)
+
+
     with open("frag_smiles_biases.csv", "w") as f:
-        f.write(data_csv)
+        f.write(csv)
 
-
+    with open("frag_smiles_biases.md", "w") as f:
+        f.write(markdown)
 
 if __name__ == "__main__":
     main()
