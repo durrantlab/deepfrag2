@@ -244,6 +244,6 @@ class MoadVoxelModelParent(
 
         out_name = pth + os.sep + args.mode + ".actually_used.json"
         if not os.path.exists(out_name):
-            examples_used = model.get_examples_used()
+            examples_used = model.get_examples_actually_used()
             with open(out_name, "w") as f:
                 json.dump(examples_used, f, indent=4)

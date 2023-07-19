@@ -44,6 +44,7 @@ charged_substructs = [
         "[PX4](=O)(-[OX2]-[C,c,N,n,F,Cl,Br,I])(-[O+0]-[C,c,N,n,F,Cl,Br,I])-[OX2]-[H]",
         "[$([PX4:1]([OX2][C,c,N,n])(=O)([OX2][PX4](=O)([OX2])(O[H])))]O-[H]",
         "[$([PX4](=O)([OX2][PX4](=O)([OX2])(O[H]))([OX2][PX4](=O)(O[H])([OX2])))]O-[H]",
+        "P(=O)O[H]",
         # thioic acid
         "[C,c,N,n](=[O,S])-[SX2,OX2]-[H]",
         "[c,n]-[SX2]-[H]",

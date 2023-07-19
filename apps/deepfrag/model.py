@@ -391,7 +391,7 @@ class DeepFragModel(pl.LightningModule):
                     entry_info.fragment_smiles
                 )
 
-    def get_examples_used(self) -> dict:
+    def get_examples_actually_used(self) -> dict:
         """Get the examples used.
 
         Returns:
