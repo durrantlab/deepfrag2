@@ -24,7 +24,7 @@ RDKit_DESC_CALC = MolecularDescriptorCalculator([x[0] for x in Descriptors._desc
 
 
 def bar_progress(current: float, total: float, width=80):
-    """Progress bar for downloading Molbert model. TODO: Candidate for removal.
+    """Progress bar for downloading Molbert model.
 
     Args:
         current (float): Current progress.
@@ -42,7 +42,7 @@ def bar_progress(current: float, total: float, width=80):
 
 
 def download_molbert_ckpt():
-    """Download Molbert model checkpoint. TODO: Candidate for removal."""
+    """Download Molbert model checkpoint."""
     global PATH_MOLBERT_CKPT
     global PATH_MOLBERT_MODEL
 
@@ -103,7 +103,7 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
 
 
 def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """A vector with RDK and Morgan Fingerprints.
+    """A vector fusing RDK and Morgan Fingerprints.
 
     Args:
         m (rdkit.Chem.rdchem.Mol): RDKit molecule.
@@ -122,7 +122,7 @@ def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
 
 @lru_cache
 def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Molbert fingerprints. TODO: Candidate for removal.
+    """Molbert fingerprints.
 
     Args:
         m (rdkit.Chem.rdchem.Mol): RDKit molecule (not used).
@@ -139,7 +139,7 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
 
 def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints with positive values. Any value less than 0 is just
-    set to 0. TODO: Candidate for removal.
+    set to 0.
 
     Args:
         m (rdkit.Chem.rdchem.Mol): RDKit molecule.
@@ -155,47 +155,30 @@ def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
     return molbert_fp
 
 
-def _molbert_x_rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Molbert fingerprints multiplied by RDKit fingerprints. TODO: Candidate
-    for removal.
-    
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
-        size (int): Size of the fingerprint.
-        smiles (str): SMILES string.
-        
-    Returns:
-        np.array: Fingerprint.
-    """
-    rdk10_fp = _rdk10(m, size, smiles)
-    molbert_fp = _molbert(m, size, smiles)
-    return np.multiply(molbert_fp, rdk10_fp)
+def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.array:
+    """Random binary fingerprints to validate non-random correlation .
 
-
-def _molbert_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Molbert fingerprints multiplied by Morgan fingerprints. TODO: Candidate
-    for removal.
-    
     Args:
         m (rdkit.Chem.rdchem.Mol): RDKit molecule.
         size (int): Size of the fingerprint.
         smiles (str): SMILES string.
 
     Returns:
-        np.array: Fingerprint.
+        np.array: Random Fingerprint.
     """
-    morgan_fp = _Morgan(m, size, smiles)
-    molbert_fp = _molbert(m, size, smiles)
-    return np.multiply(molbert_fp, morgan_fp)
+    prob0 = np.random.uniform(0.1, 1.0)
+    prob1 = 1 - prob0
+    random_fp = np.random.choice([0, 1], size=(size_,), p=[prob0, prob1])
+    np.random.shuffle(random_fp)
+    return random_fp
 
 
 FINGERPRINTS = {
     "rdk10": _rdk10,
-    "morgan": _Morgan,
     "rdk10_x_morgan": _rdk10_x_morgan,
-    "molbert": _molbert,
     "molbert_binary": _molbert_binary,
-    "molbert_x_rdk10": _molbert_x_rdk10,
+    "random_1536": _random_binary,
+    "random_2048": _random_binary,
 }
 
 
