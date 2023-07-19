@@ -86,8 +86,11 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--split_method",
         required=False,
         type=str,
-        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If you use --prevent_smiles_overlap with this method, some data will be discarded. (2) If 'butina', butina clustering will be used. TODO: More details needed."
+        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If any fragments are present in more than one set, some will be randomly removed to ensure independence. If 'high_priority', duplicate fragments will be removed so as to favor the training set first, then the validation set (i.e., training and validation sets will be larger that user-specified fraction). If 'low_priority', duplicate fragment will be removed so as to favor the test set, then the validation set (i.e., test and validation sets will be larger than the user-specified fraction). If 'butina', butina clustering will be used. Used only for finetuning. TODO: More details needed."
     )
+
+    # Note that --prevent_smiles_overlap is no longer a user-definable
+    # parameter.
 
     parser.add_argument(
         "--butina_cluster_cutoff",
