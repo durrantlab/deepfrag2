@@ -34,8 +34,6 @@ class MoadVoxelModelParent(
     # TODO: I should not have done this multiple-inheritance thing. Need to
     # refactor. Very confusing. 
 
-    NUM_MOST_SIMILAR_PER_ENTRY = 5
-
     def __init__(
             self,
             model_cls: Type[pl.LightningModule],
