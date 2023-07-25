@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import sys
 
-json_file_path = "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Results\\experiments_v2_heavy"
+json_file_path = "path/to/json/results/files"
 
 all_files = os.listdir(json_file_path)
 json_files = [os.path.abspath(os.path.join(json_file_path, f)) for f in all_files if f.endswith(".json")]
