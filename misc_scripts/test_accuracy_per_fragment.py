@@ -24,7 +24,7 @@ else:
 result_counts = {}
 
 for entry in tqdm(data["entries"], desc="Collecting results"):
-    correct_smi = entry["correct"]["fragmentSmiles"]
+    correct_smi = entry["groundTruth"]["fragmentSmiles"]
     top_predictions = [entry["avgOfCheckpoints"]["closestFromLabelSet"][i]["smiles"] for i in range(4)]
 
     # Use RDKit to make sure both smiles are cannonical

@@ -451,7 +451,7 @@ class MoadVoxelModelTest(object):
                 # Add in correct answers for all entries
                 correct_answer = predictions_per_rot.get_correct_answer_info(i)
                 all_test_data["entries"].append(
-                    {"correct": correct_answer, "perCheckpoint": []}
+                    {"groundTruth": correct_answer, "perCheckpoint": []}
                 )
 
         # Calculate top_k metric for this checkpoint
@@ -492,7 +492,7 @@ class MoadVoxelModelTest(object):
                 ]["closestFromLabelSet"].append(
                     {
                         "smiles": predicted_entry_info.fragment_smiles,
-                        "cosineSimilarityWithAveraged": cos_similarity,
+                        "cosSimilarityWithAvgPrediction": cos_similarity,
                         "pcaProjection": pca[0],
                     }
                 )
@@ -551,7 +551,7 @@ class MoadVoxelModelTest(object):
         # txt = ""
         # for entry in all_test_data["entries"]:
         #     txt += "Correct\n"
-        #     txt += "\t".join([str(e) for e in entry["correct"]["pcaProjection"]]) + "\t" + entry["correct"]["fragmentSmiles"] + "\n"
+        #     txt += "\t".join([str(e) for e in entry["groundTruth"]["pcaProjection"]]) + "\t" + entry["groundTruth"]["fragmentSmiles"] + "\n"
         #     txt += "averagedPrediction\n"
         #     txt += "\t".join([str(e) for e in entry["averagedPrediction"]["pcaProjection"]]) + "\n"
         #     txt += "closestFromLabelSet\n"
@@ -772,7 +772,7 @@ class MoadVoxelModelTest(object):
                 ].append(
                     {
                         "smiles": predicted_entry_info.fragment_smiles,
-                        "cosineSimilarityWithAveraged": cos_similarity,
+                        "cosSimilarityWithAvgPrediction": cos_similarity,
                         "pcaProjection": pca[0],
                     }
                 )

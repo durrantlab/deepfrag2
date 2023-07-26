@@ -84,7 +84,7 @@ def main():
     with open(sys.argv[1]) as f:
         data = json.load(f)
     correct_frag_smiles = [
-        entry["correct"]["fragmentSmiles"] for entry in data["entries"]
+        entry["groundTruth"]["fragmentSmiles"] for entry in data["entries"]
     ]
 
     top_k_ns = [1, 4]
@@ -98,7 +98,7 @@ def main():
         k: {
             # Keep track of how often it is the correct fragment (reflects
             # database)
-            "correct": v,  #  / total,
+            "groundTruth": v,  #  / total,
             # Keep track of how often it is present in the top n, even if not
             # correct (reflects prediciton, can predict in that region of
             # fingerprint space).
@@ -127,7 +127,7 @@ def main():
                 if smiles in data_catalogued:
                     data_catalogued[smiles][key] += 1
 
-            correct_smiles = entry["correct"]["fragmentSmiles"]
+            correct_smiles = entry["groundTruth"]["fragmentSmiles"]
             key = f"accuracy_{n}"
             if correct_smiles in closest_smiles:
                 data_catalogued[correct_smiles][key] += 1
@@ -135,7 +135,7 @@ def main():
     # Convert all the entries to percentages
     total = sum(correct_frag_counts.values())
     for entry in data_catalogued.values():
-        entry["correct"] = round(100 * entry["correct"] / total, precision)
+        entry["groundTruth"] = round(100 * entry["groundTruth"] / total, precision)
         for n in top_k_ns:
             key = f"present_{n}"
             entry[key] = round(100 * entry[key] / total, precision)
@@ -149,11 +149,11 @@ def main():
     df = df.sort_values(by="accuracy_4", ascending=False)
 
     # Add a column called "present_4_enrichment" that is "present_4" divided by
-    # "correct"
-    df["present_4_enrichment"] = (df["present_4"] / df["correct"]).round(precision)
+    # "groundTruth"
+    df["present_4_enrichment"] = (df["present_4"] / df["groundTruth"]).round(precision)
 
     # Same for accuracy_4
-    df["accuracy_4_enrichment"] = (df["accuracy_4"] / df["correct"]).round(precision)
+    df["accuracy_4_enrichment"] = (df["accuracy_4"] / df["groundTruth"]).round(precision)
 
     # Save as a csv string
     data_csv = df.to_csv()
@@ -175,13 +175,13 @@ never present in top-4 predictions regardless of accuracy:,{num_frags_never_pres
 
     notes = """Note: values below are percents.
 
-* "correct" is the actual fragment derived from the source structures.
+* "groundTruth" is the actual fragment derived from the source structures.
 * "present_1" is the percent of the time the fragment is the top prediction even if it is not the correct fragment.
 * "present_4" is the percent of the time the fragment is in the top 4 predictions even if it is not the correct fragment.
 * "accuracy_1" is the percent of the time the fragment is correctly selected as the top fragment.
 * "accuracy_4" is the percent of the time the fragment is correctly selected as one of the top 4 fragments.
-* "present_4_enrichment" is "present_4" divided by "correct".
-* "accuracy_4_enrichment" is "accuracy_4" divided by "correct"."""
+* "present_4_enrichment" is "present_4" divided by "groundTruth".
+* "accuracy_4_enrichment" is "accuracy_4" divided by "groundTruth"."""
 
     csv = f"""{summary_csv}
 

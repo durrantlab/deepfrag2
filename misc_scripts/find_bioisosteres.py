@@ -85,7 +85,7 @@ def get_score(entry: dict) -> List[Tuple[str, float]]:
         List[Tuple[str, float]]: A list of tuples containing the SMILES string
             pair (correct, closest) and the score.
     """
-    correct_smi = fix_smi(entry["correct"]["fragmentSmiles"])
+    correct_smi = fix_smi(entry["groundTruth"]["fragmentSmiles"])
     closest_smiles = [
         fix_smi(e["smiles"]) for e in entry["averagedPrediction"]["closestFromLabelSet"]
     ]
