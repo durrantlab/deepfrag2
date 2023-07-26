@@ -82,6 +82,22 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     n_fp = list(map(int, list(fp.ToBitString())))
     return np.array(n_fp)
 
+def _rdk10_nonzero(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+    """RDKFingerprint with maxPath=10, but zero values are set to 0.1.
+
+    Args:
+        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
+        size (int): Size of the fingerprint.
+        smiles (str): SMILES string (not used).
+
+    Returns:
+        np.array: Fingerprint.
+    """
+    fp = Chem.rdmolops.RDKFingerprint(m, maxPath=10, fpSize=size)
+    n_fp = list(map(int, list(fp.ToBitString())))
+    n_fp = [0.1 if x == 0 else x for x in n_fp]
+    return np.array(n_fp)
+
 
 def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Morgan fingerprints. TODO: Candidate for removal.
@@ -175,6 +191,7 @@ def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.ar
 
 FINGERPRINTS = {
     "rdk10": _rdk10,
+    "rdk10_nonzero": _rdk10_nonzero,
     "rdk10_x_morgan": _rdk10_x_morgan,
     "molbert_binary": _molbert_binary,
     "random_1536": _random_binary,
