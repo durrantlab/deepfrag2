@@ -367,7 +367,9 @@ def _generate_splits_from_scratch(
                 print("    Reassigning overlapping SMILES by priority, favoring the testing and validation sets")
                 __priority_reassign_overlapping_smiles(all_smis, False)
     else:
-        return None, None
+        # Throw error here.
+        raise ValueError(f"Unknown split method: {split_method}")
+        # return None, None
 
     return pdb_ids, all_smis
 
