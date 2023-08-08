@@ -159,7 +159,7 @@ class MOADFragmentDataset(Dataset):
             required=False,
             type=str,
             # default="",
-            help='Consider only fragments that match selected chemical properties. A comma-separated list. Options are "aromatic", "aliphatic", "charged", "neutral". If specifying multiple properties (e.g., "aromatic,charged"), only fragments matching all properties (charged aromatics) will be considered. Default is "" (no filtering).',
+            help='Consider only fragments that match selected chemical properties. A comma-separated list. Options are "aromatic", "aliphatic", "acid", "base", "neutral". If specifying multiple properties (e.g., "aromatic,acid"), only fragments matching all properties (acidic aromatics) will be considered. Default is "" (no filtering).',
         )
         parser.add_argument(
             "--max_frag_repeats",
@@ -201,8 +201,8 @@ class MOADFragmentDataset(Dataset):
 
         Returns:
             List[str]: The mol_props parameter as a list of strings. E.g., 
-                separates out string-list like "aromatic,charged" into
-                `["aromatic", "charged"]`.
+                separates out string-list like "aromatic,acid" into
+                `["aromatic", "acid"]`.
         """
         mol_props = args.mol_props.split(",")
 
@@ -214,16 +214,26 @@ class MOADFragmentDataset(Dataset):
                     "Cannot specify both aromatic and aliphatic properties. They are mutually exclusive."
                 )
 
-            if "charged" in mol_props and "neutral" in mol_props:
+            if "acid" in mol_props and "neutral" in mol_props:
                 raise ValueError(
-                    "Cannot specify both charged and neutral properties. They are mutually exclusive."
+                    "Cannot specify both acid and neutral properties. They are mutually exclusive."
                 )
 
-            # If anything in molprops other than aromatic, aliphatic, charged,
-            # or neutral is specified, raise an error saying which one is not
-            # recognized.
+            if "base" in mol_props and "neutral" in mol_props:
+                raise ValueError(
+                    "Cannot specify both base and neutral properties. They are mutually exclusive."
+                )
+
+            if "base" in mol_props and "acid" in mol_props:
+                raise ValueError(
+                    "Cannot specify both base and acid properties. They are mutually exclusive."
+                )
+
+            # If anything in molprops other than aromatic, aliphatic, acid,
+            # base, or neutral is specified, raise an error saying which one is
+            # not recognized.
             for prop in mol_props:
-                if prop not in ["aromatic", "aliphatic", "charged", "neutral"]:
+                if prop not in ["aromatic", "aliphatic", "acid", "base", "neutral"]:
                     raise ValueError(f"Unrecognized property: {prop}")
 
             self.mol_props_param_validated = True
@@ -237,7 +247,9 @@ class MOADFragmentDataset(Dataset):
         frag_dist_to_recep: float,
         frag_num_heavy_atom: int,
         frag_aromatic: bool,
-        frag_charged: bool,
+        frag_acid: bool,
+        frag_base: bool,
+        frag_neutral: bool,
         frag_smi: str,
     ) -> bool:
         """Filter is passed to cache_filter.load_cache_and_filter via the
@@ -249,7 +261,9 @@ class MOADFragmentDataset(Dataset):
             frag_dist_to_recep (float): The fragment's distance to the receptor.
             frag_num_heavy_atom (int): The fragment's number of heavy atoms.
             frag_aromatic (bool): Whether the fragment is aromatic.
-            frag_charged (bool): Whether the fragment is charged.
+            frag_acid (bool): Whether the fragment is acid.
+            frag_base (bool): Whether the fragment is base.
+            frag_neutral (bool): Whether the fragment is neutral.
             frag_smi (str): The fragment's SMILES string.
 
         Returns:
@@ -317,14 +331,19 @@ class MOADFragmentDataset(Dataset):
                     print("Fragment rejected; aromatic.")
                 return False
 
-            if "charged" in mol_props and not frag_charged:
+            if "acid" in mol_props and not frag_acid:
                 if user_args.verbose:
-                    print("Fragment rejected; not charged.")
+                    print("Fragment rejected; not acid.")
                 return False
 
-            if "neutral" in mol_props and frag_charged:
+            if "base" in mol_props and not frag_base:
                 if user_args.verbose:
-                    print("Fragment rejected; charged.")
+                    print("Fragment rejected; not base.")
+                return False
+
+            if "neutral" in mol_props and not frag_neutral:
+                if user_args.verbose:
+                    print("Fragment rejected; not neutral.")
                 return False
 
         return True
@@ -352,7 +371,9 @@ class MOADFragmentDataset(Dataset):
         frag_dists_to_recep = lig_inf["frag_dists_to_recep"]
         frag_num_heavy_atoms = lig_inf["frag_num_heavy_atoms"]
         frag_aromatics = lig_inf["frag_aromatic"]
-        frag_chargeds = lig_inf["frag_charged"]
+        frag_acids = lig_inf["frag_acid"]
+        frag_bases = lig_inf["frag_base"]
+        frag_neutrals = lig_inf["frag_neutral"]
         # Uses Chem.MolToSmiles, so should be cannonical
         frag_smiles = lig_inf["frag_smiles"]
 
@@ -362,7 +383,9 @@ class MOADFragmentDataset(Dataset):
             dist_to_recep = frag_dists_to_recep[frag_idx]
             num_heavy_atom = frag_num_heavy_atoms[frag_idx]
             frag_aromatic = frag_aromatics[frag_idx]
-            frag_charged = frag_chargeds[frag_idx]
+            frag_acid = frag_acids[frag_idx]
+            frag_base = frag_bases[frag_idx]
+            frag_neutral = frag_neutrals[frag_idx]
             frag_smi = frag_smiles[frag_idx]
 
             if self._frag_filter(
@@ -371,7 +394,9 @@ class MOADFragmentDataset(Dataset):
                 dist_to_recep,
                 num_heavy_atom,
                 frag_aromatic,
-                frag_charged,
+                frag_acid,
+                frag_base,
+                frag_neutral,
                 frag_smi,
             ):
                 entries_to_return.append(
@@ -407,7 +432,9 @@ class MOADFragmentDataset(Dataset):
                 frag_dists_to_recep=True,
                 frag_smiles=True,  # Good for debugging.
                 frag_aromatic=True,
-                frag_charged=True,
+                frag_acid=True,
+                frag_base=True,
+                frag_neutral=True,
             ),
             cache_file,
             cores,
