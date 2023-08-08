@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 from typing import Tuple, Union, Any, Optional, List
 from tqdm.std import tqdm
-from collagen.external.moad.chem_props import is_aromatic, is_charged
+from collagen.external.moad.chem_props import is_aromatic, is_acid, is_base, is_neutral
 import numpy as np
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
 from scipy.spatial.distance import cdist
@@ -35,7 +35,9 @@ class CacheItemsToUpdate(object):
     frag_dists_to_recep: bool = False
     frag_smiles: str = False  # str || bool
     frag_aromatic: bool = False
-    frag_charged: bool = False
+    frag_acid: bool = False
+    frag_base: bool = False
+    frag_neutral: bool = False
 
     def updatable(self) -> bool:
         """Return True if any of the properties are updatable.
@@ -54,7 +56,9 @@ class CacheItemsToUpdate(object):
                 self.frag_smiles,
                 self.frag_num_heavy_atoms,
                 self.frag_aromatic,
-                self.frag_charged,
+                self.frag_acid,
+                self.frag_base,
+                self.frag_neutral,
             ]
         )
 
@@ -159,7 +163,9 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                 or cache_items_to_update.frag_dists_to_recep
                 or cache_items_to_update.frag_smiles
                 or cache_items_to_update.frag_aromatic
-                or cache_items_to_update.frag_charged
+                or cache_items_to_update.frag_acid
+                or cache_items_to_update.frag_base
+                or cache_items_to_update.frag_neutral
             ):
                 moad_ligand_ = lig.meta["moad_ligand"]
                 if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
@@ -199,9 +205,19 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                     lambda f: [is_aromatic(x[1].rdmol) for x in f], frags, []
                 )
 
-            if cache_items_to_update.frag_charged:
-                lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
-                    lambda f: [is_charged(x[1].rdmol) for x in f], frags, []
+            if cache_items_to_update.frag_acid:
+                lig_infs[lig_name]["frag_acid"] = _set_molecular_prop(
+                    lambda f: [is_acid(x[1].rdmol) for x in f], frags, []
+                )
+
+            if cache_items_to_update.frag_base:
+                lig_infs[lig_name]["frag_base"] = _set_molecular_prop(
+                    lambda f: [is_base(x[1].rdmol) for x in f], frags, []
+                )
+
+            if cache_items_to_update.frag_neutral:
+                lig_infs[lig_name]["frag_neutral"] = _set_molecular_prop(
+                    lambda f: [is_neutral(x[1].rdmol) for x in f], frags, []
                 )
 
     return pdb_id, lig_infs
@@ -249,8 +265,12 @@ def _set_cache_params_to_update(cache: dict):
         CACHE_ITEMS_TO_UPDATE.frag_smiles = False
     if "frag_aromatic" in first_lig:
         CACHE_ITEMS_TO_UPDATE.frag_aromatic = False
-    if "frag_charged" in first_lig:
-        CACHE_ITEMS_TO_UPDATE.frag_charged = False
+    if "frag_acid" in first_lig:
+        CACHE_ITEMS_TO_UPDATE.frag_acid = False
+    if "frag_base" in first_lig:
+        CACHE_ITEMS_TO_UPDATE.frag_base = False
+    if "frag_neutral" in first_lig:
+        CACHE_ITEMS_TO_UPDATE.frag_neutral = False
 
 
 def _build_moad_cache_file(
