@@ -187,7 +187,7 @@ if __name__ == "__main__":
     types = []
     mols = []
     substruct_matches = []
-    with open("chem_props_test.smi", "r") as f:
+    with open(filename, "r") as f:
         for line in f:
             smi, name = line.strip().split()
             name, type = name.split("__")
