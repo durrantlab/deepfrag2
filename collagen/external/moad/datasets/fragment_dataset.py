@@ -224,11 +224,6 @@ class MOADFragmentDataset(Dataset):
                     "Cannot specify both base and neutral properties. They are mutually exclusive."
                 )
 
-            if "base" in mol_props and "acid" in mol_props:
-                raise ValueError(
-                    "Cannot specify both base and acid properties. They are mutually exclusive."
-                )
-
             # If anything in molprops other than aromatic, aliphatic, acid,
             # base, or neutral is specified, raise an error saying which one is
             # not recognized.

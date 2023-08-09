@@ -79,6 +79,9 @@ base_substructs = [Chem.MolFromSmarts(smi) for smi in base_substructs_smi]
 
 # TODO: Send all domain-specific models to Shayne when ready.
 
+# TODO: Look at actually used. Lots of repeated, you ask for acids but not
+# always acids. Not sure what to make of it. Need code review.
+
 
 def is_aromatic(mol: Chem.Mol) -> bool:
     """Determine if a molecule is aromatic. Below is overkill. Could probably
