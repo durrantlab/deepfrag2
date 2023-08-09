@@ -56,4 +56,4 @@ CN=C	Imine-like__base
 C[NH+]=C	Imine-like__base
 [H][N+](C)=C	Imine-like__base
 CC(N)=O	Amide__neutral
-C[C@H]1[C@H]([C@H]([C@@H]([C@H](O1)O)O)O)O Test__neutral
+C([C@@H]1[C@@H]([C@@H]([C@H]([C@H](O1)OC[C@@H]2[C@H]([C@@H]([C@H]([C@H](O2)O)O)O)O)O)O)O)O Test__neutral

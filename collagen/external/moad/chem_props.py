@@ -160,6 +160,7 @@ def is_base(mol: Chem.Mol, testing=False) -> bool:
         mol.HasSubstructMatch(base_substruct) for base_substruct in base_substructs
     )
 
+
 def is_neutral(mol: Chem.Mol) -> bool:
     """Determine if a molecule is neutral. If not acid and not base, assume
     neutral.
@@ -176,6 +177,10 @@ def is_neutral(mol: Chem.Mol) -> bool:
 
 if __name__ == "__main__":
     import pandas as pd
+    import sys
+
+    # If no arguments, use filename "chem_props_test.smi"
+    filename = "chem_props_test.smi" if len(sys.argv) == 1 else sys.argv[1]
 
     smis = []
     names = []
