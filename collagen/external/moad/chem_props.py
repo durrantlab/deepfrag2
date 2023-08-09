@@ -8,11 +8,11 @@ acid_substructs_smi = [
     "[*]C(=O)[O+0;H1]",
     "[*]C(=O)[O-]",
     # Hydroxyl groups bound to aromatic rings
-    "[c,C][O+0;H1]",
-    "[c,C][O-]",
+    "c[O+0;H1]",
+    "c[O-]",
     # Thiol groups bound to aromatic rings
-    "[c,C][S+0;H1]",
-    "[c,C][S-]",
+    "c[S+0;H1]",
+    "c[S-]",
     # Phosphate-like
     "P(=O)[O+0;H1]",
     "P(=O)[O-]",
@@ -202,10 +202,13 @@ if __name__ == "__main__":
     base_cats = [is_base(mol, True) for mol in mols]
 
     df["predict_acid"] = [e[0] for e in acid_cats]
-    # df["acid_match"] = [e[1] for e in acid_cats]
+    df["acid_match"] = [e[1] for e in acid_cats]
     df["predict_base"] = [e[0] for e in base_cats]
-    # df["base_match"] = [e[1] for e in base_cats]
+    df["base_match"] = [e[1] for e in base_cats]
     df["predict_aromatic"] = [is_aromatic(mol) for mol in mols]
 
     print(df)
+
+    # Save to tsv.
+    df.to_csv("chem_props_test.tsv", sep="\t", index=False)
 
