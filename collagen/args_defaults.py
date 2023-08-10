@@ -48,7 +48,7 @@ def get_default_args() -> dict:
         "batch_size": 16,
         "rotations": 8,
         "cache_pdbs_to_disk": False,
-        "cache": None,
+        "cache": "none",
         "wandb_project": None,
         "save_every_epoch": False,
         "custom_test_set_dir": None,
