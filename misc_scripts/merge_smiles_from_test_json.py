@@ -58,13 +58,14 @@ def merge_smiles(smiles1, smiles2):
 
 # 1. Create a worker function
 def process_entry(entry):
-    receptor = entry["groundTruth"]["receptor"]
-    parent = entry["groundTruth"]["parentSmiles"]
+    groundTruth = "groundTruth" if "groundTruth" in entry else "correct"
+    receptor = entry[groundTruth]["receptor"]
+    parent = entry[groundTruth]["parentSmiles"]
 
     lig_data_entry = {}
 
     if receptor not in lig_data_entry:
-        correct_frag = entry["groundTruth"]["fragmentSmiles"]
+        correct_frag = entry[groundTruth]["fragmentSmiles"]
         correct_ligand = merge_smiles(parent, correct_frag)
 
         lig_data_entry[receptor] = {"correct": correct_ligand, "predicted": []}
