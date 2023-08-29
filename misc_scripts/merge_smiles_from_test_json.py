@@ -18,7 +18,7 @@ from multiprocessing import Pool, cpu_count
 import sys
 
 DEBUG = False
-#OPENBABEL_EXEC = "/Users/jdurrant/opt/anaconda3/bin/obabel"
+# OPENBABEL_EXEC = "/Users/jdurrant/opt/anaconda3/bin/obabel"
 OPENBABEL_EXEC = "~/workspace/openbabel/obabel"
 SMINA_EXEC = "/Applications/smina/smina.osx"
 
@@ -327,7 +327,7 @@ def get_pdb_lig(payload):
     lig_pdb_file = f"{pdb_dir}/{pdbid}_cryst_lig.pdb"
     recep_pdb_file = f"{pdb_dir}/{pdbid}_cryst_recep.pdb"
 
-    if not exists(lig_pdb_file) or not exists(recep_pdb_file):
+    if not exists(f"{lig_pdb_file}.pdbqt") or not exists(f"{recep_pdb_file}.pdbqt"):
         # Get all the ligands (HETATMs)
         with open(pdb_file, "r") as f:
             pdb_lines = f.readlines()
@@ -448,7 +448,9 @@ def make_docking_cmds(out_dir):
     # pdbqt.out files. Use recursive glob
 
     lig_pdbqt_files = []
-    for f in glob(f"{out_dir}/**/decoy*.pdbqt", recursive=True) + glob(f"{out_dir}/**/predicted*.pdbqt", recursive=True):
+    for f in glob(f"{out_dir}/**/decoy*.pdbqt", recursive=True) + glob(
+        f"{out_dir}/**/predicted*.pdbqt", recursive=True
+    ):
         if exists(f + "_out.pdbqt"):
             continue
         recep_candidates = glob(f"{dirname(f)}/../*recep.pdb.pdbqt")
