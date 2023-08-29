@@ -17,8 +17,9 @@ from multiprocessing import Pool, cpu_count
 
 import sys
 
-DEBUG = True
-OPENBABEL_EXEC = "/Users/jdurrant/opt/anaconda3/bin/obabel"
+DEBUG = False
+#OPENBABEL_EXEC = "/Users/jdurrant/opt/anaconda3/bin/obabel"
+OPENBABEL_EXEC = "~/workspace/openbabel/obabel"
 SMINA_EXEC = "/Applications/smina/smina.osx"
 
 
@@ -445,19 +446,18 @@ def get_pdb_lig(payload):
 def make_docking_cmds(out_dir):
     # Find all the "decoy*pdbqt" files (recursively) that do not have associated
     # pdbqt.out files. Use recursive glob
-    lig_pdbqt_files = [
-        f
-        for f in glob(f"{out_dir}/**/decoy*.pdbqt", recursive=True)
-        + glob(f"{out_dir}/**/predicted*.pdbqt", recursive=True)
-        if not exists(f + "_out.pdbqt")
-    ]
-    lig_pdbqt_files = [
-        (f, abspath(glob(f"{dirname(f)}/../*recep.pdb.pdbqt")[0]))
-        for f in lig_pdbqt_files
-    ]
-    lig_pdbqt_files = [
-        (l, r, r.replace("recep.pdb.pdbqt", "lig.pdb")) for l, r in lig_pdbqt_files
-    ]
+
+    lig_pdbqt_files = []
+    for f in glob(f"{out_dir}/**/decoy*.pdbqt", recursive=True) + glob(f"{out_dir}/**/predicted*.pdbqt", recursive=True):
+        if exists(f + "_out.pdbqt"):
+            continue
+        recep_candidates = glob(f"{dirname(f)}/../*recep.pdb.pdbqt")
+        if len(recep_candidates) == 0:
+            print("Problem with " + f + "! Skipping...")
+            continue
+        recep = abspath(recep_candidates[0])
+        cryst = recep.replace("recep.pdb.pdbqt", "lig.pdb")
+        lig_pdbqt_files.append((f, recep, cryst))
 
     cryst_lig_pdbqt_files = [
         f
