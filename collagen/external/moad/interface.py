@@ -12,6 +12,7 @@ import csv
 from collagen.core.molecules.mol import BackedMol
 from rdkit.Geometry import Point3D
 import sys
+from rdkit.Chem import AllChem
 
 
 class MOADInterface(object):
@@ -394,7 +395,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             noh: bool,
             discard_distant_atoms: bool,
     ):
-        super().__init__(structures, structures.split(",")[9], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
+        super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _load_classes_families_targets_ligands(
         self,
@@ -476,40 +477,32 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
     def __read_data_from_csv(self, paired_data_csv):
         paired_data_csv_sep = paired_data_csv.split(",")
-        col_csv_file = paired_data_csv_sep[0]
-        col_pdb_name = paired_data_csv_sep[1]
-        col_sdf_name = paired_data_csv_sep[2]
-        col_parent_smi = paired_data_csv_sep[3]
-        col_first_frag_smi = paired_data_csv_sep[4]
-        col_second_frag_smi = paired_data_csv_sep[5]
-        col_act_first_frag_smi = paired_data_csv_sep[6]
-        col_act_second_frag_smi = paired_data_csv_sep[7]
-        col_prevalence = paired_data_csv_sep[8]
-        col_path_pdb_sdf_files = paired_data_csv_sep[9]
+        path_csv_file = paired_data_csv_sep[0]  # path to the csv (or tab) file
+        path_pdb_sdf_files = paired_data_csv_sep[1]  # path containing the pdb and/or sdf files
+        col_pdb_name = paired_data_csv_sep[2]  # pdb file name containing the receptor
+        col_sdf_name = paired_data_csv_sep[3]  # sdf (or pdb) file name containing the ligand
+        col_parent_smi = paired_data_csv_sep[4]  # SMILES string for the parent
+        col_first_frag_smi = paired_data_csv_sep[5]  # SMILES string for the first fragment
+        col_second_frag_smi = paired_data_csv_sep[6]  # SMILES string for the second fragment
+        col_act_first_frag_smi = paired_data_csv_sep[7]  # activity for the first fragment
+        col_act_second_frag_smi = paired_data_csv_sep[8]  # activity for the second fragment
+        col_first_ligand_template = paired_data_csv_sep[9]  # first SMILES string for assigning bonds to the ligand
+        col_second_ligand_template = paired_data_csv_sep[10]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
+        col_prevalence = paired_data_csv_sep[11] if len(paired_data_csv_sep) == 12 else None  # prevalence value (optional). Default is 1 (even prevalence for the fragments)
 
-        with open(col_csv_file, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
+        with open(path_csv_file, newline='') as csvfile:
+            reader = csv.DictReader(csvfile, delimiter='\t')
             for row in reader:
                 pdb_name = row[col_pdb_name]
                 sdf_name = row[col_sdf_name]
-                if os.path.exists(col_path_pdb_sdf_files + os.sep + pdb_name) and os.path.exists(col_path_pdb_sdf_files + os.sep + sdf_name):
-                    backed_parent = None
-                    backed_first_frag = None
-                    backed_second_frag = None
-                    suppl = Chem.SDMolSupplier(col_path_pdb_sdf_files + os.sep + sdf_name)
-                    for ref_mol in suppl:
-                        r_parent = self.get_sub_mol(ref_mol, row[col_parent_smi])
-                        r_first_frag_smi = self.get_sub_mol(ref_mol, row[col_first_frag_smi])
-                        r_second_frag_smi = self.get_sub_mol(ref_mol, row[col_second_frag_smi])
-
-                        if r_parent:
-                            backed_parent = BackedMol(rdmol=r_parent)
-                        if r_first_frag_smi:
-                            backed_first_frag = BackedMol(rdmol=r_first_frag_smi)
-                        if r_second_frag_smi:
-                            backed_second_frag = BackedMol(rdmol=r_second_frag_smi)
-                        break
-
+                if os.path.exists(path_pdb_sdf_files + os.sep + pdb_name) and os.path.exists(path_pdb_sdf_files + os.sep + sdf_name):
+                    backed_parent, backed_first_frag, backed_second_frag = self.read_mol(sdf_name,
+                                                                                         path_pdb_sdf_files,
+                                                                                         row[col_parent_smi],
+                                                                                         row[col_first_frag_smi],
+                                                                                         row[col_second_frag_smi],
+                                                                                         row[col_first_ligand_template],
+                                                                                         row[col_second_ligand_template])
                     if not backed_parent or (not backed_first_frag and not backed_second_frag):
                         continue
 
@@ -518,7 +511,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
                     act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
                     act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
-                    prevalence_receptor = row[col_prevalence]
+                    prevalence_receptor = row[col_prevalence] if col_prevalence else 1
 
                     key_sdf_pdb = self.__get_key_sdf_pdb(pdb_name, sdf_name)
                     key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(pdb_name, sdf_name, parent_smi)
@@ -545,6 +538,46 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
     def __get_key_parent_sdf_pdb(self, pdb_name, sdf_name, parent_smi):
         return pdb_name + "_" + sdf_name + "_" + parent_smi
+
+    def read_mol(self, sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_frag_smi, first_ligand_template, second_ligand_template):
+        backed_parent = None
+        backed_first_frag = None
+        backed_second_frag = None
+        path_to_mol = path_pdb_sdf_files + os.sep + sdf_name
+
+        if sdf_name.endswith(".pdb"):
+            try:
+                ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
+                template = Chem.MolFromSmiles(first_ligand_template)
+                ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
+            except:
+                try:
+                    ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
+                    template = Chem.MolFromSmiles(second_ligand_template)
+                    ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
+                except:
+                    print("Molecule " + sdf_name + " was disregarded because of wrong SMILES used as template to assign bonds\n")
+                    return None, None, None
+
+        elif sdf_name.endswith(".sdf"):
+            suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
+            for ref_mol in suppl:
+                pass
+        else:
+            return None, None, None
+
+        r_parent = self.get_sub_mol(ref_mol, parent_smi)
+        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi)
+        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi)
+
+        if r_parent:
+            backed_parent = BackedMol(rdmol=r_parent)
+        if r_first_frag_smi:
+            backed_first_frag = BackedMol(rdmol=r_first_frag_smi)
+        if r_second_frag_smi:
+            backed_second_frag = BackedMol(rdmol=r_second_frag_smi)
+
+        return backed_parent, backed_first_frag, backed_second_frag
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
