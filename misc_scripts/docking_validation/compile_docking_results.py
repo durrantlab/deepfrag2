@@ -9,7 +9,7 @@ def extract_docking_score(file_path):
     """
     with open(file_path, "r") as file:
         for line in file:
-            if line.startswith("1"):
+            if line.startswith("1  "):
                 score = line.split()[1]  # the score is the 2nd item in the line
                 return float(score)
     return None
