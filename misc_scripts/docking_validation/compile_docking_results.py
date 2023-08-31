@@ -21,7 +21,7 @@ def process_directory(directory):
     """
     data = []
 
-    for cryst_lig_path in glob.glob(f"{directory}/*/*cryst_lig.smi.pdbqt_out.pdbqt"):
+    for cryst_lig_path in glob.glob(f"{directory}/*/*cryst_lig.smi.pdbqt.log"):
         pdb_id = os.path.basename(os.path.dirname(cryst_lig_path))
         cryst_score = extract_docking_score(cryst_lig_path)
 
@@ -33,12 +33,12 @@ def process_directory(directory):
             }
 
             # decoy scores
-            for decoy_path in glob.glob(f"{batch_dir}/decoy*.pdbqt_out.pdbqt"):
+            for decoy_path in glob.glob(f"{batch_dir}/decoy*.pdbqt.log"):
                 score = extract_docking_score(decoy_path)
                 row[os.path.basename(decoy_path).split(".")[0]] = score
 
             # predicted scores
-            for pred_path in glob.glob(f"{batch_dir}/predicted*.pdbqt_out.pdbqt"):
+            for pred_path in glob.glob(f"{batch_dir}/predicted*.pdbqt.log"):
                 score = extract_docking_score(pred_path)
                 row[os.path.basename(pred_path).split(".")[0]] = score
 
