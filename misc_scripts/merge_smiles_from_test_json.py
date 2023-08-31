@@ -20,7 +20,8 @@ import sys
 DEBUG = False
 # OPENBABEL_EXEC = "/Users/jdurrant/opt/anaconda3/bin/obabel"
 OPENBABEL_EXEC = "~/workspace/openbabel/obabel"
-SMINA_EXEC = "/Applications/smina/smina.osx"
+#SMINA_EXEC = "/Applications/smina/smina.osx"
+SMINA_EXEC = "~/miniconda3/envs/deepfrag/bin/smina"
 
 
 def merge_smiles(smiles1, smiles2):
@@ -463,7 +464,7 @@ def make_docking_cmds(out_dir):
 
     cryst_lig_pdbqt_files = [
         f
-        for f in glob(f"{out_dir}/**/*cryst*.pdbqt", recursive=True)
+        for f in glob(f"{out_dir}/**/*cryst*lig*.pdbqt", recursive=True)
         if not exists(f + "_out.pdbqt")
     ]
     cryst_lig_pdbqt_files = [
