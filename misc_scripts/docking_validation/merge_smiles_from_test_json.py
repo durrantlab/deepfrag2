@@ -332,6 +332,20 @@ def get_pdb_lig(payload):
         # Get all the ligands (HETATMs)
         with open(pdb_file, "r") as f:
             pdb_lines = f.readlines()
+        
+        # keep only lines that start with ATOM or HETATM
+        pdb_lines = [l for l in pdb_lines if l.startswith("ATOM") or l.startswith("HETATM")]
+
+        # Remove some residues
+        res_to_remove = ["HOH", "WAT", "Na", "Cl", " K "]
+        pdb_lines = [l for l in pdb_lines if all(r not in l for r in res_to_remove)]
+
+        # Reject if contains any of these
+        reject_res = ["Am", "As", "Cm", "Cs", "Gd", "Li", "Rb", "Ru"]
+        if any(r in "".join(pdb_lines) for r in reject_res):
+            print("Reject: strange atom found.")
+            return 0
+
         hetatm_lines = [l for l in pdb_lines if l.startswith("HETATM")]
         lig_resname_chain_resnums = {l[17:26].strip() for l in hetatm_lines}
         uniq_ligs = {l[17:20] for l in hetatm_lines}
@@ -403,7 +417,6 @@ def get_pdb_lig(payload):
             f.write("".join(lig_pdb_lines))
 
         # Write the rest to a file
-        # NOTE: Purposefully not removing any water molecules.
         with open(recep_pdb_file, "w") as f:
             f.write("".join(rest_pdb_lines))
         receptor_pdb_to_pdbqt(recep_pdb_file)
@@ -416,30 +429,35 @@ def get_pdb_lig(payload):
 
     for batch_idx, predicted_data in enumerate(lig_datum["predicted"]):
         batch_dir = f"{pdb_dir}/batch{batch_idx}/"
-        if exists(batch_dir):
-            # Already processed this batch, probably
-            continue
+        pred_smi_file = f"{batch_dir}/pred_ligs.smi"
+        decoy_smi_file = f"{batch_dir}/decoys.smi"
+
+        # if exists(batch_dir):
+        #     # Already processed this batch, probably
+        #     continue
+
         system(f"mkdir -p {batch_dir}")
 
-        predLigs = [
-            d + "\tpredicted" + str(i + 1)
-            for i, d in enumerate(predicted_data["predLigs"])
-        ]
-        decoys = [
-            d + "\tdecoy" + str(i + 1) for i, d in enumerate(predicted_data["decoys"])
-        ]
+        if not os.path.exists(pred_smi_file):
+            predLigs = [
+                d + "\tpredicted" + str(i + 1)
+                for i, d in enumerate(predicted_data["predLigs"])
+            ]
 
-        # Write the predicted ligands to a file
-        smi_file = f"{batch_dir}/pred_ligs.smi"
-        with open(smi_file, "w") as f:
-            f.write("\n".join(predLigs))
-        multiline_ligand_smi_to_pdbqt(smi_file)
+            # Write the predicted ligands to a file
+            with open(pred_smi_file, "w") as f:
+                f.write("\n".join(predLigs))
+            multiline_ligand_smi_to_pdbqt(pred_smi_file)
 
-        # Write the decoys to a file
-        smi_file = f"{batch_dir}/decoys.smi"
-        with open(smi_file, "w") as f:
-            f.write("\n".join(decoys))
-        multiline_ligand_smi_to_pdbqt(smi_file)
+        if not os.path.exists(decoy_smi_file):
+            decoys = [
+                d + "\tdecoy" + str(i + 1) for i, d in enumerate(predicted_data["decoys"])
+            ]
+
+            # Write the decoys to a file
+            with open(decoy_smi_file, "w") as f:
+                f.write("\n".join(decoys))
+            multiline_ligand_smi_to_pdbqt(decoy_smi_file)
 
     return 1
 
@@ -452,7 +470,7 @@ def make_docking_cmds(out_dir):
     for f in glob(f"{out_dir}/**/decoy*.pdbqt", recursive=True) + glob(
         f"{out_dir}/**/predicted*.pdbqt", recursive=True
     ):
-        if exists(f + "_out.pdbqt"):
+        if exists(f"{f}_out.pdbqt"):
             continue
         recep_candidates = glob(f"{dirname(f)}/../*recep.pdb.pdbqt")
         if len(recep_candidates) == 0:
@@ -465,7 +483,7 @@ def make_docking_cmds(out_dir):
     cryst_lig_pdbqt_files = [
         f
         for f in glob(f"{out_dir}/**/*cryst*lig*.pdbqt", recursive=True)
-        if not exists(f + "_out.pdbqt")
+        if not exists(f"{f}_out.pdbqt")
     ]
     cryst_lig_pdbqt_files = [
         (f, abspath(glob(f"{dirname(f)}/*recep.pdb.pdbqt")[0]))
@@ -496,10 +514,7 @@ def prepare_docking(lig_data, args):
 
     ligs_to_keep, lig_to_smiles = get_all_lig_info()
 
-    # for pdbid in tqdm.tqdm(lig_data, desc="Preparing docking"):
-    #     get_pdb_lig(out_dir, pdbid, ligs_to_keep, lig_data[pdbid], lig_to_smiles)
-
-    # Do same as above, now using multiple processors
+    # using multiple processors
     pdbids = [pdbid for pdbid in lig_data.keys()]
     data = [
         (out_dir, pdbid, ligs_to_keep, lig_data[pdbid], lig_to_smiles, cache_dir)
