@@ -556,7 +556,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     template = Chem.MolFromSmiles(second_ligand_template, sanitize=False)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
-                    print("Molecule " + sdf_name + " was rejected because of wrong SMILES used as template to assign bonds\n")
+                    # print("Molecule " + sdf_name + " was rejected because of wrong SMILES used as template to assign bonds\n")
                     return None, None, None
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
@@ -584,7 +584,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         patt = Chem.MolFromSmarts(smi_sub_mol)
         sub_atoms = mol.GetSubstructMatch(patt, useChirality=True)
         if len(sub_atoms) == 0:
-            print("Molecule " + Chem.MolToSmiles(mol) + " has not the fragment " + Chem.MolToSmiles(patt), file=sys.stderr)
+            # print("Molecule " + Chem.MolToSmiles(mol) + " has not the fragment " + Chem.MolToSmiles(patt), file=sys.stderr)
             return None
 
         new_mol = Chem.RWMol()
@@ -619,7 +619,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 x, y, z = mol.GetConformer().GetAtomPosition(idx)
                 conf.SetAtomPosition(atom_map[a.GetIdx()], Point3D(x, y, z))
         except Exception as e:
-            print("Molecule " + Chem.MolToSmiles(mol) + " and fragment " + Chem.MolToSmiles(new_mol) + " " + str(e), file=sys.stderr)
+            # print("Molecule " + Chem.MolToSmiles(mol) + " and fragment " + Chem.MolToSmiles(new_mol) + " " + str(e), file=sys.stderr)
             return None
 
         if debug:
