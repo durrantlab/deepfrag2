@@ -104,116 +104,107 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
     # global CACHE_ITEMS_TO_UPDATE
 
     # moad_entry_info = moad[pdb_id]
-    try:
-        pdb_id = payload[0]
-        moad_entry_info = payload[1]
-        cache_items_to_update = payload[2]
+    pdb_id = payload[0]
+    moad_entry_info = payload[1]
+    cache_items_to_update = payload[2]
 
-        lig_infs = {}
-        for lig_chunk_idx in range(len(moad_entry_info)):
-            try:
-                # Unpack info to get ligands
-                receptor, ligands = moad_entry_info[lig_chunk_idx]
-            except Exception:
-                # Note that prody can't parse some PDBs for some reason. Examples:
-                # 1vif
-                continue
+    lig_infs = {}
+    for lig_chunk_idx in range(len(moad_entry_info)):
+        try:
+            # Unpack info to get ligands
+            receptor, ligands = moad_entry_info[lig_chunk_idx]
+        except Exception:
+            # Note that prody can't parse some PDBs for some reason. Examples:
+            # 1vif
+            continue
 
-            if len(ligands) == 0:
-                # Strangely, some entries in Binding MOAD don't actually have
-                # non-protein/peptide ligands. For example: 2awu 2yno 5n70
-                continue
+        if len(ligands) == 0:
+            # Strangely, some entries in Binding MOAD don't actually have
+            # non-protein/peptide ligands. For example: 2awu 2yno 5n70
+            continue
 
-            for lig in ligands:
-                lig_name = lig.meta["moad_ligand"].name
-                lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
+        for lig in ligands:
+            lig_name = lig.meta["moad_ligand"].name
+            lig_infs[lig_name] = {"lig_chunk_idx": lig_chunk_idx}
 
-                # First, deal with properties that apply to the entire ligand (not
-                # each fragment)
+            # First, deal with properties that apply to the entire ligand (not
+            # each fragment)
 
-                # Updatable
-                if cache_items_to_update.lig_mass:
-                    lig_infs[lig_name]["lig_mass"] = _set_molecular_prop(
-                        lambda x: x.mass, lig, 999999
+            # Updatable
+            if cache_items_to_update.lig_mass:
+                lig_infs[lig_name]["lig_mass"] = _set_molecular_prop(
+                    lambda x: x.mass, lig, 999999
+                )
+
+            if cache_items_to_update.murcko_scaffold:
+                try:
+                    smi_fixed = fix_moad_smiles(lig.smiles(True))
+                    scaffold_smi = MurckoScaffoldSmilesFromSmiles(
+                        smi_fixed, includeChirality=True
                     )
+                    lig_infs[lig_name]["murcko_scaffold"] = scaffold_smi
+                except Exception:
+                    lig_infs[lig_name]["murcko_scaffold"] = ""
 
-                if cache_items_to_update.murcko_scaffold:
-                    try:
-                        smi_fixed = fix_moad_smiles(lig.smiles(True))
-                        scaffold_smi = MurckoScaffoldSmilesFromSmiles(
-                            smi_fixed, includeChirality=True
-                        )
-                        lig_infs[lig_name]["murcko_scaffold"] = scaffold_smi
-                    except Exception:
-                        lig_infs[lig_name]["murcko_scaffold"] = ""
+            if cache_items_to_update.num_heavy_atoms:
+                lig_infs[lig_name]["num_heavy_atoms"] = _set_molecular_prop(
+                    lambda x: x.num_heavy_atoms, lig, 999999
+                )
 
-                if cache_items_to_update.num_heavy_atoms:
-                    lig_infs[lig_name]["num_heavy_atoms"] = _set_molecular_prop(
-                        lambda x: x.num_heavy_atoms, lig, 999999
-                    )
+            # Now deal with properties by fragment (not entire ligand)
 
-                # Now deal with properties by fragment (not entire ligand)
+            if (
+                cache_items_to_update.frag_masses
+                or cache_items_to_update.frag_num_heavy_atoms
+                or cache_items_to_update.frag_dists_to_recep
+                or cache_items_to_update.frag_smiles
+                or cache_items_to_update.frag_aromatic
+                or cache_items_to_update.frag_charged
+            ):
+                moad_ligand_ = lig.meta["moad_ligand"]
+                if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
+                    # Get all the fragments from an additional csv file
+                    frags = []
+                    for _, _, backed_frag, _ in moad_ligand_.fragment_and_act:
+                        frags.append([moad_ligand_.smiles, backed_frag])
+                else:
+                    # Get all the fragments
+                    frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
 
-                if (
-                    cache_items_to_update.frag_masses
-                    or cache_items_to_update.frag_num_heavy_atoms
-                    or cache_items_to_update.frag_dists_to_recep
-                    or cache_items_to_update.frag_smiles
-                    or cache_items_to_update.frag_aromatic
-                    or cache_items_to_update.frag_charged
-                ):
-                    moad_ligand_ = lig.meta["moad_ligand"]
-                    if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
-                        # Get all the fragments from an additional csv file
-                        frags = []
-                        for _, _, backed_frag, _ in moad_ligand_.fragment_and_act:
-                            frags.append([moad_ligand_.smiles, backed_frag])
-                    else:
-                        # Get all the fragments
-                        frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
+            if cache_items_to_update.frag_masses:
+                lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
+                    lambda f: [x[1].mass for x in f], frags, []
+                )
 
-                if cache_items_to_update.frag_masses:
-                    lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
-                        lambda f: [x[1].mass for x in f], frags, []
-                    )
+            if cache_items_to_update.frag_num_heavy_atoms:
+                lig_infs[lig_name]["frag_num_heavy_atoms"] = _set_molecular_prop(
+                    lambda f: [x[1].num_heavy_atoms for x in f], frags, []
+                )
 
-                if cache_items_to_update.frag_num_heavy_atoms:
-                    lig_infs[lig_name]["frag_num_heavy_atoms"] = _set_molecular_prop(
-                        lambda f: [x[1].num_heavy_atoms for x in f], frags, []
-                    )
+            if cache_items_to_update.frag_dists_to_recep:
+                lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
+                    lambda f: [np.min(cdist(x[1].coords, receptor.coords)) for x in f],
+                    frags,
+                    [],
+                )
 
-                if cache_items_to_update.frag_dists_to_recep:
-                    lig_infs[lig_name]["frag_dists_to_recep"] = _set_molecular_prop(
-                        lambda f: [np.min(cdist(x[1].coords, receptor.coords)) for x in f],
-                        frags,
-                        [],
-                    )
+            if cache_items_to_update.frag_smiles:
+                # Helpful for debugging, mostly.
+                lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
+                    lambda f: [x[1].smiles(True) for x in f], frags, [],
+                )
 
-                if cache_items_to_update.frag_smiles:
-                    # Helpful for debugging, mostly.
-                    lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
-                        lambda f: [x[1].smiles(True) for x in f], frags, [],
-                    )
+            if cache_items_to_update.frag_aromatic:
+                lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
+                    lambda f: [is_aromatic(x[1].rdmol) for x in f], frags, []
+                )
 
-                if cache_items_to_update.frag_aromatic:
-                    lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
-                        lambda f: [is_aromatic(x[1].rdmol) for x in f], frags, []
-                    )
+            if cache_items_to_update.frag_charged:
+                lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
+                    lambda f: [is_charged(x[1].rdmol) for x in f], frags, []
+                )
 
-                if cache_items_to_update.frag_charged:
-                    lig_infs[lig_name]["frag_charged"] = _set_molecular_prop(
-                        lambda f: [is_charged(x[1].rdmol) for x in f], frags, []
-                    )
-
-        return pdb_id, lig_infs
-    except RuntimeError:
-        # To avoid error like this:
-        #     RuntimeError: Pre - condition Violation
-        #         Violation occurred on line 46 in file Code / GraphMol / Conformer.cpp
-        #         Failed Expression: dp_mol->getNumAtoms() == d_positions.size()
-        #         RDKIT: 2023.03.3
-        #         BOOST: 1_78
-        return "ERROR", lig_infs
+    return pdb_id, lig_infs
 
 
 def _set_cache_params_to_update(cache: dict):
@@ -313,9 +304,6 @@ def _build_moad_cache_file(
             total=len(pdb_ids_queue),
             desc="Building cache",
         ):
-            if "ERROR" in pdb_id:
-                continue
-
             pdb_id = pdb_id.lower()
 
             if pdb_id not in cache:
