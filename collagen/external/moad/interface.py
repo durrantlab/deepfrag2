@@ -547,12 +547,12 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         if sdf_name.endswith(".pdb"):
             try:
-                ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False, sanitize=False)
+                ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=True, sanitize=False)
                 template = Chem.MolFromSmiles(first_ligand_template, sanitize=False)
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
                 try:
-                    ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False, sanitize=False)
+                    ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=True, sanitize=False)
                     template = Chem.MolFromSmiles(second_ligand_template, sanitize=False)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
