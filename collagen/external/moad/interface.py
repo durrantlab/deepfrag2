@@ -547,18 +547,17 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         if sdf_name.endswith(".pdb"):
             try:
-                ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
-                template = Chem.MolFromSmiles(first_ligand_template)
+                ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False, sanitize=False)
+                template = Chem.MolFromSmiles(first_ligand_template, sanitize=False)
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
                 try:
-                    ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
-                    template = Chem.MolFromSmiles(second_ligand_template)
+                    ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False, sanitize=False)
+                    template = Chem.MolFromSmiles(second_ligand_template, sanitize=False)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
-                    print("Molecule " + sdf_name + " was disregarded because of wrong SMILES used as template to assign bonds\n")
+                    print("Molecule " + sdf_name + " was rejected because of wrong SMILES used as template to assign bonds\n")
                     return None, None, None
-
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
             for ref_mol in suppl:
@@ -608,10 +607,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         try:
             new_mol = new_mol.GetMol()
             new_mol.UpdatePropertyCache(strict=False)
-            Chem.SanitizeMol(new_mol,
-                             Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_KEKULIZE | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
-                             catchErrors=False)
-            Chem.Kekulize(new_mol, clearAromaticFlags=False)
+            # Chem.SanitizeMol(new_mol,
+            #                  Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_KEKULIZE | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
+            #                  catchErrors=False)
+            # Chem.Kekulize(new_mol, clearAromaticFlags=False)
             new_mol = Chem.MolToMolBlock(new_mol)
             new_mol = Chem.MolFromMolBlock(new_mol)
             conf = new_mol.GetConformer()
