@@ -508,7 +508,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                     parent_smi = backed_parent.smiles(True)
                     first_frag_smi = backed_first_frag.smiles(True) if backed_first_frag else None
-                    second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
+                    try:
+                        second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
+                    except:
+                        second_frag_smi = None
                     act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
                     act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
                     prevalence_receptor = row[col_prevalence] if col_prevalence else 1
