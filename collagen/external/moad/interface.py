@@ -588,7 +588,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         patt = Chem.MolFromSmarts(smi_sub_mol)
         sub_atoms = mol.GetSubstructMatch(patt, useChirality=True)
         if len(sub_atoms) == 0:
-            # print("Molecule " + Chem.MolToSmiles(mol) + " has not the fragment " + Chem.MolToSmiles(patt), file=sys.stderr)
+            print("Molecule " + Chem.MolToSmiles(mol) + " has not the fragment " + Chem.MolToSmiles(patt), file=sys.stderr)
             return None
 
         new_mol = Chem.RWMol()
