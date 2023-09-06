@@ -511,6 +511,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     try:
                         second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
                     except:
+                        backed_second_frag = None
                         second_frag_smi = None
                     act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
                     act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
