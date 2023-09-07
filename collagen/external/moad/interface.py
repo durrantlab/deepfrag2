@@ -13,6 +13,7 @@ from collagen.core.molecules.mol import BackedMol
 from rdkit.Geometry import Point3D
 import sys
 from rdkit.Chem import AllChem
+import logging
 
 
 class MOADInterface(object):
@@ -397,6 +398,14 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     ):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "unmatched_assay_pdb-lig.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "unmatched_pdb-lig_fragment.log")
+        self.__setup_logger('log_three', os.getcwd() + os.sep + "error_getting_3d_coordinates.log")
+
+        self.logging_assay_lig = logging.getLogger('log_one')
+        self.logging_lig_frag = logging.getLogger('log_two')
+        self.logging_error_3d_coord = logging.getLogger('log_three')
+
     def _load_classes_families_targets_ligands(
         self,
         metadata,
@@ -555,12 +564,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 template = Chem.MolFromSmiles(first_ligand_template)
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
+                self.logging_assay_lig.info("Ligand into " + sdf_name + " and the First SMILES string (" + first_ligand_template + ") did not match\n")
                 try:
                     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                     template = Chem.MolFromSmiles(second_ligand_template)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
-                    # print("Molecule " + sdf_name + " was rejected because of wrong SMILES used as template to assign bonds\n")
+                    self.logging_assay_lig.info("Ligand into " + sdf_name + " and the Second SMILES string (" + second_ligand_template + ") did not match\n")
                     return None, None, None
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
@@ -569,9 +579,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         else:
             return None, None, None
 
-        r_parent = self.get_sub_mol(ref_mol, parent_smi)
-        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi)
-        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi)
+        r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name)
+        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name)
+        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name)
 
         if r_parent:
             backed_parent = BackedMol(rdmol=r_parent)
@@ -584,11 +594,11 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
-    def get_sub_mol(self, mol, smi_sub_mol, debug=False):
+    def get_sub_mol(self, mol, smi_sub_mol, sdf_name, debug=False):
         patt = Chem.MolFromSmarts(smi_sub_mol)
         sub_atoms = mol.GetSubstructMatch(patt, useChirality=True)
         if len(sub_atoms) == 0:
-            # print("Molecule " + Chem.MolToSmiles(mol) + " has not the fragment " + Chem.MolToSmiles(patt), file=sys.stderr)
+            self.logging_lig_frag.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
             return None
 
         new_mol = Chem.RWMol()
@@ -623,7 +633,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 x, y, z = mol.GetConformer().GetAtomPosition(idx)
                 conf.SetAtomPosition(atom_map[a.GetIdx()], Point3D(x, y, z))
         except Exception as e:
-            # print("Molecule " + Chem.MolToSmiles(mol) + " and fragment " + Chem.MolToSmiles(new_mol) + " " + str(e), file=sys.stderr)
+            self.logging_lig_frag.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
             return None
 
         if debug:
@@ -648,6 +658,18 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             print("--------------------------------------------------------------------------------------------------------", file=sys.stderr)
 
         return new_mol
+
+    def __setup_logger(self, logger_name, log_file, level=logging.INFO):
+
+        log_setup = logging.getLogger(logger_name)
+        formatter = logging.Formatter('%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        file_handler = logging.FileHandler(log_file, mode='a')
+        file_handler.setFormatter(formatter)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        log_setup.setLevel(level)
+        log_setup.addHandler(file_handler)
+        log_setup.addHandler(stream_handler)
 
 
 class SdfDirInterface(MOADInterface):
