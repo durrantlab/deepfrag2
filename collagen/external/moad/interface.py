@@ -398,11 +398,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     ):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "unmatched_assay_pdb-lig.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "unmatched_pdb-lig_fragment.log")
-        self.__setup_logger('log_three', os.getcwd() + os.sep + "error_getting_3d_coordinates.log")
+        self.__setup_logger('log_zero', os.getcwd() + os.sep + "0.matched_assay_pdb-lig.log")
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "1.unmatched_assay_pdb-lig.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "2.unmatched_pdb-lig_fragment.log")
+        self.__setup_logger('log_three', os.getcwd() + os.sep + "3.error_getting_3d_coordinates.log")
 
-        self.logging_assay_lig = logging.getLogger('log_one')
+        self.logging_used_recep_lig = logging.getLogger('log_zero')
+        self.logging_unmatch_assay_lig = logging.getLogger('log_one')
         self.logging_lig_frag = logging.getLogger('log_two')
         self.logging_error_3d_coord = logging.getLogger('log_three')
 
@@ -544,6 +546,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         if backed_second_frag:
                             self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
 
+                    self.logging_used_recep_lig.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used\n")
+
         self.pdb_files.sort()
 
     def __get_key_sdf_pdb(self, pdb_name, sdf_name):
@@ -564,13 +568,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 template = Chem.MolFromSmiles(first_ligand_template)
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
-                self.logging_assay_lig.info("Ligand into " + sdf_name + " and the First SMILES string (" + first_ligand_template + ") did not match\n")
+                self.logging_unmatch_assay_lig.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match\n")
                 try:
                     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                     template = Chem.MolFromSmiles(second_ligand_template)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
-                    self.logging_assay_lig.info("Ligand into " + sdf_name + " and the Second SMILES string (" + second_ligand_template + ") did not match\n")
+                    self.logging_unmatch_assay_lig.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match\n")
                     return None, None, None
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
@@ -633,7 +637,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 x, y, z = mol.GetConformer().GetAtomPosition(idx)
                 conf.SetAtomPosition(atom_map[a.GetIdx()], Point3D(x, y, z))
         except Exception as e:
-            self.logging_lig_frag.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
+            self.logging_error_3d_coord.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
             return None
 
         if debug:
