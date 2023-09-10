@@ -683,11 +683,11 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         formatter = logging.Formatter('%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         file_handler = logging.FileHandler(log_file, mode='a')
         file_handler.setFormatter(formatter)
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
+        # stream_handler = logging.StreamHandler()
+        # stream_handler.setFormatter(formatter)
         log_setup.setLevel(level)
         log_setup.addHandler(file_handler)
-        log_setup.addHandler(stream_handler)
+        # log_setup.addHandler(stream_handler)
 
 
 class SdfDirInterface(MOADInterface):
