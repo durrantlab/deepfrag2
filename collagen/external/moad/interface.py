@@ -58,6 +58,7 @@ class MOADInterface(object):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
+        self._creating_logger_files()
         self._load_classes_families_targets_ligands(
             metadata,
             cache_pdbs_to_disk,
@@ -107,6 +108,9 @@ class MOADInterface(object):
         k = pdb_id.lower()
         assert k in self._lookup, f'Target "{k}" not found.'
         return self._lookup[k]
+
+    def _creating_logger_files(self):
+        pass
 
     def _load_classes_families_targets_ligands(
         self,
@@ -403,6 +407,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     ):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
+    def _creating_logger_files(self):
         self.__setup_logger('log_zero', os.getcwd() + os.sep + "0_matched_assay_pdb-lig.log")
         self.__setup_logger('log_one', os.getcwd() + os.sep + "1_unmatched_assay_pdb-lig.log")
         self.__setup_logger('log_two', os.getcwd() + os.sep + "2_unmatched_pdb-lig_fragment.log")
