@@ -414,9 +414,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         self.__setup_logger('log_three', os.getcwd() + os.sep + "3_error_getting_3d_coordinates.log")
 
         self.logging_used_recep_lig = logging.getLogger('log_zero')
+        self.logging_used_recep_lig.propagate = False
         self.logging_unmatch_assay_lig = logging.getLogger('log_one')
+        self.logging_unmatch_assay_lig.propagate = False
         self.logging_lig_frag = logging.getLogger('log_two')
+        self.logging_lig_frag.propagate = False
         self.logging_error_3d_coord = logging.getLogger('log_three')
+        self.logging_error_3d_coord.propagate = False
 
     def _load_classes_families_targets_ligands(
         self,
