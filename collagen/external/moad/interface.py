@@ -387,6 +387,11 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     frag_and_act_x_parent_x_sdf_x_pdb = {}
     backed_mol_x_parent = {}
 
+    logging_used_recep_lig = None
+    logging_unmatch_assay_lig = None
+    logging_lig_frag = None
+    logging_error_3d_coord = None
+
     def __init__(
             self,
             structures: Union[str, Path],
@@ -398,10 +403,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     ):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
-        self.__setup_logger('log_zero', os.getcwd() + os.sep + "0.matched_assay_pdb-lig.log")
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "1.unmatched_assay_pdb-lig.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "2.unmatched_pdb-lig_fragment.log")
-        self.__setup_logger('log_three', os.getcwd() + os.sep + "3.error_getting_3d_coordinates.log")
+        self.__setup_logger('log_zero', os.getcwd() + os.sep + "0_matched_assay_pdb-lig.log")
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "1_unmatched_assay_pdb-lig.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "2_unmatched_pdb-lig_fragment.log")
+        self.__setup_logger('log_three', os.getcwd() + os.sep + "3_error_getting_3d_coordinates.log")
 
         self.logging_used_recep_lig = logging.getLogger('log_zero')
         self.logging_unmatch_assay_lig = logging.getLogger('log_one')
