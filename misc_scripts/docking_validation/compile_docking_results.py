@@ -2,6 +2,7 @@ import pandas as pd
 import argparse
 import glob
 import os
+from collections import OrderedDict
 
 def extract_docking_score(file_path):
     """
@@ -65,28 +66,35 @@ def process_directory(directory):
             }
 
             # decoy scores
-            for decoy_path in glob.glob(f"{batch_dir}/decoy*.pdbqt.log"):
-                rmsd = extract_rmsd(decoy_path)
-                if rmsd is None or rmsd > RMSD_CUTOFF:
-                    # Don't consider decoys with different poses from crystal
-                    # structure
-                    continue
-                score = extract_docking_score(decoy_path)
-                key = os.path.basename(decoy_path).split(".")[0]
-                row[key] = score
-                row[key + "_rmsd"] = rmsd
+            for path in glob.glob(f"{batch_dir}/decoy*.pdbqt.log") + glob.glob(f"{batch_dir}/predicted*.pdbqt.log"):
+                rmsd = extract_rmsd(path)
+                rmsd_passes_filter = rmsd is not None and rmsd <= RMSD_CUTOFF
+                # if rmsd is None or rmsd > RMSD_CUTOFF:
+                #     # Don't consider those with different poses from crystal
+                #     # structure
+                #     continue
+                score = extract_docking_score(path)
+                key = os.path.basename(path).split(".")[0]
+                row["score_" + key] = score
+                row["rmsd_" + key] = rmsd
+                row["score_if_pass_rmsd_filt" + key] = score if rmsd_passes_filter else None
+                row["delta_score_" + key] = cryst_score - score
+                row["delta_score_if_pass_rmsd_filt_" + key] = cryst_score - score if rmsd_passes_filter else None
 
-            # predicted scores
-            for pred_path in glob.glob(f"{batch_dir}/predicted*.pdbqt.log"):
-                rmsd = extract_rmsd(pred_path)
-                if rmsd is None or rmsd > RMSD_CUTOFF:
-                    # Don't consider predicted poses with different poses from
-                    # crystal structure
-                    continue
-                score = extract_docking_score(pred_path)
-                key = os.path.basename(pred_path).split(".")[0]
-                row[key] = score
-                row[key + "_rmsd"] = rmsd
+            # # predicted scores
+            # for pred_path in glob.glob(f"{batch_dir}/predicted*.pdbqt.log"):
+            #     rmsd = extract_rmsd(pred_path)
+            #     if rmsd is None or rmsd > RMSD_CUTOFF:
+            #         # Don't consider predicted poses with different poses from
+            #         # crystal structure
+            #         continue
+            #     score = extract_docking_score(pred_path)
+            #     key = os.path.basename(pred_path).split(".")[0]
+            #     row[key] = score
+            #     row[key + "_rmsd"] = rmsd
+
+            # The row should be an ordered dictionary, with the columns in alphabetical order.
+            row = OrderedDict(sorted(row.items()))
 
             data.append(row)
 
