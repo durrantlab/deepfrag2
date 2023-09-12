@@ -2,7 +2,7 @@ import pandas as pd
 import argparse
 import glob
 import os
-from collections import OrderedDict
+# from collections import OrderedDict
 
 def extract_docking_score(file_path):
     """
@@ -94,7 +94,7 @@ def process_directory(directory):
             #     row[key + "_rmsd"] = rmsd
 
             # The row should be an ordered dictionary, with the columns in alphabetical order.
-            row = OrderedDict(sorted(row.items()))
+            # row = OrderedDict(sorted(row.items()))
 
             data.append(row)
 
@@ -103,6 +103,10 @@ def process_directory(directory):
 
 def main(directory):
     df = process_directory(directory)
+
+    # Order the columns alphabetically
+    df = df.reindex(sorted(df.columns), axis=1)
+
     df.to_csv("docking_data.csv", index=False)
     print("Data saved to docking_data.csv")
 
