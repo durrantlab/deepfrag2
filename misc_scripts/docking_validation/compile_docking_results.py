@@ -23,7 +23,12 @@ def extract_rmsd(file_path):
         return None
     with open(file_path, "r") as file:
         first_line = file.readline()
-    return float(first_line.split()[1])
+    try:
+        rmsd = float(first_line.split()[1])
+    except Exception:
+        import pdb
+        pdb.set_trace()
+    return rmsd
 
 def process_directory(directory):
     """
