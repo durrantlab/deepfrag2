@@ -14,12 +14,13 @@ def extract_docking_score(file_path):
     #             return float(score)
     # return None
 
-    with open(file_path[:-4] + "_out.pdbqt", "r") as file:
-        _ = file.readline()
-        second_line = file.readline()
-    return float(second_line.split()[2])
-        
-    # return None
+    try:
+        with open(file_path[:-4] + "_out.pdbqt", "r") as file:
+            _ = file.readline()
+            second_line = file.readline()
+        return float(second_line.split()[2])
+    except Exception:
+        return None
 
 def extract_rmsd(file_path):
     """
