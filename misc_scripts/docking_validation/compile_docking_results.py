@@ -14,6 +14,16 @@ def extract_docking_score(file_path):
                 return float(score)
     return None
 
+def extract_rmsd(file_path):
+    """
+    Extracts the rmsd of the first pose (previously calculated)
+    """
+    file_path = file_path[:-4] + "_out.pdbqt.match.dat"
+    if not os.path.exists(file_path):
+        return None
+    with open(file_path, "r") as file:
+        first_line = file.readline()
+    return float(first_line.split()[1])
 
 def process_directory(directory):
     """
@@ -24,23 +34,29 @@ def process_directory(directory):
     for cryst_lig_path in glob.glob(f"{directory}/*/*cryst_lig.smi.pdbqt.log"):
         pdb_id = os.path.basename(os.path.dirname(cryst_lig_path))
         cryst_score = extract_docking_score(cryst_lig_path)
+        cryst_rmsd = extract_rmsd(cryst_lig_path)
 
         for batch_dir in glob.glob(f"{directory}/{pdb_id}/batch*"):
             row = {
                 "pdb_id": pdb_id,
                 "batch": os.path.basename(batch_dir),
                 "crystal_score": cryst_score,
+                "crystal_rmsd": cryst_rmsd,
             }
 
             # decoy scores
             for decoy_path in glob.glob(f"{batch_dir}/decoy*.pdbqt.log"):
                 score = extract_docking_score(decoy_path)
-                row[os.path.basename(decoy_path).split(".")[0]] = score
+                key = os.path.basename(decoy_path).split(".")[0]
+                row[key] = score
+                row[key + "_rmsd"] = extract_rmsd(decoy_path)
 
             # predicted scores
             for pred_path in glob.glob(f"{batch_dir}/predicted*.pdbqt.log"):
                 score = extract_docking_score(pred_path)
-                row[os.path.basename(pred_path).split(".")[0]] = score
+                key = os.path.basename(pred_path).split(".")[0]
+                row[key] = score
+                row[key + "_rmsd"] = extract_rmsd(decoy_path)
 
             data.append(row)
 
