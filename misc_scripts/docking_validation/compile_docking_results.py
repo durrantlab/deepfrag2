@@ -7,12 +7,19 @@ def extract_docking_score(file_path):
     """
     Extracts the best docking affinity score from a smina .pdbqt_out.pdbqt file.
     """
-    with open(file_path, "r") as file:
-        for line in file:
-            if line.startswith("1  "):
-                score = line.split()[1]  # the score is the 2nd item in the line
-                return float(score)
-    return None
+    # with open(file_path, "r") as file:
+    #     for line in file:
+    #         if line.startswith("1  "):
+    #             score = line.split()[1]  # the score is the 2nd item in the line
+    #             return float(score)
+    # return None
+
+    with open(file_path[:-4] + "_out.pdbqt", "r") as file:
+        _ = file.readline()
+        second_line = file.readline()
+    return float(second_line.split()[2])
+        
+    # return None
 
 def extract_rmsd(file_path):
     """
@@ -21,14 +28,14 @@ def extract_rmsd(file_path):
     file_path = file_path[:-4] + "_out.pdbqt.match.dat"
     if not os.path.exists(file_path):
         return None
+
     with open(file_path, "r") as file:
         first_line = file.readline()
+
     try:
-        rmsd = float(first_line.split()[1])
+        return float(first_line.split()[1])
     except Exception:
-        import pdb
-        pdb.set_trace()
-    return rmsd
+        return None
 
 def process_directory(directory):
     """
