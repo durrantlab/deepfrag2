@@ -69,7 +69,7 @@ def process_directory(directory):
                 score = extract_docking_score(pred_path)
                 key = os.path.basename(pred_path).split(".")[0]
                 row[key] = score
-                row[key + "_rmsd"] = extract_rmsd(decoy_path)
+                row[key + "_rmsd"] = extract_rmsd(pred_path)
 
             data.append(row)
 
