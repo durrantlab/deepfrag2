@@ -78,8 +78,8 @@ def process_directory(directory):
                 row["score_" + key] = score
                 row["rmsd_" + key] = rmsd
                 row["score_if_pass_rmsd_filt" + key] = score if rmsd_passes_filter else None
-                row["delta_score_" + key] = cryst_score - score
-                row["delta_score_if_pass_rmsd_filt_" + key] = cryst_score - score if rmsd_passes_filter else None
+                row["delta_score_" + key] = cryst_score - score if score is not None else None
+                row["delta_score_if_pass_rmsd_filt_" + key] = cryst_score - score if rmsd_passes_filter and score is not None else None
 
             # # predicted scores
             # for pred_path in glob.glob(f"{batch_dir}/predicted*.pdbqt.log"):
