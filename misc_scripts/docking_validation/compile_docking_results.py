@@ -44,10 +44,17 @@ def process_directory(directory):
     """
     data = []
 
+    RMSD_CUTOFF = 2.0
+
     for cryst_lig_path in glob.glob(f"{directory}/*/*cryst_lig.smi.pdbqt.log"):
         pdb_id = os.path.basename(os.path.dirname(cryst_lig_path))
         cryst_score = extract_docking_score(cryst_lig_path)
         cryst_rmsd = extract_rmsd(cryst_lig_path)
+
+        if cryst_rmsd is None or cryst_rmsd > RMSD_CUTOFF:
+            # If you can't recapture the crystallographic pose, no use
+            # proceeding with decoys/predicteds.
+            continue
 
         for batch_dir in glob.glob(f"{directory}/{pdb_id}/batch*"):
             row = {
@@ -59,17 +66,27 @@ def process_directory(directory):
 
             # decoy scores
             for decoy_path in glob.glob(f"{batch_dir}/decoy*.pdbqt.log"):
+                rmsd = extract_rmsd(decoy_path)
+                if rmsd is None or rmsd > RMSD_CUTOFF:
+                    # Don't consider decoys with different poses from crystal
+                    # structure
+                    continue
                 score = extract_docking_score(decoy_path)
                 key = os.path.basename(decoy_path).split(".")[0]
                 row[key] = score
-                row[key + "_rmsd"] = extract_rmsd(decoy_path)
+                row[key + "_rmsd"] = rmsd
 
             # predicted scores
             for pred_path in glob.glob(f"{batch_dir}/predicted*.pdbqt.log"):
+                rmsd = extract_rmsd(pred_path)
+                if rmsd is None or rmsd > RMSD_CUTOFF:
+                    # Don't consider predicted poses with different poses from
+                    # crystal structure
+                    continue
                 score = extract_docking_score(pred_path)
                 key = os.path.basename(pred_path).split(".")[0]
                 row[key] = score
-                row[key + "_rmsd"] = extract_rmsd(pred_path)
+                row[key + "_rmsd"] = rmsd
 
             data.append(row)
 
