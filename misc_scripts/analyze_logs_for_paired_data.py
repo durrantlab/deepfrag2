@@ -32,8 +32,8 @@ for log_file_name in logs:
         for line in reader_log:
             if line.startswith("INFO"):
                 split_line = line.split(" ")
-                info_receptor = split_line[logs[log_file_name]["pos_info_receptor"]]
-                info_ligand = split_line[logs[log_file_name]["pos_info_ligand"]]
+                info_receptor = split_line[logs[log_file_name]["pos_info_receptor"]].replace("\n", "").replace("\"", "")
+                info_ligand = split_line[logs[log_file_name]["pos_info_ligand"]].replace("\n", "").replace("\"", "")
 
                 structure = logs[log_file_name]["results"]
                 if info_receptor not in structure:
@@ -47,7 +47,6 @@ for log_file_name in logs:
 for log_file_name in logs:
     csv_file = os.path.abspath(os.path.join(path, log_file_name + ".csv"))
     with open(csv_file, 'w') as file:
-        # creating a csv writer object
         csvwriter = csv.writer(file)
         rows = []
         structure = logs[log_file_name]["results"]
