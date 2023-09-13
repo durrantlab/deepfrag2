@@ -391,10 +391,15 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     frag_and_act_x_parent_x_sdf_x_pdb = {}
     backed_mol_x_parent = {}
 
-    logging_used_recep_lig = None
-    logging_unmatch_assay_lig = None
-    logging_lig_frag = None
-    logging_error_3d_coord = None
+    fail_match_FirstSmiles_PDBLigand = None
+    fail_match_SecondSmiles_PDBLigand = None
+    ligand_not_contain_parent = None
+    ligand_not_contain_first_frag = None
+    ligand_not_contain_second_frag = None
+    error_getting_3d_coordinates_for_parent = None
+    error_getting_3d_coordinates_for_first_frag = None
+    error_getting_3d_coordinates_for_second_frag = None
+    finally_used = None
 
     def __init__(
             self,
@@ -408,19 +413,34 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _creating_logger_files(self):
-        self.__setup_logger('log_zero', os.getcwd() + os.sep + "0_matched_assay_pdb-lig.log")
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "1_unmatched_assay_pdb-lig.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "2_unmatched_pdb-lig_fragment.log")
-        self.__setup_logger('log_three', os.getcwd() + os.sep + "3_error_getting_3d_coordinates.log")
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "1_fail_match_FirstSmiles_PDBLigand.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "2_fail_match_SecondSmiles_PDBLigand.log")
+        self.__setup_logger('log_three', os.getcwd() + os.sep + "3_ligand_not_contain_parent.log")
+        self.__setup_logger('log_four', os.getcwd() + os.sep + "4_ligand_not_contain_first-frag.log")
+        self.__setup_logger('log_five', os.getcwd() + os.sep + "5_ligand_not_contain_second-frag.log")
+        self.__setup_logger('log_six', os.getcwd() + os.sep + "6_error_getting_3d_coordinates_for_parent.log")
+        self.__setup_logger('log_seven', os.getcwd() + os.sep + "7_error_getting_3d_coordinates_for_first-frag.log")
+        self.__setup_logger('log_eight', os.getcwd() + os.sep + "8_error_getting_3d_coordinates_for_second-frag.log")
+        self.__setup_logger('log_nine', os.getcwd() + os.sep + "9_finally_used.log")
 
-        self.logging_used_recep_lig = logging.getLogger('log_zero')
-        self.logging_used_recep_lig.propagate = False
-        self.logging_unmatch_assay_lig = logging.getLogger('log_one')
-        self.logging_unmatch_assay_lig.propagate = False
-        self.logging_lig_frag = logging.getLogger('log_two')
-        self.logging_lig_frag.propagate = False
-        self.logging_error_3d_coord = logging.getLogger('log_three')
-        self.logging_error_3d_coord.propagate = False
+        self.fail_match_FirstSmiles_PDBLigand = logging.getLogger('log_one')
+        self.fail_match_FirstSmiles_PDBLigand.propagate = False
+        self.fail_match_SecondSmiles_PDBLigand = logging.getLogger('log_two')
+        self.fail_match_SecondSmiles_PDBLigand.propagate = False
+        self.ligand_not_contain_parent = logging.getLogger('log_three')
+        self.ligand_not_contain_parent.propagate = False
+        self.ligand_not_contain_first_frag = logging.getLogger('log_four')
+        self.ligand_not_contain_first_frag.propagate = False
+        self.ligand_not_contain_second_frag = logging.getLogger('log_five')
+        self.ligand_not_contain_second_frag.propagate = False
+        self.error_getting_3d_coordinates_for_parent = logging.getLogger('log_six')
+        self.error_getting_3d_coordinates_for_parent.propagate = False
+        self.error_getting_3d_coordinates_for_first_frag = logging.getLogger('log_seven')
+        self.error_getting_3d_coordinates_for_first_frag.propagate = False
+        self.error_getting_3d_coordinates_for_second_frag = logging.getLogger('log_eight')
+        self.error_getting_3d_coordinates_for_second_frag.propagate = False
+        self.finally_used = logging.getLogger('log_nine')
+        self.finally_used.propagate = False
 
     def _load_classes_families_targets_ligands(
         self,
@@ -560,7 +580,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         if backed_second_frag:
                             self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
 
-                    self.logging_used_recep_lig.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used\n")
+                    self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used\n")
 
         self.pdb_files.sort()
 
@@ -582,13 +602,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 template = Chem.MolFromSmiles(first_ligand_template)
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
-                self.logging_unmatch_assay_lig.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match\n")
+                self.fail_match_FirstSmiles_PDBLigand.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match\n")
                 try:
                     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                     template = Chem.MolFromSmiles(second_ligand_template)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
-                    self.logging_unmatch_assay_lig.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match\n")
+                    self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match\n")
                     return None, None, None
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
@@ -597,9 +617,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         else:
             return None, None, None
 
-        r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name)
-        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name)
-        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name)
+        r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
+        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
+        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
 
         if r_parent:
             backed_parent = BackedMol(rdmol=r_parent)
@@ -612,11 +632,11 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
-    def get_sub_mol(self, mol, smi_sub_mol, sdf_name, debug=False):
+    def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates, debug=False):
         patt = Chem.MolFromSmarts(smi_sub_mol)
         sub_atoms = mol.GetSubstructMatch(patt, useChirality=True)
         if len(sub_atoms) == 0:
-            self.logging_lig_frag.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
+            log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
             return None
 
         new_mol = Chem.RWMol()
@@ -651,7 +671,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 x, y, z = mol.GetConformer().GetAtomPosition(idx)
                 conf.SetAtomPosition(atom_map[a.GetIdx()], Point3D(x, y, z))
         except Exception as e:
-            self.logging_error_3d_coord.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
+            log_for_3d_coordinates.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
             return None
 
         if debug:
