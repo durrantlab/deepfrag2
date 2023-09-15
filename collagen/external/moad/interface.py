@@ -637,7 +637,11 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
     def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates, debug=False):
         patt = Chem.MolFromSmarts(smi_sub_mol)
-        sub_atoms = mol.GetSubstructMatch(patt, useChirality=True)
+        mol_smile = Chem.MolToSmiles(patt)
+        mol_smile = mol_smile.replace("*", "[H]")
+        patt_mol = Chem.MolFromSmiles(mol_smile)
+        Chem.RemoveAllHs(patt_mol)
+        sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=True)
         if len(sub_atoms) == 0:
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
             return None
