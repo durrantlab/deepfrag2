@@ -6,6 +6,7 @@ from rdkit.Chem import AllChem
 from rdkit import Chem
 from rdkit.Geometry import Point3D
 from rdkit.Chem import rdmolops
+import sys
 
 
 class PairedPdbSdfCsvInterface(object):
@@ -34,15 +35,15 @@ class PairedPdbSdfCsvInterface(object):
         self._creating_logger_files()
 
     def _creating_logger_files(self):
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "1_fail_match_FirstSmiles_PDBLigand.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "2_fail_match_SecondSmiles_PDBLigand.log")
-        self.__setup_logger('log_three', os.getcwd() + os.sep + "3_ligand_not_contain_parent.log")
-        self.__setup_logger('log_four', os.getcwd() + os.sep + "4_ligand_not_contain_first-frag.log")
-        self.__setup_logger('log_five', os.getcwd() + os.sep + "5_ligand_not_contain_second-frag.log")
-        self.__setup_logger('log_six', os.getcwd() + os.sep + "6_error_getting_3d_coordinates_for_parent.log")
-        self.__setup_logger('log_seven', os.getcwd() + os.sep + "7_error_getting_3d_coordinates_for_first-frag.log")
-        self.__setup_logger('log_eight', os.getcwd() + os.sep + "8_error_getting_3d_coordinates_for_second-frag.log")
-        self.__setup_logger('log_nine', os.getcwd() + os.sep + "9_error_standardizing_smiles_for_parent.log")
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_fail_match_FirstSmiles_PDBLigand.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "02_fail_match_SecondSmiles_PDBLigand.log")
+        self.__setup_logger('log_three', os.getcwd() + os.sep + "03_ligand_not_contain_parent.log")
+        self.__setup_logger('log_four', os.getcwd() + os.sep + "04_ligand_not_contain_first-frag.log")
+        self.__setup_logger('log_five', os.getcwd() + os.sep + "05_ligand_not_contain_second-frag.log")
+        self.__setup_logger('log_six', os.getcwd() + os.sep + "06_error_getting_3d_coordinates_for_parent.log")
+        self.__setup_logger('log_seven', os.getcwd() + os.sep + "07_error_getting_3d_coordinates_for_first-frag.log")
+        self.__setup_logger('log_eight', os.getcwd() + os.sep + "08_error_getting_3d_coordinates_for_second-frag.log")
+        self.__setup_logger('log_nine', os.getcwd() + os.sep + "09_error_standardizing_smiles_for_parent.log")
         self.__setup_logger('log_ten', os.getcwd() + os.sep + "10_error_standardizing_smiles_for_first-frag.log")
         self.__setup_logger('log_eleven', os.getcwd() + os.sep + "11_error_standardizing_smiles_for_second-frag.log")
         self.__setup_logger('log_twelve', os.getcwd() + os.sep + "12_finally_used.log")
@@ -178,7 +179,7 @@ class PairedPdbSdfCsvInterface(object):
         try:
             if molecule:
                 smi = Chem.MolToSmiles(molecule, isomericSmiles=True)
-                smi = self.__standardize_smiles(smi, True)
+                smi = self.__standardize_smiles(smiles=smi, raise_if_fails=True)
                 return molecule
         except Exception as e:
             logger.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(molecule)} >> ", e)
@@ -217,33 +218,24 @@ class PairedPdbSdfCsvInterface(object):
         Returns:
             str: Standardized SMILES string.
         """
-        # Catch all errors
-        try:
-            # Convert smiles to rdkit mol
-            rdmol = Chem.MolFromSmiles(smiles)
+        # Convert smiles to rdkit mol
+        rdmol = Chem.MolFromSmiles(smiles)
 
-            # Neutralize the molecule (charges)
-            self.__neutralize_atoms(rdmol)
+        # Neutralize the molecule (charges)
+        self.__neutralize_atoms(rdmol)
 
-            rdmolops.Cleanup(rdmol)
-            rdmolops.RemoveStereochemistry(rdmol)
-            rdmolops.SanitizeMol(rdmol, catchErrors=True)
+        rdmolops.Cleanup(rdmol)
+        rdmolops.RemoveStereochemistry(rdmol)
+        rdmolops.SanitizeMol(rdmol, catchErrors=True)
 
-            # Remove hydrogens
-            rdmol = Chem.RemoveHs(rdmol)
+        # Remove hydrogens
+        rdmol = Chem.RemoveHs(rdmol)
 
-            return Chem.MolToSmiles(
-                rdmol,
-                isomericSmiles=False,  # No chirality
-                canonical=True,  # e.g., all benzenes are written as aromatic
-            )
-
-        except Exception as e:
-            if raise_if_fails:
-                raise e
-            else:
-                print(f"CAUGHT EXCEPTION: Could not standardize SMILES: {smiles} >> ", e)
-                return smiles
+        return Chem.MolToSmiles(
+            rdmol,
+            isomericSmiles=False,  # No chirality
+            canonical=True,  # e.g., all benzenes are written as aromatic
+        )
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
@@ -319,4 +311,5 @@ class PairedPdbSdfCsvInterface(object):
 
 if __name__ == "__main__":
     paired_obj = PairedPdbSdfCsvInterface()
-    paired_obj.read_data_from_csv("input/argument/separated/comma/")
+    paired_obj.read_data_from_csv("D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\paired_data_original.txt,D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Datasets_paired,protein_pdb,ligand_sdf,Parent,FirstFragment,SecondFragment,Endpoint_First,Endpoint_Second,Template_one,Template_two,ReceptorPrevalence")
+    sys.exit()
