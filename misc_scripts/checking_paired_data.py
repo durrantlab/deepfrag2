@@ -5,7 +5,7 @@ import csv
 from rdkit.Chem import AllChem
 from rdkit import Chem
 from rdkit.Geometry import Point3D
-from collagen.core.molecules.mol import BackedMol
+from rdkit.Chem import rdmolops
 
 
 class PairedPdbSdfCsvInterface(object):
@@ -103,10 +103,10 @@ class PairedPdbSdfCsvInterface(object):
                     if not backed_parent or (not backed_first_frag and not backed_second_frag):
                         continue
 
-                    parent_smi = backed_parent.smiles(True)
-                    first_frag_smi = backed_first_frag.smiles(True) if backed_first_frag else None
+                    parent_smi = Chem.MolToSmiles(backed_parent)
+                    first_frag_smi = Chem.MolToSmiles(backed_first_frag) if backed_first_frag else None
                     try:
-                        second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
+                        second_frag_smi = Chem.MolToSmiles(backed_second_frag) if backed_second_frag else None
                     except:
                         backed_second_frag = None
                         second_frag_smi = None
@@ -177,12 +177,73 @@ class PairedPdbSdfCsvInterface(object):
     def __get_backed_molecule(self, molecule, logger):
         try:
             if molecule:
-                backed = BackedMol(rdmol=molecule)
-                backed.smiles(isomeric=True, raise_if_fails=True)
-                return backed
+                smi = Chem.MolToSmiles(molecule, isomericSmiles=True)
+                smi = self.__standardize_smiles(smi, True)
+                return molecule
         except Exception as e:
             logger.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(molecule)} >> ", e)
             return None
+
+    # From https://www.rdkit.org/docs/Cookbook.html
+    def __neutralize_atoms(self, mol: Chem.Mol) -> Chem.Mol:
+        """Neutralize the molecule by adding/removing hydrogens.
+
+        Args:
+            mol (Chem.Mol): RDKit molecule.
+
+        Returns:
+            Chem.Mol: Neutralized RDKit molecule.
+        """
+        pattern = Chem.MolFromSmarts("[+1!h0!$([*]~[-1,-2,-3,-4]),-1!$([*]~[+1,+2,+3,+4])]")
+        at_matches = mol.GetSubstructMatches(pattern)
+        at_matches_list = [y[0] for y in at_matches]
+        if at_matches_list:
+            for at_idx in at_matches_list:
+                atom = mol.GetAtomWithIdx(at_idx)
+                chg = atom.GetFormalCharge()
+                hcount = atom.GetTotalNumHs()
+                atom.SetFormalCharge(0)
+                atom.SetNumExplicitHs(hcount - chg)
+                atom.UpdatePropertyCache()
+        return mol
+
+    def __standardize_smiles(self, smiles: str, raise_if_fails: bool = False) -> str:
+        """Standardize SMILES string.
+
+        Args:
+            smiles (str): SMILES string.
+            raise_if_fails (bool): If True, will raise an Exception.
+
+        Returns:
+            str: Standardized SMILES string.
+        """
+        # Catch all errors
+        try:
+            # Convert smiles to rdkit mol
+            rdmol = Chem.MolFromSmiles(smiles)
+
+            # Neutralize the molecule (charges)
+            self.__neutralize_atoms(rdmol)
+
+            rdmolops.Cleanup(rdmol)
+            rdmolops.RemoveStereochemistry(rdmol)
+            rdmolops.SanitizeMol(rdmol, catchErrors=True)
+
+            # Remove hydrogens
+            rdmol = Chem.RemoveHs(rdmol)
+
+            return Chem.MolToSmiles(
+                rdmol,
+                isomericSmiles=False,  # No chirality
+                canonical=True,  # e.g., all benzenes are written as aromatic
+            )
+
+        except Exception as e:
+            if raise_if_fails:
+                raise e
+            else:
+                print(f"CAUGHT EXCEPTION: Could not standardize SMILES: {smiles} >> ", e)
+                return smiles
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
