@@ -11,7 +11,6 @@ import linecache
 import csv
 from collagen.core.molecules.mol import BackedMol
 from rdkit.Geometry import Point3D
-import sys
 from rdkit.Chem import AllChem
 import logging
 
@@ -399,6 +398,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     error_getting_3d_coordinates_for_parent = None
     error_getting_3d_coordinates_for_first_frag = None
     error_getting_3d_coordinates_for_second_frag = None
+    error_standardizing_smiles_for_parent = None
+    error_standardizing_smiles_for_first_frag = None
+    error_standardizing_smiles_for_second_frag = None
     finally_used = None
 
     def __init__(
@@ -421,7 +423,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         self.__setup_logger('log_six', os.getcwd() + os.sep + "6_error_getting_3d_coordinates_for_parent.log")
         self.__setup_logger('log_seven', os.getcwd() + os.sep + "7_error_getting_3d_coordinates_for_first-frag.log")
         self.__setup_logger('log_eight', os.getcwd() + os.sep + "8_error_getting_3d_coordinates_for_second-frag.log")
-        self.__setup_logger('log_nine', os.getcwd() + os.sep + "9_finally_used.log")
+        self.__setup_logger('log_nine', os.getcwd() + os.sep + "9_error_standardizing_smiles_for_parent.log")
+        self.__setup_logger('log_ten', os.getcwd() + os.sep + "10_error_standardizing_smiles_for_first-frag.log")
+        self.__setup_logger('log_eleven', os.getcwd() + os.sep + "11_error_standardizing_smiles_for_second-frag.log")
+        self.__setup_logger('log_twelve', os.getcwd() + os.sep + "12_finally_used.log")
 
         self.fail_match_FirstSmiles_PDBLigand = logging.getLogger('log_one')
         self.fail_match_FirstSmiles_PDBLigand.propagate = False
@@ -439,7 +444,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         self.error_getting_3d_coordinates_for_first_frag.propagate = False
         self.error_getting_3d_coordinates_for_second_frag = logging.getLogger('log_eight')
         self.error_getting_3d_coordinates_for_second_frag.propagate = False
-        self.finally_used = logging.getLogger('log_nine')
+        self.error_standardizing_smiles_for_parent = logging.getLogger('log_nine')
+        self.error_standardizing_smiles_for_parent.propagate = False
+        self.error_standardizing_smiles_for_first_frag = logging.getLogger('log_ten')
+        self.error_standardizing_smiles_for_first_frag.propagate = False
+        self.error_standardizing_smiles_for_second_frag = logging.getLogger('log_eleven')
+        self.error_standardizing_smiles_for_second_frag.propagate = False
+        self.finally_used = logging.getLogger('log_twelve')
         self.finally_used.propagate = False
 
     def _load_classes_families_targets_ligands(
@@ -580,7 +591,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         if backed_second_frag:
                             self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
 
-                    self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used\n")
+                    self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used")
 
         self.pdb_files.sort()
 
@@ -602,13 +613,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 template = Chem.MolFromSmiles(first_ligand_template)
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
-                self.fail_match_FirstSmiles_PDBLigand.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match\n")
+                self.fail_match_FirstSmiles_PDBLigand.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match")
                 try:
                     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                     template = Chem.MolFromSmiles(second_ligand_template)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
-                    self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match\n")
+                    self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match")
                     return None, None, None
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
@@ -624,14 +635,17 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
         r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
 
-        if r_parent:
-            backed_parent = BackedMol(rdmol=r_parent)
-        if r_first_frag_smi:
-            backed_first_frag = BackedMol(rdmol=r_first_frag_smi)
-        if r_second_frag_smi:
-            backed_second_frag = BackedMol(rdmol=r_second_frag_smi)
+        return self.__get_backed_molecule(molecule=r_parent, logger=self.error_standardizing_smiles_for_parent), self.__get_backed_molecule(molecule=r_first_frag_smi, logger=self.error_standardizing_smiles_for_first_frag), self.__get_backed_molecule(molecule=r_second_frag_smi, logger=self.error_standardizing_smiles_for_second_frag)
 
-        return backed_parent, backed_first_frag, backed_second_frag
+    def __get_backed_molecule(self, molecule, logger):
+        try:
+            if molecule:
+                backed = BackedMol(rdmol=molecule)
+                backed.smiles(isomeric=True, raise_if_fails=True)
+                return backed
+        except Exception as e:
+            logger.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(molecule)} >> ", e)
+            return None
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py

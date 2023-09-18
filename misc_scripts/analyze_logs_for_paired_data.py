@@ -44,7 +44,7 @@ logs = {
         "pos_info_ligand": 9,
         "results": {}
     },
-    "9_finally_used.log": {
+    "12_finally_used.log": {
         "pos_info_receptor": 6,
         "pos_info_ligand": 10,
         "results": {}
