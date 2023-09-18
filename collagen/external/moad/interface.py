@@ -635,7 +635,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
-    def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates, debug=False):
+    def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates):
         patt = Chem.MolFromSmarts(smi_sub_mol)
         mol_smile = Chem.MolToSmiles(patt)
         mol_smile = mol_smile.replace("*", "[H]")
@@ -681,26 +681,14 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             log_for_3d_coordinates.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
             return None
 
-        if debug:
-            print(Chem.MolToSmiles(new_mol))
-            print(Chem.MolToSmiles(patt))
-
         # find out the connector atom
         # NOTE: according to several runs, the connector atom is always allocated in the position 0 into the recovered substructure ('new_mol' variable)
         # but this was implemented just in case the connector atom is in a position other than 0.
         # this implementation has linear complexity and it is so fast
         for idx in sub_atoms:
             a = mol.GetAtomWithIdx(idx)
-            if debug:
-                print(str(atom_map[a.GetIdx()]) + " " + new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() + " " + patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol())
             if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
                 new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
-
-        if debug:
-            for s in sub_atoms:
-                print(mol.GetAtoms()[s].GetSymbol(), list(mol.GetConformer().GetAtomPosition(s)), file=sys.stderr)
-            print("\n" + Chem.MolToMolBlock(new_mol), file=sys.stderr)
-            print("--------------------------------------------------------------------------------------------------------", file=sys.stderr)
 
         return new_mol
 
