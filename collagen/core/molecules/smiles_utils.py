@@ -29,11 +29,12 @@ def neutralize_atoms(mol: Chem.Mol) -> Chem.Mol:
     return mol
 
 
-def standardize_smiles(smiles: str) -> str:
+def standardize_smiles(smiles: str, raise_if_fails: bool = False) -> str:
     """Standardize SMILES string.
 
     Args:
         smiles (str): SMILES string.
+        raise_if_fails (bool): If True, will raise an Exception.
 
     Returns:
         str: Standardized SMILES string.
@@ -44,7 +45,7 @@ def standardize_smiles(smiles: str) -> str:
         rdmol = Chem.MolFromSmiles(smiles)
 
         # Neutralize the molecule (charges)
-        # neutralize_atoms(rdmol)
+        neutralize_atoms(rdmol)
 
         rdmolops.Cleanup(rdmol)
         rdmolops.RemoveStereochemistry(rdmol)
@@ -60,5 +61,8 @@ def standardize_smiles(smiles: str) -> str:
         )
 
     except Exception as e:
-        print(f"CAUGHT EXCEPTION: Could not standardize SMILES: {smiles} >> ", e)
-        return smiles
+        if raise_if_fails:
+            raise e
+        else:
+            print(f"CAUGHT EXCEPTION: Could not standardize SMILES: {smiles} >> ", e)
+            return smiles
