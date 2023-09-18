@@ -602,11 +602,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         return pdb_name + "_" + sdf_name + "_" + parent_smi
 
     def read_mol(self, sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_frag_smi, first_ligand_template, second_ligand_template):
-        backed_parent = None
-        backed_first_frag = None
-        backed_second_frag = None
         path_to_mol = path_pdb_sdf_files + os.sep + sdf_name
-
         if sdf_name.endswith(".pdb"):
             try:
                 ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
@@ -622,7 +618,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match")
                     return None, None, None
         elif sdf_name.endswith(".sdf"):
-            suppl = Chem.SDMolSupplier(path_pdb_sdf_files + os.sep + sdf_name)
+            suppl = Chem.SDMolSupplier(path_to_mol)
             for ref_mol in suppl:
                 pass
         else:
