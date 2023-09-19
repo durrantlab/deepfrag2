@@ -415,15 +415,15 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _creating_logger_files(self):
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "1_fail_match_FirstSmiles_PDBLigand.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "2_fail_match_SecondSmiles_PDBLigand.log")
-        self.__setup_logger('log_three', os.getcwd() + os.sep + "3_ligand_not_contain_parent.log")
-        self.__setup_logger('log_four', os.getcwd() + os.sep + "4_ligand_not_contain_first-frag.log")
-        self.__setup_logger('log_five', os.getcwd() + os.sep + "5_ligand_not_contain_second-frag.log")
-        self.__setup_logger('log_six', os.getcwd() + os.sep + "6_error_getting_3d_coordinates_for_parent.log")
-        self.__setup_logger('log_seven', os.getcwd() + os.sep + "7_error_getting_3d_coordinates_for_first-frag.log")
-        self.__setup_logger('log_eight', os.getcwd() + os.sep + "8_error_getting_3d_coordinates_for_second-frag.log")
-        self.__setup_logger('log_nine', os.getcwd() + os.sep + "9_error_standardizing_smiles_for_parent.log")
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_fail_match_FirstSmiles_PDBLigand.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "02_fail_match_SecondSmiles_PDBLigand.log")
+        self.__setup_logger('log_three', os.getcwd() + os.sep + "03_ligand_not_contain_parent.log")
+        self.__setup_logger('log_four', os.getcwd() + os.sep + "04_ligand_not_contain_first-frag.log")
+        self.__setup_logger('log_five', os.getcwd() + os.sep + "05_ligand_not_contain_second-frag.log")
+        self.__setup_logger('log_six', os.getcwd() + os.sep + "06_error_getting_3d_coordinates_for_parent.log")
+        self.__setup_logger('log_seven', os.getcwd() + os.sep + "07_error_getting_3d_coordinates_for_first-frag.log")
+        self.__setup_logger('log_eight', os.getcwd() + os.sep + "08_error_getting_3d_coordinates_for_second-frag.log")
+        self.__setup_logger('log_nine', os.getcwd() + os.sep + "09_error_standardizing_smiles_for_parent.log")
         self.__setup_logger('log_ten', os.getcwd() + os.sep + "10_error_standardizing_smiles_for_first-frag.log")
         self.__setup_logger('log_eleven', os.getcwd() + os.sep + "11_error_standardizing_smiles_for_second-frag.log")
         self.__setup_logger('log_twelve', os.getcwd() + os.sep + "12_finally_used.log")
@@ -559,16 +559,34 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                                                                                          row[col_second_frag_smi],
                                                                                          row[col_first_ligand_template],
                                                                                          row[col_second_ligand_template])
-                    if not backed_parent or (not backed_first_frag and not backed_second_frag):
+
+                    if not backed_parent:
+                        continue
+                    try:
+                        parent_smi = backed_parent.smiles(isomeric=True, raise_if_fails=True)
+                    except BaseException as e:
+                        self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)} >> ", e)
                         continue
 
-                    parent_smi = backed_parent.smiles(True)
-                    first_frag_smi = backed_first_frag.smiles(True) if backed_first_frag else None
-                    try:
-                        second_frag_smi = backed_second_frag.smiles(True) if backed_second_frag else None
-                    except:
-                        backed_second_frag = None
-                        second_frag_smi = None
+                    if backed_first_frag:
+                        try:
+                            first_frag_smi = backed_first_frag.smiles(isomeric=True, raise_if_fails=True) if backed_first_frag else None
+                        except BaseException as e:
+                            self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)} >> ", e)
+                            backed_first_frag = None
+                            first_frag_smi = None
+
+                    if backed_second_frag:
+                        try:
+                            second_frag_smi = backed_second_frag.smiles(isomeric=True, raise_if_fails=True) if backed_second_frag else None
+                        except BaseException as e:
+                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(second_frag_smi.rdmol)} >> ", e)
+                            backed_second_frag = None
+                            second_frag_smi = None
+
+                    if not backed_first_frag and not backed_second_frag:
+                        continue
+
                     act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
                     act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
                     prevalence_receptor = row[col_prevalence] if col_prevalence else 1
@@ -631,17 +649,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
         r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
 
-        return self.__get_backed_molecule(molecule=r_parent, logger=self.error_standardizing_smiles_for_parent), self.__get_backed_molecule(molecule=r_first_frag_smi, logger=self.error_standardizing_smiles_for_first_frag), self.__get_backed_molecule(molecule=r_second_frag_smi, logger=self.error_standardizing_smiles_for_second_frag)
-
-    def __get_backed_molecule(self, molecule, logger):
-        try:
-            if molecule:
-                backed = BackedMol(rdmol=molecule)
-                backed.smiles(isomeric=True, raise_if_fails=True)
-                return backed
-        except Exception as e:
-            logger.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(molecule)} >> ", e)
-            return None
+        return BackedMol(rdmol=r_parent) if r_parent else None, BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None, BackedMol(rdmol=r_second_frag_smi) if r_second_frag_smi else None
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py

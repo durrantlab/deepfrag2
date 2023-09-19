@@ -4,42 +4,42 @@ import csv
 path = "pth/to/log/files"
 
 logs = {
-    "1_fail_match_FirstSmiles_PDBLigand.log": {
+    "01_fail_match_FirstSmiles_PDBLigand.log": {
         "pos_info_receptor": 6,
         "pos_info_ligand": 11,
         "results": {}
     },
-    "2_fail_match_SecondSmiles_PDBLigand.log": {
+    "02_fail_match_SecondSmiles_PDBLigand.log": {
         "pos_info_receptor": 6,
         "pos_info_ligand": 11,
         "results": {}
     },
-    "3_ligand_not_contain_parent.log":  {
+    "03_ligand_not_contain_parent.log":  {
         "pos_info_receptor": 5,
         "pos_info_ligand": 10,
         "results": {}
     },
-    "4_ligand_not_contain_first-frag.log":  {
+    "04_ligand_not_contain_first-frag.log":  {
         "pos_info_receptor": 5,
         "pos_info_ligand": 10,
         "results": {}
     },
-    "5_ligand_not_contain_second-frag.log":  {
+    "05_ligand_not_contain_second-frag.log":  {
         "pos_info_receptor": 5,
         "pos_info_ligand": 10,
         "results": {}
     },
-    "6_error_getting_3d_coordinates_for_parent.log":  {
+    "06_error_getting_3d_coordinates_for_parent.log":  {
         "pos_info_receptor": 16,
         "pos_info_ligand": 9,
         "results": {}
     },
-    "7_error_getting_3d_coordinates_for_first-frag.log":  {
+    "07_error_getting_3d_coordinates_for_first-frag.log":  {
         "pos_info_receptor": 16,
         "pos_info_ligand": 9,
         "results": {}
     },
-    "8_error_getting_3d_coordinates_for_second-frag.log":  {
+    "08_error_getting_3d_coordinates_for_second-frag.log":  {
         "pos_info_receptor": 16,
         "pos_info_ligand": 9,
         "results": {}
