@@ -604,12 +604,12 @@ class BackedMol(Mol):
         self._ensure_structure()
         return Chem.MolToPDBBlock(self.rdmol)
 
-    def smiles(self, isomeric: bool = False, raise_if_fails: bool = False) -> str:
+    def smiles(self, isomeric: bool = False, none_if_fails: bool = False) -> str:
         """Convert the internal rdmol to a SMILES string.
 
         Args:
             isomeric (bool): If True, will return an isomeric SMILES.
-            raise_if_fails (bool): If True, will raise an Exception if standardize_smiles fails.
+            none_if_fails (bool): If True, will return None if standardize_smiles fails.
 
         Note:
             This version returns a non-isomeric SMILES, even if isomeric = True
@@ -617,7 +617,7 @@ class BackedMol(Mol):
             rdkfingerprint does not account for chirality, so shouldn't matter.
         """
         smi = Chem.MolToSmiles(self.rdmol, isomericSmiles=isomeric)
-        smi = standardize_smiles(smi, raise_if_fails)
+        smi = standardize_smiles(smi, none_if_fails)
         return smi
 
     @property
