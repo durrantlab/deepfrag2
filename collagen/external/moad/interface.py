@@ -580,7 +580,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         try:
                             second_frag_smi = backed_second_frag.smiles(isomeric=True, raise_if_fails=True) if backed_second_frag else None
                         except BaseException as e:
-                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(second_frag_smi.rdmol)} >> ", e)
+                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)} >> ", e)
                             backed_second_frag = None
                             second_frag_smi = None
 
