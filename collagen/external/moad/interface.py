@@ -562,27 +562,22 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                     if not backed_parent:
                         continue
-                    try:
-                        parent_smi = backed_parent.smiles(isomeric=True, raise_if_fails=True)
-                    except BaseException as e:
-                        self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)} >> ", e)
+                    parent_smi = backed_parent.smiles(isomeric=True, none_if_fails=True)
+                    if not parent_smi:
+                        self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
                         continue
 
                     if backed_first_frag:
-                        try:
-                            first_frag_smi = backed_first_frag.smiles(isomeric=True, raise_if_fails=True) if backed_first_frag else None
-                        except BaseException as e:
-                            self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)} >> ", e)
+                        first_frag_smi = backed_first_frag.smiles(isomeric=True, none_if_fails=True)
+                        if not first_frag_smi:
+                            self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
                             backed_first_frag = None
-                            first_frag_smi = None
 
                     if backed_second_frag:
-                        try:
-                            second_frag_smi = backed_second_frag.smiles(isomeric=True, raise_if_fails=True) if backed_second_frag else None
-                        except BaseException as e:
-                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)} >> ", e)
+                        second_frag_smi = backed_second_frag.smiles(isomeric=True, none_if_fails=True)
+                        if not second_frag_smi:
+                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
                             backed_second_frag = None
-                            second_frag_smi = None
 
                     if not backed_first_frag and not backed_second_frag:
                         continue

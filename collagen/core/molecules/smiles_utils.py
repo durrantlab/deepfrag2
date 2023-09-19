@@ -29,12 +29,12 @@ def neutralize_atoms(mol: Chem.Mol) -> Chem.Mol:
     return mol
 
 
-def standardize_smiles(smiles: str, raise_if_fails: bool = False) -> str:
+def standardize_smiles(smiles: str, none_if_fails: bool = False) -> str:
     """Standardize SMILES string.
 
     Args:
         smiles (str): SMILES string.
-        raise_if_fails (bool): If True, will raise an Exception.
+        none_if_fails (bool): If True, will return None.
 
     Returns:
         str: Standardized SMILES string.
@@ -61,8 +61,8 @@ def standardize_smiles(smiles: str, raise_if_fails: bool = False) -> str:
         )
 
     except Exception as e:
-        if raise_if_fails:
-            raise e
+        if none_if_fails:
+            return None
         else:
             print(f"CAUGHT EXCEPTION: Could not standardize SMILES: {smiles} >> ", e)
             return smiles
