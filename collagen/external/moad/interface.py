@@ -637,6 +637,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         else:
             return None, None, None
 
+        Chem.RemoveAllHs(ref_mol)
         # it is needed to get 3D coordinates for parent to voxelize.
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
@@ -651,10 +652,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates):
         patt = Chem.MolFromSmarts(smi_sub_mol)
         mol_smile = Chem.MolToSmiles(patt)
-        mol_smile = mol_smile.replace("*", "[H]")
+        mol_smile = mol_smile.replace("*/", "[H]").replace("*", "[H]")
         patt_mol = Chem.MolFromSmiles(mol_smile)
         Chem.RemoveAllHs(patt_mol)
-        sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=True)
+        sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=False)
         if len(sub_atoms) == 0:
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
             return None
@@ -678,11 +679,12 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         try:
             new_mol = new_mol.GetMol()
+            # http://rdkit.org/docs/Cookbook.html#explicit-valence-error-partial-sanitization
             new_mol.UpdatePropertyCache(strict=False)
             Chem.SanitizeMol(new_mol,
                              Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_KEKULIZE | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
                              catchErrors=False)
-            Chem.Kekulize(new_mol, clearAromaticFlags=False)
+            # Chem.Kekulize(new_mol, clearAromaticFlags=False)
             new_mol = Chem.MolToMolBlock(new_mol)
             new_mol = Chem.MolFromMolBlock(new_mol)
             conf = new_mol.GetConformer()
@@ -703,6 +705,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
                 new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
 
+        Chem.RemoveAllHs(new_mol)
         return new_mol
 
     def __setup_logger(self, logger_name, log_file, level=logging.INFO):
