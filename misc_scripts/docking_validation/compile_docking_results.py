@@ -2,7 +2,9 @@ import pandas as pd
 import argparse
 import glob
 import os
-from functools import cmp_to_key
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 # from collections import OrderedDict
 
@@ -169,6 +171,56 @@ def sort_df_cols(df):
 
     return df
 
+def create_histogram(df, cols1, cols2, label1, label2, bin_edges, file_name="histogram.svg"):
+    """
+    Create superimposed normalized line histograms from values of two sets of columns in a DataFrame.
+    
+    Args:
+    - df (pd.DataFrame): DataFrame containing the data.
+    - cols1 (list): First list of columns to extract values from.
+    - cols2 (list): Second list of columns to extract values from.
+    - label1 (str): Label for the first set of columns.
+    - label2 (str): Label for the second set of columns.
+    - bin_edges (list): Bin edges for the histogram.
+    - file_name (str): Name of the SVG file to save the histogram. Default is 'histogram.svg'.
+
+    Returns:
+    None
+    """
+    
+    # Extract values for the first set of columns
+    values1 = []
+    for col in cols1:
+        values1.extend(df[col].dropna().tolist())
+    
+    # Extract values for the second set of columns
+    values2 = []
+    for col in cols2:
+        values2.extend(df[col].dropna().tolist())
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    
+    # Compute and plot histogram for cols1
+    hist1, edges1 = np.histogram(values1, bins=bin_edges, density=True)
+    plt.plot(edges1[:-1], hist1, marker='o', linestyle='-', color='blue', label=label1)
+    
+    # Compute and plot histogram for cols2
+    hist2, edges2 = np.histogram(values2, bins=bin_edges, density=True)
+    plt.plot(edges2[:-1], hist2, marker='x', linestyle='-', color='red', label=label2)
+    
+    plt.xlabel('Value')
+    plt.ylabel('Density')
+    plt.title('Normalized Histograms')
+    plt.legend()
+    
+    # Save the plot as SVG file
+    plt.savefig(file_name, format='svg')
+    plt.close()
+
+# Example usage:
+# create_histogram(df, ['header1', 'header2'], ['header3', 'header4'], [0, 10, 20, 30, 40, 50])
+
 
 def main(directory):
     df = process_directory(directory)
@@ -178,6 +230,26 @@ def main(directory):
     df = sort_df_cols(df)
 
     df.to_csv("docking_data.csv", index=False)
+
+    # Make histograms too
+    create_histogram(
+        df, 
+        ['delta_score_predicted1', 'delta_score_predicted2', 'delta_score_predicted3', 'delta_score_predicted4', 'delta_score_predicted5'], 
+        ['delta_score_decoy1', 'delta_score_decoy2', 'delta_score_decoy3', 'delta_score_decoy4', 'delta_score_decoy5'], 
+        [-20 + i for i in range(31)], # -20 to 10, by 1
+        file_name="histogram_delta_score.svg"
+    )
+
+    # Also RMSDs
+    create_histogram(
+        df, 
+        ['rmsd_predicted1', 'rmsd_predicted2', 'rmsd_predicted3', 'rmsd_predicted4', 'rmsd_predicted5'], 
+        ['rmsd_decoy1', 'rmsd_decoy2', 'rmsd_decoy3', 'rmsd_decoy4', 'rmsd_decoy5'], 
+        # 0 to 15, by 0.5
+        [0 + 0.5*i for i in range(31)],
+        file_name="histogram_rmsd.svg"
+    )
+
     print("Data saved to docking_data.csv")
 
 
