@@ -2,6 +2,8 @@ import pandas as pd
 import argparse
 import glob
 import os
+from functools import cmp_to_key
+
 # from collections import OrderedDict
 
 def extract_docking_score(file_path):
@@ -32,7 +34,11 @@ def extract_rmsd(file_path):
         return None
 
     with open(file_path, "r") as file:
-        first_line = file.readline()
+        first_line = ""
+        while not "Score:" in first_line:
+            first_line = file.readline()
+            if not first_line:
+                break
 
     try:
         return float(first_line.split()[1])
@@ -77,7 +83,7 @@ def process_directory(directory):
                 key = os.path.basename(path).split(".")[0]
                 row["score_" + key] = score
                 row["rmsd_" + key] = rmsd
-                row["score_if_pass_rmsd_filt" + key] = score if rmsd_passes_filter else None
+                row["score_if_pass_rmsd_filt_" + key] = score if rmsd_passes_filter else None
                 row["delta_score_" + key] = cryst_score - score if score is not None else None
                 row["delta_score_if_pass_rmsd_filt_" + key] = cryst_score - score if rmsd_passes_filter and score is not None else None
 
@@ -100,12 +106,76 @@ def process_directory(directory):
 
     return pd.DataFrame(data)
 
+def sort_df_cols(df):
+        
+    order = [
+        "pdb_id",
+        "batch",
+        "crystal_score",
+        "crystal_rmsd",
+        "delta_score_predicted1",
+        "delta_score_predicted2",
+        "delta_score_predicted3",
+        "delta_score_predicted4",
+        "delta_score_predicted5",
+        "delta_score_if_pass_rmsd_filt_predicted1",
+        "delta_score_if_pass_rmsd_filt_predicted2",
+        "delta_score_if_pass_rmsd_filt_predicted3",
+        "delta_score_if_pass_rmsd_filt_predicted4",
+        "delta_score_if_pass_rmsd_filt_predicted5",
+        "rmsd_predicted1",
+        "rmsd_predicted2",
+        "rmsd_predicted3",
+        "rmsd_predicted4",
+        "rmsd_predicted5",
+        "score_predicted1",
+        "score_predicted2",
+        "score_predicted3",
+        "score_predicted4",
+        "score_predicted5",
+        "score_if_pass_rmsd_filt_predicted1",
+        "score_if_pass_rmsd_filt_predicted2",
+        "score_if_pass_rmsd_filt_predicted3",
+        "score_if_pass_rmsd_filt_predicted4",
+        "score_if_pass_rmsd_filt_predicted5",
+        "delta_score_decoy1",
+        "delta_score_decoy2",
+        "delta_score_decoy3",
+        "delta_score_decoy4",
+        "delta_score_decoy5",
+        "delta_score_if_pass_rmsd_filt_decoy1",
+        "delta_score_if_pass_rmsd_filt_decoy2",
+        "delta_score_if_pass_rmsd_filt_decoy3",
+        "delta_score_if_pass_rmsd_filt_decoy4",
+        "delta_score_if_pass_rmsd_filt_decoy5",
+        "rmsd_decoy1",
+        "rmsd_decoy2",
+        "rmsd_decoy3",
+        "rmsd_decoy4",
+        "rmsd_decoy5",
+        "score_decoy1",
+        "score_decoy2",
+        "score_decoy3",
+        "score_decoy4",
+        "score_decoy5",
+        "score_if_pass_rmsd_filt_decoy1",
+        "score_if_pass_rmsd_filt_decoy2",
+        "score_if_pass_rmsd_filt_decoy3",
+        "score_if_pass_rmsd_filt_decoy4",
+        "score_if_pass_rmsd_filt_decoy5"
+    ]
+
+    df = df[order]
+
+    return df
+
 
 def main(directory):
     df = process_directory(directory)
 
     # Order the columns alphabetically
     df = df.reindex(sorted(df.columns), axis=1)
+    df = sort_df_cols(df)
 
     df.to_csv("docking_data.csv", index=False)
     print("Data saved to docking_data.csv")
