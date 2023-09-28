@@ -199,6 +199,9 @@ def create_histogram(df, cols1, cols2, label1, label2, bin_edges, xaxis_range, f
     for col in cols2:
         values2.extend(df[col].dropna().tolist())
 
+    avg_values1 = np.mean(values1)
+    avg_values2 = np.mean(values2)
+
     # Plotting
     plt.figure(figsize=(10, 6))
 
@@ -209,6 +212,10 @@ def create_histogram(df, cols1, cols2, label1, label2, bin_edges, xaxis_range, f
     # Compute and plot histogram for cols2
     hist2, edges2 = np.histogram(values2, bins=bin_edges, density=True)
     plt.plot(edges2[:-1], hist2, marker='o', linestyle='-', color='red', label=label2)
+
+    # Draw vertical lines for the average values
+    plt.axvline(avg_values1, color='blue', linestyle='--', label=f'Average {label1}: {avg_values1:.2f}')
+    plt.axvline(avg_values2, color='red', linestyle='--', label=f'Average {label2}: {avg_values2:.2f}')
 
     plt.xlabel('Value')
     plt.xlim(xaxis_range)
