@@ -171,12 +171,13 @@ def sort_df_cols(df):
 
     return df
 
-def create_histogram(df, cols1, cols2, label1, label2, bin_edges, xaxis_range, file_name="histogram.svg"):
+def create_histogram(df, title_desc, cols1, cols2, label1, label2, bin_edges, xaxis_range, file_name="histogram.svg"):
     """
     Create superimposed normalized line histograms from values of two sets of columns in a DataFrame.
     
     Args:
     - df (pd.DataFrame): DataFrame containing the data.
+    - title_desc (str): Description of the histogram to be used in the title.
     - cols1 (list): First list of columns to extract values from.
     - cols2 (list): Second list of columns to extract values from.
     - label1 (str): Label for the first set of columns.
@@ -243,10 +244,11 @@ def main(directory):
     # Make histograms too
     create_histogram(
         df, 
+        "Delta Score from Cryst",
         ['delta_score_predicted1', 'delta_score_predicted2', 'delta_score_predicted3', 'delta_score_predicted4', 'delta_score_predicted5'], 
         ['delta_score_decoy1', 'delta_score_decoy2', 'delta_score_decoy3', 'delta_score_decoy4', 'delta_score_decoy5'], 
-        "Predicteds, Delta Score from Cryst",
-        "Decoys, Delta Score from Cryst",
+        "Predicteds",
+        "Decoys",
         [-20 + i for i in range(31)], # -20 to 10, by 1
         [-7, 7],
         file_name="histogram_delta_score.svg"
@@ -255,10 +257,11 @@ def main(directory):
     # Also RMSDs
     create_histogram(
         df, 
+        "RMSD from Cryst",
         ['rmsd_predicted1', 'rmsd_predicted2', 'rmsd_predicted3', 'rmsd_predicted4', 'rmsd_predicted5'], 
         ['rmsd_decoy1', 'rmsd_decoy2', 'rmsd_decoy3', 'rmsd_decoy4', 'rmsd_decoy5'], 
-        "Predicteds, RMSD from Cryst",
-        "Decoys, RMSD from Cryst",
+        "Predicteds",
+        "Decoys",
         # 0 to 15, by 0.5
         [0 + 0.5*i for i in range(31)],
         [0, 10],
