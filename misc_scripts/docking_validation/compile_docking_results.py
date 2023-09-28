@@ -236,7 +236,7 @@ def main(directory):
         df, 
         ['delta_score_predicted1', 'delta_score_predicted2', 'delta_score_predicted3', 'delta_score_predicted4', 'delta_score_predicted5'], 
         ['delta_score_decoy1', 'delta_score_decoy2', 'delta_score_decoy3', 'delta_score_decoy4', 'delta_score_decoy5'], 
-        "Predicteds, Delta Score from Cryst"
+        "Predicteds, Delta Score from Cryst",
         "Decoys, Delta Score from Cryst",
         [-20 + i for i in range(31)], # -20 to 10, by 1
         file_name="histogram_delta_score.svg"
@@ -247,7 +247,7 @@ def main(directory):
         df, 
         ['rmsd_predicted1', 'rmsd_predicted2', 'rmsd_predicted3', 'rmsd_predicted4', 'rmsd_predicted5'], 
         ['rmsd_decoy1', 'rmsd_decoy2', 'rmsd_decoy3', 'rmsd_decoy4', 'rmsd_decoy5'], 
-        "Predicteds, RMSD from Cryst"
+        "Predicteds, RMSD from Cryst",
         "Decoys, RMSD from Cryst",
         # 0 to 15, by 0.5
         [0 + 0.5*i for i in range(31)],
