@@ -221,7 +221,7 @@ def create_histogram(df, title_desc, cols1, cols2, label1, label2, bin_edges, xa
     plt.xlabel('Value')
     plt.xlim(xaxis_range)
     plt.ylabel('Density')
-    plt.title(f'Normalized Histograms, {str(xaxis_range)}')
+    plt.title(f'{title_desc}, Normalized Histograms, {str(xaxis_range)}')
     plt.legend()
 
     # Save the plot as SVG file
