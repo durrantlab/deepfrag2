@@ -171,7 +171,7 @@ def sort_df_cols(df):
 
     return df
 
-def create_histogram(df, cols1, cols2, label1, label2, bin_edges, file_name="histogram.svg"):
+def create_histogram(df, cols1, cols2, label1, label2, bin_edges, xaxis_range, file_name="histogram.svg"):
     """
     Create superimposed normalized line histograms from values of two sets of columns in a DataFrame.
     
@@ -182,6 +182,7 @@ def create_histogram(df, cols1, cols2, label1, label2, bin_edges, file_name="his
     - label1 (str): Label for the first set of columns.
     - label2 (str): Label for the second set of columns.
     - bin_edges (list): Bin edges for the histogram.
+    - xaxis_range (list): Range of values for the x-axis.
     - file_name (str): Name of the SVG file to save the histogram. Default is 'histogram.svg'.
 
     Returns:
@@ -192,7 +193,7 @@ def create_histogram(df, cols1, cols2, label1, label2, bin_edges, file_name="his
     values1 = []
     for col in cols1:
         values1.extend(df[col].dropna().tolist())
-    
+
     # Extract values for the second set of columns
     values2 = []
     for col in cols2:
@@ -200,20 +201,21 @@ def create_histogram(df, cols1, cols2, label1, label2, bin_edges, file_name="his
 
     # Plotting
     plt.figure(figsize=(10, 6))
-    
+
     # Compute and plot histogram for cols1
     hist1, edges1 = np.histogram(values1, bins=bin_edges, density=True)
     plt.plot(edges1[:-1], hist1, marker='o', linestyle='-', color='blue', label=label1)
-    
+
     # Compute and plot histogram for cols2
     hist2, edges2 = np.histogram(values2, bins=bin_edges, density=True)
-    plt.plot(edges2[:-1], hist2, marker='x', linestyle='-', color='red', label=label2)
-    
+    plt.plot(edges2[:-1], hist2, marker='o', linestyle='-', color='red', label=label2)
+
     plt.xlabel('Value')
+    plt.xlim(xaxis_range)
     plt.ylabel('Density')
-    plt.title('Normalized Histograms')
+    plt.title(f'Normalized Histograms, {str(xaxis_range)}')
     plt.legend()
-    
+
     # Save the plot as SVG file
     plt.savefig(file_name, format='svg')
     plt.close()
@@ -239,6 +241,7 @@ def main(directory):
         "Predicteds, Delta Score from Cryst",
         "Decoys, Delta Score from Cryst",
         [-20 + i for i in range(31)], # -20 to 10, by 1
+        [-7, 7],
         file_name="histogram_delta_score.svg"
     )
 
@@ -251,6 +254,7 @@ def main(directory):
         "Decoys, RMSD from Cryst",
         # 0 to 15, by 0.5
         [0 + 0.5*i for i in range(31)],
+        [0, 10],
         file_name="histogram_rmsd.svg"
     )
 
