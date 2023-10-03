@@ -642,8 +642,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
         # it is needed to get 3D coordinates for fragments to compute distance to receptor for filtering purposes.
-        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
-        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
+        # r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
+        r_first_frag_smi = Chem.MolFromSmiles(first_frag_smi)
+        # r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
+        r_second_frag_smi = Chem.MolFromSmiles(second_frag_smi)
 
         return BackedMol(rdmol=r_parent) if r_parent else None, BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None, BackedMol(rdmol=r_second_frag_smi) if r_second_frag_smi else None
 

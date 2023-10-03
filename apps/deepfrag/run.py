@@ -54,7 +54,10 @@ class DeepFrag(MoadVoxelModelParent):
         """
         rec, parent, frag, ligand_id, fragment_idx = entry
         rot = rand_rot()
-        center = frag.connectors[0]
+        try:
+            center = frag.connectors[0]
+        except:
+            center = None
 
         payload = Entry_info(
             fragment_smiles=frag.smiles(True),
