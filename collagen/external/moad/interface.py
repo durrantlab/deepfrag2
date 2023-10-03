@@ -532,6 +532,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         return "pdb"
 
     def __read_data_from_csv(self, paired_data_csv):
+        # reading input parameters
         paired_data_csv_sep = paired_data_csv.split(",")
         path_csv_file = paired_data_csv_sep[0]  # path to the csv (or tab) file
         path_pdb_sdf_files = paired_data_csv_sep[1]  # path containing the pdb and/or sdf files
@@ -562,18 +563,21 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                     if not backed_parent:
                         continue
+                    # getting the smiles for parent. this can be modified to avoid sanitization errors
                     parent_smi = backed_parent.smiles(isomeric=True, none_if_fails=True)
                     if not parent_smi:
                         self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
                         continue
 
                     if backed_first_frag:
+                        # getting the smiles for first fragment. this can be modified to avoid sanitization errors
                         first_frag_smi = backed_first_frag.smiles(isomeric=True, none_if_fails=True)
                         if not first_frag_smi:
                             self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
                             backed_first_frag = None
 
                     if backed_second_frag:
+                        # getting the smiles for second fragment. this can be modified to avoid sanitization errors
                         second_frag_smi = backed_second_frag.smiles(isomeric=True, none_if_fails=True)
                         if not second_frag_smi:
                             self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
@@ -617,19 +621,26 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     def read_mol(self, sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_frag_smi, first_ligand_template, second_ligand_template):
         path_to_mol = path_pdb_sdf_files + os.sep + sdf_name
         if sdf_name.endswith(".pdb"):
+            # read ligand from PDB file and assign bonds according to first smiles
             try:
                 ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                 template = Chem.MolFromSmiles(first_ligand_template)
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
+                # if fails, record this error in log files
                 self.fail_match_FirstSmiles_PDBLigand.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match")
+
+                # if fails, trying to assign bonds according to second smiles
+                # seem to be that never the second smiles is useful to assing bonds
                 try:
                     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                     template = Chem.MolFromSmiles(second_ligand_template)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
+                    # if fails, record this error in log files
                     self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match")
                     return None, None, None
+        # this could be removed since ligands from paired data will always be pdb format
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_to_mol)
             for ref_mol in suppl:
@@ -641,17 +652,20 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         # it is needed to get 3D coordinates for parent to voxelize.
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
+        # this code replaces the getting 3D coordinates for fragments
+        r_first_frag_smi = Chem.MolFromSmiles(first_frag_smi)
+        r_second_frag_smi = Chem.MolFromSmiles(second_frag_smi)
+
         # it is needed to get 3D coordinates for fragments to compute distance to receptor for filtering purposes.
         # r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
-        r_first_frag_smi = Chem.MolFromSmiles(first_frag_smi)
         # r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
-        r_second_frag_smi = Chem.MolFromSmiles(second_frag_smi)
 
         return BackedMol(rdmol=r_parent) if r_parent else None, BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None, BackedMol(rdmol=r_second_frag_smi) if r_second_frag_smi else None
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
     def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates):
+        # getting substructure
         patt = Chem.MolFromSmarts(smi_sub_mol)
         mol_smile = Chem.MolToSmiles(patt)
         mol_smile = mol_smile.replace("*/", "[H]").replace("*", "[H]")
@@ -662,12 +676,14 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
             return None
 
+        # it is created the mol object for the obtained substructure
         new_mol = Chem.RWMol()
         atom_map = {}
         for idx in sub_atoms:
             atom = mol.GetAtomWithIdx(idx)
             atom_map[idx] = new_mol.AddAtom(atom)
 
+        # it is added the bonds corresponding to the obtained substructure
         sub_atoms = set(sub_atoms)
         for idx in sub_atoms:
             a = mol.GetAtomWithIdx(idx)
@@ -679,6 +695,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 if a.GetIdx() < b.GetIdx():  # each bond is enumerated twice
                     new_mol.AddBond(atom_map[a.GetIdx()], atom_map[b.GetIdx()], bt)
 
+        # assign 3D coordinates
         try:
             new_mol = new_mol.GetMol()
             # http://rdkit.org/docs/Cookbook.html#explicit-valence-error-partial-sanitization
