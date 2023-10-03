@@ -352,7 +352,7 @@ class MOADFragmentDataset(Dataset):
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):
             mass = frag_masses[frag_idx]
-            dist_to_recep = frag_dists_to_recep[frag_idx]
+            dist_to_recep = 0 if len(frag_dists_to_recep) == 0 else frag_dists_to_recep[frag_idx]
             num_heavy_atom = frag_num_heavy_atoms[frag_idx]
             frag_aromatic = frag_aromatics[frag_idx]
             frag_charged = frag_chargeds[frag_idx]
