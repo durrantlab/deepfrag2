@@ -648,7 +648,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         else:
             return None, None, None
 
-        Chem.RemoveAllHs(ref_mol)
+        # Chem.RemoveAllHs(ref_mol)
         # it is needed to get 3D coordinates for parent to voxelize.
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
@@ -724,7 +724,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
                 new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
 
-        Chem.RemoveAllHs(new_mol)
+        # Chem.RemoveAllHs(new_mol)
         return new_mol
 
     def __setup_logger(self, logger_name, log_file, level=logging.INFO):
