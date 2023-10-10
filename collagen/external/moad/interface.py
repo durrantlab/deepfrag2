@@ -677,6 +677,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             return None
 
         # it is created the mol object for the obtained substructure
+        mol.UpdatePropertyCache(strict=True)
         new_mol = Chem.RWMol()
         atom_map = {}
         for idx in sub_atoms:
@@ -698,15 +699,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         # assign 3D coordinates
         try:
             new_mol = new_mol.GetMol()
-            # http://rdkit.org/docs/Cookbook.html#explicit-valence-error-partial-sanitization
-            new_mol.UpdatePropertyCache(strict=False)
-            Chem.SanitizeMol(new_mol,
-                             Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
-                             catchErrors=False)
-            # Chem.SanitizeMol(new_mol,
-            #                  Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_KEKULIZE | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
-            #                  catchErrors=False)
-            # Chem.Kekulize(new_mol, clearAromaticFlags=False)
+            new_mol.UpdatePropertyCache(strict=True)
             new_mol = Chem.MolToMolBlock(new_mol)
             new_mol = Chem.MolFromMolBlock(new_mol)
             conf = new_mol.GetConformer()
