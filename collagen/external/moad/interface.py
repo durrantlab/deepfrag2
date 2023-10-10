@@ -701,8 +701,11 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             # http://rdkit.org/docs/Cookbook.html#explicit-valence-error-partial-sanitization
             new_mol.UpdatePropertyCache(strict=False)
             Chem.SanitizeMol(new_mol,
-                             Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_KEKULIZE | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
+                             Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
                              catchErrors=False)
+            # Chem.SanitizeMol(new_mol,
+            #                  Chem.SanitizeFlags.SANITIZE_ADJUSTHS | Chem.SanitizeFlags.SANITIZE_FINDRADICALS | Chem.SanitizeFlags.SANITIZE_KEKULIZE | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
+            #                  catchErrors=False)
             # Chem.Kekulize(new_mol, clearAromaticFlags=False)
             new_mol = Chem.MolToMolBlock(new_mol)
             new_mol = Chem.MolFromMolBlock(new_mol)
