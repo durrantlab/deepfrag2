@@ -566,22 +566,31 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     # getting the smiles for parent. this can be modified to avoid sanitization errors
                     parent_smi = backed_parent.smiles(isomeric=True, none_if_fails=True)
                     if not parent_smi:
-                        self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
-                        continue
+                        try:
+                            parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
+                        except:
+                            self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
+                            continue
 
                     if backed_first_frag:
                         # getting the smiles for first fragment. this can be modified to avoid sanitization errors
                         first_frag_smi = backed_first_frag.smiles(isomeric=True, none_if_fails=True)
                         if not first_frag_smi:
-                            self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
-                            backed_first_frag = None
+                            try:
+                                first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
+                            except:
+                                self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
+                                backed_first_frag = None
 
                     if backed_second_frag:
                         # getting the smiles for second fragment. this can be modified to avoid sanitization errors
                         second_frag_smi = backed_second_frag.smiles(isomeric=True, none_if_fails=True)
                         if not second_frag_smi:
-                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
-                            backed_second_frag = None
+                            try:
+                                second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
+                            except:
+                                self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
+                                backed_second_frag = None
 
                     if not backed_first_frag and not backed_second_frag:
                         continue
@@ -648,7 +657,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         else:
             return None, None, None
 
-        # Chem.RemoveAllHs(ref_mol)
+        Chem.RemoveAllHs(ref_mol)
         # it is needed to get 3D coordinates for parent to voxelize.
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
@@ -720,7 +729,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
                 new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
 
-        # Chem.RemoveAllHs(new_mol)
+        Chem.RemoveAllHs(new_mol)
         return new_mol
 
     def __setup_logger(self, logger_name, log_file, level=logging.INFO):
