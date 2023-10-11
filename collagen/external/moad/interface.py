@@ -11,8 +11,9 @@ import linecache
 import csv
 from collagen.core.molecules.mol import BackedMol
 from rdkit.Geometry import Point3D
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, rdmolops
 import logging
+from collagen.core.molecules import smiles_utils
 
 
 class MOADInterface(object):
@@ -662,14 +663,25 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
         # this code replaces the getting 3D coordinates for fragments
-        # r_first_frag_smi = Chem.MolFromSmiles(first_frag_smi)
-        # r_second_frag_smi = Chem.MolFromSmiles(second_frag_smi)
+        r_first_frag_smi = Chem.MolFromSmiles(first_frag_smi)
+        r_second_frag_smi = Chem.MolFromSmiles(second_frag_smi)
 
         # it is needed to get 3D coordinates for fragments to compute distance to receptor for filtering purposes.
-        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
-        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
+        # r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
+        # r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
 
-        return BackedMol(rdmol=r_parent) if r_parent else None, BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None, BackedMol(rdmol=r_second_frag_smi) if r_second_frag_smi else None
+        backed_parent = BackedMol(rdmol=r_parent) if r_parent else None
+        backed_frag1 = BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None
+        backed_frag2 = BackedMol(rdmol=r_second_frag_smi) if r_second_frag_smi else None
+
+        # if not backed_parent:
+        self.error_standardizing_smiles_for_parent.info(("parent" if r_parent else "NoneParent") + " " + ("Frag1" if backed_frag1 else "NoneFrag1") + " " + ("Frag2" if backed_frag2 else "NoneFrag2"))
+        # if not backed_frag1:
+        #     self.error_standardizing_smiles_for_first_frag.info("NOT backed_frag1")
+        # if not backed_frag2:
+        #     self.error_standardizing_smiles_for_second_frag.info("NOT backed_frag2")
+
+        return backed_parent, backed_frag1, backed_frag2
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
@@ -705,10 +717,20 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 if a.GetIdx() < b.GetIdx():  # each bond is enumerated twice
                     new_mol.AddBond(atom_map[a.GetIdx()], atom_map[b.GetIdx()], bt)
 
+        # clean molecule
+        try:
+            new_mol = new_mol.GetMol()
+            smiles_utils.neutralize_atoms(new_mol)
+            rdmolops.Cleanup(new_mol)
+            rdmolops.RemoveStereochemistry(new_mol)
+        except Exception as e:
+            log_for_3d_coordinates.info("Failed cleaning before getting 3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " because " + str(e))
+            return None
+
         # assign 3D coordinates
         try:
             new_mol = new_mol.GetMol()
-            new_mol.UpdatePropertyCache(strict=True)
+            # new_mol.UpdatePropertyCache(strict=True)
             new_mol = Chem.MolToMolBlock(new_mol)
             new_mol = Chem.MolFromMolBlock(new_mol)
             conf = new_mol.GetConformer()
