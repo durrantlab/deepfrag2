@@ -662,13 +662,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         # it is needed to get 3D coordinates for parent to voxelize.
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
-        # this code replaces the getting 3D coordinates for fragments
-        r_first_frag_smi = Chem.MolFromSmiles(first_frag_smi)
-        r_second_frag_smi = Chem.MolFromSmiles(second_frag_smi)
-
-        # it is needed to get 3D coordinates for fragments to compute distance to receptor for filtering purposes.
-        # r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag)
-        # r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag)
+        # get_sub_structure=False to avoid getting 3D coordinates
+        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag, get_sub_structure=False)
+        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=False)
 
         backed_parent = BackedMol(rdmol=r_parent) if r_parent else None
         backed_frag1 = BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None
@@ -679,13 +675,16 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
     # mol must be RWMol object
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
-    def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates):
+    def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates, get_sub_structure=True):
         # getting substructure
         patt = Chem.MolFromSmarts(smi_sub_mol)
         mol_smile = Chem.MolToSmiles(patt)
         mol_smile = mol_smile.replace("*/", "[H]").replace("*", "[H]")
         patt_mol = Chem.MolFromSmiles(mol_smile)
         Chem.RemoveAllHs(patt_mol)
+        if not get_sub_structure:
+            return patt_mol
+
         sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=False)
         if len(sub_atoms) == 0:
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
