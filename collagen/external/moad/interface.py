@@ -674,13 +674,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         backed_frag1 = BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None
         backed_frag2 = BackedMol(rdmol=r_second_frag_smi) if r_second_frag_smi else None
 
-        # if not backed_parent:
         self.error_standardizing_smiles_for_parent.info(("parent" if r_parent else "NoneParent") + " " + ("Frag1" if backed_frag1 else "NoneFrag1") + " " + ("Frag2" if backed_frag2 else "NoneFrag2"))
-        # if not backed_frag1:
-        #     self.error_standardizing_smiles_for_first_frag.info("NOT backed_frag1")
-        # if not backed_frag2:
-        #     self.error_standardizing_smiles_for_second_frag.info("NOT backed_frag2")
-
         return backed_parent, backed_frag1, backed_frag2
 
     # mol must be RWMol object
@@ -729,8 +723,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         # assign 3D coordinates
         try:
-            new_mol = new_mol.GetMol()
-            # new_mol.UpdatePropertyCache(strict=True)
+            # new_mol = new_mol.GetMol()
+            new_mol.UpdatePropertyCache(strict=True)
             new_mol = Chem.MolToMolBlock(new_mol)
             new_mol = Chem.MolFromMolBlock(new_mol)
             conf = new_mol.GetConformer()
