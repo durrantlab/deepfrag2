@@ -1,5 +1,7 @@
 """Runs DeepFrag2."""
 
+import os
+os.environ['NUMEXPR_MAX_THREADS'] = str(os.cpu_count())
 import time
 import logging
 from apps.deepfrag.run import function_to_run_deepfrag
