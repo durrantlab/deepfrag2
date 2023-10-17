@@ -524,7 +524,7 @@ class Entry_info(object):
             + "--"
             + self.receptor_name
             + "--"
-            + self.ligand_id
+            + str(self.ligand_id)
             + ","
             + self.fragment_idx
         )
