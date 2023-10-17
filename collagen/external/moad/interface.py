@@ -667,8 +667,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=False)
 
         backed_parent = BackedMol(rdmol=r_parent) if r_parent else None
-        backed_frag1 = BackedMol(rdmol=r_first_frag_smi) if r_first_frag_smi else None
-        backed_frag2 = BackedMol(rdmol=r_second_frag_smi) if r_second_frag_smi else None
+        backed_frag1 = BackedMol(rdmol=r_first_frag_smi, warn_no_confs=False) if r_first_frag_smi else None
+        backed_frag2 = BackedMol(rdmol=r_second_frag_smi, warn_no_confs=False) if r_second_frag_smi else None
 
         return backed_parent, backed_frag1, backed_frag2
 
