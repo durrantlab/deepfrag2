@@ -526,5 +526,5 @@ class Entry_info(object):
             + "--"
             + str(self.ligand_id)
             + ","
-            + self.fragment_idx
+            + str(self.fragment_idx)
         )
