@@ -720,19 +720,25 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             return None
 
         # assign 3D coordinates
-        try:
-            # new_mol = new_mol.GetMol()
-            new_mol.UpdatePropertyCache(strict=True)
-            new_mol = Chem.MolToMolBlock(new_mol)
-            new_mol = Chem.MolFromMolBlock(new_mol)
-            conf = new_mol.GetConformer()
-            for idx in sub_atoms:
-                a = mol.GetAtomWithIdx(idx)
-                x, y, z = mol.GetConformer().GetAtomPosition(idx)
-                conf.SetAtomPosition(atom_map[a.GetIdx()], Point3D(x, y, z))
-        except Exception as e:
-            log_for_3d_coordinates.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
-            return None
+        for i in [0, 1]:
+            try:
+                # new_mol = new_mol.GetMol()
+                new_mol.UpdatePropertyCache(strict=True)
+                new_mol = Chem.MolToMolBlock(new_mol)
+                new_mol = Chem.MolFromMolBlock(new_mol)
+                conf = new_mol.GetConformer()
+                for idx in sub_atoms:
+                    a = mol.GetAtomWithIdx(idx)
+                    x, y, z = mol.GetConformer().GetAtomPosition(idx)
+                    conf.SetAtomPosition(atom_map[a.GetIdx()], Point3D(x, y, z))
+                break
+            except Exception as e:
+                if i == 1:
+                    log_for_3d_coordinates.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
+                    return None
+                else:
+                    mol_smile = Chem.MolToSmiles(new_mol)
+                    new_mol = Chem.MolFromSmiles(mol_smile.upper())
 
         # find out the connector atom
         # NOTE: according to several runs, the connector atom is always allocated in the position 0 into the recovered substructure ('new_mol' variable)
