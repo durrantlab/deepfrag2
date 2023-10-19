@@ -57,6 +57,7 @@ class DeepFrag(MoadVoxelModelParent):
         try:
             center = frag.connectors[0]
         except:
+            print("WARNING: No center found for", ligand_id, fragment_idx)
             center = None
 
         payload = Entry_info(
