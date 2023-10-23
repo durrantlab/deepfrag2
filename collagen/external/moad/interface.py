@@ -738,7 +738,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     return None
                 else:
                     mol_smile = Chem.MolToSmiles(new_mol)
-                    mol_smile = mol_smile.upper().replace("CL", "Cl")
+                    mol_smile = mol_smile.upper().replace("CL", "Cl").replace("BR", "Br")
                     new_mol = Chem.MolFromSmiles(mol_smile)
 
         # find out the connector atom
