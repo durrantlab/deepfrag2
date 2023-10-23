@@ -734,7 +734,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 break
             except Exception as e:
                 if i == 1:
-                    log_for_3d_coordinates.info("3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
+                    log_for_3d_coordinates.info("3D coordinates of the fragment " + mol_smile + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
                     return None
                 else:
                     mol_smile = Chem.MolToSmiles(new_mol)
