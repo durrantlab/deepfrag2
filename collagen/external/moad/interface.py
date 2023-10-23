@@ -738,7 +738,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     return None
                 else:
                     mol_smile = Chem.MolToSmiles(new_mol)
-                    new_mol = Chem.MolFromSmiles(mol_smile.upper())
+                    mol_smile = mol_smile.upper().replace("CL", "Cl")
+                    new_mol = Chem.MolFromSmiles(mol_smile)
 
         # find out the connector atom
         # NOTE: according to several runs, the connector atom is always allocated in the position 0 into the recovered substructure ('new_mol' variable)
