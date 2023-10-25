@@ -517,14 +517,4 @@ class Entry_info(object):
             + str(self.connection_pt[1])
             + ","
             + str(self.connection_pt[2])
-        ) if self.connection_pt else (
-            self.fragment_smiles
-            + "--"
-            + self.parent_smiles
-            + "--"
-            + self.receptor_name
-            + "--"
-            + str(self.ligand_id)
-            + ","
-            + str(self.fragment_idx)
         )
