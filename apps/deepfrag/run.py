@@ -57,10 +57,7 @@ class DeepFrag(MoadVoxelModelParent):
         try:
             center = frag.connectors[0]
         except:
-            print("WARNING: Using center from Parent.")
             center = parent.connectors[0]
-            if not center.all():
-                print("WARNING: No center used for", ligand_id, fragment_idx)
 
         payload = Entry_info(
             fragment_smiles=frag.smiles(True),
