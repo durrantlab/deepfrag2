@@ -108,7 +108,7 @@ class ParentEnsembled(ABC):
             "pcaProjection": self.correct_fp_pca_projected[entry_idx],
             "parentSmiles": entry_inf.parent_smiles,
             "receptor": entry_inf.receptor_name,
-            "connectionPoint": entry_inf.connection_pt.tolist() if entry_inf.connection_pt else None,
+            "connectionPoint": entry_inf.connection_pt.tolist() if entry_inf.connection_pt.size > 0 else None,
         }
 
     def get_predictions_info(self, entry_idx: int) -> dict:
