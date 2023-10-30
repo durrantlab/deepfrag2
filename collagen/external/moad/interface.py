@@ -654,7 +654,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     # Convert parent SMILES string to capital letters to be only used with single bonds
                     try:
                         ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
-                        parent_smi = parent_smi.upper().replace("CL", "Cl").replace("BR", "Br")
+                        parent_smi = parent_smi.replace("*/", "[H]").replace("*", "[H]").upper().replace("CL", "Cl").replace("BR", "Br")
                     except:
                         return None, None, None
 
