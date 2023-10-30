@@ -641,7 +641,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 self.fail_match_FirstSmiles_PDBLigand.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match")
 
                 # if fails, trying to assign bonds according to second smiles
-                # seem to be that never the second smiles is useful to assing bonds
+                # seem to be that the second smiles is never useful to assign bonds
                 try:
                     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                     template = Chem.MolFromSmiles(second_ligand_template)
@@ -649,7 +649,15 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 except:
                     # if fails, record this error in log files
                     self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match")
-                    return None, None, None
+
+                    # Using ligand into PDB file with single bonds only
+                    # Convert parent SMILES string to capital letters to be only used with single bonds
+                    try:
+                        ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
+                        parent_smi = parent_smi.upper().replace("CL", "Cl").replace("BR", "Br")
+                    except:
+                        return None, None, None
+
         # this could be removed since ligands from paired data will always be pdb format
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_to_mol)
