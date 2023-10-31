@@ -609,7 +609,7 @@ def full_moad_split(moad: "MOADInterface") -> MOAD_split:
         max_pdbs_train=None,
         max_pdbs_val=None,
         max_pdbs_test=None,
-        butina_cluster_cutoff=0.0,
+        butina_cluster_cutoff=0.0
     )
 
     return MOAD_split(name="Full", targets=pdb_ids.train, smiles=all_smis.train)

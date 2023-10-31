@@ -10,4 +10,8 @@
 
 . _test6.sh
 
+. _test7.sh
+
+. _test8.sh
+
 . _eval_results.sh

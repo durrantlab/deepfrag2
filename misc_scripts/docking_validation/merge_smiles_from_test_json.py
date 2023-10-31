@@ -176,6 +176,25 @@ def make_predicted_merged_mols(test_json_filename):
         process_entry, entries, max_workers=cpu_count(), chunksize=100
     )
 
+    # import pdb; pdb.set_trace()
+    # [j["1a50"]["parent"] for j in results if "1a50" in j.keys()]
+    #  [(j["1a50"]["predicted"][0]["parent"], j["1a50"]["predicted"][0]["predFrags"],  j["1a50"]["predicted"][0]["predLigs"]) for j in results if "1a50" in j.keys()][-1]
+
+#  "cryst_ref": {
+#       "ligand": "c1cc2c(cc1F)c(c[nH]2)CCCOP(=O)(O)O",
+#       "parent": "*OCCCc1c[nH]c2ccc(F)cc12",
+#       "frag": "*P(=O)(O)O",
+#       "connection": [
+#         48.042999267578125,
+#         28.5310001373291,
+#         11.14799976348877
+#       ]
+#     },
+#     "pred_ligands": [
+#       "CCCCCCCOP(=O)(O)O",
+#       "CCCCCCCCOP(=O)(O)O",
+#       "CCCCCCCCCOP(=O)(O)O",
+
     lig_data = {}
 
     for result in results:

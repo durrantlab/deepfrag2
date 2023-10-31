@@ -14,6 +14,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
     --custom_test_set_dir ./data_to_finetune/  `# separate from --data_dir so you can run test on one PDB set, but get labels from BindingMOAD.` \
     --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
+    --cache ./every_csv.cache.json \
     --data_dir $MOAD_DIR/  `# For labels` \
     --inference_label_sets all \
     --rotations 2 \
