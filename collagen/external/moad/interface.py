@@ -654,7 +654,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     # Convert parent SMILES string to capital letters to be only used with single bonds
                     try:
                         ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
-                        parent_smi = parent_smi.replace("*/", "[H]").replace("*", "[H]").upper().replace("CL", "Cl").replace("BR", "Br")
+                        for bond in ref_mol.GetBonds():
+                            bond.SetBondType(Chem.BondType.SINGLE)
+                        parent_smi = parent_smi.upper().replace("CL", "Cl").replace("BR", "Br")
                     except:
                         return None, None, None
 
@@ -694,7 +696,20 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=False)
         if len(sub_atoms) == 0:
-            log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt))
+            log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt_mol))
+            save_ligand_parent_path = os.getcwd() + os.sep + "unmatch_ligand_parent" + os.sep
+            save_ligand = save_ligand_parent_path + sdf_name + "_l.sdf"
+            save_parent = save_ligand_parent_path + sdf_name + "_p_" + str(hash(Chem.MolToSmiles(patt_mol))) + ".sdf"
+            if not os.path.exists(os.path.dirname(save_ligand_parent_path)):
+                os.mkdir(os.path.dirname(save_ligand_parent_path))
+            if not os.path.exists(save_ligand):
+                writer = Chem.SDWriter(save_ligand)
+                writer.write(mol)
+                writer.close()
+            if not os.path.exists(save_parent):
+                writer = Chem.SDWriter(save_parent)
+                writer.write(patt_mol)
+                writer.close()
             return None
 
         # it is created the mol object for the obtained substructure
