@@ -1,85 +1,86 @@
-"""Code to identify aromatic/aliphatic and charged/uncharged groups. Not
-perfect, but pretty good.
+"""Code to roughly identify aromatic/aliphatic and acid/base/neutral groups.
 """
 
 from rdkit import Chem
 
-charged_nitrogen_substructs = [
-    Chem.MolFromSmarts(smi)
-    for smi in [
-        "[N+]",
-        "[n+]",
-    ]
+acid_substructs_smi = [
+    # Carboxylates
+    "[*]C(=O)[O+0;H1]",
+    "[*]C(=O)[O-]",
+    # Hydroxyl groups bound to aromatic rings
+    "c[O+0;H1]",
+    "c[O-]",
+    # Thiol groups bound to aromatic rings
+    "c[S+0;H1]",
+    "c[S-]",
+    # Phosphate-like
+    "P(=O)[O+0;H1]",
+    "P(=O)[O-]",
+    # Sulfate-like
+    "S(=O)[O+0;H1]",
+    "S(=O)[O-]",
+    # Tetrazoles
+    "c1nnn[nH]1",
+    "c1nnn[n-]1",
+    "c1nn[nH]n1",
+    "c1nn[n-]n1",
+    # sulfonamides are acidic. NOTE: for NS(=O)(=O)c1ccccc1, predicted pKa
+    # is 10.24. For CS(N)(=O)=O, it is 13.11. For O=S1(=O)CCCCN1, it is
+    # 12.55. For O=S1(=O)NC=CC=C1, it is 8.52. Not going to do all
+    # sulfonamides, just ones attached to aromatic rings.
+    "O=S(c)[N+0;H1;X3]",  # Covers CNS(=O)(=O)c1ccccc1
+    "O=S(c)[N+0;H2;X3]",  # Covers NS(=O)(=O)c1ccccc1
+    "O=S(c)[N-;H0;X2]",  # Covers C[N-]S(=O)(=O)c1ccccc1
+    "O=S(c)[N-;H1;X2]",  # Covers [NH-]S(=O)(=O)c1ccccc1
+    "O=S[N+0;H1;X3](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)Nc1ccccc1
+    "O=S[N+0;H2;X3](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)Nc1ccccc1
+    "O=S[N-;H0;X2](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)[N-]c1ccccc1
+    ### DON'T USE THE BELOW ###
+    # Thiols have pretty low pKa, much lower than alcohols. But not used
+    # much in drugs.
+    # "C[S-]",
+    # "C[S;H1]",
+    # Nitro groups aren't really acidic.
+    # "[N+](=O)[O-]",
+    # "[N+](=O)[O;H1]",
+    # Could consider N[O-] and n[O-] to be acidic, but they are pretty rare
+    # substructures.
 ]
 
-# Get the charged moieties. Note that if there is an explicit charge, it will be
-# caught elsewhere. This is only to find the moieties that are fully protonated
-# but could be charged if they lost or gained a hydrogen atom.
-charged_substructs = [
-    Chem.MolFromSmarts(smi)
-    for smi in [
-        # Protonated carboxylate
-        "[*]C(=O)[O;H1]",
-        # Terminal amines, two hydrogens
-        "[X4]-[N;H2;X3]",
-        # Secondary amines, one hydrogen. But note that this doesn't catch
-        # secondary amines immediately adjacent to the connection point, because
-        # can't guarantee that would be sp3 hybridized.
-        "[X4]-[N;H1;X3]-[X4]",
-        # Tertiary amines, no hydrogens
-        "[X4]-[N;H0;X3](-[X4])-[X4]",
-        # Guanidines
-        "[N]-[C](-[N])=[NX2]-[H]",
-        "[C](-[N])=[NX2+0]",
-        # Sulfur-related
-        "[SX4](=O)(=O)(O-[C,c,N,n])-[OX2]-[H]",
-        "[SX4](=O)(=O)(-[C,c,N,n])-[OX2]-[H]",
-        "[SX3](=O)-[O]-[H]",
-        # Phosphorus-related
-        "[PX4](=O)(-[OX2]-[H])(-[O+0])-[OX2]-[H]",
-        "[PX4](=O)(-[OX2]-[H])(-[C,c,N,n])-[OX2]-[H]",
-        "[PX4](=O)(-[C,c,N,n,F,Cl,Br,I])(-[C,c,N,n,F,Cl,Br,I])-[OX2]-[H]",
-        # Not sure below work (couldn't find examples).
-        "[PX4](=O)(-[OX2]-[C,c,N,n,F,Cl,Br,I])(-[C,c,N,n,F,Cl,Br,I])-[OX2]-[H]",
-        "[PX4](=O)(-[OX2]-[C,c,N,n,F,Cl,Br,I])(-[O+0]-[C,c,N,n,F,Cl,Br,I])-[OX2]-[H]",
-        "[$([PX4:1]([OX2][C,c,N,n])(=O)([OX2][PX4](=O)([OX2])(O[H])))]O-[H]",
-        "[$([PX4](=O)([OX2][PX4](=O)([OX2])(O[H]))([OX2][PX4](=O)(O[H])([OX2])))]O-[H]",
-        "P(=O)O[H]",
-        # thioic acid
-        "[C,c,N,n](=[O,S])-[SX2,OX2]-[H]",
-        "[c,n]-[SX2]-[H]",
-
-        # New ones adding for DeepFrag 
-        # 
-        # Aromatic nitrogens can often be positively charged near neutral pH.
-        # Count aromatic nitrogens that are bound to two atoms, neither of which
-        # is a hydrogen, as potentially positive.
-        "[n;H0;D2]",
-
-        # Above doesn't catch some sulfur-containing groups.
-        "S(=O)[O;H1]",
-
-        # To get, for exmaple, *OP(=S)(O[H])O[H]
-        "P(=S)[O;H1]"
-        "P(=O)[O;H1]"
-        "P(=O)[S;H1]"
-        "P(=S)[S;H1]"
-    ]
+base_substructs_smi = [
+    # Primary amines. For simplicity's sake, must be bound to SP3 carbon (to
+    # avoid amide).
+    "[C;X4][N+0;H2;X3]",
+    "[C;X4][N+;H3;X4]",
+    # Secondary amines. Also covers Piperazine, Piperidine, Pyrrolidine,
+    # Aziridines. For simplicity's sake, must be bound to SP3 carbons (to
+    # avoid sulfonamide).
+    "[C;X4][N+0;H1;X3][C;X4]",
+    "[C;X4][N+;H2;X4][C;X4]",
+    # Tertiary amines. For simplicity's sake, must be bound to SP3 carbons.
+    "[C;X4][N+0;H0;X3]([C;X4])[C;X4]",
+    "[C;X4][N+;H1;X4]([C;X4])[C;X4]",
+    # Imine-like
+    "[N+0;H0;X2]",
+    "[N+;H1;X3]",
+    "[N+0;H1;X2]",
+    "[N+;H2;X3]",
 ]
 
-charged_substructs_to_ignore = [
-    (Chem.MolFromSmarts(smi[0]), Chem.MolFromSmarts(smi[1]))
-    for smi in [
-        # azides
-        ("N=[N+]=[N;X1]", "C"),
-        ("N=[N+]=[N;H1;X2]", "C"),
-        # nitro
-        # Actually, I think I'll count nitro groups as charged.
-        # Sulfonamide-like
-        ("S(=O)N", "S(=O)C"),
-        ("P(=O)N", "P(=O)C")
-    ]
-]
+acid_substructs = [Chem.MolFromSmarts(smi) for smi in acid_substructs_smi]
+base_substructs = [Chem.MolFromSmarts(smi) for smi in base_substructs_smi]
+
+# TODO: Neutral can just be not acid, not base.
+
+# TODO: What percentage are acids and bases? If small, maybe just use general
+# model for neutral.
+
+# TODO: Make sure lookup-table also matches properties of training/testing.
+
+# TODO: Send all domain-specific models to Shayne when ready.
+
+# TODO: Look at actually used. Lots of repeated, you ask for acids but not
+# always acids. Not sure what to make of it. Need code review.
 
 
 def is_aromatic(mol: Chem.Mol) -> bool:
@@ -99,42 +100,120 @@ def is_aromatic(mol: Chem.Mol) -> bool:
     )
 
 
-def is_charged(mol: Chem.Mol) -> bool:
-    """Determine if a molecule is charged or has the potential to be charged
-    near neutral pH. 
+def is_acid(mol: Chem.Mol, testing=False) -> bool:
+    """Determine if a molecule is an acid.
+
+    Args:
+        mol: RDKit molecule object.
+        testing: If True, return tuple of (True/False, substructure matched). If
+            False, return only True/False.
+
+    Returns:
+        True if an acid, False if not.
+    """
+
+    # Make copy of mol, so substitution doesn't change original
+    mol = Chem.Mol(mol)
+
+    if testing:
+        return next(
+            (
+                (True, acid_substructs_smi[i])
+                for i, acid_substruct in enumerate(acid_substructs)
+                if mol.HasSubstructMatch(acid_substruct)
+            ),
+            (False, None),
+        )
+
+    return any(
+        mol.HasSubstructMatch(acid_substruct) for acid_substruct in acid_substructs
+    )
+
+
+def is_base(mol: Chem.Mol, testing=False) -> bool:
+    """Determine if a molecule is a base.
+
+    Args:
+        mol: RDKit molecule object.
+        testing: If True, return tuple of (True/False, substructure matched). If
+            False, return only True/False.
+
+    Returns:
+        True if a base, False if not.
+    """
+
+    # Make copy of mol, so substitution doesn't change original
+    mol = Chem.Mol(mol)
+
+    if testing:
+
+        return next(
+            (
+                (True, base_substructs_smi[i])
+                for i, base_substruct in enumerate(base_substructs)
+                if mol.HasSubstructMatch(base_substruct)
+            ),
+            (False, None),
+        )
+
+    return any(
+        mol.HasSubstructMatch(base_substruct) for base_substruct in base_substructs
+    )
+
+
+def is_neutral(mol: Chem.Mol) -> bool:
+    """Determine if a molecule is neutral. If not acid and not base, assume
+    neutral.
 
     Args:
         mol: RDKit molecule object.
 
     Returns:
-        True if charged, False if not.
+        True if a neutral, False if not.
     """
-    # If formal charge on any atom, then the molecule is charged. Easy solution.
-    for atom in mol.GetAtoms():
-        if atom.GetFormalCharge() != 0:
-            # print("1", "formal charge found", Chem.MolToSmiles(mol))
-            return True
 
-    # If you get here, you need to consider the possibility that it could be
-    # ionizable, even though neutral in SMILES.
+    return not is_acid(mol) and not is_base(mol)
 
-    # Make copy of mol, so substitution doesn't change original
-    mol = Chem.Mol(mol)
 
-    # Go through and mask out certain nitrogens. There could be a prohibited
-    # substructure that appears to be a charged nitrogen (e.g., azide). You must
-    # replace it with a carbon.
-    for charged_substruct_to_ignore, replacement in charged_substructs_to_ignore:
-        if mol.HasSubstructMatch(charged_substruct_to_ignore):
-            mol = Chem.ReplaceSubstructs(
-                mol, charged_substruct_to_ignore, replacement
-            )[0]
+if __name__ == "__main__":
+    import pandas as pd
+    import sys
 
-            # fix
-            mol.UpdatePropertyCache(strict=False)
+    # If no arguments, use filename "chem_props_test.smi"
+    filename = "chem_props_test.smi" if len(sys.argv) == 1 else sys.argv[1]
 
-    return any(
-        mol.HasSubstructMatch(charged_substruct)
-        for charged_substruct in charged_substructs
-    )
+    smis = []
+    names = []
+    types = []
+    mols = []
+    substruct_matches = []
+    with open(filename, "r") as f:
+        for line in f:
+            smi, name = line.strip().split()
+            name, type = name.split("__")
+            mol = Chem.MolFromSmiles(smi)
+            smis.append(smi)
+            names.append(name)
+            types.append(type)
+            mols.append(mol)
+
+    # Create empty dataframe.
+    df = pd.DataFrame(columns=["smiles", "name"])
+    df["smiles"] = smis
+    df["name"] = names
+    df["correct_type"] = types
+
+    acid_cats = [is_acid(mol, True) for mol in mols]
+    base_cats = [is_base(mol, True) for mol in mols]
+
+    df["predict_acid"] = [e[0] for e in acid_cats]
+    df["acid_match"] = [e[1] for e in acid_cats]
+    df["predict_base"] = [e[0] for e in base_cats]
+    df["base_match"] = [e[1] for e in base_cats]
+    df["predict_aromatic"] = [is_aromatic(mol) for mol in mols]
+
+    print(df)
+
+    # Save to tsv.
+    df.to_csv("chem_props_test.tsv", sep="\t", index=False)
 

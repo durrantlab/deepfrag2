@@ -30,6 +30,11 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
     # Get the epoch, which is the number after "epoch="
     finetuned_epoch=`echo $finetuned_ckpt_file | sed -e 's/.*epoch=\([0-9]*\).*/\1/'`
 
+    # if (( $finetuned_ckpt_file % 4 != 0)); then
+    if (( 10#$finetuned_epoch % 4 != 0 )); then
+        continue
+    fi
+
     echo "Considering finetuned epoch ${finetuned_epoch}..."
 
     # Create a subdirectory in the directory in finetuned_output_dir called
@@ -54,7 +59,8 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
             --data_dir ../data_to_finetune/ \
             --default_root_dir ${epoch_output_finetuned_dir}  `# The output directory` \
             --inference_label_sets test \
-            --rotations 2 \
+            --rotations 8 \
+            --min_frag_num_heavy_atoms 4 \
             --json_params common_params.json.inp \
             | tee ${epoch_output_finetuned_dir}OUT-python_out.txt
     fi
@@ -68,11 +74,11 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
             --load_splits ${initial_model_output_dir}/splits.saved.json \
             --load_checkpoint ${finetuned_ckpt_file}   `# Note loading finetuned checkpoint` \
             --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
-            --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
             --data_dir $MOAD_DIR/ \
             --default_root_dir ${epoch_output_initial_model_dir}  `# The output directory` \
             --inference_label_sets test \
-            --rotations 2 \
+            --rotations 8 \
+            --min_frag_num_heavy_atoms 4 \
             --json_params common_params.json.inp \
             | tee ${epoch_output_initial_model_dir}OUT-python_out.txt
     fi

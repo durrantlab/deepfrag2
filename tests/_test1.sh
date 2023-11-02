@@ -10,7 +10,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --save_params ./1.train_on_moad.output/params.saved.json \
     --save_splits ./1.train_on_moad.output/splits.saved.json \
     --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
-    --cache $MOAD_DIR/${EVERY_CSV_BSNM}.cache.json \
+    --cache ./every_csv.cache.json \
     --data_dir $MOAD_DIR/ \
     --default_root_dir $(pwd)/1.train_on_moad.output/  `# The output directory` \
     --max_pdbs_train 100  `# Train on a small subset of the Binding MOAD` \

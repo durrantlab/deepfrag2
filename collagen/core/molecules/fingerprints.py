@@ -82,7 +82,6 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     n_fp = list(map(int, list(fp.ToBitString())))
     return np.array(n_fp)
 
-
 def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Morgan fingerprints. TODO: Candidate for removal.
     

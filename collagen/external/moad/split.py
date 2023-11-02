@@ -367,7 +367,9 @@ def _generate_splits_from_scratch(
                 print("    Reassigning overlapping SMILES by priority, favoring the testing and validation sets")
                 __priority_reassign_overlapping_smiles(all_smis, False)
     else:
-        return None, None
+        # Throw error here.
+        raise ValueError(f"Unknown split method: {split_method}")
+        # return None, None
 
     return pdb_ids, all_smis
 
@@ -607,7 +609,7 @@ def full_moad_split(moad: "MOADInterface") -> MOAD_split:
         max_pdbs_train=None,
         max_pdbs_val=None,
         max_pdbs_test=None,
-        butina_cluster_cutoff=0.0,
+        butina_cluster_cutoff=0.0
     )
 
     return MOAD_split(name="Full", targets=pdb_ids.train, smiles=all_smis.train)

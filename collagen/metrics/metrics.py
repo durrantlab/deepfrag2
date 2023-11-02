@@ -181,9 +181,8 @@ def most_similar_matches(
         for cos_dist, smi, fp in zip(
             sorted_dists[:k], sorted_smis[:k], sorted_label_set_fingerprints[:k]
         ):
-            cos_sim = 1 - float(
-                cos_dist
-            )  # So reports cos similarity, not cosine distance.
+            # So reports cos similarity, not cosine distance.
+            cos_sim = 1 - float(cos_dist)
             similar_one_to_add = [smi, cos_sim]
             if pca_project is not None:
                 similar_one_to_add.append(pca_project.project(fp))
