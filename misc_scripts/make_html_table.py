@@ -6,10 +6,10 @@
 
 3. Put those SVG texts into the row of an HTML table.
 """
-
 # NOTE: Considers only the first checkpoint.
 
 # Import the rdkit library
+from typing import List, Tuple
 import rdkit
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -23,7 +23,17 @@ test_json_filename = sys.argv[1]
 
 pattern = re.compile("<\?xml.*\?>")
 
-def DrawMol(mol, molSize=(450,150), kekulize=True):
+def DrawMol(mol, molSize: Tuple[int, int]=(450,150), kekulize: bool=True) -> str:
+    """Draw molecule in SVG format.
+    
+    Args:
+        mol (Any): The molecule to draw.
+        molSize (Tuple[int, int]): The size of the SVG image.
+        kekulize (bool): Whether to kekulize the molecule.
+        
+    Returns:
+        str: The SVG text of the molecule.
+    """
     mc = Chem.MolFromSmiles(mol)
     if kekulize:
         try:
@@ -40,9 +50,15 @@ def DrawMol(mol, molSize=(450,150), kekulize=True):
     svg = re.sub(pattern, '', svg)
     return svg
 
-def toHTMLTable(list_of_smi):
+def toHTMLTable(list_of_smi: List[str]) -> str:
     """
     Put those SVG texts into the row of an HTML table.
+
+    Args:
+        list_of_smi (List[str]): A list of smiles strings.
+
+    Returns:
+        str: The HTML table.
     """
     # Create a list to store the SVG text
     svg_text = [DrawMol(smi.replace("[MATCH]", "")) for smi in list_of_smi]
@@ -67,7 +83,7 @@ def toHTMLTable(list_of_smi):
 data = json.load(open(test_json_filename))
 lines = []
 for entry in data["entries"]:
-    correct = entry["correct"]["fragmentSmiles"]
+    correct = entry["groundTruth"]["fragmentSmiles"]
     # Consider only first checkpoint
     ckpt = entry["perCheckpoint"][0]["averagedPrediction"]
     closest = [e["smiles"] for e in ckpt["closestFromLabelSet"]]

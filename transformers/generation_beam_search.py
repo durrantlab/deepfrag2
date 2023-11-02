@@ -54,7 +54,6 @@ PROCESS_INPUTS_DOCSTRING = r"""
               indicating to which beam the next tokens shall be added.
 
 """
-
 FINALIZE_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size * num_beams, sequence_length)`):
@@ -83,13 +82,11 @@ FINALIZE_INPUTS_DOCSTRING = r"""
 
 """
 
-
 class BeamScorer(ABC):
     """
     Abstract base class for all beam scorers that are used for :meth:`~transformers.PretrainedModel.beam_search` and
     :meth:`~transformers.PretrainedModel.beam_sample`.
     """
-
     @abstractmethod
     @add_start_docstrings(PROCESS_INPUTS_DOCSTRING)
     def process(
@@ -142,7 +139,6 @@ class BeamSearchScorer(BeamScorer):
             The number of beam hypotheses that shall be returned upon calling
             :meth:`~transformer.BeamSearchScorer.finalize`.
     """
-
     def __init__(
         self,
         batch_size: int,
@@ -346,7 +342,6 @@ class BeamHypotheses:
         If there are enough hypotheses and that none of the hypotheses being generated can become better than the worst
         one in the heap, then we are done with this sentence.
         """
-
         if len(self) < self.num_beams:
             return False
         elif self.early_stopping:

@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for Flaubert, based on XLM."""
 
-
 import unicodedata
 
 import six
@@ -89,7 +88,6 @@ class FlaubertTokenizer(XLMTokenizer):
     This tokenizer inherits from :class:`~transformers.XLMTokenizer`. Please check the superclass for usage examples
     and documentation regarding arguments.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION

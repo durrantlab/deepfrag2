@@ -48,7 +48,6 @@ def html_progress_bar(value, total, prefix, label, width=300):
     </div>
     """
 
-
 def text_to_html_table(items):
     "Put the texts in `items` in an HTML table."
     html_code = """<table border="1" class="dataframe">\n"""
@@ -102,7 +101,6 @@ class NotebookProgressBar:
             time.sleep(0.07)
         pbar.update(100)
     """
-
     warmup = 5
     update_every = 0.2
 
@@ -208,7 +206,6 @@ class NotebookTrainingTracker(NotebookProgressBar):
             The list of column names for the metrics table (will be inferred from the first call to
             :meth:`~transformers.utils.notebook.NotebookTrainingTracker.write_line` if not set).
     """
-
     def __init__(self, num_steps, column_names=None):
         super().__init__(num_steps)
         self.inner_table = None if column_names is None else [column_names]
@@ -270,7 +267,6 @@ class NotebookProgressCallback(TrainerCallback):
     A :class:`~transformers.TrainerCallback` that displays the progress of training or evaluation, optimized for
     Jupyter Notebooks or Google colab.
     """
-
     def __init__(self):
         self.training_tracker = None
         self.prediction_bar = None

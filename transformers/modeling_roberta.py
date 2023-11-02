@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """PyTorch RoBERTa model. """
-
 import math
 import warnings
 
@@ -69,7 +68,6 @@ class RobertaEmbeddings(nn.Module):
     """
     Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
     """
-
     # Copied from transformers.modeling_bert.BertEmbeddings.__init__
     def __init__(self, config):
         super().__init__()
@@ -470,7 +468,6 @@ class RobertaPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = RobertaConfig
     base_model_prefix = "roberta"
 
@@ -489,7 +486,6 @@ class RobertaPreTrainedModel(PreTrainedModel):
 
 
 ROBERTA_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -504,7 +500,6 @@ ROBERTA_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 ROBERTA_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -555,14 +550,12 @@ ROBERTA_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
 @add_start_docstrings(
     "The bare RoBERTa Model transformer outputting raw hidden-states without any specific head on top.",
     ROBERTA_START_DOCSTRING,
 )
 class RobertaModel(RobertaPreTrainedModel):
     """
-
     The model can behave as an encoder (with only self-attention) as well as a decoder, in which case a layer of
     cross-attention is added between the self-attention layers, following the architecture described in `Attention is
     all you need`_ by Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz
@@ -576,7 +569,6 @@ class RobertaModel(RobertaPreTrainedModel):
     .. _`Attention is all you need`: https://arxiv.org/abs/1706.03762
 
     """
-
     authorized_missing_keys = [r"position_ids"]
 
     # Copied from transformers.modeling_bert.BertModel.__init__ with Bert->Roberta
@@ -926,7 +918,6 @@ class RobertaForMaskedLM(RobertaPreTrainedModel):
 
 class RobertaLMHead(nn.Module):
     """Roberta Head for masked language modeling."""
-
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
@@ -1217,7 +1208,6 @@ class RobertaForTokenClassification(RobertaPreTrainedModel):
 
 class RobertaClassificationHead(nn.Module):
     """Head for sentence-level classification tasks."""
-
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)

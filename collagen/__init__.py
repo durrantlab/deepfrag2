@@ -1,3 +1,5 @@
+"""__init__.py"""
+
 __all__ = []
 
 from collagen.core import *

@@ -18,7 +18,6 @@
     All the conversions are grouped here to gather SentencePiece dependencies outside of the fast tokenizers files and
     allow to make our dependency on SentencePiece optional.
 """
-
 from typing import Dict, List, Tuple
 
 from tokenizers import Tokenizer, decoders, normalizers, pre_tokenizers, processors
@@ -34,7 +33,6 @@ class SentencePieceExtractor:
     """
     Extractor implementation for SentencePiece trained models. https://github.com/google/sentencepiece
     """
-
     def __init__(self, model: str):
         requires_sentencepiece(self)
         from sentencepiece import SentencePieceProcessor
@@ -614,7 +612,6 @@ def convert_slow_tokenizer(transformer_tokenizer) -> Tokenizer:
         A instance of :class:`~tokenizers.Tokenizer` to be used as the backend tokenizer of a
         :class:`~transformers.tokenization_utils_base.PreTrainedTokenizerFast`
     """
-
     tokenizer_class_name = transformer_tokenizer.__class__.__name__
 
     if tokenizer_class_name not in SLOW_TO_FAST_CONVERTERS:

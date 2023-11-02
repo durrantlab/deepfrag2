@@ -33,7 +33,6 @@ class OnnxConverterArgumentParser(ArgumentParser):
     """
     Wraps all the script arguments supported to export transformers models to ONNX IR
     """
-
     def __init__(self):
         super().__init__("ONNX Converter")
 
@@ -160,7 +159,6 @@ def infer_shapes(nlp: Pipeline, framework: str) -> Tuple[List[str], List[str], D
         - Dictionary with input/output variables names as key and shape tensor as value
         - a BatchEncoding reference which was used to infer all the above information
     """
-
     def build_shape_dict(name: str, tensor, is_input: bool, seq_len: int):
         if isinstance(tensor, (tuple, list)):
             return [build_shape_dict(name, t, is_input, seq_len) for t in tensor]

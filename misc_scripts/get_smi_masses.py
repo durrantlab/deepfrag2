@@ -6,8 +6,8 @@
 
 3. Use rdkit to calculate the molecular mass of each smiles.
 
-4. Print the smiles and its mass to the screen."""
-
+4. Print the smiles and its mass to the screen.
+"""
 # 1. Import the rdkit library
 from rdkit import Chem
 from rdkit.Chem import Descriptors

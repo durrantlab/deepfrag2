@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Convert pytorch checkpoints to TensorFlow """
 
-
 import argparse
 import os
 

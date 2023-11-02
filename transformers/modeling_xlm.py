@@ -16,7 +16,6 @@
  PyTorch XLM model.
 """
 
-
 import itertools
 import math
 import warnings
@@ -233,7 +232,6 @@ class XLMPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = XLMConfig
     load_tf_weights = None
     base_model_prefix = "transformer"
@@ -298,7 +296,6 @@ class XLMForQuestionAnsweringOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     start_top_log_probs: Optional[torch.FloatTensor] = None
     start_top_index: Optional[torch.LongTensor] = None
@@ -310,7 +307,6 @@ class XLMForQuestionAnsweringOutput(ModelOutput):
 
 
 XLM_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -325,7 +321,6 @@ XLM_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 XLM_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -394,7 +389,6 @@ XLM_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare XLM Model transformer outputting raw hidden-states without any specific head on top.",
@@ -634,7 +628,6 @@ class XLMPredLayer(nn.Module):
     """
     Prediction layer (cross_entropy or adaptive_softmax).
     """
-
     def __init__(self, config):
         super().__init__()
         self.asm = config.asm

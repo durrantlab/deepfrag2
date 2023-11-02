@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ OpenAI GPT-2 configuration """
-
 from .configuration_utils import PretrainedConfig
 from .utils import logging
 
@@ -118,7 +117,6 @@ class GPT2Config(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
-
     model_type = "gpt2"
 
     def __init__(

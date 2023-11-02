@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization class for model BertGeneration."""
 
-
 import os
 from shutil import copyfile
 from typing import List, Optional, Tuple
@@ -53,7 +52,6 @@ class BertGenerationTokenizer(PreTrainedTokenizer):
         pad_token (:obj:`str`, `optional`, defaults to :obj:`"<pad>"`):
             The token used for padding, for example when batching sequences of different lengths.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = {"vocab_file": {"bert_for_seq_generation": tokenizer_url}}
     max_model_input_sizes = {"bert_for_seq_generation": 512}

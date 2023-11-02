@@ -36,7 +36,6 @@ class FinetuneSmilesMolbertApp(BaseMolbertApp):
         -4: freeze the task head but not the base layer
         n>0: freeze the bottom n layers of the base model.
         """
-
         model_bert = model.model.bert
         model_tasks = model.model.tasks
 

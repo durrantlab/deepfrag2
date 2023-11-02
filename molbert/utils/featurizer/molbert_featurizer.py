@@ -19,7 +19,6 @@ class MolBertFeaturizer:
     This featurizer takes a molbert model and transforms the input data and
     returns the representation in the last layer (pooled output and sequence_output).
     """
-
     def __init__(
         self,
         checkpoint_path: str,
@@ -45,6 +44,7 @@ class MolBertFeaturizer:
         self.model_dir = os.path.dirname(os.path.dirname(checkpoint_path))
         self.hparams_path = os.path.join(self.model_dir, 'hparams.yaml')
         self.device = device or 'cuda' if torch.cuda.is_available() else 'cpu'
+        print("MolBert is using " + self.device)
         self.embedding_type = embedding_type
         self.output_all = False if self.embedding_type in ['pooled'] else True
         self.max_seq_len = max_seq_len

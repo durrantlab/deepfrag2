@@ -52,3 +52,11 @@ tests/*.output
 
 **/lightning_logs
 **/lightning_logs/**
+
+tmp_working_dir/
+tests/core.*
+
+old*
+.idea
+
+misc_scripts/output/

@@ -1,3 +1,8 @@
+"""Simple dataclasses like MOAD_class, MOAD_family, MOAD_target, etc. Note that
+MOAD_target has some complexity to it (to load/save PDB files, including
+caching), but let's leave it here.
+"""
+
 from dataclasses import dataclass, field
 from collagen.core import args as user_args
 from typing import List, Tuple, Any
@@ -17,25 +22,30 @@ from ... import Mol
 from .moad_utils import fix_moad_smiles
 import sys
 
-# Simple dataclasses like MOAD_class, MOAD_family, MOAD_target, etc. Note that
-# MOAD_target has some complexity to it (to load/save PDB files, including
-# caching), but let's leave it here.
-
 
 @dataclass
 class MOAD_class(object):
+
+    """MOAD class."""
+
     ec_num: str
     families: List["MOAD_family"]
 
 
 @dataclass
 class MOAD_family(object):
+
+    """MOAD family."""
+
     rep_pdb_id: str
     targets: List["MOAD_target"]
 
 
 @dataclass
 class MOAD_target(object):
+
+    """MOAD target."""
+
     pdb_id: str
     ligands: List["MOAD_ligand"]
     files: List[Path] = field(default_factory=list)
@@ -55,7 +65,7 @@ class MOAD_target(object):
     recent_pickle_contents = OrderedDict()
 
     def __len__(self) -> int:
-        """Returns the number of on-disk structures."""
+        """Return the number of on-disk structures."""
         return len(self.files)
 
     def _get_pdb_from_disk_cache(self, idx: int) -> Tuple[Any]:
@@ -70,7 +80,9 @@ class MOAD_target(object):
         if self.cache_pdbs_to_disk and os.path.exists(pkl_filename):
             # Check if it's been loaded recently. If so, no need to reload.
             # print(self.recent_pickle_contents.keys())
-            if pkl_filename in self.recent_pickle_contents:  # and self.recent_pickle_contents[pkl_filename] is not None:
+            if (
+                pkl_filename in self.recent_pickle_contents
+            ):  # and self.recent_pickle_contents[pkl_filename] is not None:
                 payload = self.recent_pickle_contents[pkl_filename]
 
                 # If more than 100 recent pickles in memory, remove the oldest one.
@@ -195,7 +207,7 @@ class MOAD_target(object):
             dist = 0.5 * self.grid_width * self.grid_resolution
 
             # Need to account for diagnol
-            dist = (3**0.5) * dist
+            dist = (3 ** 0.5) * dist
 
             # Add padding
             dist = dist + self.grid_padding
@@ -227,7 +239,7 @@ class MOAD_target(object):
 
         # Print numer of atoms in selection
         # if prody_mol is None:
-            # print(rec_sel)
+        # print(rec_sel)
         # print("Number of atoms in selection:", prody_mol.numAtoms())
         rec_mol = Mol.from_prody(prody_mol)
         rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
@@ -237,7 +249,10 @@ class MOAD_target(object):
     def _save_to_file_cache(self, pkl_filename: str, rec_mol: Any, ligands: Any):
         if self.cache_pdbs_to_disk:
             if os.path.exists(pkl_filename):
-                print("\nFile already exists! Already saved from another thread?", pkl_filename)
+                print(
+                    "\nFile already exists! Already saved from another thread?",
+                    pkl_filename,
+                )
             with open(pkl_filename, "wb") as f:
                 # print("Save pickle")
                 pickle.dump([rec_mol, ligands], f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -252,7 +267,6 @@ class MOAD_target(object):
         Returns a (receptor, ligand) tuple of
             :class:`atlas.data.molecules.mol.Mol` objects.
         """
-
         # First try loading from the cache on file (.pkl).
         cached_recep_and_ligs, pkl_filename = self._get_pdb_from_disk_cache(idx)
         if cached_recep_and_ligs is not None:
@@ -327,8 +341,16 @@ class MOAD_target(object):
 @dataclass
 class PdbSdfDir_target(MOAD_target):
 
-    def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
+    """Class to load a target/ligand from a directory of PDB/SDF files."""
 
+    def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
+        """Load the Nth structure for this target.
+
+        Args:
+            idx (int): The index of the biological assembly to load.
+
+        Returns a (receptor, ligand) tuple of Mol objects.
+        """
         lig_mols = []
 
         for lig in self.ligands:
@@ -337,18 +359,28 @@ class PdbSdfDir_target(MOAD_target):
             lig_mol.meta["moad_ligand"] = lig
             lig_mols.append(lig_mol)
 
-        m = self._load_pdb(idx)
-        rec_mol = self._get_rec_from_prody_mol(m, [], [])
-        rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
+        rec_mol = None
+        if self.pdb_id != "Non":
+            m = self._load_pdb(idx)
+            rec_mol = self._get_rec_from_prody_mol(m, [], [])
+            rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"
 
         return rec_mol, lig_mols
 
     def _get_rec_from_prody_mol(
-        self,
-        m: Any,
-        not_part_of_protein_sels: List[str],
-        lig_sels: List[str],
+        self, m: Any, not_part_of_protein_sels: List[str], lig_sels: List[str],
     ):
+        """Get the receptor atoms from a prody mol.
+
+        Args:
+            m (Any): A prody mol.
+            not_part_of_protein_sels (List[str]): A list of selections for
+                components that are not part of the protein.
+            lig_sels (List[str]): A list of selections for the ligands.
+
+        Returns:
+            Mol: The receptor atoms.
+        """
         rec_sel = "not water"
 
         if self.noh:
@@ -377,6 +409,9 @@ class PdbSdfDir_target(MOAD_target):
 
 @dataclass
 class MOAD_ligand(object):
+
+    """Class to hold information about a ligand from the MOAD database."""
+
     name: str
     validity: str
     affinity_measure: str
@@ -386,28 +421,61 @@ class MOAD_ligand(object):
 
     @property
     def chain(self) -> str:
+        """Chain ID of the ligand.
+        
+        Returns:
+            str: The chain ID of the ligand.
+        """
         return self.name.split(":")[1]
 
     @property
     def resnum(self) -> int:
+        """Residue number of the ligand.
+
+        Returns:
+            int: The residue number of the ligand.
+        """
         return int(self.name.split(":")[2])
 
     @property
     def reslength(self) -> int:
+        """Length of the residue name of the ligand.
+
+        Returns:
+            int: The length of the residue name of the ligand.
+        """
         return len(self.name.split(":")[0].split(" "))
 
     @property
     def is_valid(self) -> bool:
+        """Whether the ligand is valid.
+
+        Returns:
+            bool: Whether the ligand is valid.
+        """
         return self.validity == "valid"
 
 
 @dataclass
 class PdbSdfDir_ligand(MOAD_ligand):
+
+    """Class to hold information about a ligand from a directory of PDB/SDF
+    files.
+    """
+
     rdmol: Any
 
 
 @dataclass
+class PairedPdbSdfCsv_ligand(PdbSdfDir_ligand):
+    fragment_and_act: {}
+
+
+@dataclass
 class MOAD_split(object):
+
+    """Class to hold information about a split of the MOAD database."""
+
     name: str
     targets: List[str]
     smiles: List[str]
@@ -415,12 +483,28 @@ class MOAD_split(object):
 
 @dataclass
 class Entry_info(object):
+
+    """Class to hold information about a MOAD entry."""
+
     fragment_smiles: str
-    parent_smiles: str  # TODO: Really need to calculate this? Not sure how long it takes, but not really needed.
+
+    # TODO: Really need to calculate this? Not sure how long it takes, but not
+    # really needed.
+    parent_smiles: str
+
     receptor_name: str
     connection_pt: List[float]
 
+    # these attributes are used when performing fine-tuning on paired data
+    ligand_id: str
+    fragment_idx: int
+
     def hashable_key(self) -> str:
+        """Get a hashable key for this entry.
+
+        Returns:
+            str: A hashable key for this entry.
+        """
         return (
             self.fragment_smiles
             + "--"

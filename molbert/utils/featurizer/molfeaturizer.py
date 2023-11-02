@@ -20,7 +20,6 @@ class MolFeaturizer(ABC):
     """
     Interface for the featurization of molecules, given as SMILES strings, to some vectorized representation.
     """
-
     def __call__(self, molecules: Sequence[str]) -> Tuple[np.ndarray, np.ndarray]:
         return self.transform(molecules)
 
@@ -50,7 +49,6 @@ class MolFeaturizer(ABC):
         Returns:
             Tuple: feature vector (1D array), boolean for successful featurization
         """
-
     def invalid_mol_features(self) -> np.ndarray:
         """
         Features to return for invalid molecules.
@@ -63,7 +61,6 @@ class MolFeaturizer(ABC):
         """
         Get the dimension after featurization
         """
-
     def is_valid(self, molecules: Sequence[str]) -> Sequence[bool]:
         return np.array([self.is_valid_single(mol) for mol in molecules])
 
@@ -80,7 +77,6 @@ class RDKitFeaturizer(MolFeaturizer, ABC):
     """
     Base class for MolFeaturizers relying on RDKit.Mols during featurization
     """
-
     def __init__(self, sanitize: bool = True, replacements: Optional[dict] = None):
         """
         Args:
@@ -108,7 +104,6 @@ class RDKitFeaturizer(MolFeaturizer, ABC):
         Featurizes one molecule given as a RDKit.Mol
         """
 
-
 class PhysChemFeaturizer(RDKitFeaturizer):
     """
     MolFeaturizer that featurizes a molecule with an array of phys-chem properties.
@@ -116,7 +111,6 @@ class PhysChemFeaturizer(RDKitFeaturizer):
     @see http://www.rdkit.org/Python_Docs/rdkit.ML.Descriptors.MoleculeDescriptors-module.html
     For available descriptors @see http://rdkit.org/docs/source/rdkit.ML.Descriptors.MoleculeDescriptors.html
     """
-
     def __init__(
         self,
         descriptors: List[str] = [],
@@ -274,7 +268,6 @@ class PhysChemFeaturizer(RDKitFeaturizer):
         """LogP descriptors and VSA/LogP descriptors
         SlogP_VSA: VSA of atoms contributing to a specified bin of SlogP
         """
-
         return [
             'MolLogP',
             'SlogP_VSA1',
@@ -883,7 +876,6 @@ class MorganFPFeaturizer(RDKitFeaturizer):
     MolFeaturizer generating the Morgan fingerprints.
     @see http://rdkit.org/docs/source/rdkit.Chem.rdMolDescriptors.html#rdkit.Chem.rdMolDescriptors.GetMorganFingerprint
     """
-
     def __init__(
         self,
         fp_size: int = 2048,
@@ -981,7 +973,6 @@ class SmilesIndexFeaturizer(MolFeaturizer):
     Transforms a SMILES string into its index character representation
     Each double letter element is first converted into a single symbol
     """
-
     def __init__(
         self,
         max_length: int,
@@ -1147,7 +1138,6 @@ class SmilesIndexFeaturizer(MolFeaturizer):
         Returns:
             sanitized SMILE string with only single-char tokens
         """
-
         temp_smiles = smiles
         for symbol, token in self.encode_dict.items():
             temp_smiles = temp_smiles.replace(symbol, token)
@@ -1294,13 +1284,13 @@ class SmilesIndexFeaturizer(MolFeaturizer):
                 try:
                     indices_array[i] = self.token_to_idx[c]
                 except KeyError:
-                    logging.warning(f'SMILES has unknown symbol {decorated_smiles} -> {c}')
+                    # logging.warning(f'SMILES has unknown symbol {decorated_smiles} -> {c}')
+                    pass
 
         return indices_array, valid_smiles
 
     def convert_tokens_to_ids(self, tokens: Sequence[str]) -> List[int]:
-        """Converts a sequence of tokens into ids using the vocab."""
-
+        """Convert a sequence of tokens into ids using the vocab."""
         ids = [self.token_to_idx[token] for token in tokens]
 
         if len(ids) > self.max_length:

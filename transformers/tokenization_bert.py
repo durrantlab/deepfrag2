@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for Bert."""
 
-
 import collections
 import os
 import unicodedata
@@ -155,7 +154,6 @@ class BertTokenizer(PreTrainedTokenizer):
             Whether or not to strip all accents. If this option is not specified, then it will be determined by the
             value for :obj:`lowercase` (as in the original BERT).
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -288,7 +286,6 @@ class BertTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(
@@ -371,7 +368,6 @@ class BasicTokenizer(object):
             Whether or not to strip all accents. If this option is not specified, then it will be determined by the
             value for :obj:`lowercase` (as in the original BERT).
     """
-
     def __init__(self, do_lower_case=True, never_split=None, tokenize_chinese_chars=True, strip_accents=None):
         if never_split is None:
             never_split = []
@@ -503,7 +499,6 @@ class BasicTokenizer(object):
 
 class WordpieceTokenizer(object):
     """Runs WordPiece tokenization."""
-
     def __init__(self, vocab, unk_token, max_input_chars_per_word=100):
         self.vocab = vocab
         self.unk_token = unk_token
@@ -523,7 +518,6 @@ class WordpieceTokenizer(object):
         Returns:
           A list of wordpiece tokens.
         """
-
         output_tokens = []
         for token in whitespace_tokenize(text):
             chars = list(token)

@@ -14,7 +14,6 @@
 # limitations under the License.
 """ PyTorch LayoutLM model. """
 
-
 import math
 
 import torch
@@ -55,7 +54,6 @@ LayoutLMLayerNorm = torch.nn.LayerNorm
 
 class LayoutLMEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super(LayoutLMEmbeddings, self).__init__()
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
@@ -506,7 +504,6 @@ class LayoutLMPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = LayoutLMConfig
     base_model_prefix = "layoutlm"
     authorized_missing_keys = [r"position_ids"]
@@ -538,7 +535,6 @@ LAYOUTLM_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 LAYOUTLM_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`{0}`):
@@ -586,7 +582,6 @@ LAYOUTLM_INPUTS_DOCSTRING = r"""
             If set to ``True``, the model will return a :class:`~transformers.file_utils.ModelOutput` instead of a
             plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare LayoutLM Model transformer outputting raw hidden-states without any specific head on top.",

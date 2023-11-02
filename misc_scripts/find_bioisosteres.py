@@ -1,8 +1,11 @@
-# Given the json output file (test_results.json), find candidate bioisosteres.
+"""Given the json output file (test_results.json), find candidate
+bioisosteres.
+"""
 
 import json
 import sys
 import re
+from typing import List, Tuple
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from mpire import WorkerPool
@@ -12,7 +15,16 @@ from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors
 
 
-def fix_smi(orig_smi):
+def fix_smi(orig_smi: str) -> str:
+    """Fix the SMILES string by removing the atom mapping numbers and
+    adding hydrogens.
+    
+    Args:
+        orig_smi (str): The original SMILES string.
+        
+    Returns:
+        str: The fixed SMILES string.
+    """
     smi = re.sub(r"\[[0-9]{0,5}\*\]", "*", orig_smi, 0, re.MULTILINE)
     mol = Chem.MolFromSmiles(smi)
     mol = AllChem.AddHs(mol)
@@ -33,14 +45,14 @@ def fix_smi(orig_smi):
                 for bond in atom.GetBonds():
                     bondedAtoms = [bond.GetBeginAtom(), bond.GetEndAtom()]
                     bondedHydrogens = [a for a in bondedAtoms if a.GetSymbol() == "H"]
-                    if len(bondedHydrogens) == 0:
+                    if not bondedHydrogens:
                         continue
                     atom.SetFormalCharge(0)
                     bondedHydrogen = bondedHydrogens[0]
                     emol = Chem.EditableMol(mol)
                     try:
                         emol.RemoveAtom(bondedHydrogen.GetIdx())
-                    except:
+                    except Exception:
                         print("Couldn't remove atom:", Chem.MolToSmiles(mol))
                     mol = emol.GetMol()
                     changed = True
@@ -48,10 +60,9 @@ def fix_smi(orig_smi):
 
     try:
         mol = Chem.RemoveHs(mol)
-    except:
+    except Exception:
         print("Could not remove hydrogens:", Chem.MolToSmiles(mol))
-        pass
-
+    
     smi = Chem.MolToSmiles(mol, canonical=True, isomericSmiles=False)
 
     # print(orig_smi, "\n", smi, "\n")
@@ -64,8 +75,17 @@ data = json.load(open(filename))
 TANIMOTO_CUTOFF = 0.2
 HEAVY_ATOM_COUNT_CUTOFF = 5
 
-def get_score(entry):
-    correct_smi = fix_smi(entry["correct"]["fragmentSmiles"])
+def get_score(entry: dict) -> List[Tuple[str, float]]:
+    """Get the score for a single entry.
+    
+    Args:
+        entry (dict): The entry to get the score for.
+        
+    Returns:
+        List[Tuple[str, float]]: A list of tuples containing the SMILES string
+            pair (correct, closest) and the score.
+    """
+    correct_smi = fix_smi(entry["groundTruth"]["fragmentSmiles"])
     closest_smiles = [
         fix_smi(e["smiles"]) for e in entry["averagedPrediction"]["closestFromLabelSet"]
     ]
@@ -104,7 +124,16 @@ colated = [(v, *k.split("\t")) for k, v in colated.items()]
 colated.sort(key=lambda x: x[0], reverse=True)
 
 
-def calc_tanimoto(score, smi1, smi2):
+def calc_tanimoto(score, smi1: str, smi2: str) -> float:
+    """Calculate the tanimoto similarity between two SMILES strings.
+
+    Args:
+        smi1 (str): The first SMILES string.
+        smi2 (str): The second SMILES string.
+
+    Returns:
+        float: The tanimoto similarity.
+    """
     mol1 = Chem.MolFromSmiles(smi1)
     mol2 = Chem.MolFromSmiles(smi2)
 
@@ -119,11 +148,30 @@ with WorkerPool(n_jobs=12) as pool:
 
 colated = [[*c, t] for c, t in zip(colated, tanimotos) if t < TANIMOTO_CUTOFF]
 
-def mol_mass(smiles):
+def mol_mass(smiles: str) -> float:
+    """Calculate the molecular mass of a SMILES string.
+
+    Args:
+        smiles (str): The SMILES string.
+
+    Returns:
+        float: The molecular mass.
+    """
     mol = Chem.MolFromSmiles(smiles)
     return rdMolDescriptors.CalcExactMolWt(mol)
 
-def num_heavy_atoms(score, smi1, smi2, tanimoto) -> int:
+def num_heavy_atoms(score: float, smi1: str, smi2: str, tanimoto: float) -> int:
+    """Calculate the number of heavy atoms in the largest molecule.
+
+    Args:
+        score (float): The score. Not used.
+        smi1 (str): The first SMILES string.
+        smi2 (str): The second SMILES string.
+        tanimoto (float): The tanimoto similarity. Not used.
+
+    Returns:
+        int: The number of heavy atoms in the largest molecule.
+    """
     mol1 = Chem.MolFromSmiles(smi1)
     mol2 = Chem.MolFromSmiles(smi2)
     return max(mol1.GetNumHeavyAtoms(), mol2.GetNumHeavyAtoms())

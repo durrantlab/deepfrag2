@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ PyTorch Funnel Transformer model. """
-
 import os
 from dataclasses import dataclass
 from typing import Optional, Tuple
@@ -175,7 +174,6 @@ class FunnelAttentionStructure(nn.Module):
     """
     Contains helpers for `FunnelRelMultiheadAttention `.
     """
-
     cls_token_type_id: int = 2
 
     def __init__(self, config):
@@ -734,7 +732,6 @@ class FunnelDecoder(nn.Module):
 
 class FunnelDiscriminatorPredictions(nn.Module):
     """Prediction module for the discriminator, made up of two dense layers."""
-
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -753,7 +750,6 @@ class FunnelPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = FunnelConfig
     load_tf_weights = load_tf_weights_in_funnel
     base_model_prefix = "funnel"
@@ -817,7 +813,6 @@ class FunnelForPreTrainingOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -825,7 +820,6 @@ class FunnelForPreTrainingOutput(ModelOutput):
 
 
 FUNNEL_START_DOCSTRING = r"""
-
     The Funnel Transformer model was proposed in `Funnel-Transformer: Filtering out Sequential Redundancy for Efficient
     Language Processing <https://arxiv.org/abs/2006.03236>`__ by Zihang Dai, Guokun Lai, Yiming Yang, Quoc V. Le.
 
@@ -843,7 +837,6 @@ FUNNEL_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 FUNNEL_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`({0})`):
@@ -882,7 +875,6 @@ FUNNEL_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     """

@@ -17,7 +17,6 @@
  TF 2.0 XLNet model.
 """
 
-
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -792,7 +791,6 @@ class TFXLNetPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = XLNetConfig
     base_model_prefix = "transformer"
 
@@ -824,7 +822,6 @@ class TFXLNetModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     last_hidden_state: tf.Tensor = None
     mems: Optional[List[tf.Tensor]] = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -860,7 +857,6 @@ class TFXLNetLMHeadModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     mems: Optional[List[tf.Tensor]] = None
@@ -894,7 +890,6 @@ class TFXLNetForSequenceClassificationOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     mems: Optional[List[tf.Tensor]] = None
@@ -928,7 +923,6 @@ class TFXLNetForTokenClassificationOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     mems: Optional[List[tf.Tensor]] = None
@@ -964,7 +958,6 @@ class TFXLNetForMultipleChoiceOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     logits: tf.Tensor = None
     mems: Optional[List[tf.Tensor]] = None
@@ -1000,7 +993,6 @@ class TFXLNetForQuestionAnsweringSimpleOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     loss: Optional[tf.Tensor] = None
     start_logits: tf.Tensor = None
     end_logits: tf.Tensor = None
@@ -1010,7 +1002,6 @@ class TFXLNetForQuestionAnsweringSimpleOutput(ModelOutput):
 
 
 XLNET_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -1044,7 +1035,6 @@ XLNET_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 XLNET_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`({0})`):
@@ -1119,7 +1109,6 @@ XLNET_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     "The bare XLNet Model transformer outputting raw hidden-states without any specific head on top.",

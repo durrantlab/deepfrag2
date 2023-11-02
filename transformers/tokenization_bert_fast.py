@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Fast Tokenization classes for Bert."""
-
 import json
 from typing import List, Optional, Tuple
 
@@ -153,7 +152,6 @@ class BertTokenizerFast(PreTrainedTokenizerFast):
         wordpieces_prefix: (:obj:`str`, `optional`, defaults to :obj:`"##"`):
             The prefix for subwords.
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION

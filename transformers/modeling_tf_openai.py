@@ -15,7 +15,6 @@
 # limitations under the License.
 """ TF 2.0 OpenAI GPT model."""
 
-
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
@@ -361,7 +360,6 @@ class TFOpenAIGPTPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = OpenAIGPTConfig
     base_model_prefix = "transformer"
 
@@ -388,7 +386,6 @@ class TFOpenAIGPTDoubleHeadsModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     logits: tf.Tensor = None
     mc_logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -396,7 +393,6 @@ class TFOpenAIGPTDoubleHeadsModelOutput(ModelOutput):
 
 
 OPENAI_GPT_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.TFPreTrainedModel`. Check the superclass documentation for the
     generic methods the library implements for all its model (such as downloading or saving, resizing the input
     embeddings, pruning heads etc.)
@@ -431,7 +427,6 @@ OPENAI_GPT_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 OPENAI_GPT_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -484,7 +479,6 @@ OPENAI_GPT_INPUTS_DOCSTRING = r"""
             Whether or not to use the model in training mode (some modules like dropout modules have different
             behaviors between training and evaluation).
 """
-
 
 @add_start_docstrings(
     "The bare OpenAI GPT transformer model outputting raw hidden-states without any specific head on top.",
@@ -655,7 +649,6 @@ class TFOpenAIGPTDoubleHeadsModel(TFOpenAIGPTPreTrainedModel):
             >>> outputs = model(inputs)
             >>> lm_prediction_scores, mc_prediction_scores = outputs[:2]
         """
-
         if isinstance(inputs, (tuple, list)):
             input_ids = inputs[0]
             attention_mask = inputs[1] if len(inputs) > 1 else attention_mask

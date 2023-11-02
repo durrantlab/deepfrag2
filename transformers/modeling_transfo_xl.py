@@ -466,7 +466,6 @@ class TransfoXLPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
-
     config_class = TransfoXLConfig
     load_tf_weights = load_tf_weights_in_transfo_xl
     base_model_prefix = "transformer"
@@ -626,7 +625,6 @@ class TransfoXLModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     last_hidden_state: torch.FloatTensor
     mems: List[torch.FloatTensor] = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
@@ -659,7 +657,6 @@ class TransfoXLLMHeadModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
-
     losses: Optional[torch.FloatTensor] = None
     prediction_scores: torch.FloatTensor = None
     mems: List[torch.FloatTensor] = None
@@ -677,7 +674,6 @@ class TransfoXLLMHeadModelOutput(ModelOutput):
 
 
 TRANSFO_XL_START_DOCSTRING = r"""
-
     This model inherits from :class:`~transformers.PreTrainedModel`. Check the superclass documentation for the generic
     methods the library implements for all its model (such as downloading or saving, resizing the input embeddings,
     pruning heads etc.)
@@ -692,7 +688,6 @@ TRANSFO_XL_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 TRANSFO_XL_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
@@ -726,7 +721,6 @@ TRANSFO_XL_INPUTS_DOCSTRING = r"""
         return_dict (:obj:`bool`, `optional`):
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
-
 
 @add_start_docstrings(
     "The bare Bert Model transformer outputting raw hidden-states without any specific head on top.",
@@ -993,7 +987,6 @@ class TransfoXLLMHeadModel(TransfoXLPreTrainedModel):
         """
         Run this to be sure output and input (adaptive) softmax weights are tied
         """
-
         if self.config.tie_word_embeddings:
             for i in range(len(self.crit.out_layers)):
                 self._tie_or_clone_weights(self.crit.out_layers[i], self.transformer.word_emb.emb_layers[i])

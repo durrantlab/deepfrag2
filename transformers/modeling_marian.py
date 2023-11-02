@@ -14,7 +14,6 @@
 # limitations under the License.
 """PyTorch MarianMTModel model, ported from the Marian C++ repo."""
 
-
 from .configuration_marian import MarianConfig
 from .modeling_bart import BartForConditionalGeneration
 

@@ -119,7 +119,6 @@ class BlenderbotSmallTokenizer(PreTrainedTokenizer):
         **kwargs
             Additional keyword arguments passed along to :class:`~transformers.PreTrainedTokenizer`
     """
-
     vocab_files_names = {"vocab_file": "vocab.json", "merges_file": "merges.txt"}
     pretrained_vocab_files_map = {
         "vocab_file": {"facebook/blenderbot-90M": "https://cdn.huggingface.co/facebook/blenderbot-90M/vocab.json"},

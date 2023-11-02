@@ -92,7 +92,6 @@ class MBartTokenizerFast(XLMRobertaTokenizerFast):
         ...     example_english_phrase, src_lang="en_XX", tgt_lang="ro_RO", tgt_texts=expected_translation_romanian
         ... )
     """
-
     vocab_files_names = {"vocab_file": "sentencepiece.bpe.model"}
     max_model_input_sizes = {m: 1024 for m in _all_mbart_models}
     pretrained_vocab_files_map = {"vocab_file": {m: SPM_URL for m in _all_mbart_models}}
@@ -127,7 +126,6 @@ class MBartTokenizerFast(XLMRobertaTokenizerFast):
         Returns:
             :obj:`List[int]`: A list of integers in the range [0, 1]: 1 for a special token, 0 for a sequence token.
         """
-
         if already_has_special_tokens:
             if token_ids_1 is not None:
                 raise ValueError(

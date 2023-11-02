@@ -14,7 +14,6 @@
 # limitations under the License
 """ Tokenization classes for Camembert model."""
 
-
 import os
 from shutil import copyfile
 from typing import List, Optional, Tuple
@@ -96,7 +95,6 @@ class CamembertTokenizer(PreTrainedTokenizer):
     Attributes: sp_model (:obj:`SentencePieceProcessor`): The `SentencePiece` processor that is used for every
     conversion (string, tokens and IDs).
     """
-
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
@@ -155,7 +153,6 @@ class CamembertTokenizer(PreTrainedTokenizer):
         Returns:
             :obj:`List[int]`: List of `input IDs <../glossary.html#input-ids>`__ with the appropriate special tokens.
         """
-
         if token_ids_1 is None:
             return [self.cls_token_id] + token_ids_0 + [self.sep_token_id]
         cls = [self.cls_token_id]

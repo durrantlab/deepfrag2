@@ -38,7 +38,6 @@ class TatoebaConverter:
         3. write a model card containing the original Tatoeba-Challenge/README.md and extra info about alpha3 group
            members.
     """
-
     def __init__(self, save_dir="marian_converted"):
         assert Path(DEFAULT_REPO).exists(), "need git clone git@github.com:Helsinki-NLP/Tatoeba-Challenge.git"
         reg = self.make_tatoeba_registry()

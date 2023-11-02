@@ -15,7 +15,6 @@
 """
 Callbacks to use with the Trainer class and customize the training loop.
 """
-
 import dataclasses
 import json
 from dataclasses import dataclass
@@ -70,7 +69,6 @@ class TrainerState:
             Whether we are in the process of a hyper parameter search using Trainer.hyperparameter_search. This will
             impact the way data will be logged in TensorBoard.
     """
-
     epoch: Optional[float] = None
     global_step: int = 0
     max_steps: int = 0
@@ -131,7 +129,6 @@ class TrainerControl:
 
             If :obj:`True`, this variable will be set back to :obj:`False` at the beginning of the next step.
     """
-
     should_training_stop: bool = False
     should_epoch_stop: bool = False
     should_save: bool = False
@@ -200,7 +197,6 @@ class TrainerCallback:
                 if state.is_local_process_zero:
                     print(logs)
     """
-
     def on_init_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         """
         Event called at the end of the initialization of the :class:`~transformers.Trainer`.
@@ -272,7 +268,6 @@ class TrainerCallback:
 
 class CallbackHandler(TrainerCallback):
     """ Internal class that just calls the list of callbacks in order. """
-
     def __init__(self, callbacks, model, optimizer, lr_scheduler):
         self.callbacks = []
         for cb in callbacks:
@@ -392,7 +387,6 @@ class DefaultFlowCallback(TrainerCallback):
     A :class:`~transformers.TrainerCallback` that handles the default flow of the training loop for logs, evaluation
     and checkpoints.
     """
-
     def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         # Log
         if state.global_step == 1 and args.logging_first_step:
@@ -428,7 +422,6 @@ class ProgressCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that displays the progress of training or evaluation.
     """
-
     def __init__(self):
         self.training_bar = None
         self.prediction_bar = None
@@ -470,7 +463,6 @@ class PrinterCallback(TrainerCallback):
     """
     A bare :class:`~transformers.TrainerCallback` that just prints the logs.
     """
-
     def on_log(self, args, state, control, logs=None, **kwargs):
         _ = logs.pop("total_flos", None)
         if state.is_local_process_zero:

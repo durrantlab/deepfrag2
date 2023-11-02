@@ -2,7 +2,6 @@
 Utilities for working with the local dataset cache. This file is adapted from the AllenNLP library at
 https://github.com/allenai/allennlp Copyright by the AllenNLP authors.
 """
-
 import fnmatch
 import io
 import json
@@ -308,7 +307,6 @@ working directory, python may try to import this instead of the 🤗 Datasets li
 that python file if that's the case.
 """
 
-
 # docstyle-ignore
 TOKENIZERS_IMPORT_ERROR = """
 {0} requires the 🤗 Tokenizers library but it was not found in your environment. You can install it with:
@@ -321,14 +319,12 @@ In a notebook or a colab, you can install it by executing a cell with
 ```
 """
 
-
 # docstyle-ignore
 SENTENCEPIECE_IMPORT_ERROR = """
 {0} requires the SentencePiece library but it was not found in your environment. Checkout the instructions on the
 installation page of its repo: https://github.com/google/sentencepiece#installation and follow the ones
 that match your environment.
 """
-
 
 # docstyle-ignore
 FAISS_IMPORT_ERROR = """
@@ -337,13 +333,11 @@ installation page of its repo: https://github.com/facebookresearch/faiss/blob/ma
 that match your environment.
 """
 
-
 # docstyle-ignore
 PYTORCH_IMPORT_ERROR = """
 {0} requires the PyTorch library but it was not found in your environment. Checkout the instructions on the
 installation page: https://pytorch.org/get-started/locally/ and follow the ones that match your environment.
 """
-
 
 # docstyle-ignore
 SKLEARN_IMPORT_ERROR = """
@@ -357,20 +351,17 @@ In a notebook or a colab, you can install it by executing a cell with
 ```
 """
 
-
 # docstyle-ignore
 TENSORFLOW_IMPORT_ERROR = """
 {0} requires the TensorFlow library but it was not found in your environment. Checkout the instructions on the
 installation page: https://www.tensorflow.org/install and follow the ones that match your environment.
 """
 
-
 # docstyle-ignore
 FLAX_IMPORT_ERROR = """
 {0} requires the FLAX library but it was not found in your environment. Checkout the instructions on the
 installation page: https://github.com/google/flax and follow the ones that match your environment.
 """
-
 
 def requires_datasets(obj):
     name = obj.__name__ if hasattr(obj, "__name__") else obj.__class__.__name__
@@ -433,7 +424,6 @@ def add_start_docstrings_to_model_forward(*docstr):
         class_name = ":class:`~transformers.{}`".format(fn.__qualname__.split(".")[0])
         intro = "   The {} forward method, overrides the :func:`__call__` special method.".format(class_name)
         note = r"""
-
     .. note::
         Although the recipe for forward pass needs to be defined within this function, one should call the
         :class:`Module` instance afterwards instead of this since the former takes care of running the pre and post
@@ -461,7 +451,6 @@ PT_RETURN_INTRODUCTION = r"""
 
 """
 
-
 TF_RETURN_INTRODUCTION = r"""
     Returns:
         :class:`~{full_output_type}` or :obj:`tuple(tf.Tensor)`: A :class:`~{full_output_type}` (if
@@ -469,7 +458,6 @@ TF_RETURN_INTRODUCTION = r"""
         various elements depending on the configuration (:class:`~transformers.{config_class}`) and inputs.
 
 """
-
 
 def _get_indent(t):
     """Returns the indentation in the first line of t"""
@@ -541,7 +529,6 @@ PT_TOKEN_CLASSIFICATION_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 PT_QUESTION_ANSWERING_SAMPLE = r"""
     Example::
 
@@ -561,7 +548,6 @@ PT_QUESTION_ANSWERING_SAMPLE = r"""
         >>> start_scores = outputs.start_logits
         >>> end_scores = outputs.end_logits
 """
-
 PT_SEQUENCE_CLASSIFICATION_SAMPLE = r"""
     Example::
 
@@ -577,7 +563,6 @@ PT_SEQUENCE_CLASSIFICATION_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 PT_MASKED_LM_SAMPLE = r"""
     Example::
 
@@ -594,7 +579,6 @@ PT_MASKED_LM_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 PT_BASE_MODEL_SAMPLE = r"""
     Example::
 
@@ -609,7 +593,6 @@ PT_BASE_MODEL_SAMPLE = r"""
 
         >>> last_hidden_states = outputs.last_hidden_state
 """
-
 PT_MULTIPLE_CHOICE_SAMPLE = r"""
     Example::
 
@@ -631,7 +614,6 @@ PT_MULTIPLE_CHOICE_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 PT_CAUSAL_LM_SAMPLE = r"""
     Example::
 
@@ -646,7 +628,6 @@ PT_CAUSAL_LM_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 TF_TOKEN_CLASSIFICATION_SAMPLE = r"""
     Example::
 
@@ -664,7 +645,6 @@ TF_TOKEN_CLASSIFICATION_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 TF_QUESTION_ANSWERING_SAMPLE = r"""
     Example::
 
@@ -683,7 +663,6 @@ TF_QUESTION_ANSWERING_SAMPLE = r"""
         >>> all_tokens = tokenizer.convert_ids_to_tokens(input_dict["input_ids"].numpy()[0])
         >>> answer = ' '.join(all_tokens[tf.math.argmax(start_logits, 1)[0] : tf.math.argmax(end_logits, 1)[0]+1])
 """
-
 TF_SEQUENCE_CLASSIFICATION_SAMPLE = r"""
     Example::
 
@@ -700,7 +679,6 @@ TF_SEQUENCE_CLASSIFICATION_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 TF_MASKED_LM_SAMPLE = r"""
     Example::
 
@@ -717,7 +695,6 @@ TF_MASKED_LM_SAMPLE = r"""
         >>> loss = outputs.loss
         >>> logits = outputs.logits
 """
-
 TF_BASE_MODEL_SAMPLE = r"""
     Example::
 
@@ -732,7 +709,6 @@ TF_BASE_MODEL_SAMPLE = r"""
 
         >>> last_hidden_states = outputs.last_hidden_states
 """
-
 TF_MULTIPLE_CHOICE_SAMPLE = r"""
     Example::
 
@@ -753,7 +729,6 @@ TF_MULTIPLE_CHOICE_SAMPLE = r"""
         >>> # the linear classifier still needs to be trained
         >>> logits = outputs.logits
 """
-
 TF_CAUSAL_LM_SAMPLE = r"""
     Example::
 
@@ -767,7 +742,6 @@ TF_CAUSAL_LM_SAMPLE = r"""
         >>> outputs = model(inputs)
         >>> logits = outputs.logits
 """
-
 
 def add_code_sample_docstrings(
     *docstr, tokenizer_class=None, checkpoint=None, output_type=None, config_class=None, mask=None
@@ -1183,7 +1157,6 @@ class cached_property(property):
 
     Built-in in functools from Python 3.8.
     """
-
     def __get__(self, obj, objtype=None):
         # See docs.python.org/3/howto/descriptor.html#properties
         if obj is None:
@@ -1247,7 +1220,6 @@ class ModelOutput(OrderedDict):
         You can't unpack a :obj:`ModelOutput` directly. Use the :meth:`~transformers.file_utils.ModelOutput.to_tuple`
         method to convert it to a tuple before.
     """
-
     def __post_init__(self):
         class_fields = fields(self)
 

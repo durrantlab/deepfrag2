@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Tokenizer class. """
 
-
 from collections import OrderedDict
 
 from .configuration_auto import (
@@ -227,7 +226,6 @@ class AutoTokenizer:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoTokenizer is designed to be instantiated "
