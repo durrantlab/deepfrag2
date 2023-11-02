@@ -698,18 +698,14 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         if len(sub_atoms) == 0:
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt_mol))
             save_ligand_parent_path = os.getcwd() + os.sep + "unmatch_ligand_parent" + os.sep
-            save_ligand = save_ligand_parent_path + sdf_name + "_l.sdf"
-            save_parent = save_ligand_parent_path + sdf_name + "_p_" + str(hash(Chem.MolToSmiles(patt_mol))) + ".sdf"
+            save_ligand = save_ligand_parent_path + sdf_name + "_l.pdb"
+            save_parent = save_ligand_parent_path + sdf_name + "_p_" + str(hash(Chem.MolToSmiles(patt_mol))) + ".pdb"
             if not os.path.exists(os.path.dirname(save_ligand_parent_path)):
                 os.mkdir(os.path.dirname(save_ligand_parent_path))
             if not os.path.exists(save_ligand):
-                writer = Chem.SDWriter(save_ligand)
-                writer.write(mol)
-                writer.close()
+                Chem.MolToPDBFile(mol=mol, filename=save_ligand)
             if not os.path.exists(save_parent):
-                writer = Chem.SDWriter(save_parent)
-                writer.write(patt_mol)
-                writer.close()
+                Chem.MolToPDBFile(mol=patt_mol, filename=save_parent)
             return None
 
         # it is created the mol object for the obtained substructure
