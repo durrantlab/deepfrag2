@@ -29,6 +29,10 @@ class DeepFragModel(pl.LightningModule):
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
 
+        # Only record the examples used for the first epoch. After first epoch,
+        # add to below to stop recording. Will eventually contain "train",
+        # "val", and "test".
+        self._examples_used_stop_recording = set([])
         self._examples_used = {"train": {}, "val": {}, "test": {}}
 
         # self.first_epoch = True
@@ -217,6 +221,18 @@ class DeepFragModel(pl.LightningModule):
         return fps
         # return self.model(voxel)
 
+    def configure_optimizers(self) -> torch.optim.Optimizer:
+        """Configure the optimizer.
+
+        Returns:
+            torch.optim.Optimizer: The optimizer.
+        """
+        # https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
+        # 3e-4 to 5e-4 are the best learning rates if you're learning the task
+        # from scratch.
+
+        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+
     def loss(
         self,
         pred: torch.Tensor,
@@ -260,55 +276,12 @@ class DeepFragModel(pl.LightningModule):
 
         # print("shape", cos_loss(pred, fps).shape)
 
-        self._mark_example_used("train", entry_infos)
+        self._mark_example_as_used("train", entry_infos)
 
         # print("training_step")
         self.log("loss", loss, batch_size=batch_size)
 
         return loss
-
-    def training_epoch_end(self, outputs: List[dict]):
-        """Run at the end of the training epoch with the outputs of all
-            training steps. Logs the info.
-        
-        Args:
-            outputs (List[dict]): List of outputs you defined in
-                training_step(), or if there are multiple dataloaders, a list
-                containing a list of outputs for each dataloader.
-        """
-        # See https://github.com/Lightning-AI/lightning/issues/2110
-        try:
-            # Sometimes x["loss"] is an empty TensorList. Not sure why. TODO:
-            # Using try catch like this is bad practice.
-            avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
-            self.log(
-                "loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1}
-            )
-        except Exception:
-            self.log("loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
-
-    def validation_epoch_end(self, outputs: List[dict]):
-        """Run at the end of the validation epoch with the outputs of all
-            validation steps. Logs the info.
-        
-        Args:
-            outputs (List[dict]): List of outputs you defined in
-                validation_step(), or if there are multiple dataloaders, a
-                list containing a list of outputs for each dataloader.
-        """
-        # See https://github.com/Lightning-AI/lightning/issues/2110
-        try:
-            # Sometimes x["val_loss"] is an empty TensorList. Not sure why. TODO:
-            # Using try catch like this is bad practice.
-            avg_loss = torch.stack([x["val_loss"] for x in outputs]).mean()
-            self.log(
-                "val_loss_per_epoch",
-                {"avg_loss": avg_loss, "step": self.current_epoch + 1},
-            )
-        except Exception:
-            self.log(
-                "val_loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1}
-            )
 
     # def on_train_epoch_end(self):
     #     if not self.first_epoch:
@@ -357,62 +330,10 @@ class DeepFragModel(pl.LightningModule):
         # loss = cos_loss(pred, fps).mean()
         loss = self.loss(pred, fps, entry_infos, batch_size)
 
-        self._mark_example_used("val", entry_infos)
+        self._mark_example_as_used("val", entry_infos)
 
         # print("validation_step")
         self.log("val_loss", loss, batch_size=batch_size)
-
-    def configure_optimizers(self) -> torch.optim.Optimizer:
-        """Configure the optimizer.
-
-        Returns:
-            torch.optim.Optimizer: The optimizer.
-        """
-        # https://stackoverflow.com/questions/42966393/is-it-good-learning-rate-for-adam-method
-        # 3e-4 to 5e-4 are the best learning rates if you're learning the task
-        # from scratch.
-
-        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-
-    def _mark_example_used(self, lbl: str, entry_infos: List[Entry_info]):
-        """Mark the example as used.
-
-        Args:
-            lbl (str): The label of the split.
-            entry_infos (List[Entry_info]): The entry infos.
-        """
-        if entry_infos is not None:
-            for entry_info in entry_infos:
-                if entry_info.receptor_name not in self._examples_used[lbl]:
-                    # Don't use set here. If one ligand has multiple identical
-                    # fragments, I want them all listed.
-                    self._examples_used[lbl][entry_info.receptor_name] = []
-                self._examples_used[lbl][entry_info.receptor_name].append(
-                    entry_info.fragment_smiles
-                )
-
-    def get_examples_actually_used(self) -> dict:
-        """Get the examples used.
-
-        Returns:
-            dict: The examples used.
-        """
-        to_return = {"counts": {}}
-        for split in self._examples_used:
-            to_return[split] = {}
-            frags_together = []
-            for recep in self._examples_used[split].keys():
-                frags = self._examples_used[split][recep]
-                frags_together.extend(frags)
-                to_return[split][recep] = list(frags)
-            to_return["counts"][split] = {
-                "receptors": len(self._examples_used[split].keys()),
-                "fragments": {
-                    "total": len(frags_together),
-                    "unique": len(set(frags_together)),
-                },
-            }
-        return to_return
 
     def test_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
@@ -436,13 +357,61 @@ class DeepFragModel(pl.LightningModule):
         # loss = cos_loss(pred, fps).mean()
         loss = self.loss(pred, fps, entry_infos, batch_size)
 
-        self._mark_example_used("test", entry_infos)
+        self._mark_example_as_used("test", entry_infos)
 
         # print("test_step")
         self.log("test_loss", loss, batch_size=batch_size)
 
         # Drop (large) voxel input, return the predicted and target fingerprints.
         return pred, fps, entry_infos
+
+    def training_epoch_end(self, outputs: List[dict]):
+        """Run at the end of the training epoch with the outputs of all
+            training steps. Logs the info.
+        
+        Args:
+            outputs (List[dict]): List of outputs you defined in
+                training_step(), or if there are multiple dataloaders, a list
+                containing a list of outputs for each dataloader.
+        """
+        self._examples_used_stop_recording.add("train")
+
+        # See https://github.com/Lightning-AI/lightning/issues/2110
+        try:
+            # Sometimes x["loss"] is an empty TensorList. Not sure why. TODO:
+            # Using try catch like this is bad practice.
+            avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
+            self.log(
+                "loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1}
+            )
+        except Exception:
+            self.log("loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
+
+    def validation_epoch_end(self, outputs: List[dict]):
+        """Run at the end of the validation epoch with the outputs of all
+            validation steps. Logs the info.
+        
+        Args:
+            outputs (List[dict]): List of outputs you defined in
+                validation_step(), or if there are multiple dataloaders, a
+                list containing a list of outputs for each dataloader.
+        """
+
+        self._examples_used_stop_recording.add("val")
+
+        # See https://github.com/Lightning-AI/lightning/issues/2110
+        try:
+            # Sometimes x["val_loss"] is an empty TensorList. Not sure why. TODO:
+            # Using try catch like this is bad practice.
+            avg_loss = torch.stack([x["val_loss"] for x in outputs]).mean()
+            self.log(
+                "val_loss_per_epoch",
+                {"avg_loss": avg_loss, "step": self.current_epoch + 1},
+            )
+        except Exception:
+            self.log(
+                "val_loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1}
+            )
 
     def test_epoch_end(
         self, results: List[Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]]
@@ -453,6 +422,9 @@ class DeepFragModel(pl.LightningModule):
             results (List[Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]]): The
                 results from all batches.
         """
+
+        self._examples_used_stop_recording.add("test")
+
         predictions = torch.cat([x[0] for x in results])
         prediction_targets = torch.cat([x[1] for x in results])
 
@@ -486,3 +458,49 @@ class DeepFragModel(pl.LightningModule):
         self.predictions = predictions
         self.prediction_targets = prediction_targets
         self.prediction_targets_entry_infos = prediction_targets_entry_infos
+
+    def _mark_example_as_used(self, lbl: str, entry_infos: List[Entry_info]):
+        """Mark the example as used.
+
+        Args:
+            lbl (str): The label of the split.
+            entry_infos (List[Entry_info]): The entry infos.
+        """
+
+        if lbl in self._examples_used_stop_recording:
+            # No longer recording for this label.
+            return
+
+        if entry_infos is not None:
+            for entry_info in entry_infos:
+                if entry_info.receptor_name not in self._examples_used[lbl]:
+                    # Don't use set here. If one ligand has multiple identical
+                    # fragments, I want them all listed.
+                    self._examples_used[lbl][entry_info.receptor_name] = []
+                self._examples_used[lbl][entry_info.receptor_name].append(
+                    entry_info.fragment_smiles
+                )
+
+    def get_examples_actually_used(self) -> dict:
+        """Get the examples used.
+
+        Returns:
+            dict: The examples used.
+        """
+        to_return = {"counts": {}}
+        for split in self._examples_used:
+            to_return[split] = {}
+            frags_together = []
+            for recep in self._examples_used[split].keys():
+                frags = self._examples_used[split][recep]
+                frags_together.extend(frags)
+                to_return[split][recep] = list(frags)
+            to_return["counts"][split] = {
+                "receptors": len(self._examples_used[split].keys()),
+                "fragments": {
+                    "total": len(frags_together),
+                    "unique": len(set(frags_together)),
+                },
+            }
+        return to_return
+

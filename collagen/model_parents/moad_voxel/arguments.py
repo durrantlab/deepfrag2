@@ -103,7 +103,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         "--cache",
         required=False,
         # default=None,
-        help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--every_csv`.",
+        help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--every_csv`. If 'none' (default), will create new, temporary cache with a random filename.",
     )
     parser.add_argument(
         "--cache_pdbs_to_disk",
@@ -218,4 +218,9 @@ def fix_moad_args(args: Namespace) -> Namespace:
     if args.cache is None:
         import os
         args.cache = f"{args.default_root_dir + os.sep}cache.json"
+    elif args.cache == "none":
+        # Note that this is now the default. Essentially, to recreate cache
+        # every time (no cache from run to run, just within a run).
+        import tempfile
+        args.cache = tempfile.NamedTemporaryFile().name
     return args

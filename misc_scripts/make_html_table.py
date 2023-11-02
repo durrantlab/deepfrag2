@@ -83,7 +83,7 @@ def toHTMLTable(list_of_smi: List[str]) -> str:
 data = json.load(open(test_json_filename))
 lines = []
 for entry in data["entries"]:
-    correct = entry["correct"]["fragmentSmiles"]
+    correct = entry["groundTruth"]["fragmentSmiles"]
     # Consider only first checkpoint
     ckpt = entry["perCheckpoint"][0]["averagedPrediction"]
     closest = [e["smiles"] for e in ckpt["closestFromLabelSet"]]

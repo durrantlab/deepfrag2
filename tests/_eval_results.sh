@@ -18,3 +18,5 @@ test_file_exists ./3.finetune_moad.output/last.ckpt
 test_file_exists ./4.finetune_test.output/predictions_nonMOAD/mean/test_results-1.json
 test_file_exists ./5.inference.output/inference_out.smi
 test_file_exists ./6.inference_custom_set.output/predictions_CustomDataset/mean/test_results-1.json
+test_file_exists ./7.train_on_moad_large_aromatic_frags.output/last.ckpt
+test_file_exists ./8.test_big_aromatic_trained.output/predictions_MOAD/mean/test_results-1.json
