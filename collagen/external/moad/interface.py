@@ -649,16 +649,16 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 except:
                     # if fails, record this error in log files
                     self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match")
-
+                    return None, None, None
                     # Using ligand into PDB file with single bonds only
                     # Convert parent SMILES string to capital letters to be only used with single bonds
-                    try:
-                        ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
-                        for bond in ref_mol.GetBonds():
-                            bond.SetBondType(Chem.BondType.SINGLE)
-                        parent_smi = parent_smi.upper().replace("CL", "Cl").replace("BR", "Br")
-                    except:
-                        return None, None, None
+                    # try:
+                    #     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
+                    #     for bond in ref_mol.GetBonds():
+                    #         bond.SetBondType(Chem.BondType.SINGLE)
+                    #     parent_smi = parent_smi.upper().replace("CL", "Cl").replace("BR", "Br")
+                    # except:
+                    #     return None, None, None
 
         # this could be removed since ligands from paired data will always be pdb format
         elif sdf_name.endswith(".sdf"):
@@ -697,15 +697,15 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=False)
         if len(sub_atoms) == 0:
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt_mol))
-            save_ligand_parent_path = os.getcwd() + os.sep + "unmatch_ligand_parent" + os.sep
-            save_ligand = save_ligand_parent_path + sdf_name + "_l.pdb"
-            save_parent = save_ligand_parent_path + sdf_name + "_p_" + str(hash(Chem.MolToSmiles(patt_mol))) + ".pdb"
-            if not os.path.exists(os.path.dirname(save_ligand_parent_path)):
-                os.mkdir(os.path.dirname(save_ligand_parent_path))
-            if not os.path.exists(save_ligand):
-                Chem.MolToPDBFile(mol=mol, filename=save_ligand)
-            if not os.path.exists(save_parent):
-                Chem.MolToPDBFile(mol=patt_mol, filename=save_parent)
+            # save_ligand_parent_path = os.getcwd() + os.sep + "unmatch_ligand_parent" + os.sep
+            # save_ligand = save_ligand_parent_path + sdf_name + "_l.pdb"
+            # save_parent = save_ligand_parent_path + sdf_name + "_p_" + str(hash(Chem.MolToSmiles(patt_mol))) + ".pdb"
+            # if not os.path.exists(os.path.dirname(save_ligand_parent_path)):
+            #     os.mkdir(os.path.dirname(save_ligand_parent_path))
+            # if not os.path.exists(save_ligand):
+            #     Chem.MolToPDBFile(mol=mol, filename=save_ligand)
+            # if not os.path.exists(save_parent):
+            #     Chem.MolToPDBFile(mol=patt_mol, filename=save_parent)
             return None
 
         # it is created the mol object for the obtained substructure
