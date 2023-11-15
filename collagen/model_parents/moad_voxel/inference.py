@@ -19,6 +19,7 @@ import rdkit
 from rdkit import Chem
 import pytorch_lightning as pl
 import os
+import json
 
 
 class MoadVoxelModelInference(object):
@@ -223,12 +224,14 @@ class MoadVoxelModelInference(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
+        output = {
+            "most_similar": most_similar[0],
+            "fps": {"per_rot": fps, "avg": avg_over_ckpts_of_avgs},
+        }
+
         if not save_results_to_disk:
             # Return the results
-            return {
-                "most_similar": most_similar[0],
-                "fps": {"per_rot": fps, "avg": avg_over_ckpts_of_avgs},
-            }
+            return output
 
         # If you get here, you are saving the results to disk (default).
         with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
@@ -239,6 +242,19 @@ class MoadVoxelModelInference(object):
                 line = f"{smiles}\t{score_cos_similarity:.3f}"
                 print(line)
                 f.write(line + "\n")
+
+        output["fps"]["per_rot"] = [v.detach().numpy().tolist() for v in output["fps"]["per_rot"]]
+        output["fps"]["avg"] = output["fps"]["avg"].detach().numpy().tolist()
+        
+        with open(f"{args.default_root_dir}{os.sep}inference_out.tsv", "w") as f:
+            f.write("most_similar\t" + json.dumps(output["most_similar"]) + "\n")
+            f.write(f"fps_avg\t" + json.dumps(output["fps"]["avg"][0]) + "\n")
+            for i, per_rot in enumerate(output["fps"]["per_rot"]):
+                f.write(f"fps_rot_{i + 1}\t" + json.dumps(per_rot[0]) + "\n")
+            
+            # json.dump(output, f)
+
+        
 
         # TODO: Need to check on some known answers as a "sanity check".
 
