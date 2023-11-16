@@ -628,6 +628,47 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     def __get_key_parent_sdf_pdb(self, pdb_name, sdf_name, parent_smi):
         return pdb_name + "_" + sdf_name + "_" + parent_smi
 
+    def __parent_smarts_to_mol(self, smi):
+        # It's not enough to just convert to mol with MolFromSmarts. Need to keep track of
+        # connection point.
+        smi = smi.replace("[R*]", "*")
+        mol = Chem.MolFromSmiles(smi)
+
+        # Find the dummy atom.
+        for atom in mol.GetAtoms():
+            if atom.GetSymbol() == "*":
+                neighbors = atom.GetNeighbors()
+                if neighbors:
+                    # Assume only one neighbor
+                    neighbor = neighbors[0]
+                    neighbor.SetProp("was_dummy_connected", "yes")
+                    # Remove dummy atom
+                    eds = Chem.EditableMol(mol)
+                    eds.RemoveAtom(atom.GetIdx())
+                    mol = eds.GetMol()
+
+        # Now dummy atom removed, but connection marked.
+        return mol
+
+    def __remove_mult_bonds_by_smi_to_smi(self, smi):
+        smi = smi.upper()
+        smi = smi.replace("=", "")
+        smi = smi.replace("#", "")
+        smi = smi.replace("BR", "Br").replace("CL", "Cl")
+        return smi
+
+    def __remove_mult_bonds(self, mol):
+        # mol = Chem.MolFromSmiles(smi)
+        emol = Chem.EditableMol(mol)
+        for bond in mol.GetBonds():
+            emol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
+            emol.AddBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), Chem.BondType.SINGLE)
+
+        mol = emol.GetMol()
+        Chem.SanitizeMol(mol)
+        # mol=Chem.AddHs(mol)
+        return mol
+
     def read_mol(self, sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_frag_smi, first_ligand_template, second_ligand_template):
         path_to_mol = path_pdb_sdf_files + os.sep + sdf_name
         if sdf_name.endswith(".pdb"):
@@ -638,29 +679,51 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
             except:
                 # if fails, record this error in log files
-                self.fail_match_FirstSmiles_PDBLigand.info("Ligand in " + sdf_name + " and First SMILES string (" + first_ligand_template + ") did not match")
+                # self.fail_match_FirstSmiles_PDBLigand.info("Ligand in " + sdf_name + " and First Parent SMILES string (" + first_ligand_template + ") did not match")
+                ref_mol = None
 
-                # if fails, trying to assign bonds according to second smiles
-                # seem to be that the second smiles is never useful to assign bonds
+            # try to assign bonds according to second smiles
+            # seem to be that the second smiles is never useful to assign bonds
+            if not ref_mol:
                 try:
                     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
                     template = Chem.MolFromSmiles(second_ligand_template)
                     ref_mol = AllChem.AssignBondOrdersFromTemplate(template, ref_mol)
                 except:
-                    # if fails, record this error in log files
-                    self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second SMILES string (" + second_ligand_template + ") did not match")
-                    return None, None, None
-                    # Using ligand into PDB file with single bonds only
-                    # Convert parent SMILES string to capital letters to be only used with single bonds
-                    # try:
-                    #     ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
-                    #     for bond in ref_mol.GetBonds():
-                    #         bond.SetBondType(Chem.BondType.SINGLE)
-                    #     parent_smi = parent_smi.upper().replace("CL", "Cl").replace("BR", "Br")
-                    # except:
-                    #     return None, None, None
+                    # self.fail_match_SecondSmiles_PDBLigand.info("Ligand in " + sdf_name + " and Second Parent SMILES string (" + second_ligand_template + ") did not match")
+                    ref_mol = None
 
-        # this could be removed since ligands from paired data will always be pdb format
+            # Use ligand into PDB file with single bonds only
+            if not ref_mol:
+                try:
+                    ref_mol = AllChem.MolFromPDBFile(path_to_mol, removeHs=False)
+                    ref_mol = self.__remove_mult_bonds(ref_mol)
+                except:
+                    self.fail_match_FirstSmiles_PDBLigand.info("Error assigning single bonds for Ligand in " + sdf_name)
+                    return None, None, None
+
+                try:
+                    c_parent_smi = self.__remove_mult_bonds_by_smi_to_smi(parent_smi)
+                    c_parent_smi = self.__parent_smarts_to_mol(c_parent_smi)
+                    parent_smi = c_parent_smi
+                except:
+                    self.ligand_not_contain_parent.info("Error assigning single bonds for parent " + parent_smi)
+                    return None, None, None
+
+                try:
+                    c_first_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(first_frag_smi)
+                    c_first_frag_smi = self.__parent_smarts_to_mol(c_first_frag_smi)
+                    first_frag_smi = c_first_frag_smi
+                except:
+                    self.ligand_not_contain_first_frag.info("Error assigning single bonds for first fragment " + first_frag_smi)
+
+                try:
+                    c_second_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(second_frag_smi)
+                    c_second_frag_smi = self.__parent_smarts_to_mol(c_second_frag_smi)
+                    second_frag_smi = c_second_frag_smi
+                except:
+                    self.ligand_not_contain_second_frag.info("Error assigning single bonds for second fragment " + second_frag_smi)
+
         elif sdf_name.endswith(".sdf"):
             suppl = Chem.SDMolSupplier(path_to_mol)
             for ref_mol in suppl:
@@ -673,8 +736,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
         # get_sub_structure=False to avoid getting 3D coordinates
-        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag, get_sub_structure=False)
-        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=False)
+        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag, get_sub_structure=True)
+        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=True)
 
         backed_parent = BackedMol(rdmol=r_parent) if r_parent else None
         backed_frag1 = BackedMol(rdmol=r_first_frag_smi, warn_no_confs=False) if r_first_frag_smi else None
@@ -686,26 +749,21 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     # based on https://github.com/wengong-jin/hgraph2graph/blob/master/hgraph/chemutils.py
     def get_sub_mol(self, mol, smi_sub_mol, sdf_name, log_for_fragments, log_for_3d_coordinates, get_sub_structure=True):
         # getting substructure
-        patt = Chem.MolFromSmarts(smi_sub_mol)
-        mol_smile = Chem.MolToSmiles(patt)
-        mol_smile = mol_smile.replace("*/", "[H]").replace("*", "[H]")
-        patt_mol = Chem.MolFromSmiles(mol_smile)
-        Chem.RemoveAllHs(patt_mol)
-        if not get_sub_structure:
-            return patt_mol
+        if isinstance(smi_sub_mol, str):
+            patt = Chem.MolFromSmarts(smi_sub_mol)
+            mol_smile = Chem.MolToSmiles(patt)
+            mol_smile = mol_smile.replace("*/", "[H]").replace("*", "[H]")
+            patt_mol = Chem.MolFromSmiles(mol_smile)
+            Chem.RemoveAllHs(patt_mol)
+            if not get_sub_structure:
+                return patt_mol
+        else:
+            patt = smi_sub_mol
+            patt_mol = smi_sub_mol
 
-        sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=False)
+        sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=False, useQueryQueryMatches=False)
         if len(sub_atoms) == 0:
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt_mol))
-            # save_ligand_parent_path = os.getcwd() + os.sep + "unmatch_ligand_parent" + os.sep
-            # save_ligand = save_ligand_parent_path + sdf_name + "_l.pdb"
-            # save_parent = save_ligand_parent_path + sdf_name + "_p_" + str(hash(Chem.MolToSmiles(patt_mol))) + ".pdb"
-            # if not os.path.exists(os.path.dirname(save_ligand_parent_path)):
-            #     os.mkdir(os.path.dirname(save_ligand_parent_path))
-            # if not os.path.exists(save_ligand):
-            #     Chem.MolToPDBFile(mol=mol, filename=save_ligand)
-            # if not os.path.exists(save_parent):
-            #     Chem.MolToPDBFile(mol=patt_mol, filename=save_parent)
             return None
 
         # it is created the mol object for the obtained substructure
@@ -757,17 +815,25 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     return None
                 else:
                     mol_smile = Chem.MolToSmiles(new_mol)
-                    mol_smile = mol_smile.upper().replace("CL", "Cl").replace("BR", "Br")
+                    mol_smile = self.__remove_mult_bonds_by_smi_to_smi(mol_smile)
                     new_mol = Chem.MolFromSmiles(mol_smile)
 
         # find out the connector atom
         # NOTE: according to several runs, the connector atom is always allocated in the position 0 into the recovered substructure ('new_mol' variable)
         # but this was implemented just in case the connector atom is in a position other than 0.
         # this implementation has linear complexity and it is so fast
-        for idx in sub_atoms:
-            a = mol.GetAtomWithIdx(idx)
-            if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
-                new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+        if isinstance(smi_sub_mol, str):
+            for idx in sub_atoms:
+                a = mol.GetAtomWithIdx(idx)
+                if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
+                    new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+                    break
+        else:
+            # Get the connection point and add it to the data row
+            for atom in new_mol.GetAtoms():
+                if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
+                    new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+                    break
 
         Chem.RemoveAllHs(new_mol)
         return new_mol
