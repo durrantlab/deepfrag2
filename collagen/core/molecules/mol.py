@@ -643,7 +643,7 @@ class BackedMol(Mol):
         return [
             self.coords[atom.GetIdx()]
             for atom in self.atoms
-            if atom.GetAtomicNum() == 0
+            if (atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes") or atom.GetAtomicNum() == 0
         ]
 
     @property
