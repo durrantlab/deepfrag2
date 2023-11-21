@@ -828,12 +828,12 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
                     new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
                     break
-        else:
-            # Get the connection point and add it to the data row
-            for atom in new_mol.GetAtoms():
-                if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
-                    new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
-                    break
+        # else:
+        #     # Get the connection point and add it to the data row
+        #     for atom in new_mol.GetAtoms():
+        #         if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
+        #             new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+        #             break
 
         Chem.RemoveAllHs(new_mol)
         return new_mol
