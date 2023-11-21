@@ -564,34 +564,29 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                     if not backed_parent:
                         continue
-                    # getting the smiles for parent. this can be modified to avoid sanitization errors
-                    parent_smi = backed_parent.smiles(isomeric=True, none_if_fails=True)
-                    if not parent_smi:
-                        try:
-                            parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
-                        except:
-                            self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
-                            continue
 
+                    # getting the smiles for parent.
+                    try:
+                        parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
+                    except:
+                        self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
+                        continue
+
+                    # getting the smiles for first fragment.
                     if backed_first_frag:
-                        # getting the smiles for first fragment. this can be modified to avoid sanitization errors
-                        first_frag_smi = backed_first_frag.smiles(isomeric=True, none_if_fails=True)
-                        if not first_frag_smi:
-                            try:
-                                first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
-                            except:
-                                self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
-                                backed_first_frag = None
+                        try:
+                            first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
+                        except:
+                            self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
+                            backed_first_frag = None
 
+                    # getting the smiles for second fragment.
                     if backed_second_frag:
-                        # getting the smiles for second fragment. this can be modified to avoid sanitization errors
-                        second_frag_smi = backed_second_frag.smiles(isomeric=True, none_if_fails=True)
-                        if not second_frag_smi:
-                            try:
-                                second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
-                            except:
-                                self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
-                                backed_second_frag = None
+                        try:
+                            second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
+                        except:
+                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
+                            backed_second_frag = None
 
                     if not backed_first_frag and not backed_second_frag:
                         continue
@@ -736,8 +731,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
         # get_sub_structure=False to avoid getting 3D coordinates
-        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag, get_sub_structure=False)
-        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=False)
+        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag, get_sub_structure=True)
+        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=True)
 
         backed_parent = BackedMol(rdmol=r_parent) if r_parent else None
         backed_frag1 = BackedMol(rdmol=r_first_frag_smi, warn_no_confs=False) if r_first_frag_smi else None
@@ -828,6 +823,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
                     new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
                     break
+            else:
+                log_for_3d_coordinates.info("Connector atom was not detected for " + Chem.MolToSmiles(new_mol))
+                return None
         # else:
         #     # Get the connection point and add it to the data row
         #     for atom in new_mol.GetAtoms():
