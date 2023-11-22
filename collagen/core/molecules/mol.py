@@ -4,7 +4,6 @@ adds the ability to load molecules from a database. A few other relevant classes
 as well.
 """
 
-from dataclasses import dataclass
 from io import StringIO
 from typing import Generator, List, Tuple, Iterator, Any, Dict, Optional
 import warnings
@@ -21,7 +20,6 @@ from .fingerprints import fingerprint_for
 from ..voxelization.voxelizer import numba_ptr, mol_gridify
 from ..types import AnyAtom
 from ...draw import MolView
-import sys
 
 
 class UnparsableSMILESException(Exception):
@@ -549,7 +547,7 @@ class BackedMol(Mol):
         rdmol: "rdkit.Chem.rdchem.Mol",
         meta: dict = None,
         warn_no_confs: bool = True,
-        coord_atom_connector=[],
+        coord_connector_atom=[],
     ):
         """Initialize a new BackedMol with an existing RDMol.
         
@@ -561,7 +559,7 @@ class BackedMol(Mol):
         """
         super(BackedMol, self).__init__(meta=meta)
         self.rdmol = rdmol
-        self.coord_atom_connector = coord_atom_connector
+        self.coord_connector_atom = coord_connector_atom
 
         if warn_no_confs and self.rdmol.GetNumConformers() == 0:
             warnings.warn("Internal rdmol has no conformers")
@@ -641,7 +639,7 @@ class BackedMol(Mol):
             List[numpy.ndarray]: A list of numpy arrays of shape (N, 3)
                 containing connector coordinates.
         """
-        if not self.coord_atom_connector:
+        if not self.coord_connector_atom:
             self._ensure_structure()
             return [
                 self.coords[atom.GetIdx()]
@@ -649,7 +647,7 @@ class BackedMol(Mol):
                 if (atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes") or atom.GetAtomicNum() == 0
             ]
         else:
-            return [self.coord_atom_connector]
+            return [self.coord_connector_atom]
 
     @property
     def atoms(self) -> List[AnyAtom]:
