@@ -827,14 +827,14 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     coord_atom_connector = [connection_point.x, connection_point.y, connection_point.z]
                     break
             else:
-                log_for_3d_coordinates.info("Connector atom was not detected for " + Chem.MolToSmiles(new_mol))
+                log_for_3d_coordinates.info("Connector atom was not detected for " + Chem.MolToSmiles(new_mol) + " -> Converting SMILES to structures")
                 return None, []
         else:
             # Get the connection point and add it to the data row
-            for atom in new_mol.GetAtoms():
+            for atom in patt_mol.GetAtoms():
                 if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
-                    new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
-                    connection_point = new_mol.GetConformer().GetAtomPosition(atom_map[a.GetIdx()])
+                    # new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+                    connection_point = patt_mol.GetConformer().GetAtomPosition(atom_map[a.GetIdx()])
                     coord_atom_connector = [connection_point.x, connection_point.y, connection_point.z]
                     break
             else:
