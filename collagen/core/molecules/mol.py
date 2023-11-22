@@ -549,6 +549,7 @@ class BackedMol(Mol):
         rdmol: "rdkit.Chem.rdchem.Mol",
         meta: dict = None,
         warn_no_confs: bool = True,
+        coord_atom_connector=[],
     ):
         """Initialize a new BackedMol with an existing RDMol.
         
@@ -560,6 +561,7 @@ class BackedMol(Mol):
         """
         super(BackedMol, self).__init__(meta=meta)
         self.rdmol = rdmol
+        self.coord_atom_connector = coord_atom_connector
 
         if warn_no_confs and self.rdmol.GetNumConformers() == 0:
             warnings.warn("Internal rdmol has no conformers")
@@ -639,12 +641,15 @@ class BackedMol(Mol):
             List[numpy.ndarray]: A list of numpy arrays of shape (N, 3)
                 containing connector coordinates.
         """
-        self._ensure_structure()
-        return [
-            self.coords[atom.GetIdx()]
-            for atom in self.atoms
-            if (atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes") or atom.GetAtomicNum() == 0
-        ]
+        if not self.coord_atom_connector:
+            self._ensure_structure()
+            return [
+                self.coords[atom.GetIdx()]
+                for atom in self.atoms
+                if (atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes") or atom.GetAtomicNum() == 0
+            ]
+        else:
+            return [self.coord_atom_connector]
 
     @property
     def atoms(self) -> List[AnyAtom]:

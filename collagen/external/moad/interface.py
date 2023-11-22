@@ -503,6 +503,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                                 smiles=parent_smi,
                                 rdmol=backed_parent.rdmol,
                                 fragment_and_act=self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb],
+                                backed_parent=backed_parent,
                             )
                         )
 
@@ -728,15 +729,15 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         Chem.RemoveAllHs(ref_mol)
         # it is needed to get 3D coordinates for parent to voxelize.
-        r_parent = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
+        r_parent, r_parent_coord_atom_connector = self.get_sub_mol(ref_mol, parent_smi, sdf_name, self.ligand_not_contain_parent, self.error_getting_3d_coordinates_for_parent)
 
         # get_sub_structure=False to avoid getting 3D coordinates
-        r_first_frag_smi = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag, get_sub_structure=True)
-        r_second_frag_smi = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=True)
+        r_first_frag_smi, first_parent_coord_atom_connector = self.get_sub_mol(ref_mol, first_frag_smi, sdf_name, self.ligand_not_contain_first_frag, self.error_getting_3d_coordinates_for_first_frag, get_sub_structure=True)
+        r_second_frag_smi, second_coord_atom_connector = self.get_sub_mol(ref_mol, second_frag_smi, sdf_name, self.ligand_not_contain_second_frag, self.error_getting_3d_coordinates_for_second_frag, get_sub_structure=True)
 
-        backed_parent = BackedMol(rdmol=r_parent) if r_parent else None
-        backed_frag1 = BackedMol(rdmol=r_first_frag_smi, warn_no_confs=False) if r_first_frag_smi else None
-        backed_frag2 = BackedMol(rdmol=r_second_frag_smi, warn_no_confs=False) if r_second_frag_smi else None
+        backed_parent = BackedMol(rdmol=r_parent, coord_atom_connector=r_parent_coord_atom_connector) if r_parent else None
+        backed_frag1 = BackedMol(rdmol=r_first_frag_smi, warn_no_confs=False, coord_atom_connector=first_parent_coord_atom_connector) if r_first_frag_smi else None
+        backed_frag2 = BackedMol(rdmol=r_second_frag_smi, warn_no_confs=False, coord_atom_connector=second_coord_atom_connector) if r_second_frag_smi else None
 
         return backed_parent, backed_frag1, backed_frag2
 
@@ -751,7 +752,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             patt_mol = Chem.MolFromSmiles(mol_smile)
             Chem.RemoveAllHs(patt_mol)
             if not get_sub_structure:
-                return patt_mol
+                return patt_mol, []
         else:
             patt = smi_sub_mol
             patt_mol = smi_sub_mol
@@ -759,7 +760,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         sub_atoms = mol.GetSubstructMatch(patt_mol, useChirality=False, useQueryQueryMatches=False)
         if len(sub_atoms) == 0:
             log_for_fragments.info("Ligand " + sdf_name + " has not the fragment " + Chem.MolToSmiles(patt_mol))
-            return None
+            return None, []
 
         # it is created the mol object for the obtained substructure
         mol.UpdatePropertyCache(strict=True)
@@ -789,7 +790,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             rdmolops.RemoveStereochemistry(new_mol)
         except Exception as e:
             log_for_3d_coordinates.info("Failed cleaning before getting 3D coordinates of the fragment " + Chem.MolToSmiles(new_mol) + " because " + str(e))
-            return None
+            return None, []
 
         # assign 3D coordinates
         for i in [0, 1]:
@@ -807,7 +808,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             except Exception as e:
                 if i == 1:
                     log_for_3d_coordinates.info("3D coordinates of the fragment " + mol_smile + " cannot be extracted from the ligand " + sdf_name + " because " + str(e))
-                    return None
+                    return None, []
                 else:
                     mol_smile = Chem.MolToSmiles(new_mol)
                     mol_smile = self.__remove_mult_bonds_by_smi_to_smi(mol_smile)
@@ -822,19 +823,26 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 a = mol.GetAtomWithIdx(idx)
                 if patt.GetAtomWithIdx(atom_map[a.GetIdx()]).GetSymbol() == "*":  # this is the connector atom
                     new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+                    connection_point = new_mol.GetConformer().GetAtomPosition(atom_map[a.GetIdx()])
+                    coord_atom_connector = [connection_point.x, connection_point.y, connection_point.z]
                     break
             else:
                 log_for_3d_coordinates.info("Connector atom was not detected for " + Chem.MolToSmiles(new_mol))
-                return None
-        # else:
-        #     # Get the connection point and add it to the data row
-        #     for atom in new_mol.GetAtoms():
-        #         if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
-        #             new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
-        #             break
+                return None, []
+        else:
+            # Get the connection point and add it to the data row
+            for atom in new_mol.GetAtoms():
+                if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
+                    new_mol.GetAtomWithIdx(atom_map[a.GetIdx()]).SetAtomicNum(0)
+                    connection_point = new_mol.GetConformer().GetAtomPosition(atom_map[a.GetIdx()])
+                    coord_atom_connector = [connection_point.x, connection_point.y, connection_point.z]
+                    break
+            else:
+                log_for_3d_coordinates.info("Connector atom was not detected for " + Chem.MolToSmiles(new_mol))
+                return None, []
 
         Chem.RemoveAllHs(new_mol)
-        return new_mol
+        return new_mol, coord_atom_connector
 
     def __setup_logger(self, logger_name, log_file, level=logging.INFO):
 

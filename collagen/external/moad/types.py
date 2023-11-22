@@ -469,6 +469,7 @@ class PdbSdfDir_ligand(MOAD_ligand):
 @dataclass
 class PairedPdbSdfCsv_ligand(PdbSdfDir_ligand):
     fragment_and_act: {}
+    backed_parent: Any
 
 
 @dataclass
