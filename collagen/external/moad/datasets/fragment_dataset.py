@@ -455,8 +455,8 @@ class MOADFragmentDataset(Dataset):
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
                         if isinstance(self.moad, PairedPdbSdfCsvInterface):
                             backed_frag = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.frag_idx][2]
-                            parent = BackedMol(rdmol=ligand.rdmol)
-                            fragment = BackedMol(rdmol=backed_frag.rdmol)
+                            parent = ligand.meta["moad_ligand"].backed_parent  # BackedMol(rdmol=ligand.rdmol)
+                            fragment = backed_frag  # BackedMol(rdmol=backed_frag.rdmol)
                             break
                         else:
                             pairs = ligand.split_bonds()
