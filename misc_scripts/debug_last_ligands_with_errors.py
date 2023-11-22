@@ -31,26 +31,29 @@ def read_data_from_csv(paired_data_csv):
 
 
 def parent_smarts_to_mol(smi):
-    # It's not enough to just convert to mol with MolFromSmarts. Need to keep track of
-    # connection point.
-    smi = smi.replace("[R*]", "*")
-    mol = Chem.MolFromSmiles(smi)
+    try:
+        # It's not enough to just convert to mol with MolFromSmarts. Need to keep track of
+        # connection point.
+        smi = smi.replace("[R*]", "*")
+        mol = Chem.MolFromSmiles(smi)
 
-    # Find the dummy atom.
-    for atom in mol.GetAtoms():
-        if atom.GetSymbol() == "*":
-            neighbors = atom.GetNeighbors()
-            if neighbors:
-                # Assume only one neighbor
-                neighbor = neighbors[0]
-                neighbor.SetProp("was_dummy_connected", "yes")
-                # Remove dummy atom
-                eds = Chem.EditableMol(mol)
-                eds.RemoveAtom(atom.GetIdx())
-                mol = eds.GetMol()
+        # Find the dummy atom.
+        for atom in mol.GetAtoms():
+            if atom.GetSymbol() == "*":
+                neighbors = atom.GetNeighbors()
+                if neighbors:
+                    # Assume only one neighbor
+                    neighbor = neighbors[0]
+                    neighbor.SetProp("was_dummy_connected", "yes")
+                    # Remove dummy atom
+                    eds = Chem.EditableMol(mol)
+                    eds.RemoveAtom(atom.GetIdx())
+                    mol = eds.GetMol()
 
-    # Now dummy atom removed, but connection marked.
-    return mol
+        # Now dummy atom removed, but connection marked.
+        return mol
+    except:
+        return None
 
 
 def remove_mult_bonds_by_smi_to_smi(smi):
@@ -152,6 +155,7 @@ def read_mol(sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_fr
 
             conf = new_mol.GetConformer()
             connect_coord = conf.GetAtomPosition(atom_idx)
+            connect_coord = [connect_coord.x, connect_coord.y, connect_coord.z]
 
             first_frag_smi = remove_mult_bonds_by_smi_to_smi(first_frag_smi)
             first_frag_smi = parent_smarts_to_mol(first_frag_smi)
@@ -159,7 +163,7 @@ def read_mol(sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_fr
             second_frag_smi = remove_mult_bonds_by_smi_to_smi(second_frag_smi)
             second_frag_smi = parent_smarts_to_mol(second_frag_smi)
 
-            if conf and connect_coord and first_frag_smi and second_frag_smi:
+            if conf and len(connect_coord) == 3 and first_frag_smi and second_frag_smi:
                 print("OK")
 
     else:
