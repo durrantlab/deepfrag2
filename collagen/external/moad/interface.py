@@ -759,7 +759,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 return backed_parent, backed_frag1, backed_frag2
 
             else:
-                self.ligand_not_contain_parent.info("Ligand " + sdf_name + " has not parent structure " + Chem.MolToSmiles(parent_smi))
+                self.ligand_not_contain_parent.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
 
         else:
             return None, None, None
