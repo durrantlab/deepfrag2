@@ -61,7 +61,7 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
             exp_value = e ** prv_value
             # the activity with the receptor is penalized by increasing its value
             # this increase makes its tendency to 0 more difficult when multiplying by the probability obtained from the cosine similarity function
-            act_euler = act_value * exp_value
+            act_euler = act_value * exp_value  # consider neg prevalence
             cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
             idx = idx + 1
 
