@@ -760,6 +760,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
             else:
                 self.ligand_not_contain_parent.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
+                return None, None, None
 
         else:
             return None, None, None
