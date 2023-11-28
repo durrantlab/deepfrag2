@@ -13,6 +13,7 @@ from collagen.core.molecules.mol import BackedMol
 from rdkit.Geometry import Point3D
 from rdkit.Chem import AllChem, rdmolops
 import logging
+import numpy as np
 from collagen.core.molecules import smiles_utils
 
 
@@ -744,7 +745,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                 conf = new_mol.GetConformer()
                 connect_coord = conf.GetAtomPosition(atom_idx)
-                connect_coord = [connect_coord.x, connect_coord.y, connect_coord.z]
+                connect_coord = np.array([connect_coord.x, connect_coord.y, connect_coord.z])
 
                 backed_parent = BackedMol(rdmol=new_mol, coord_connector_atom=connect_coord)
 
@@ -760,10 +761,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
             else:
                 self.ligand_not_contain_parent.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
-                return None, None, None
 
-        else:
-            return None, None, None
+        return None, None, None
 
     def __setup_logger(self, logger_name, log_file, level=logging.INFO):
 

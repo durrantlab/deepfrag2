@@ -547,7 +547,7 @@ class BackedMol(Mol):
         rdmol: "rdkit.Chem.rdchem.Mol",
         meta: dict = None,
         warn_no_confs: bool = True,
-        coord_connector_atom=[],
+        coord_connector_atom=np.empty([]),
     ):
         """Initialize a new BackedMol with an existing RDMol.
         
@@ -639,8 +639,8 @@ class BackedMol(Mol):
             List[numpy.ndarray]: A list of numpy arrays of shape (N, 3)
                 containing connector coordinates.
         """
-        if not self.coord_connector_atom:
-            self._ensure_structure()
+        if self.coord_connector_atom.size == 0:
+            # self._ensure_structure()
             return [
                 self.coords[atom.GetIdx()]
                 for atom in self.atoms
