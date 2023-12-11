@@ -426,7 +426,7 @@ class MOADFragmentDataset(Dataset):
         Returns:
             Tuple[Mol, Mol, Mol]: (receptor, parent, fragment)
         """
-        # assert 0 <= idx <= len(self), "Index out of bounds"
+        assert 0 <= idx < len(self), "Index out of bounds"
         entry = None
         counter = 1
         max_counter = 3
@@ -441,9 +441,9 @@ class MOADFragmentDataset(Dataset):
             try:
                 entry = self._internal_index_valids_filtered[idx]
 
-                receptor, ligands = self.moad[entry.pdb_id][
-                    entry.lig_to_frag_masses_chunk_idx
-                ]
+                receptor, ligands = self.moad[entry.pdb_id][entry.lig_to_frag_masses_chunk_idx]
+                assert isinstance(receptor, BackedMol)
+                assert len(ligands) >= 1
 
                 # with open("/mnt/extra/fragz2.txt", "a") as f:
                 #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
@@ -454,7 +454,10 @@ class MOADFragmentDataset(Dataset):
                 for ligand in ligands:
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
                         if isinstance(self.moad, PairedPdbSdfCsvInterface):
-                            backed_frag = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.frag_idx][2]
+                            list_frag_and_act = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id]
+                            assert 0 <= entry.frag_idx < len(list_frag_and_act)
+
+                            backed_frag = list_frag_and_act[entry.frag_idx][2]
                             parent = ligand.meta["moad_ligand"].backed_parent  # BackedMol(rdmol=ligand.rdmol)
                             fragment = backed_frag  # BackedMol(rdmol=backed_frag.rdmol)
                             break
