@@ -639,12 +639,12 @@ class BackedMol(Mol):
             List[numpy.ndarray]: A list of numpy arrays of shape (N, 3)
                 containing connector coordinates.
         """
-        if self.coord_connector_atom.size == 0:
+        if len(self.coord_connector_atom.shape) == 0:
             # self._ensure_structure()
             return [
                 self.coords[atom.GetIdx()]
                 for atom in self.atoms
-                if (atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes") or atom.GetAtomicNum() == 0
+                if atom.GetAtomicNum() == 0
             ]
         else:
             return [self.coord_connector_atom]
