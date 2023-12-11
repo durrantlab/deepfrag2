@@ -426,7 +426,7 @@ class MOADFragmentDataset(Dataset):
         Returns:
             Tuple[Mol, Mol, Mol]: (receptor, parent, fragment)
         """
-        assert 0 <= idx <= len(self), "Index out of bounds"
+        # assert 0 <= idx <= len(self), "Index out of bounds"
         entry = None
         counter = 1
         max_counter = 3
