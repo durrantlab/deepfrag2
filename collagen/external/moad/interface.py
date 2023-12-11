@@ -392,6 +392,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     frag_and_act_x_parent_x_sdf_x_pdb = {}
     backed_mol_x_parent = {}
 
+    error_loading_data = None
     finally_used = None
 
     def __init__(
@@ -406,8 +407,12 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _creating_logger_files(self):
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_finally_used.log")
-        self.finally_used = logging.getLogger('log_one')
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_error_loading_data.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "02_finally_used.log")
+
+        self.error_loading_data = logging.getLogger('log_one')
+        self.error_loading_data.propagate = False
+        self.finally_used = logging.getLogger('log_two')
         self.finally_used.propagate = False
 
     def _load_classes_families_targets_ligands(
@@ -526,7 +531,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     try:
                         parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
                     except:
-                        self.error_standardizing_smiles_for_parent.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
+                        self.error_loading_data.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
                         continue
 
                     # getting the smiles for first fragment.
@@ -534,7 +539,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         try:
                             first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
                         except:
-                            self.error_standardizing_smiles_for_first_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
+                            self.error_loading_data.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
                             backed_first_frag = None
 
                     # getting the smiles for second fragment.
@@ -542,7 +547,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         try:
                             second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
                         except:
-                            self.error_standardizing_smiles_for_second_frag.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
+                            self.error_loading_data.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
                             backed_second_frag = None
 
                     if not backed_first_frag and not backed_second_frag:
@@ -715,7 +720,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 return backed_parent, backed_frag1, backed_frag2
 
             else:
-                self.ligand_not_contain_parent.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
+                self.error_loading_data.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
 
         return None, None, None
 
