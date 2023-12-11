@@ -392,17 +392,6 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     frag_and_act_x_parent_x_sdf_x_pdb = {}
     backed_mol_x_parent = {}
 
-    fail_match_FirstSmiles_PDBLigand = None
-    fail_match_SecondSmiles_PDBLigand = None
-    ligand_not_contain_parent = None
-    ligand_not_contain_first_frag = None
-    ligand_not_contain_second_frag = None
-    error_getting_3d_coordinates_for_parent = None
-    error_getting_3d_coordinates_for_first_frag = None
-    error_getting_3d_coordinates_for_second_frag = None
-    error_standardizing_smiles_for_parent = None
-    error_standardizing_smiles_for_first_frag = None
-    error_standardizing_smiles_for_second_frag = None
     finally_used = None
 
     def __init__(
@@ -417,42 +406,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _creating_logger_files(self):
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_fail_match_FirstSmiles_PDBLigand.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "02_fail_match_SecondSmiles_PDBLigand.log")
-        self.__setup_logger('log_three', os.getcwd() + os.sep + "03_ligand_not_contain_parent.log")
-        self.__setup_logger('log_four', os.getcwd() + os.sep + "04_ligand_not_contain_first-frag.log")
-        self.__setup_logger('log_five', os.getcwd() + os.sep + "05_ligand_not_contain_second-frag.log")
-        self.__setup_logger('log_six', os.getcwd() + os.sep + "06_error_getting_3d_coordinates_for_parent.log")
-        self.__setup_logger('log_seven', os.getcwd() + os.sep + "07_error_getting_3d_coordinates_for_first-frag.log")
-        self.__setup_logger('log_eight', os.getcwd() + os.sep + "08_error_getting_3d_coordinates_for_second-frag.log")
-        self.__setup_logger('log_nine', os.getcwd() + os.sep + "09_error_standardizing_smiles_for_parent.log")
-        self.__setup_logger('log_ten', os.getcwd() + os.sep + "10_error_standardizing_smiles_for_first-frag.log")
-        self.__setup_logger('log_eleven', os.getcwd() + os.sep + "11_error_standardizing_smiles_for_second-frag.log")
-        self.__setup_logger('log_twelve', os.getcwd() + os.sep + "12_finally_used.log")
-
-        self.fail_match_FirstSmiles_PDBLigand = logging.getLogger('log_one')
-        self.fail_match_FirstSmiles_PDBLigand.propagate = False
-        self.fail_match_SecondSmiles_PDBLigand = logging.getLogger('log_two')
-        self.fail_match_SecondSmiles_PDBLigand.propagate = False
-        self.ligand_not_contain_parent = logging.getLogger('log_three')
-        self.ligand_not_contain_parent.propagate = False
-        self.ligand_not_contain_first_frag = logging.getLogger('log_four')
-        self.ligand_not_contain_first_frag.propagate = False
-        self.ligand_not_contain_second_frag = logging.getLogger('log_five')
-        self.ligand_not_contain_second_frag.propagate = False
-        self.error_getting_3d_coordinates_for_parent = logging.getLogger('log_six')
-        self.error_getting_3d_coordinates_for_parent.propagate = False
-        self.error_getting_3d_coordinates_for_first_frag = logging.getLogger('log_seven')
-        self.error_getting_3d_coordinates_for_first_frag.propagate = False
-        self.error_getting_3d_coordinates_for_second_frag = logging.getLogger('log_eight')
-        self.error_getting_3d_coordinates_for_second_frag.propagate = False
-        self.error_standardizing_smiles_for_parent = logging.getLogger('log_nine')
-        self.error_standardizing_smiles_for_parent.propagate = False
-        self.error_standardizing_smiles_for_first_frag = logging.getLogger('log_ten')
-        self.error_standardizing_smiles_for_first_frag.propagate = False
-        self.error_standardizing_smiles_for_second_frag = logging.getLogger('log_eleven')
-        self.error_standardizing_smiles_for_second_frag.propagate = False
-        self.finally_used = logging.getLogger('log_twelve')
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_finally_used.log")
+        self.finally_used = logging.getLogger('log_one')
         self.finally_used.propagate = False
 
     def _load_classes_families_targets_ligands(
@@ -747,15 +702,15 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 connect_coord = conf.GetAtomPosition(atom_idx)
                 connect_coord = np.array([connect_coord.x, connect_coord.y, connect_coord.z])
 
-                backed_parent = BackedMol(rdmol=new_mol, coord_connector_atom=connect_coord)
+                backed_parent = BackedMol(rdmol=new_mol)
 
                 first_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(first_frag_smi)
                 first_frag_smi = self.__parent_smarts_to_mol(first_frag_smi)
-                backed_frag1 = BackedMol(rdmol=first_frag_smi, warn_no_confs=False) if first_frag_smi else None
+                backed_frag1 = BackedMol(rdmol=first_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
 
                 second_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(second_frag_smi)
                 second_frag_smi = self.__parent_smarts_to_mol(second_frag_smi)
-                backed_frag2 = BackedMol(rdmol=second_frag_smi, warn_no_confs=False) if second_frag_smi else None
+                backed_frag2 = BackedMol(rdmol=second_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
 
                 return backed_parent, backed_frag1, backed_frag2
 
