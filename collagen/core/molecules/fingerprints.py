@@ -149,10 +149,13 @@ def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
     Returns:
         np.array: Fingerprint.
     """
-    molbert_fp = _molbert(m, size, smiles)
-    molbert_fp[molbert_fp <= 0] = 0
-    molbert_fp[molbert_fp > 0] = 1
-    return molbert_fp
+    try:
+        molbert_fp = _molbert(m, size, smiles)
+        molbert_fp[molbert_fp <= 0] = 0
+        molbert_fp[molbert_fp > 0] = 1
+        return molbert_fp
+    except Exception as e:
+        raise Exception("Error calculating binary molbert fingerprints " + str(e))
 
 
 def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.array:
