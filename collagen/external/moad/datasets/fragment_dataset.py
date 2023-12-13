@@ -468,10 +468,20 @@ class MOADFragmentDataset(Dataset):
                 else:
                     raise Exception(f"Ligand not found: {str(receptor)} -- {str(ligands)}")
 
+                assert isinstance(parent, BackedMol), "Parent not found"
+                assert isinstance(fragment, BackedMol), "Fragment not found"
                 sample = (receptor, parent, fragment, entry.ligand_id, entry.frag_idx)
+                assert len(sample) == 5, "Sample size is different to 5"
 
                 # Actually performs voxelization and fingerprinting.
                 return self.transform(sample) if self.transform else sample
+
+            except AssertionError as e:
+                print(
+                    f"\nMethod __getitem__ in 'fragment_dataset.py'. Assertion Error: {str(e)}",
+                    file=sys.stderr,
+                )
+                raise e
             except Exception as e:
                 if entry is not None:
                     print(
