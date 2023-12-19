@@ -283,16 +283,22 @@ if __name__ == "__main__":
             if frag in lower_frags.keys():
                 lower_frags[frag].freq = lower_frags[frag].freq + 1
 
+    csv_file = os.path.abspath(os.path.join(root, "either_frags.csv"))
+    with open(csv_file, 'w') as file:
+        csvwriter = csv.writer(file)
+        for key in often_either.keys():
+            csvwriter.writerow([key, str(often_either[key])])
+
     csv_file = os.path.abspath(os.path.join(root, "higher_frags.csv"))
     with open(csv_file, 'w') as file:
         csvwriter = csv.writer(file)
         for key in higher_frags.keys():
             frag_act = higher_frags[key]
-            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
+            csvwriter.writerow([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
 
     csv_file = os.path.abspath(os.path.join(root, "lower_frags.csv"))
     with open(csv_file, 'w') as file:
         csvwriter = csv.writer(file)
         for key in lower_frags.keys():
             frag_act = lower_frags[key]
-            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
+            csvwriter.writerow([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
