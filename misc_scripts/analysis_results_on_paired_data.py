@@ -288,11 +288,11 @@ if __name__ == "__main__":
         csvwriter = csv.writer(file)
         for key in higher_frags.keys():
             frag_act = higher_frags[key]
-            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), frag_act.freq])
+            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
 
     csv_file = os.path.abspath(os.path.join(root, "lower_frags.csv"))
     with open(csv_file, 'w') as file:
         csvwriter = csv.writer(file)
         for key in lower_frags.keys():
             frag_act = lower_frags[key]
-            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), frag_act.freq])
+            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
