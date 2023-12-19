@@ -2,7 +2,6 @@ from rdkit import Chem
 import os
 from rdkit.Chem import AllChem
 import numpy as np
-from collagen.core.molecules.mol import BackedMol
 import csv
 import json
 
@@ -149,15 +148,15 @@ def read_mol(sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_fr
             connect_coord = conf.GetAtomPosition(atom_idx)
             connect_coord = np.array([connect_coord.x, connect_coord.y, connect_coord.z])
 
-            backed_parent = BackedMol(rdmol=new_mol)
+            backed_parent = new_mol
 
             first_frag_smi = remove_mult_bonds_by_smi_to_smi(first_frag_smi)
             first_frag_smi = parent_smarts_to_mol(first_frag_smi)
-            backed_frag1 = BackedMol(rdmol=first_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
+            backed_frag1 = first_frag_smi if first_frag_smi else None
 
             second_frag_smi = remove_mult_bonds_by_smi_to_smi(second_frag_smi)
             second_frag_smi = parent_smarts_to_mol(second_frag_smi)
-            backed_frag2 = BackedMol(rdmol=second_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
+            backed_frag2 = second_frag_smi if second_frag_smi else None
 
             return backed_parent, backed_frag1, backed_frag2
 
@@ -202,21 +201,21 @@ def read_data_from_csv(paired_data_csv):
 
                 # getting the smiles for parent.
                 try:
-                    parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
+                    parent_smi = Chem.MolToSmiles(backed_parent, isomericSmiles=True)
                 except:
                     continue
 
                 # getting the smiles for first fragment.
                 if backed_first_frag:
                     try:
-                        first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
+                        first_frag_smi = Chem.MolToSmiles(backed_first_frag, isomericSmiles=True)
                     except:
                         backed_first_frag = None
 
                 # getting the smiles for second fragment.
                 if backed_second_frag:
                     try:
-                        second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
+                        second_frag_smi = Chem.MolToSmiles(backed_second_frag, isomericSmiles=True)
                     except:
                         backed_second_frag = None
 
@@ -273,7 +272,8 @@ if __name__ == "__main__":
         receptor_name = entry["correct"]["receptor"]
         parent_smiles = entry["correct"]["parentSmiles"]
         closest_labels = entry["avgOfCheckpoints"]["closestFromLabelSet"]
-        for frag in closest_labels:
+        for label in closest_labels:
+            frag = label["smiles"]
             if frag not in often_either.keys():
                 often_either[frag] = 0
             often_either[frag] = often_either[frag] + 1
@@ -286,11 +286,13 @@ if __name__ == "__main__":
     csv_file = os.path.abspath(os.path.join(root, "higher_frags.csv"))
     with open(csv_file, 'w') as file:
         csvwriter = csv.writer(file)
-        for frag_act in higher_frags.items():
-            csvwriter.writerows([frag_act.fragment, frag_act.activity, frag_act.freq])
+        for key in higher_frags.keys():
+            frag_act = higher_frags[key]
+            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), frag_act.freq])
 
     csv_file = os.path.abspath(os.path.join(root, "lower_frags.csv"))
     with open(csv_file, 'w') as file:
         csvwriter = csv.writer(file)
-        for frag_act in lower_frags.items():
-            csvwriter.writerows([frag_act.fragment, frag_act.activity, frag_act.freq])
+        for key in lower_frags.keys():
+            frag_act = lower_frags[key]
+            csvwriter.writerows([frag_act.fragment, str(frag_act.activity), frag_act.freq])
