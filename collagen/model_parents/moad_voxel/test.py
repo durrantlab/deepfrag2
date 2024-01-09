@@ -417,6 +417,8 @@ class MoadVoxelModelTest(object):
             device,
             ckpt,
             args.aggregation_rotations,
+            args.fragment_representation,
+            args.save_fps,
         )
 
         if ckpt_idx == 0:

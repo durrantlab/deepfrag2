@@ -3,23 +3,19 @@ import os
 from rdkit.Chem import AllChem
 import numpy as np
 import csv
-import json
+import pickle
+import torch as nn
 
 
-class FragAct:
-    def __init__(self, fragment, activity):
-        self.fragment = fragment
-        self.activity = activity
-        self.freq = 0
-
-    def __eq__(self, other):
-        return self.activity == other.activity
-
-    def __gt__(self, other):
-        return self.activity > other.activity
-
-    def __lt__(self, other):
-        return self.activity < other.activity
+class PairDataEntry:
+    def __init__(self, pdb_name, sdf_name, parent, frag1, frag2, act1, act2):
+        self.pdb_name = pdb_name
+        self.sdf_name = sdf_name
+        self.parent = parent
+        self.frag1 = frag1
+        self.frag2 = frag2
+        self.act1 = act1
+        self.act2 = act2
 
 
 def parent_smarts_to_mol(smi):
@@ -179,9 +175,7 @@ def read_data_from_csv(paired_data_csv):
     col_second_ligand_template = paired_data_csv_sep[10]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
     col_prevalence = paired_data_csv_sep[11] if len(paired_data_csv_sep) == 12 else None  # prevalence value (optional). Default is 1 (even prevalence for the fragments)
 
-    data = {}
-    high_affinity_frags = {}
-    low_affinity_frags = {}
+    data = []
     with open(path_csv_file, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter='\t')
         for row in reader:
@@ -196,109 +190,100 @@ def read_data_from_csv(paired_data_csv):
                                                                                 row[col_first_ligand_template],
                                                                                 row[col_second_ligand_template])
 
-                if not backed_parent:
-                    continue
-
-                # getting the smiles for parent.
-                try:
-                    parent_smi = Chem.MolToSmiles(backed_parent, isomericSmiles=True)
-                except:
-                    continue
-
-                # getting the smiles for first fragment.
-                if backed_first_frag:
+                if backed_parent:
+                    # getting the smiles for parent.
                     try:
-                        first_frag_smi = Chem.MolToSmiles(backed_first_frag, isomericSmiles=True)
+                        parent_smi = Chem.MolToSmiles(backed_parent, isomericSmiles=True)
                     except:
-                        backed_first_frag = None
+                        continue
 
-                # getting the smiles for second fragment.
-                if backed_second_frag:
-                    try:
-                        second_frag_smi = Chem.MolToSmiles(backed_second_frag, isomericSmiles=True)
-                    except:
-                        backed_second_frag = None
+                    # getting the smiles for first fragment.
+                    if backed_first_frag:
+                        try:
+                            first_frag_smi = Chem.MolToSmiles(backed_first_frag, isomericSmiles=True)
+                        except:
+                            first_frag_smi = None
 
-                if not backed_first_frag and not backed_second_frag:
-                    continue
+                    # getting the smiles for second fragment.
+                    if backed_second_frag:
+                        try:
+                            second_frag_smi = Chem.MolToSmiles(backed_second_frag, isomericSmiles=True)
+                        except:
+                            second_frag_smi = None
 
-                act_first_frag_smi = float(row[col_act_first_frag_smi]) if backed_first_frag else None
-                act_second_frag_smi = float(row[col_act_second_frag_smi]) if backed_second_frag else None
-                prevalence_receptor = float(row[col_prevalence]) if col_prevalence else 1
+                    act_first_frag_smi = float(row[col_act_first_frag_smi]) if backed_first_frag else float(0)
+                    act_second_frag_smi = float(row[col_act_second_frag_smi]) if backed_second_frag else float(0)
+                    prevalence_receptor = float(row[col_prevalence]) if col_prevalence else 1
 
-                if pdb_name not in data.keys():
-                    data[pdb_name] = {}
-                if parent_smi not in data[pdb_name].keys():
-                    data[pdb_name][parent_smi] = []
+                    data.append(PairDataEntry(pdb_name, sdf_name, parent_smi, first_frag_smi, second_frag_smi, act_first_frag_smi, act_second_frag_smi))
 
-                if backed_first_frag:
-                    data[pdb_name][parent_smi].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor])
-                    if first_frag_smi not in high_affinity_frags.keys():
-                        high_affinity_frags[first_frag_smi] = FragAct(first_frag_smi, act_first_frag_smi)
-                        low_affinity_frags[first_frag_smi] = FragAct(first_frag_smi, act_first_frag_smi)
-                    if act_first_frag_smi > high_affinity_frags[first_frag_smi].activity:
-                        high_affinity_frags[first_frag_smi].activity = act_first_frag_smi
-                    if act_first_frag_smi < low_affinity_frags[first_frag_smi].activity:
-                        low_affinity_frags[first_frag_smi].activity = act_first_frag_smi
+    return data
 
-                if backed_second_frag:
-                    data[pdb_name][parent_smi].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
-                    if second_frag_smi not in high_affinity_frags.keys():
-                        high_affinity_frags[second_frag_smi] = FragAct(second_frag_smi, act_second_frag_smi)
-                        low_affinity_frags[second_frag_smi] = FragAct(second_frag_smi, act_second_frag_smi)
-                    if act_second_frag_smi > high_affinity_frags[second_frag_smi].activity:
-                        high_affinity_frags[second_frag_smi].activity = act_second_frag_smi
-                    if act_second_frag_smi < low_affinity_frags[second_frag_smi].activity:
-                        low_affinity_frags[second_frag_smi].activity = act_second_frag_smi
 
-    return data, high_affinity_frags, low_affinity_frags
+# Closer to 1 means more similar, closer to 0 means more dissimilar.
+_cos = nn.CosineSimilarity(dim=1, eps=1e-6)
 
 
 if __name__ == "__main__":
     root = "path"
-    json_file = "path"
     paired_data_csv = "path"
+    predicted_fps_file = "path"
+    calculated_fps_file = "path"
+    predicted_fps = {}
+    calculated_fps = {}
 
-    often_either = {}
-    _, higher_frags, lower_frags = read_data_from_csv(paired_data_csv)
+    with open(predicted_fps_file, "rb") as file:
+        while True:
+            try:
+                key = pickle.load(file)
+                fps = pickle.load(file)
+                predicted_fps[key] = fps
+            except EOFError:
+                break
+        file.close()
 
-    with open(json_file) as f:
-        json_result_inf = json.load(f)
-    f.close()
+    with open(calculated_fps_file, "rb") as file:
+        while True:
+            try:
+                key = pickle.load(file)
+                fps = pickle.load(file)
+                calculated_fps[key] = fps
+            except EOFError:
+                break
+        file.close()
 
-    labels = []
-    entries_list = json_result_inf["entries"]
-    for entry in entries_list:
-        receptor_name = entry["correct"]["receptor"]
-        parent_smiles = entry["correct"]["parentSmiles"]
-        closest_labels = entry["avgOfCheckpoints"]["closestFromLabelSet"]
-        for label in closest_labels:
-            frag = label["smiles"]
-            if frag not in often_either.keys():
-                often_either[frag] = 0
-            often_either[frag] = often_either[frag] + 1
+    frag1_most_similar_higher_act = csv.writer(os.path.abspath(os.path.join(root, "frag1_most_similar_higher_act.csv")))
+    frag1_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
+    frag1_most_similar_lower_act = csv.writer(os.path.abspath(os.path.join(root, "frag1_most_similar_lower_act.csv")))
+    frag1_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
+    frag2_most_similar_higher_act = csv.writer(os.path.abspath(os.path.join(root, "frag2_most_similar_higher_act.csv")))
+    frag2_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
+    frag2_most_similar_lower_act = csv.writer(os.path.abspath(os.path.join(root, "frag2_most_similar_lower_act.csv")))
+    frag2_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
 
-            if frag in higher_frags.keys():
-                higher_frags[frag].freq = higher_frags[frag].freq + 1
-            if frag in lower_frags.keys():
-                lower_frags[frag].freq = lower_frags[frag].freq + 1
+    data = read_data_from_csv(paired_data_csv)
+    for idx, entry in enumerate(data):
+        key = entry.pdb_name + "_" + entry.sdf_name + "_" + entry.parent
+        if key in predicted_fps.keys():
+            recep_parent_fps = predicted_fps[key]
 
-    csv_file = os.path.abspath(os.path.join(root, "either_frags.csv"))
-    with open(csv_file, 'w') as file:
-        csvwriter = csv.writer(file)
-        for key in often_either.keys():
-            csvwriter.writerow([key, str(often_either[key])])
+            if entry.frag1 and entry.frag2:
+                frag1_fps = calculated_fps[entry.frag1]
+                frag2_fps = calculated_fps[entry.frag2]
 
-    csv_file = os.path.abspath(os.path.join(root, "higher_frags.csv"))
-    with open(csv_file, 'w') as file:
-        csvwriter = csv.writer(file)
-        for key in higher_frags.keys():
-            frag_act = higher_frags[key]
-            csvwriter.writerow([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
+                sim_to_frag1 = _cos(recep_parent_fps, frag1_fps)
+                sim_to_frag2 = _cos(recep_parent_fps, frag2_fps)
 
-    csv_file = os.path.abspath(os.path.join(root, "lower_frags.csv"))
-    with open(csv_file, 'w') as file:
-        csvwriter = csv.writer(file)
-        for key in lower_frags.keys():
-            frag_act = lower_frags[key]
-            csvwriter.writerow([frag_act.fragment, str(frag_act.activity), str(frag_act.freq)])
+                writer = None
+                if sim_to_frag1 > sim_to_frag2:
+                    if entry.act1 > entry.act2:
+                        writer = frag1_most_similar_higher_act
+                    else:
+                        writer = frag1_most_similar_lower_act
+                else:
+                    if entry.act1 < entry.act2:
+                        writer = frag2_most_similar_higher_act
+                    else:
+                        writer = frag2_most_similar_lower_act
+
+                writer.writerow([entry.pdb_name, entry.sdf_name, entry.parent, entry.frag1, entry.frag2, entry.act1, entry.act2])
