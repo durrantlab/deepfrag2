@@ -8,6 +8,8 @@ from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
+import pickle
+import os.path
 
 
 class AveragedEnsembled(ParentEnsembled):
@@ -28,6 +30,8 @@ class AveragedEnsembled(ParentEnsembled):
         device: torch.device,
         ckpt_name: str,
         aggregation_function: Operator,
+        frag_representation: str,
+        save_fps=False,
     ):
         """Initialize the class.
 
@@ -40,6 +44,9 @@ class AveragedEnsembled(ParentEnsembled):
             ckpt_name (str): The name of the checkpoint.
             aggregation_function (Operator): The aggregation function to use.
         """
+        self.frag_representation = frag_representation
+        self.save_fps = save_fps
+
         if aggregation_function != Operator.MEAN.value and num_rotations == 1:
             raise Exception(
                 "Use more than one rotation to use an aggregation function other than Mean (average) function"
@@ -146,3 +153,23 @@ class AveragedEnsembled(ParentEnsembled):
                 device=self.device,
                 requires_grad=False,
             )
+
+        if self.save_fps:
+            frag_saved_fps = []
+            recep_lig_saved_fps = []
+            frag_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "pred_fingerprints.bin", "wb")
+            recep_lig_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "cal_fingerprints.bin", "wb")
+
+            for idx, entry in enumerate(self.model.prediction_targets_entry_infos):
+                if entry.ligand_id not in recep_lig_saved_fps:
+                    recep_lig_saved_fps.append(entry.ligand_id)
+                    pickle.dump(entry.ligand_id, recep_lig_saved_fps_file)
+                    pickle.dump(self.predictions_ensembled[idx], recep_lig_saved_fps_file)
+
+                if entry.fragment_smiles not in frag_saved_fps:
+                    frag_saved_fps.append(entry.fragment_smiles)
+                    pickle.dump(entry.fragment_smiles, frag_saved_fps_file)
+                    pickle.dump(self.model.prediction_targets[idx], frag_saved_fps_file)
+
+            frag_saved_fps_file.close()
+            recep_lig_saved_fps_file.close()
