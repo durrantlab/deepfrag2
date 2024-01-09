@@ -157,8 +157,8 @@ class AveragedEnsembled(ParentEnsembled):
         if self.save_fps:
             frag_saved_fps = []
             recep_lig_saved_fps = []
-            frag_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "pred_fingerprints.bin", "wb")
-            recep_lig_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "cal_fingerprints.bin", "wb")
+            frag_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_pred_fingerprints.bin", "wb")
+            recep_lig_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_cal_fingerprints.bin", "wb")
 
             for idx, entry in enumerate(self.model.prediction_targets_entry_infos):
                 if entry.ligand_id not in recep_lig_saved_fps:
