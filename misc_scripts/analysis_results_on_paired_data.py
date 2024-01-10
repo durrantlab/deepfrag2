@@ -1,10 +1,11 @@
+import torch
 from rdkit import Chem
 import os
 from rdkit.Chem import AllChem
 import numpy as np
 import csv
 import pickle
-import torch as nn
+from torch import nn
 
 
 class PairDataEntry:
@@ -232,25 +233,11 @@ if __name__ == "__main__":
     predicted_fps = {}
     calculated_fps = {}
 
-    with open(predicted_fps_file, "rb") as file:
-        while True:
-            try:
-                key = pickle.load(file)
-                fps = pickle.load(file)
-                predicted_fps[key] = fps
-            except EOFError:
-                break
-        file.close()
+    print("Loading predicted fingerprints")
+    predicted_fps = torch.load(predicted_fps_file)
 
-    with open(calculated_fps_file, "rb") as file:
-        while True:
-            try:
-                key = pickle.load(file)
-                fps = pickle.load(file)
-                calculated_fps[key] = fps
-            except EOFError:
-                break
-        file.close()
+    print("Loading calculated fingerprints")
+    calculated_fps = torch.load(calculated_fps_file)
 
     frag1_most_similar_higher_act = csv.writer(os.path.abspath(os.path.join(root, "frag1_most_similar_higher_act.csv")))
     frag1_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
@@ -261,7 +248,10 @@ if __name__ == "__main__":
     frag2_most_similar_lower_act = csv.writer(os.path.abspath(os.path.join(root, "frag2_most_similar_lower_act.csv")))
     frag2_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
 
+    print("Reading paired data")
     data = read_data_from_csv(paired_data_csv)
+
+    print("Performing analysis")
     for idx, entry in enumerate(data):
         key = entry.pdb_name + "_" + entry.sdf_name + "_" + entry.parent
         if key in predicted_fps.keys():

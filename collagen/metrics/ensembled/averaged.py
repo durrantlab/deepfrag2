@@ -8,7 +8,6 @@ from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
-import pickle
 import os.path
 
 
@@ -155,21 +154,16 @@ class AveragedEnsembled(ParentEnsembled):
             )
 
         if self.save_fps:
-            frag_saved_fps = []
-            recep_lig_saved_fps = []
-            frag_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_pred_fingerprints.bin", "wb")
-            recep_lig_saved_fps_file = open(os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_cal_fingerprints.bin", "wb")
+            frag_fps = {}
+            recep_parent_fps = {}
 
             for idx, entry in enumerate(self.model.prediction_targets_entry_infos):
-                if entry.ligand_id not in recep_lig_saved_fps:
-                    recep_lig_saved_fps.append(entry.ligand_id)
-                    pickle.dump(entry.ligand_id, recep_lig_saved_fps_file)
-                    pickle.dump(self.predictions_ensembled[idx], recep_lig_saved_fps_file)
 
-                if entry.fragment_smiles not in frag_saved_fps:
-                    frag_saved_fps.append(entry.fragment_smiles)
-                    pickle.dump(entry.fragment_smiles, frag_saved_fps_file)
-                    pickle.dump(self.model.prediction_targets[idx], frag_saved_fps_file)
+                if entry.ligand_id not in recep_parent_fps.keys():
+                    recep_parent_fps[entry.ligand_id] = self.predictions_ensembled[idx]
 
-            frag_saved_fps_file.close()
-            recep_lig_saved_fps_file.close()
+                if entry.fragment_smiles not in frag_fps.keys():
+                    frag_fps[entry.fragment_smiles] = self.model.prediction_targets[idx]
+
+            torch.save(recep_parent_fps, os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_pred_fingerprints.pt")
+            torch.save(frag_fps, os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_calc_fingerprints.pt")
