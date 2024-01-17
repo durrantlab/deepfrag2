@@ -4,7 +4,6 @@ import os
 from rdkit.Chem import AllChem
 import numpy as np
 import csv
-import pickle
 from torch import nn
 
 
@@ -222,7 +221,7 @@ def read_data_from_csv(paired_data_csv):
 
 
 # Closer to 1 means more similar, closer to 0 means more dissimilar.
-_cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+_cos = nn.CosineSimilarity(dim=0, eps=1e-6)
 
 
 if __name__ == "__main__":
@@ -234,18 +233,18 @@ if __name__ == "__main__":
     calculated_fps = {}
 
     print("Loading predicted fingerprints")
-    predicted_fps = torch.load(predicted_fps_file)
+    predicted_fps = torch.load(predicted_fps_file, map_location=torch.device('cpu'))
 
     print("Loading calculated fingerprints")
-    calculated_fps = torch.load(calculated_fps_file)
+    calculated_fps = torch.load(calculated_fps_file, map_location=torch.device('cpu'))
 
-    frag1_most_similar_higher_act = csv.writer(os.path.abspath(os.path.join(root, "frag1_most_similar_higher_act.csv")))
+    frag1_most_similar_higher_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag1_most_similar_higher_act.csv")), 'w'))
     frag1_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
-    frag1_most_similar_lower_act = csv.writer(os.path.abspath(os.path.join(root, "frag1_most_similar_lower_act.csv")))
+    frag1_most_similar_lower_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag1_most_similar_lower_act.csv")), 'w'))
     frag1_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
-    frag2_most_similar_higher_act = csv.writer(os.path.abspath(os.path.join(root, "frag2_most_similar_higher_act.csv")))
+    frag2_most_similar_higher_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag2_most_similar_higher_act.csv")), 'w'))
     frag2_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
-    frag2_most_similar_lower_act = csv.writer(os.path.abspath(os.path.join(root, "frag2_most_similar_lower_act.csv")))
+    frag2_most_similar_lower_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag2_most_similar_lower_act.csv")), 'w'))
     frag2_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
 
     print("Reading paired data")
@@ -258,11 +257,8 @@ if __name__ == "__main__":
             recep_parent_fps = predicted_fps[key]
 
             if entry.frag1 and entry.frag2:
-                frag1_fps = calculated_fps[entry.frag1]
-                frag2_fps = calculated_fps[entry.frag2]
-
-                sim_to_frag1 = _cos(recep_parent_fps, frag1_fps)
-                sim_to_frag2 = _cos(recep_parent_fps, frag2_fps)
+                sim_to_frag1 = _cos(recep_parent_fps, calculated_fps[entry.frag1]) if entry.frag1 in calculated_fps.keys() else float(-1)
+                sim_to_frag2 = _cos(recep_parent_fps, calculated_fps[entry.frag2]) if entry.frag2 in calculated_fps.keys() else float(-1)
 
                 writer = None
                 if sim_to_frag1 > sim_to_frag2:
@@ -270,10 +266,11 @@ if __name__ == "__main__":
                         writer = frag1_most_similar_higher_act
                     else:
                         writer = frag1_most_similar_lower_act
-                else:
+                elif sim_to_frag2 > sim_to_frag1:
                     if entry.act1 < entry.act2:
                         writer = frag2_most_similar_higher_act
                     else:
                         writer = frag2_most_similar_lower_act
 
-                writer.writerow([entry.pdb_name, entry.sdf_name, entry.parent, entry.frag1, entry.frag2, entry.act1, entry.act2])
+                if writer:
+                    writer.writerow([entry.pdb_name, entry.sdf_name, entry.parent, entry.frag1, entry.frag2, entry.act1, entry.act2])
