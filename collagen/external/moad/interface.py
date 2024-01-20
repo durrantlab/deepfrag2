@@ -618,6 +618,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         mol = eds.GetMol()
 
             # Now dummy atom removed, but connection marked.
+            mol.UpdatePropertyCache()
+            Chem.GetSymmSSSR(mol)
             return mol
         except:
             return None
