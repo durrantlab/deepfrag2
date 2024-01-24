@@ -95,10 +95,16 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
         np.array: Fingerprint.
     """
     array = np.zeros((0,))
-    DataStructs.ConvertToNumpyArray(
-        AllChem.GetHashedMorganFingerprint(Chem.MolFromSmiles(smiles), 3, nBits=size),
-        array,
-    )
+    try:
+        assert m is not None, "molecule as parameter is None"
+        DataStructs.ConvertToNumpyArray(
+            AllChem.GetHashedMorganFingerprint(m, 3, nBits=size),
+            array,
+        )
+    except BaseException as e:
+        print("Error calculating Morgan Fingerprints on " + smiles + " because of " + str(e), file=sys.stderr)
+        array = np.zeros((size,))
+
     return array
 
 

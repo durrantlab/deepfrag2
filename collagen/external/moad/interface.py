@@ -392,7 +392,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     frag_and_act_x_parent_x_sdf_x_pdb = {}
     backed_mol_x_parent = {}
 
-    error_loading_data = None
+    error_loading_parents = None
+    error_loading_first_fragments = None
+    error_loading_second_fragments = None
     finally_used = None
 
     def __init__(
@@ -407,12 +409,18 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _creating_logger_files(self):
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_error_loading_data.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "02_finally_used.log")
+        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_error_loading_parents.log")
+        self.__setup_logger('log_two', os.getcwd() + os.sep + "02_error_loading_first_fragments.log")
+        self.__setup_logger('log_three', os.getcwd() + os.sep + "03_error_loading_second_fragments.log")
+        self.__setup_logger('log_four', os.getcwd() + os.sep + "04_finally_used.log")
 
-        self.error_loading_data = logging.getLogger('log_one')
-        self.error_loading_data.propagate = False
-        self.finally_used = logging.getLogger('log_two')
+        self.error_loading_parents = logging.getLogger('log_one')
+        self.error_loading_parents.propagate = False
+        self.error_loading_first_fragments = logging.getLogger('log_two')
+        self.error_loading_first_fragments.propagate = False
+        self.error_loading_second_fragments = logging.getLogger('log_three')
+        self.error_loading_second_fragments.propagate = False
+        self.finally_used = logging.getLogger('log_four')
         self.finally_used.propagate = False
 
     def _load_classes_families_targets_ligands(
@@ -531,7 +539,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     try:
                         parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
                     except:
-                        self.error_loading_data.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
+                        self.error_loading_parents.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
                         continue
 
                     # getting the smiles for first fragment.
@@ -539,16 +547,20 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         try:
                             first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
                         except:
-                            self.error_loading_data.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
+                            self.error_loading_first_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
                             backed_first_frag = None
+                    else:
+                        self.error_loading_first_fragments.info("First fragment was not read")
 
                     # getting the smiles for second fragment.
                     if backed_second_frag:
                         try:
                             second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
                         except:
-                            self.error_loading_data.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
+                            self.error_loading_second_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
                             backed_second_frag = None
+                    else:
+                        self.error_loading_first_fragments.info("Second fragment was not read")
 
                     if not backed_first_frag and not backed_second_frag:
                         continue
@@ -606,6 +618,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         mol = eds.GetMol()
 
             # Now dummy atom removed, but connection marked.
+            mol.UpdatePropertyCache()
+            Chem.GetSymmSSSR(mol)
             return mol
         except:
             return None
@@ -709,18 +723,18 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                 backed_parent = BackedMol(rdmol=new_mol)
 
-                first_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(first_frag_smi)
+                # first_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(first_frag_smi)
                 first_frag_smi = self.__parent_smarts_to_mol(first_frag_smi)
                 backed_frag1 = BackedMol(rdmol=first_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
 
-                second_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(second_frag_smi)
+                # second_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(second_frag_smi)
                 second_frag_smi = self.__parent_smarts_to_mol(second_frag_smi)
                 backed_frag2 = BackedMol(rdmol=second_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
 
                 return backed_parent, backed_frag1, backed_frag2
 
             else:
-                self.error_loading_data.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
+                self.error_loading_parents.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
 
         return None, None, None
 

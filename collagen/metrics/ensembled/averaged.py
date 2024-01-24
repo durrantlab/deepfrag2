@@ -8,6 +8,7 @@ from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
+import os.path
 
 
 class AveragedEnsembled(ParentEnsembled):
@@ -28,6 +29,8 @@ class AveragedEnsembled(ParentEnsembled):
         device: torch.device,
         ckpt_name: str,
         aggregation_function: Operator,
+        frag_representation: str,
+        save_fps=False,
     ):
         """Initialize the class.
 
@@ -40,6 +43,9 @@ class AveragedEnsembled(ParentEnsembled):
             ckpt_name (str): The name of the checkpoint.
             aggregation_function (Operator): The aggregation function to use.
         """
+        self.frag_representation = frag_representation
+        self.save_fps = save_fps
+
         if aggregation_function != Operator.MEAN.value and num_rotations == 1:
             raise Exception(
                 "Use more than one rotation to use an aggregation function other than Mean (average) function"
@@ -146,3 +152,18 @@ class AveragedEnsembled(ParentEnsembled):
                 device=self.device,
                 requires_grad=False,
             )
+
+        if self.save_fps:
+            frag_fps = {}
+            recep_parent_fps = {}
+
+            for idx, entry in enumerate(self.model.prediction_targets_entry_infos):
+
+                if entry.ligand_id not in recep_parent_fps.keys():
+                    recep_parent_fps[entry.ligand_id] = self.predictions_ensembled[idx]
+
+                if entry.fragment_smiles not in frag_fps.keys():
+                    frag_fps[entry.fragment_smiles] = self.model.prediction_targets[idx]
+
+            torch.save(recep_parent_fps, os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_pred_fingerprints.pt")
+            torch.save(frag_fps, os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_calc_fingerprints.pt")
