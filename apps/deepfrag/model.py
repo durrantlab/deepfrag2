@@ -28,6 +28,9 @@ class DeepFragModel(pl.LightningModule):
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
+        self.predictions = None
+        self.prediction_targets = None
+        self.prediction_targets_entry_infos = None
 
         self._examples_used = {"train": {}, "val": {}, "test": {}}
 
@@ -200,6 +203,11 @@ class DeepFragModel(pl.LightningModule):
             type=str,
             help="The aggregation operator to be used to aggregate rotations. Defaults to Mean.",
         )  # , default=Operator.MEAN.value)
+        parser.add_argument(
+            "--save_fps",
+            action="store_true",
+            help="If given, predicted and calculated fingerprints will be saved in binary files during test mode.",
+        )
         return parent_parser
 
     def forward(self, voxel: torch.Tensor) -> torch.Tensor:
