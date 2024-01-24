@@ -67,6 +67,8 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
             cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
             idx = idx + 1
 
+            print(entry_infos, entry_data, act_value, prv_value, exp_value, act_euler, cos_loss_vector[idx])
+
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
 
 
