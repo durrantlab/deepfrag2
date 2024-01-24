@@ -773,7 +773,7 @@ class MoadVoxelModelTest(object):
                     {
                         "smiles": predicted_entry_info.fragment_smiles,
                         "cosineSimilarityWithAveraged": cos_similarity,
-                        "pcaProjection": pca[0],
+                        "pcaProjection": pca[0]
                     }
                 )
 
