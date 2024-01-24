@@ -53,12 +53,14 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         """
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
         cos_loss_vector = cos_loss(pred, fps)
-        idx = 0
-        for entry in entry_infos:
-            act_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][1])
-            prv_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][3])
+        for idx, entry in enumerate(entry_infos):
+            entry_data = self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx]
+            act_value = float(entry_data[1])
+            prv_value = float(entry_data[3])
+
             # the greater the prevalence, the greater the result to raise euler to the prevalence.
             exp_value = e ** prv_value
+
             # the activity with the receptor is penalized by increasing its value
             # this increase makes its tendency to 0 more difficult when multiplying by the probability obtained from the cosine similarity function
             act_euler = act_value * exp_value  # consider neg prevalence
