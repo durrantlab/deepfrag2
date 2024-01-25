@@ -10,11 +10,9 @@ from rdkit import Chem
 import linecache
 import csv
 from collagen.core.molecules.mol import BackedMol
-from rdkit.Geometry import Point3D
-from rdkit.Chem import AllChem, rdmolops
+from rdkit.Chem import AllChem
 import logging
 import numpy as np
-from collagen.core.molecules import smiles_utils
 
 
 class MOADInterface(object):
@@ -616,6 +614,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         eds = Chem.EditableMol(mol)
                         eds.RemoveAtom(atom.GetIdx())
                         mol = eds.GetMol()
+                    break
 
             # Now dummy atom removed, but connection marked.
             mol.UpdatePropertyCache()
@@ -724,12 +723,12 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 backed_parent = BackedMol(rdmol=new_mol)
 
                 # first_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(first_frag_smi)
-                first_frag_smi = self.__parent_smarts_to_mol(first_frag_smi)
-                backed_frag1 = BackedMol(rdmol=first_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
+                # first_frag_smi = self.__parent_smarts_to_mol(first_frag_smi)
+                backed_frag1 = BackedMol(rdmol=Chem.MolFromSmiles(first_frag_smi.replace("[R*]", "*")), warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
 
                 # second_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(second_frag_smi)
-                second_frag_smi = self.__parent_smarts_to_mol(second_frag_smi)
-                backed_frag2 = BackedMol(rdmol=second_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
+                # second_frag_smi = self.__parent_smarts_to_mol(second_frag_smi)
+                backed_frag2 = BackedMol(rdmol=Chem.MolFromSmiles(second_frag_smi.replace("[R*]", "*")), warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
 
                 return backed_parent, backed_frag1, backed_frag2
 

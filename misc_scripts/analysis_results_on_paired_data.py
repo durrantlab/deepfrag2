@@ -5,15 +5,19 @@ from rdkit.Chem import AllChem
 import numpy as np
 import csv
 from torch import nn
+from rdkit.Chem import DataStructs
+import sys
 
 
 class PairDataEntry:
-    def __init__(self, pdb_name, sdf_name, parent, frag1, frag2, act1, act2):
+    def __init__(self, pdb_name, sdf_name, parent, frag1, frag1_mol, frag2, frag2_mol, act1, act2):
         self.pdb_name = pdb_name
         self.sdf_name = sdf_name
         self.parent = parent
         self.frag1 = frag1
+        self.frag1_mol = frag1_mol
         self.frag2 = frag2
+        self.frag2_mol = frag2_mol
         self.act1 = act1
         self.act2 = act2
 
@@ -37,8 +41,11 @@ def parent_smarts_to_mol(smi):
                     eds = Chem.EditableMol(mol)
                     eds.RemoveAtom(atom.GetIdx())
                     mol = eds.GetMol()
+                break
 
         # Now dummy atom removed, but connection marked.
+        mol.UpdatePropertyCache()
+        Chem.GetSymmSSSR(mol)
         return mol
     except:
         return None
@@ -146,13 +153,13 @@ def read_mol(sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_fr
 
             backed_parent = new_mol
 
-            first_frag_smi = remove_mult_bonds_by_smi_to_smi(first_frag_smi)
-            first_frag_smi = parent_smarts_to_mol(first_frag_smi)
-            backed_frag1 = first_frag_smi if first_frag_smi else None
+            # first_frag_smi = remove_mult_bonds_by_smi_to_smi(first_frag_smi)
+            # first_frag_smi = parent_smarts_to_mol(first_frag_smi)
+            backed_frag1 = Chem.MolFromSmiles(first_frag_smi.replace("[R*]", "*")) if first_frag_smi else None
 
-            second_frag_smi = remove_mult_bonds_by_smi_to_smi(second_frag_smi)
-            second_frag_smi = parent_smarts_to_mol(second_frag_smi)
-            backed_frag2 = second_frag_smi if second_frag_smi else None
+            # second_frag_smi = remove_mult_bonds_by_smi_to_smi(second_frag_smi)
+            # second_frag_smi = parent_smarts_to_mol(second_frag_smi)
+            backed_frag2 = Chem.MolFromSmiles(second_frag_smi.replace("[R*]", "*")) if second_frag_smi else None
 
             return backed_parent, backed_frag1, backed_frag2
 
@@ -215,7 +222,7 @@ def read_data_from_csv(paired_data_csv):
                     act_second_frag_smi = float(row[col_act_second_frag_smi]) if backed_second_frag else float(0)
                     prevalence_receptor = float(row[col_prevalence]) if col_prevalence else 1
 
-                    data.append(PairDataEntry(pdb_name, sdf_name, parent_smi, first_frag_smi, second_frag_smi, act_first_frag_smi, act_second_frag_smi))
+                    data.append(PairDataEntry(pdb_name, sdf_name, parent_smi, first_frag_smi, backed_first_frag, second_frag_smi, backed_second_frag, act_first_frag_smi, act_second_frag_smi))
 
     return data
 
@@ -224,11 +231,77 @@ def read_data_from_csv(paired_data_csv):
 _cos = nn.CosineSimilarity(dim=0, eps=1e-6)
 
 
+def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+    """RDKFingerprint with maxPath=10.
+
+    Args:
+        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
+        size (int): Size of the fingerprint.
+        smiles (str): SMILES string (not used).
+
+    Returns:
+        np.array: Fingerprint.
+    """
+    fp = Chem.rdmolops.RDKFingerprint(m, maxPath=10, fpSize=size)
+    n_fp = list(map(int, list(fp.ToBitString())))
+    return np.array(n_fp)
+
+
+def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+    """Morgan fingerprints.
+
+    Args:
+        m (rdkit.Chem.rdchem.Mol): RDKit molecule (not used).
+        size (int): Size of the fingerprint.
+        smiles (str): SMILES string.
+
+    Returns:
+        np.array: Fingerprint.
+    """
+    array = np.zeros((0,))
+    try:
+        assert m is not None, "molecule as parameter is None"
+        DataStructs.ConvertToNumpyArray(
+            AllChem.GetHashedMorganFingerprint(m, 3, nBits=size),
+            array,
+        )
+    except BaseException as e:
+        print("Error calculating Morgan Fingerprints on " + smiles + " because of " + str(e), file=sys.stderr)
+        array = np.zeros((size,))
+
+    return array
+
+
+def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+    """A vector fusing RDK and Morgan Fingerprints.
+
+    Args:
+        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
+        size (int): Size of the fingerprint.
+        smiles (str): SMILES string (not used).
+
+    Returns:
+        np.array: Fingerprint.
+    """
+    rdk10_vals = _rdk10(m, size, smiles)
+    morgan_vals = _Morgan(m, size, smiles)
+    rdk10_morgan_vals = np.add(rdk10_vals, morgan_vals)
+    rdk10_morgan_vals[rdk10_morgan_vals > 0] = 1
+    return rdk10_morgan_vals
+
+
+FINGERPRINTS = {
+    "rdk10": _rdk10,
+    "rdk10_x_morgan": _rdk10_x_morgan,
+}
+
+
 if __name__ == "__main__":
     root = "path"
     paired_data_csv = "path"
     predicted_fps_file = "path"
     calculated_fps_file = "path"
+    fps = ""
     predicted_fps = {}
     calculated_fps = {}
 
@@ -257,8 +330,19 @@ if __name__ == "__main__":
             recep_parent_fps = predicted_fps[key]
 
             if entry.frag1 and entry.frag2:
-                sim_to_frag1 = _cos(recep_parent_fps, calculated_fps[entry.frag1]) if entry.frag1 in calculated_fps.keys() else float(-1)
-                sim_to_frag2 = _cos(recep_parent_fps, calculated_fps[entry.frag2]) if entry.frag2 in calculated_fps.keys() else float(-1)
+                if entry.frag1 in calculated_fps.keys():
+                    sim_to_frag1 = _cos(recep_parent_fps, calculated_fps[entry.frag1])
+                else:
+                    fps_vector = torch.from_numpy(FINGERPRINTS[fps](entry.frag1_mol, 2048, entry.frag1))
+                    calculated_fps[entry.frag1] = fps_vector
+                    sim_to_frag1 = _cos(recep_parent_fps, fps_vector)
+
+                if entry.frag2 in calculated_fps.keys():
+                    sim_to_frag2 = _cos(recep_parent_fps, calculated_fps[entry.frag2])
+                else:
+                    fps_vector = torch.from_numpy(FINGERPRINTS[fps](entry.frag2_mol, 2048, entry.frag2))
+                    calculated_fps[entry.frag2] = fps_vector
+                    sim_to_frag2 = _cos(recep_parent_fps, fps_vector)
 
                 writer = None
                 if sim_to_frag1 > sim_to_frag2:
@@ -274,3 +358,9 @@ if __name__ == "__main__":
 
                 if writer:
                     writer.writerow([entry.pdb_name, entry.sdf_name, entry.parent, entry.frag1, entry.frag2, entry.act1, entry.act2])
+
+    try:
+        os.remove(os.path.realpath(calculated_fps_file))
+    except:
+        pass
+    torch.save(calculated_fps, os.path.realpath(calculated_fps_file))
