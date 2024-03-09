@@ -165,7 +165,7 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                 if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
                     # Get all the fragments from an additional csv file
                     frags = []
-                    for _, _, backed_frag, _ in moad_ligand_.fragment_and_act:
+                    for _, _, backed_frag, _, _ in moad_ligand_.fragment_and_act:
                         frags.append([moad_ligand_.smiles, backed_frag])
                 else:
                     # Get all the fragments
