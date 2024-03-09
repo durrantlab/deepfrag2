@@ -208,6 +208,11 @@ class DeepFragModel(pl.LightningModule):
             action="store_true",
             help="If given, predicted and calculated fingerprints will be saved in binary files during test mode.",
         )
+        parser.add_argument(
+            "--use_prevalence",
+            action="store_true",
+            help="If given, prevalence values are calculated and used during fine-tuning on paired data.",
+        )
         return parent_parser
 
     def forward(self, voxel: torch.Tensor) -> torch.Tensor:

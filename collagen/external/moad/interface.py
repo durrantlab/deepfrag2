@@ -403,7 +403,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             grid_resolution: float,
             noh: bool,
             discard_distant_atoms: bool,
+            use_prevalence: bool
     ):
+        self.use_prevalence = use_prevalence
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _creating_logger_files(self):
@@ -514,8 +516,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         col_act_second_frag_smi = paired_data_csv_sep[8]  # activity for the second fragment
         col_first_ligand_template = paired_data_csv_sep[9]  # first SMILES string for assigning bonds to the ligand
         col_second_ligand_template = paired_data_csv_sep[10]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
-        col_prevalence = paired_data_csv_sep[11] if len(paired_data_csv_sep) == 12 else None  # prevalence value (optional). Default is 1 (even prevalence for the fragments)
+        col_gen_book_id = paired_data_csv_sep[11]  # Gene Book ID column
 
+        total_entries = 0
+        gene_book_id_counter = {}
         with open(path_csv_file, newline='') as csvfile:
             reader = csv.DictReader(csvfile, delimiter='\t')
             for row in reader:
@@ -565,7 +569,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                     act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
                     act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
-                    prevalence_receptor = row[col_prevalence] if col_prevalence else 1
+                    gen_book_id = row[col_gen_book_id]
+                    prevalence_receptor = float(0.0)
 
                     key_sdf_pdb = self.__get_key_sdf_pdb(pdb_name, sdf_name)
                     key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(pdb_name, sdf_name, parent_smi)
@@ -581,11 +586,22 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         self.backed_mol_x_parent[parent_smi] = backed_parent
                         self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb] = []
                         if backed_first_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor])
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor, gen_book_id])
                         if backed_second_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor, gen_book_id])
 
                     self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used")
+                    if self.use_prevalence:
+                        total_entries = total_entries + 1
+                        if gen_book_id not in gene_book_id_counter.keys():
+                            gene_book_id_counter[gen_book_id] = 0
+                        gene_book_id_counter[gen_book_id] = gene_book_id_counter[gen_book_id] + 1
+
+        if self.use_prevalence:
+            for list_for_parent_sdf_pdb in self.frag_and_act_x_parent_x_sdf_x_pdb.values():
+                for entry in list_for_parent_sdf_pdb:
+                    entry[3] = float(gene_book_id_counter[entry[4]] / total_entries)
+                    print(str(gene_book_id_counter[entry[4]]) + " / " + str(total_entries) + " = " + str(entry[3]))
 
         self.pdb_files.sort()
 

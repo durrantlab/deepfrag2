@@ -136,7 +136,8 @@ class MoadVoxelModelTrain(object):
                     grid_width=voxel_params.width,
                     grid_resolution=voxel_params.resolution,
                     noh=args.noh,
-                    discard_distant_atoms=args.discard_distant_atoms
+                    discard_distant_atoms=args.discard_distant_atoms,
+                    use_prevalence=args.use_prevalence
                 )
 
         train, val, _ = compute_dataset_split(

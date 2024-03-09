@@ -30,6 +30,7 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         self.is_cpu = kwargs["cpu"]
         self.fragment_representation = kwargs["fragment_representation"]
         self.database = None
+        self.use_prevalence = kwargs["use_prevalence"]
 
     def set_database(self, database):
         """Method to specify the paired database.
@@ -56,14 +57,14 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         for idx, entry in enumerate(entry_infos):
             entry_data = self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx]
             act_value = float(entry_data[1])
-            prv_value = float(entry_data[3])
+            prv_value = float(entry_data[3]) * -1 if self.use_prevalence else 0  # considering neg prevalence
 
-            # the greater the prevalence, the greater the result to raise euler to the prevalence.
+            # the lower the prevalence, the lower the result to raise euler to the prevalence.
             exp_value = e ** prv_value
 
-            # the activity with the receptor is penalized by increasing its value
+            # the activity with the receptor is penalized
             # this increase makes its tendency to 0 more difficult when multiplying by the probability obtained from the cosine similarity function
-            act_euler = act_value * exp_value  # consider neg prevalence
+            act_euler = act_value * exp_value
             cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
 
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)

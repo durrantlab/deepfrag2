@@ -7,6 +7,7 @@ import csv
 from torch import nn
 from rdkit.Chem import DataStructs
 import sys
+from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 
 
 class PairDataEntry:
@@ -290,9 +291,50 @@ def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
     return rdk10_morgan_vals
 
 
+MOLBERT_MODEL = None
+
+
+def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+    """Molbert fingerprints.
+
+    Args:
+        m (rdkit.Chem.rdchem.Mol): RDKit molecule (not used).
+        size (int): Size of the fingerprint (not used).
+        smiles (str): SMILES string.
+
+    Returns:
+        np.array: Fingerprint.
+    """
+    global MOLBERT_MODEL
+    fp = MOLBERT_MODEL.transform_single(smiles)
+    return np.array(fp[0][0])
+
+
+def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+    """Molbert fingerprints with positive values. Any value less than 0 is just
+    set to 0.
+
+    Args:
+        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
+        size (int): Size of the fingerprint.
+        smiles (str): SMILES string.
+
+    Returns:
+        np.array: Fingerprint.
+    """
+    try:
+        molbert_fp = _molbert(m, size, smiles)
+        molbert_fp[molbert_fp <= 0] = 0
+        molbert_fp[molbert_fp > 0] = 1
+        return molbert_fp
+    except Exception as e:
+        raise Exception("Error calculating binary molbert fingerprints " + str(e))
+
+
 FINGERPRINTS = {
     "rdk10": _rdk10,
     "rdk10_x_morgan": _rdk10_x_morgan,
+    "molbert_binary": _molbert_binary,
 }
 
 
@@ -302,8 +344,21 @@ if __name__ == "__main__":
     predicted_fps_file = "path"
     calculated_fps_file = "path"
     fps = ""
+    fps_size = 0
     predicted_fps = {}
     calculated_fps = {}
+
+    if fps == "molbert_binary":
+        print("Loading MolBert model")
+        PATH_MOLBERT_CKPT = os.path.join(
+            "PATH_TO_MOLBERT_MODEL", f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",
+        )
+        MOLBERT_MODEL = MolBertFeaturizer(
+            PATH_MOLBERT_CKPT,
+            embedding_type="average-1-cat-pooled",
+            max_seq_len=200,
+            device="cuda",
+        )
 
     print("Loading predicted fingerprints")
     predicted_fps = torch.load(predicted_fps_file, map_location=torch.device('cpu'))
@@ -333,14 +388,14 @@ if __name__ == "__main__":
                 if entry.frag1 in calculated_fps.keys():
                     sim_to_frag1 = _cos(recep_parent_fps, calculated_fps[entry.frag1])
                 else:
-                    fps_vector = torch.from_numpy(FINGERPRINTS[fps](entry.frag1_mol, 2048, entry.frag1))
+                    fps_vector = torch.from_numpy(FINGERPRINTS[fps](entry.frag1_mol, fps_size, entry.frag1))
                     calculated_fps[entry.frag1] = fps_vector
                     sim_to_frag1 = _cos(recep_parent_fps, fps_vector)
 
                 if entry.frag2 in calculated_fps.keys():
                     sim_to_frag2 = _cos(recep_parent_fps, calculated_fps[entry.frag2])
                 else:
-                    fps_vector = torch.from_numpy(FINGERPRINTS[fps](entry.frag2_mol, 2048, entry.frag2))
+                    fps_vector = torch.from_numpy(FINGERPRINTS[fps](entry.frag2_mol, fps_size, entry.frag2))
                     calculated_fps[entry.frag2] = fps_vector
                     sim_to_frag2 = _cos(recep_parent_fps, fps_vector)
 
