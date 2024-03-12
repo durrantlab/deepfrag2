@@ -11,7 +11,7 @@ from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 
 
 class PairDataEntry:
-    def __init__(self, pdb_name, sdf_name, parent, frag1, frag1_mol, frag2, frag2_mol, act1, act2):
+    def __init__(self, pdb_name, sdf_name, parent, frag1, frag1_mol, frag2, frag2_mol, act1, act2, gene_book):
         self.pdb_name = pdb_name
         self.sdf_name = sdf_name
         self.parent = parent
@@ -21,6 +21,7 @@ class PairDataEntry:
         self.frag2_mol = frag2_mol
         self.act1 = act1
         self.act2 = act2
+        self.gene_book = gene_book
 
 
 def parent_smarts_to_mol(smi):
@@ -181,7 +182,7 @@ def read_data_from_csv(paired_data_csv):
     col_act_second_frag_smi = paired_data_csv_sep[8]  # activity for the second fragment
     col_first_ligand_template = paired_data_csv_sep[9]  # first SMILES string for assigning bonds to the ligand
     col_second_ligand_template = paired_data_csv_sep[10]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
-    col_prevalence = paired_data_csv_sep[11] if len(paired_data_csv_sep) == 12 else None  # prevalence value (optional). Default is 1 (even prevalence for the fragments)
+    col_gen_book_id = paired_data_csv_sep[11]  # Gene Book ID column
 
     data = []
     with open(path_csv_file, newline='') as csvfile:
@@ -221,9 +222,9 @@ def read_data_from_csv(paired_data_csv):
 
                     act_first_frag_smi = float(row[col_act_first_frag_smi]) if backed_first_frag else float(0)
                     act_second_frag_smi = float(row[col_act_second_frag_smi]) if backed_second_frag else float(0)
-                    prevalence_receptor = float(row[col_prevalence]) if col_prevalence else 1
+                    gen_book_id = row[col_gen_book_id]
 
-                    data.append(PairDataEntry(pdb_name, sdf_name, parent_smi, first_frag_smi, backed_first_frag, second_frag_smi, backed_second_frag, act_first_frag_smi, act_second_frag_smi))
+                    data.append(PairDataEntry(pdb_name, sdf_name, parent_smi, first_frag_smi, backed_first_frag, second_frag_smi, backed_second_frag, act_first_frag_smi, act_second_frag_smi, gen_book_id))
 
     return data
 
@@ -367,13 +368,13 @@ if __name__ == "__main__":
     calculated_fps = torch.load(calculated_fps_file, map_location=torch.device('cpu'))
 
     frag1_most_similar_higher_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag1_most_similar_higher_act.csv")), 'w'))
-    frag1_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
+    frag1_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2", "gen_book_id"])
     frag1_most_similar_lower_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag1_most_similar_lower_act.csv")), 'w'))
-    frag1_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
+    frag1_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2", "gen_book_id"])
     frag2_most_similar_higher_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag2_most_similar_higher_act.csv")), 'w'))
-    frag2_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
+    frag2_most_similar_higher_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2", "gen_book_id"])
     frag2_most_similar_lower_act = csv.writer(open(os.path.abspath(os.path.join(root, "frag2_most_similar_lower_act.csv")), 'w'))
-    frag2_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2"])
+    frag2_most_similar_lower_act.writerow(["pdb", "ligand", "parent", "frag1", "frag2", "act1", "act2", "gen_book_id"])
 
     print("Reading paired data")
     data = read_data_from_csv(paired_data_csv)
@@ -412,7 +413,7 @@ if __name__ == "__main__":
                         writer = frag2_most_similar_lower_act
 
                 if writer:
-                    writer.writerow([entry.pdb_name, entry.sdf_name, entry.parent, entry.frag1, entry.frag2, entry.act1, entry.act2])
+                    writer.writerow([entry.pdb_name, entry.sdf_name, entry.parent, entry.frag1, entry.frag2, entry.act1, entry.act2, entry.gene_book])
 
     try:
         os.remove(os.path.realpath(calculated_fps_file))
