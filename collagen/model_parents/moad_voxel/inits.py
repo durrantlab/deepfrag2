@@ -9,7 +9,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch
 import os
-from apps.deepfrag.model_additional_data import DeepFragModelPairedDataFinetune
+from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
