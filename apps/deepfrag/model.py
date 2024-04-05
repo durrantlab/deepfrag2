@@ -7,7 +7,7 @@ from collagen.external.moad.types import Entry_info
 from torch import nn
 import pytorch_lightning as pl
 from apps.deepfrag.AggregationOperators import *
-from collagen.metrics import cos_loss
+from collagen.metrics import cos_loss, mse_loss
 
 
 class DeepFragModel(pl.LightningModule):
@@ -25,6 +25,7 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
 
         self.fp_size = kwargs["fp_size"]
+        self.is_regression_mode = kwargs["fragment_representation"] in ["molbert", "normalized_molbert"]
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
@@ -33,8 +34,6 @@ class DeepFragModel(pl.LightningModule):
         self.prediction_targets_entry_infos = None
 
         self._examples_used = {"train": {}, "val": {}, "test": {}}
-
-        # self.first_epoch = True
 
         self.encoder = nn.Sequential(
             # Rescale data (mean = 0, stdev = 1), per batch.
@@ -153,11 +152,17 @@ class DeepFragModel(pl.LightningModule):
             # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
             # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
             nn.Linear(512, self.fp_size),
-            # Applies sigmoid activation function. See
-            # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
-            # Values ranging between 0 and 1
-            nn.Sigmoid(),
-        )
+        ) if self.is_regression_mode else nn.Sequential(
+                # Randomly zero some values
+                nn.Dropout(),
+                # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
+                # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+                nn.Linear(512, self.fp_size),
+                # Applies sigmoid activation function. See
+                # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
+                # Values ranging between 0 and 1
+                nn.Sigmoid(),
+            )
 
     @staticmethod
     def add_model_args(
@@ -183,7 +188,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, molbert_binary",
+            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, binary_molbert, normalized_molbert",
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",
@@ -226,9 +231,7 @@ class DeepFragModel(pl.LightningModule):
         """
         latent_space = self.encoder(voxel)
         fps = self.deepfrag_after_encoder(latent_space)
-        # frag_voxel = self.decoder(latent_space)
         return fps
-        # return self.model(voxel)
 
     def loss(
         self,
@@ -248,7 +251,7 @@ class DeepFragModel(pl.LightningModule):
         Returns:
             torch.Tensor: The loss.
         """
-        return self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
+        return mse_loss(pred, fps) if self.is_regression_mode else self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
@@ -271,11 +274,8 @@ class DeepFragModel(pl.LightningModule):
 
         loss = self.loss(pred, fps, entry_infos, batch_size)
 
-        # print("shape", cos_loss(pred, fps).shape)
-
         self._mark_example_used("train", entry_infos)
 
-        # print("training_step")
         self.log("loss", loss, batch_size=batch_size)
 
         return loss
@@ -300,10 +300,32 @@ class DeepFragModel(pl.LightningModule):
         except Exception:
             self.log("loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
 
+    def validation_step(
+        self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
+    ):
+        """Run validation step.
+
+        Args:
+            batch (Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]): The
+                batch to validate on.
+            batch_idx (int): The batch index.
+        """
+        voxels, fps, entry_infos = batch
+
+        pred = self(voxels)
+
+        batch_size = voxels.shape[0]
+
+        loss = self.loss(pred, fps, entry_infos, batch_size)
+
+        self._mark_example_used("val", entry_infos)
+
+        self.log("val_loss", loss, batch_size=batch_size)
+
     def validation_epoch_end(self, outputs: List[dict]):
         """Run at the end of the validation epoch with the outputs of all
             validation steps. Logs the info.
-        
+
         Args:
             outputs (List[dict]): List of outputs you defined in
                 validation_step(), or if there are multiple dataloaders, a
@@ -322,58 +344,6 @@ class DeepFragModel(pl.LightningModule):
             self.log(
                 "val_loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1}
             )
-
-    # def on_train_epoch_end(self):
-    #     if not self.first_epoch:
-    #         return
-
-    #     print("\nEnd first epoch. Saving fragment counts...\n")
-
-    #     # Get the fragment counts from what's currently in self._examples_used
-    #     for recep_name in self._examples_used["train"].keys():
-    #         for frag in self._examples_used["train"][recep_name]:
-    #             if frag not in self.fragment_counts_for_training:
-    #                 self.fragment_counts_for_training[frag] = 0
-    #             self.fragment_counts_for_training[frag] += 1
-
-    #     # Convert self.fragment_counts_for_training to a list of tuples sorted
-    #     # in descending order by second element
-    #     fragment_counts_for_training_srted = sorted(
-    #         self.fragment_counts_for_training.items(),
-    #         key=lambda x: x[1],
-    #         reverse=True
-    #     )
-
-    #     with open("fragment_counts_for_training.json", "w") as f:
-    #         json.dump(fragment_counts_for_training_srted, f, indent=4)
-
-    #     self.first_epoch = False
-
-    def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
-    ):
-        """Run validation step.
-
-        Args:
-            batch (Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]): The
-                batch to validate on.
-            batch_idx (int): The batch index.
-        """
-        voxels, fps, entry_infos = batch
-
-        # print("::", voxels.shape, fps.shape, len(smis))
-
-        pred = self(voxels)
-
-        batch_size = voxels.shape[0]
-
-        # loss = cos_loss(pred, fps).mean()
-        loss = self.loss(pred, fps, entry_infos, batch_size)
-
-        self._mark_example_used("val", entry_infos)
-
-        # print("validation_step")
-        self.log("val_loss", loss, batch_size=batch_size)
 
     def configure_optimizers(self) -> torch.optim.Optimizer:
         """Configure the optimizer.
@@ -446,12 +416,10 @@ class DeepFragModel(pl.LightningModule):
 
         batch_size = voxels.shape[0]
 
-        # loss = cos_loss(pred, fps).mean()
         loss = self.loss(pred, fps, entry_infos, batch_size)
 
         self._mark_example_used("test", entry_infos)
 
-        # print("test_step")
         self.log("test_loss", loss, batch_size=batch_size)
 
         # Drop (large) voxel input, return the predicted and target fingerprints.

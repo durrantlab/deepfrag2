@@ -311,7 +311,7 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return np.array(fp[0][0])
 
 
-def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+def _binary_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints with positive values. Any value less than 0 is just
     set to 0.
 
@@ -335,7 +335,7 @@ def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
 FINGERPRINTS = {
     "rdk10": _rdk10,
     "rdk10_x_morgan": _rdk10_x_morgan,
-    "molbert_binary": _molbert_binary,
+    "binary_molbert": _binary_molbert,
 }
 
 
@@ -349,7 +349,7 @@ if __name__ == "__main__":
     predicted_fps = {}
     calculated_fps = {}
 
-    if fps == "molbert_binary":
+    if fps == "binary_molbert":
         print("Loading MolBert model")
         PATH_MOLBERT_CKPT = os.path.join(
             "PATH_TO_MOLBERT_MODEL", f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",
