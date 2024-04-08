@@ -40,6 +40,9 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
             float: loss value
         """
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
+        if self.is_regression_mode:
+            return super().loss(pred, fps, entry_infos, batch_size)
+
         cos_loss_vector = cos_loss(pred, fps)
         for idx, entry in enumerate(entry_infos):
             entry_data = self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx]
