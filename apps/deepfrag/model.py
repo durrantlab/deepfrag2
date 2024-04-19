@@ -25,7 +25,7 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
 
         self.fp_size = kwargs["fp_size"]
-        self.is_regression_mode = kwargs["fragment_representation"] in ["molbert", "normalized_molbert"]
+        self.is_regression_mode = kwargs["fragment_representation"] in ["molbert", "normalized_molbert", "shuffled_molbert", "shuffled_normalized_molbert"]
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
@@ -188,7 +188,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, binary_molbert, normalized_molbert",
+            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, binary_molbert, molbert, normalized_molbert",
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",

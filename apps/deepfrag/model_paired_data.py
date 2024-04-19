@@ -6,6 +6,7 @@ from math import e
 
 
 class DeepFragModelPairedDataFinetune(DeepFragModel):
+
     def __init__(self, **kwargs):
         """Initialize the DeepFrag model.
         

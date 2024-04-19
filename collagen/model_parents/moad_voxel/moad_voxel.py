@@ -148,6 +148,8 @@ class MoadVoxelModelParent(
             "binary_molbert",
             "normalized_molbert",
             "random_1536",
+            "shuffled_molbert",
+            "shuffled_normalized_molbert",
         ]:
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()

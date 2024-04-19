@@ -150,6 +150,12 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return np.array(fp[0][0])
 
 
+def _shuffled_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    molbert_fp = _molbert(m, size, smiles)
+    np.random.shuffle(molbert_fp)
+    return molbert_fp
+
+
 def _binary_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints with positive values. Any value less than 0 is just
     set to 0.
@@ -180,7 +186,13 @@ def _normalized_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     return norm_molbert_fp
 
 
-def _binary_random(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.array:
+def _shuffled_normalized_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    molbert_fp = _normalized_molbert(m, size, smiles)
+    np.random.shuffle(molbert_fp)
+    return molbert_fp
+
+
+def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.array:
     """Random binary fingerprints to validate non-random correlation .
 
     Args:
@@ -204,8 +216,10 @@ FINGERPRINTS = {
     "molbert": _molbert,
     "binary_molbert": _binary_molbert,
     "normalized_molbert": _normalized_molbert,
-    "random_1536": _binary_random,
-    "random_2048": _binary_random,
+    "random_binary_1536": _random_binary,
+    "random_binary_2048": _random_binary,
+    "shuffled_molbert": _shuffled_molbert,
+    "shuffled_normalized_molbert": _shuffled_normalized_molbert,
 }
 
 
