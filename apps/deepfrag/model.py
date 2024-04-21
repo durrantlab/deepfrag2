@@ -218,6 +218,11 @@ class DeepFragModel(pl.LightningModule):
             action="store_true",
             help="If given, prevalence values are calculated and used during fine-tuning on paired data.",
         )
+        parser.add_argument(
+            "--use_density_net",
+            action="store_true",
+            help="If given, it is used an additional neural network to predict densities.",
+        )
         return parent_parser
 
     def forward(self, voxel: torch.Tensor) -> torch.Tensor:

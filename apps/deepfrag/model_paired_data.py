@@ -1,11 +1,11 @@
 """DeepFrag model that uses additional SDF data for training."""
 
-from apps.deepfrag.model import DeepFragModel
 from collagen.metrics import cos_loss
 from math import e
+from apps.deepfrag.model_density_predictions import VoxelAutoencoder
 
 
-class DeepFragModelPairedDataFinetune(DeepFragModel):
+class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
 
     def __init__(self, **kwargs):
         """Initialize the DeepFrag model.

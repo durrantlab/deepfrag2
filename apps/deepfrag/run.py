@@ -12,6 +12,7 @@ from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
+from apps.deepfrag.model_density_predictions import VoxelAutoencoder
 from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
@@ -34,7 +35,7 @@ class DeepFrag(MoadVoxelModelParent):
             args (argparse.Namespace): The arguments.
         """
         super().__init__(
-            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else DeepFragModel,
+            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else VoxelAutoencoder if args.use_density_net else DeepFragModel,
             dataset_cls=MOADFragmentDataset
         )
 
