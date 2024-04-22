@@ -12,6 +12,7 @@ class VoxelAutoencoder(DeepFragModel):
 
         self.use_density_net = kwargs["use_density_net"]
         if self.use_density_net:
+            print("using Network to predict densities")
             self.density_encoder = nn.Sequential(
                 # Encoder
                 nn.Conv1d(16, 32, kernel_size=3, padding=1),
