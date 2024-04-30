@@ -60,6 +60,13 @@ def _add_generic_params(
     )
 
     parser.add_argument(
+        "--test_predictions_file",
+        type=str,
+        help="If specified, the numpy file where the full test-set predictions will be saved. Requires that the mode is set to test.",
+        default=None
+    )
+
+    parser.add_argument(
         "--receptor",
         type=str,
         help="The receptor (PDB file) to use when running in inference mode.",

@@ -622,6 +622,10 @@ class MoadVoxelModelTest(object):
             raise Exception(
                 "You cannot specify --split_method if using --load_splits."
             )
+        elif args.test_predictions_file is not None and args.mode != "test":
+            raise Exception(
+                "You cannot specify --test_predictions_file unless you are in test mode."
+            )
 
     def run_test(
         self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
@@ -694,6 +698,10 @@ class MoadVoxelModelTest(object):
             # You're iterating through multiple checkpoints. This allows output
             # from multiple trained models to be averaged.
 
+            # Keep track of all fingerprints in case --test_predictions_file is
+            # set.
+            all_fingerprints = []
+
             model = self.model_parent.init_model(args, ckpt_filename, fragment_set=set2run_test_on_single_checkpoint)
             model.eval()
 
@@ -722,6 +730,8 @@ class MoadVoxelModelTest(object):
                     label_set_fingerprints,
                     label_set_entry_infos,
                 ) = payload
+
+        import pdb; pdb.set_trace()
 
         # Get the average of averages (across all checkpoints)
         torch.div(
