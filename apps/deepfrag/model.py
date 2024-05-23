@@ -25,7 +25,7 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
 
         self.fp_size = kwargs["fp_size"]
-        self.is_regression_mode = kwargs["fragment_representation"] in ["molbert", "normalized_molbert", "shuffled_molbert", "shuffled_normalized_molbert"]
+        self.is_regression_mode = kwargs["fragment_representation"] in ["molbert", "normalized_molbert", "shuffled_molbert", "shuffled_normalized_molbert", "rdk10_mse", "rdk10_x_morgan_mse"]
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]

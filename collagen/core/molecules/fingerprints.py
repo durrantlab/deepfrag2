@@ -212,7 +212,9 @@ def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.ar
 
 FINGERPRINTS = {
     "rdk10": _rdk10,
+    "rdk10_mse": _rdk10,
     "rdk10_x_morgan": _rdk10_x_morgan,
+    "rdk10_x_morgan_mse": _rdk10_x_morgan,
     "molbert": _molbert,
     "binary_molbert": _binary_molbert,
     "normalized_molbert": _normalized_molbert,
