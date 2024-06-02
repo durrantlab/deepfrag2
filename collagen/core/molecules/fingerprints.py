@@ -202,6 +202,7 @@ FINGERPRINTS = {
     "rdk10_x_morgan_mse": _rdk10_x_morgan,
     "random_binary_2048": _random_binary,
     "random_binary_2048_mse": _random_binary,
+
     "molbert": _molbert,
     "binary_molbert": _binary_molbert,
     "random_binary_1536": _random_binary,
