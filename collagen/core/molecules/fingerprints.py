@@ -177,21 +177,6 @@ def _binary_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
         raise Exception("Error calculating binary molbert fingerprints " + str(e))
 
 
-def _normalized_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
-    molbert_fp = _molbert(m, size, smiles)
-    max = np.max(molbert_fp)
-    min = np.min(molbert_fp)
-    norm_molbert_fp = np.array([(x - min) / (max - min) for x in molbert_fp])
-    norm_molbert_fp = np.nan_to_num(norm_molbert_fp, nan=0.0, posinf=0.0, neginf=0.0)
-    return norm_molbert_fp
-
-
-def _shuffled_normalized_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
-    molbert_fp = _normalized_molbert(m, size, smiles)
-    np.random.shuffle(molbert_fp)
-    return molbert_fp
-
-
 def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.array:
     """Random binary fingerprints to validate non-random correlation .
 
@@ -215,13 +200,12 @@ FINGERPRINTS = {
     "rdk10_mse": _rdk10,
     "rdk10_x_morgan": _rdk10_x_morgan,
     "rdk10_x_morgan_mse": _rdk10_x_morgan,
+    "random_binary_2048": _random_binary,
+    "random_binary_2048_mse": _random_binary,
     "molbert": _molbert,
     "binary_molbert": _binary_molbert,
-    "normalized_molbert": _normalized_molbert,
     "random_binary_1536": _random_binary,
-    "random_binary_2048": _random_binary,
     "shuffled_molbert": _shuffled_molbert,
-    "shuffled_normalized_molbert": _shuffled_normalized_molbert,
 }
 
 
