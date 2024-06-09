@@ -143,11 +143,8 @@ class MoadVoxelModelParent(
         """
         if args.fragment_representation in [
             "rdk10",
-            "rdk10_mse",
             "rdk10_x_morgan",
-            "rdk10_x_morgan_mse",
             "random_binary_2048",
-            "random_binary_2048_mse",
         ]:
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation in [
