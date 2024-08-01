@@ -7,7 +7,7 @@ from collagen.external.moad.types import Entry_info
 from torch import nn
 import pytorch_lightning as pl
 from apps.deepfrag.AggregationOperators import *
-from collagen.metrics import cos_loss
+from collagen.metrics import cos_loss, mse_loss
 
 
 class DeepFragModel(pl.LightningModule):

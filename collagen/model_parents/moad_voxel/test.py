@@ -731,8 +731,6 @@ class MoadVoxelModelTest(object):
                     label_set_entry_infos,
                 ) = payload
 
-        import pdb; pdb.set_trace()
-
         # Get the average of averages (across all checkpoints)
         torch.div(
             avg_over_ckpts_of_avgs,
