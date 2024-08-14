@@ -481,7 +481,7 @@ class MoadVoxelModelTest(object):
             predictions_ensembled,
             label_set_fingerprints,
             label_set_entry_infos,
-            self.model_parent.NUM_MOST_SIMILAR_PER_ENTRY,
+            args.num_inference_predictions,
             pca_space,
         )
         for entry_idx in range(len(predictions_ensembled)):
@@ -765,7 +765,7 @@ class MoadVoxelModelTest(object):
             avg_over_ckpts_of_avgs,
             label_set_fingerprints,
             label_set_entry_infos,
-            self.model_parent.NUM_MOST_SIMILAR_PER_ENTRY,
+            args.num_inference_predictions,
             pca_space,
         )
         for entry_idx in range(len(avg_over_ckpts_of_avgs)):

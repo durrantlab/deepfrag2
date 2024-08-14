@@ -8,6 +8,7 @@ from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
+import os.path
 
 
 class AveragedEnsembled(ParentEnsembled):

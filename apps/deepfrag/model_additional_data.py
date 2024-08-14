@@ -59,11 +59,14 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
             prv_value = float(self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx][3])
             # the greater the prevalence, the greater the result to raise euler to the prevalence.
             exp_value = e ** prv_value
+
             # the activity with the receptor is penalized by increasing its value
             # this increase makes its tendency to 0 more difficult when multiplying by the probability obtained from the cosine similarity function
-            act_euler = act_value * exp_value
+            act_euler = act_value * exp_value  # consider neg prevalence
             cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
             idx = idx + 1
+
+            print(entry_infos, entry_data, act_value, prv_value, exp_value, act_euler, cos_loss_vector[idx])
 
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
 

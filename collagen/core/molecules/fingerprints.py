@@ -82,6 +82,7 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     n_fp = list(map(int, list(fp.ToBitString())))
     return np.array(n_fp)
 
+
 def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Morgan fingerprints. TODO: Candidate for removal.
     
@@ -94,10 +95,16 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
         np.array: Fingerprint.
     """
     array = np.zeros((0,))
-    DataStructs.ConvertToNumpyArray(
-        AllChem.GetHashedMorganFingerprint(Chem.MolFromSmiles(smiles), 3, nBits=size),
-        array,
-    )
+    try:
+        assert m is not None, "molecule as parameter is None"
+        DataStructs.ConvertToNumpyArray(
+            AllChem.GetHashedMorganFingerprint(m, 3, nBits=size),
+            array,
+        )
+    except BaseException as e:
+        print("Error calculating Morgan Fingerprints on " + smiles + " because of " + str(e), file=sys.stderr)
+        array = np.zeros((size,))
+
     return array
 
 
@@ -148,10 +155,13 @@ def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
     Returns:
         np.array: Fingerprint.
     """
-    molbert_fp = _molbert(m, size, smiles)
-    molbert_fp[molbert_fp <= 0] = 0
-    molbert_fp[molbert_fp > 0] = 1
-    return molbert_fp
+    try:
+        molbert_fp = _molbert(m, size, smiles)
+        molbert_fp[molbert_fp <= 0] = 0
+        molbert_fp[molbert_fp > 0] = 1
+        return molbert_fp
+    except Exception as e:
+        raise Exception("Error calculating binary molbert fingerprints " + str(e))
 
 
 def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.array:

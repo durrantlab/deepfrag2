@@ -4,7 +4,6 @@ adds the ability to load molecules from a database. A few other relevant classes
 as well.
 """
 
-from dataclasses import dataclass
 from io import StringIO
 from typing import Generator, List, Tuple, Iterator, Any, Dict, Optional
 import warnings
@@ -21,7 +20,6 @@ from .fingerprints import fingerprint_for
 from ..voxelization.voxelizer import numba_ptr, mol_gridify
 from ..types import AnyAtom
 from ...draw import MolView
-import sys
 
 
 class UnparsableSMILESException(Exception):

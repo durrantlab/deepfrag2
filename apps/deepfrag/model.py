@@ -7,7 +7,7 @@ from collagen.external.moad.types import Entry_info
 from torch import nn
 import pytorch_lightning as pl
 from apps.deepfrag.AggregationOperators import *
-from collagen.metrics import cos_loss, mse_loss
+from collagen.metrics import cos_loss
 
 
 class DeepFragModel(pl.LightningModule):
@@ -204,6 +204,11 @@ class DeepFragModel(pl.LightningModule):
             type=str,
             help="The aggregation operator to be used to aggregate rotations. Defaults to Mean.",
         )  # , default=Operator.MEAN.value)
+        parser.add_argument(
+            "--save_fps",
+            action="store_true",
+            help="If given, predicted and calculated fingerprints will be saved in binary files during test mode.",
+        )
         return parent_parser
 
     def forward(self, voxel: torch.Tensor) -> torch.Tensor:

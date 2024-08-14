@@ -89,7 +89,7 @@ def _add_generic_params(
         "--num_inference_predictions",
         type=int,
         help="The number of top-k matching fragments (SMILES strings) to return when running DeepFrag in inference mode.",
-        default=25,
+        default=10,
     )
 
     parser.add_argument(

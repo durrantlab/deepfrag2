@@ -4,6 +4,7 @@ from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import rdmolops
 
+
 # From https://www.rdkit.org/docs/Cookbook.html
 def neutralize_atoms(mol: Chem.Mol) -> Chem.Mol:
     """Neutralize the molecule by adding/removing hydrogens.
