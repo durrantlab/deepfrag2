@@ -42,4 +42,3 @@ for key_top_k in data_sorted_by_topk:
     df = pd.DataFrame(data=data)
     df.plot(title=key_top_k, xlabel='Epochs', ylabel='Accuracy')
     plt.savefig(os.getcwd() + os.sep + key_top_k + ".png")
-

@@ -274,4 +274,3 @@ if __name__ == "__main__":
 
                 if writer:
                     writer.writerow([entry.pdb_name, entry.sdf_name, entry.parent, entry.frag1, entry.frag2, entry.act1, entry.act2])
-

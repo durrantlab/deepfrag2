@@ -79,4 +79,3 @@ for log_file_name in logs:
             for ligand in structure[receptor]:
                 rows.append([receptor, ligand, structure[receptor][ligand]])
         csvwriter.writerows(rows)
-
