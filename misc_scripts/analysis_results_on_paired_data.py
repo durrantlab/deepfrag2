@@ -18,7 +18,7 @@ class PairDataEntry:
         self.act2 = act2
 
 
-def parent_smarts_to_mol(smi):
+def parent_smarts_to_mol(smi: str) -> Chem.Mol:
     try:
         # It's not enough to just convert to mol with MolFromSmarts. Need to keep track of
         # connection point.
@@ -135,10 +135,13 @@ def read_mol(sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_fr
             new_mol = substruct_with_coords(pdb_mol, parent_mol, atom_indices)
 
             # Get the connection point and add it to the data row
+            atom_idx = -1
             for atom in new_mol.GetAtoms():
                 if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
                     atom_idx = atom.GetIdx()
                     break
+
+            assert atom_idx != -1, "Atom index not found"
 
             conf = new_mol.GetConformer()
             connect_coord = conf.GetAtomPosition(atom_idx)

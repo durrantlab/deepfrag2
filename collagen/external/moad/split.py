@@ -2,7 +2,8 @@
 
 import os
 from dataclasses import dataclass
-from typing import List, Set, Tuple
+from typing import TYPE_CHECKING, List, Optional, Set, Tuple, Union
+
 from .types import MOAD_split
 import numpy as np
 from collagen.util import sorted_list
@@ -12,8 +13,11 @@ from collagen.external.moad.split_clustering import (
 )
 from tqdm import tqdm
 
+if TYPE_CHECKING:
+    from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface
 
-split_rand_num_gen = None
+
+split_rand_num_gen: Union[np.random.Generator, None] = None
 
 
 @dataclass
@@ -49,7 +53,9 @@ def _split_seq_per_probability(seq: List, p: float) -> Tuple[List, List]:
     global split_rand_num_gen
     l = sorted_list(seq)
     size = len(l)
-    split_rand_num_gen.shuffle(l)
+
+    if split_rand_num_gen is not None:
+        split_rand_num_gen.shuffle(l)
     # np.random.shuffle(l)
 
     return l[: int(size * p)], l[int(size * p) :]
@@ -70,11 +76,11 @@ def _flatten(seq: List[List]) -> List:
     return a
 
 
-def _random_divide_two_prts(seq: List) -> Tuple[List, List]:
+def _random_divide_two_prts(seq: Union[Set[str], List[str]]) -> Tuple[Set[str], Set[str]]:
     """Divide a sequence into two parts.
 
     Args:
-        seq (List): Sequence to be divided.
+        seq (Union[Set[str], List[str]]): Sequence to be divided.
 
     Returns:
         Tuple[List, List]: First and second parts of the sequence.
@@ -84,27 +90,30 @@ def _random_divide_two_prts(seq: List) -> Tuple[List, List]:
     size = len(l)
     half_size = size // 2  # same as int(size / 2.0)
 
-    split_rand_num_gen.shuffle(l)
+    if split_rand_num_gen is not None:
+        split_rand_num_gen.shuffle(l)
 
     # np.random.shuffle(l)
 
     return (set(l[:half_size]), set(l[half_size:]))
 
 
-def _random_divide_three_prts(seq: List) -> Tuple[List, List, List]:
+def _random_divide_three_prts(seq: Union[Set[str], List[str]]) -> Tuple[Set[str], Set[str], Set[str]]:
     """Divide a sequence into three parts.
 
     Args:
-        seq (List): Sequence to be divided.
+        seq (Union[Set[str], List[str]]): Sequence to be divided.
 
     Returns:
-        Tuple[List, List, List]: First, second, and third parts of the sequence.
+        Tuple[Set[str], Set[str], Set[str]]: First, second, and third parts of the sequence.
     """
     global split_rand_num_gen
+
     l = sorted_list(seq)
     size = len(l)
 
-    split_rand_num_gen.shuffle(l)
+    if split_rand_num_gen is not None:
+        split_rand_num_gen.shuffle(l)
     # np.random.shuffle(l)
 
     thid_size = size // 3
@@ -137,9 +146,9 @@ def _smiles_for(moad: "MOADInterface", targets: List[str]) -> Set[str]:
 
 
 def _limit_split_size(
-    max_pdbs_train: int,
-    max_pdbs_val: int,
-    max_pdbs_test: int,
+    max_pdbs_train: Optional[int],
+    max_pdbs_val: Optional[int],
+    max_pdbs_test: Optional[int],
     pdb_ids: MOAD_splits_pdb_ids,
 ) -> MOAD_splits_pdb_ids:
     # If the user has asked to limit the size of the train, test, or val set,
@@ -159,12 +168,33 @@ def _limit_split_size(
 def get_families_and_smiles(moad: "MOADInterface"):
     families: List[List[str]] = []
     for c in moad.classes:
-        families.extend([x.pdb_id for x in f.targets] for f in c.families)
+        families.extend([x.pdb_id for x in f.targets if x is not None] for f in c.families)
 
-    smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
+    smiles: List[List[str]] = [list(_smiles_for(moad, family)) for family in families]
 
     return families, smiles
 
+def _flatten_and_limit_pdb_ids(
+    train_families,
+    val_families,
+    test_families,
+    max_pdbs_train,
+    max_pdbs_val,
+    max_pdbs_test,
+):
+    # Now that they are divided, we can keep only the targets themselves (no
+    # longer organized into families).
+    pdb_ids = MOAD_splits_pdb_ids(
+        train=_flatten(train_families),
+        val=_flatten(val_families),
+        test=_flatten(test_families),
+    )
+
+    # If the user has asked to limit the size of the train, test, or val set,
+    # impose those limits here.
+    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
+
+    return pdb_ids
 
 def report_sizes(train_set, test_set, val_set):
     print(f"Training set size: {len(train_set)}")
@@ -191,103 +221,20 @@ def report_sizes(train_set, test_set, val_set):
 
     # What is the number that were not assigned to any cluster?
     # print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
-
-
-def _flatten_and_limit_pdb_ids(
-    train_families,
-    val_families,
-    test_families,
-    max_pdbs_train,
-    max_pdbs_val,
-    max_pdbs_test,
-):
-    # Now that they are divided, we can keep only the targets themselves (no
-    # longer organized into families).
-    pdb_ids = MOAD_splits_pdb_ids(
-        train=_flatten(train_families),
-        val=_flatten(val_families),
-        test=_flatten(test_families),
-    )
-
-    # If the user has asked to limit the size of the train, test, or val set,
-    # impose those limits here.
-    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
-
-    return pdb_ids
-
-
-def get_families_and_smiles(moad: "MOADInterface"):
-    families: List[List[str]] = []
-    for c in moad.classes:
-        families.extend([x.pdb_id for x in f.targets] for f in c.families)
-
-    smiles: List[List[str]] = [_smiles_for(moad, family) for family in families]
-
-    return families, smiles
-
-
-def report_sizes(train_set, test_set, val_set):
-    print(f"Training set size: {len(train_set)}")
-    print(f"Testing set size: {len(test_set)}")
-    print(f"Validation set size: {len(val_set)}")
-
-    # Get the smiles in each of the sets
-    train_smiles = {complex["smiles"] for complex in train_set}
-    test_smiles = {complex["smiles"] for complex in test_set}
-    val_smiles = {complex["smiles"] for complex in val_set}
-
-    # Get the families in each of the sets
-    train_families = {complex["family_idx"] for complex in train_set}
-    test_families = {complex["family_idx"] for complex in test_set}
-    val_families = {complex["family_idx"] for complex in val_set}
-
-    # Verify that there is no overlap between the sets
-    print(f"Train and test overlap, SMILES: {len(train_smiles & test_smiles)}")
-    print(f"Train and val overlap: {len(train_smiles & val_smiles)}")
-    print(f"Test and val overlap, SMILES: {len(test_smiles & val_smiles)}")
-    print(f"Train and test overlap, families: {len(train_families & test_families)}")
-    print(f"Train and val overlap, families: {len(train_families & val_families)}")
-    print(f"Test and val overlap, families: {len(test_families & val_families)}")
-
-    # What is the number that were not assigned to any cluster?
-    # print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
-
-
-def _flatten_and_limit_pdb_ids(
-    train_families,
-    val_families,
-    test_families,
-    max_pdbs_train,
-    max_pdbs_val,
-    max_pdbs_test,
-):
-    # Now that they are divided, we can keep only the targets themselves (no
-    # longer organized into families).
-    pdb_ids = MOAD_splits_pdb_ids(
-        train=_flatten(train_families),
-        val=_flatten(val_families),
-        test=_flatten(test_families),
-    )
-
-    # If the user has asked to limit the size of the train, test, or val set,
-    # impose those limits here.
-    pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
-
-    return pdb_ids
-
 
 def _generate_splits_from_scratch(
     moad: "MOADInterface",
     fraction_train: float = 0.6,
     fraction_val: float = 0.5,
     prevent_smiles_overlap: bool = True,
-    max_pdbs_train: int = None,
-    max_pdbs_val: int = None,
-    max_pdbs_test: int = None,
+    max_pdbs_train: Optional[int] = None,
+    max_pdbs_val: Optional[int] = None,
+    max_pdbs_test: Optional[int] = None,
     split_method: str = "random",
-    butina_cluster_cutoff: float = 0.4,
+    butina_cluster_cutoff: Optional[float] = 0.4,
 ):
     if split_method == "butina":
+        # User must specify a butina_cluster_cutoff if using butina clustering.
         assert butina_cluster_cutoff is not None
 
         print("Building training/validation/test sets based on Butina clustering")
@@ -326,7 +273,7 @@ def _generate_splits_from_scratch(
         # First, get a flat list of all the families (not grouped by class).
         families: List[List[str]] = []
         for c in moad.classes:
-            families.extend([x.pdb_id for x in f.targets] for f in c.families)
+            families.extend([x.pdb_id for x in f.targets if x is not None] for f in c.families)
 
         # Note that we're working with families (not individual targets in those
         # families) so members of same family are not shared across train, val,
@@ -374,7 +321,7 @@ def _generate_splits_from_scratch(
     return pdb_ids, all_smis
 
 
-def randomly_reassign_overlapping_smiles(all_smis):
+def randomly_reassign_overlapping_smiles(all_smis: MOAD_splits_smiles):
     # Reassign overlapping SMILES.
 
     # Find the overlaps (intersections) between pairs of sets.
@@ -441,10 +388,10 @@ def __priority_reassign_overlapping_smiles(all_smis, high_prior: bool = True):
 
 def _load_splits_from_disk(
     moad: "MOADInterface",
-    load_splits: str = None,
-    max_pdbs_train: int = None,
-    max_pdbs_val: int = None,
-    max_pdbs_test: int = None,
+    load_splits: str,
+    max_pdbs_train: Optional[int] = None,
+    max_pdbs_val: Optional[int] = None,
+    max_pdbs_test: Optional[int] = None,
 ):
     # User has asked to load splits from file on disk. Get from the file.
     with open(load_splits) as f:
@@ -485,7 +432,7 @@ def _load_splits_from_disk(
 
 def _save_split(
     save_splits: str,
-    seed: int,
+    seed: Optional[int],
     pdb_ids: MOAD_splits_pdb_ids,
     all_smis: MOAD_splits_smiles,
 ):
@@ -511,18 +458,19 @@ def _save_split(
 
 
 def compute_dataset_split(
-    dataset: "MOADInterface",
-    seed: int = 0,
+    # TODO: All interfaces should inherit from same parent class.
+    dataset: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"],
+    seed: Optional[int] = 0,
     fraction_train: float = 0.6,
     fraction_val: float = 0.5,
     prevent_smiles_overlap: bool = True,
-    save_splits: str = None,
-    load_splits: str = None,
-    max_pdbs_train: int = None,
-    max_pdbs_val: int = None,
-    max_pdbs_test: int = None,
+    save_splits: Optional[str] = None,
+    load_splits: Optional[str] = None,
+    max_pdbs_train: Optional[int] = None,
+    max_pdbs_val: Optional[int] = None,
+    max_pdbs_test: Optional[int] = None,
     split_method: str = "random",  # random, butina
-    butina_cluster_cutoff=0.4,
+    butina_cluster_cutoff: Optional[float] = 0.4,
 ) -> Tuple["MOAD_split", "MOAD_split", "MOAD_split"]:
     """Compute a TRAIN/VAL/TEST split.
 
@@ -542,7 +490,7 @@ def compute_dataset_split(
     Returns:
         Tuple[MOAD_split, MOAD_split, MOAD_split]: train/val/test sets
     """
-    if seed != 0:
+    if seed != 0 and seed is not None:
         global split_rand_num_gen
         split_rand_num_gen = np.random.default_rng(seed)
 

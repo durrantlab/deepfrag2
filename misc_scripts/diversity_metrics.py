@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import sys
 
+# TODO: Need to remove hard coding
 json_file_path = "D:\\Cesar\\0.Investigacion\\3.Experimentacion\\DeepFrag\\Results\\experiments_v2_heavy"
 
 all_files = os.listdir(json_file_path)

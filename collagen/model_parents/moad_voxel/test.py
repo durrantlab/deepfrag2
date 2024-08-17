@@ -14,7 +14,7 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
 )
 import torch
 from tqdm.std import tqdm
-from typing import Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 # import multiprocessing
 # from torch import multiprocessing
@@ -29,6 +29,10 @@ from collagen.metrics.metrics import (
     pca_space_from_label_set_fingerprints,
     top_k,
 )
+
+if TYPE_CHECKING:
+    import pytorch_lightning as pl
+    from collagen.metrics.metrics import PCAProject
 
 # See https://github.com/pytorch/pytorch/issues/3492
 # try:
@@ -63,7 +67,7 @@ class MoadVoxelModelTest(object):
         self.model_parent = model_parent
 
     def _add_to_label_set(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
         moad: MOADInterface,
         split: MOAD_split,
@@ -78,7 +82,6 @@ class MoadVoxelModelTest(object):
         right from the split. A helper script.
         
         Args:
-            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             moad (MOADInterface): The MOAD dataset.
             split (MOAD_split): The splits of the MOAD dataset.
@@ -149,25 +152,24 @@ class MoadVoxelModelTest(object):
         return fps_tnsr, all_smis
 
     def _create_label_set(
-        self: "MoadVoxelModelParent",
-        args: ArgumentParser,
+        self,
+        args: Namespace,
         device: torch.device,
         existing_label_set_fps: torch.Tensor = None,
-        existing_label_set_entry_infos: List[Entry_info] = None,
+        existing_label_set_entry_infos: Optional[List[Entry_info]] = None,
         skip_test_set=False,
-        train: MOAD_split = None,
-        val: MOAD_split = None,
-        test: MOAD_split = None,
-        moad: MOADInterface = None,
-        voxel_params: VoxelParams = None,
-        lbl_set_codes: List[str] = None,
+        train: Optional[MOAD_split] = None,
+        val: Optional[MOAD_split] = None,
+        test: Optional[MOAD_split] = None,
+        moad: Optional[MOADInterface] = None,
+        voxel_params: Optional[VoxelParams] = None,
+        lbl_set_codes: Optional[List[str]] = None,
     ) -> Tuple[torch.Tensor, List[Entry_info]]:
         """Create a label set (look-up) tensor and smiles list for testing. 
         Can be comprised of the fingerprints in the train and/or test and/or
         val sets, as well as SMILES strings from a file.
 
         Args:
-            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
             existing_label_set_fps (torch.Tensor, optional): The existing tensor of 
@@ -188,7 +190,7 @@ class MoadVoxelModelTest(object):
             Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
                 tensor and smiles list.
         """
-        if "all" in args.inference_label_sets:
+        if "all" in args.inference_label_sets:  # type: ignore
             raise Exception(
                 "The 'all' value for the --inference_label_sets parameter is not a valid value in test mode"
             )
@@ -197,12 +199,12 @@ class MoadVoxelModelTest(object):
         # existing_label_set
 
         if lbl_set_codes is None:
-            lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
+            lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]  # type: ignore
 
         # Load from train, val, and test sets.
         if existing_label_set_fps is None:
             label_set_fps = torch.zeros(
-                (0, args.fp_size),
+                (0, args.fp_size),  # type: ignore
                 dtype=torch.float32,
                 device=device,
                 requires_grad=False,
@@ -215,17 +217,17 @@ class MoadVoxelModelTest(object):
                 existing_label_set_fps, existing_label_set_entry_infos, device=device
             )
 
-        if "train" in lbl_set_codes and len(train.targets) > 0:
+        if "train" in lbl_set_codes and train is not None and len(train.targets) > 0:
             label_set_fps, label_set_smis = self._add_to_label_set(
                 args, moad, train, voxel_params, device, label_set_fps, label_set_smis
             )
 
-        if "val" in lbl_set_codes and len(val.targets) > 0:
+        if "val" in lbl_set_codes and val is not None and len(val.targets) > 0:
             label_set_fps, label_set_smis = self._add_to_label_set(
                 args, moad, val, voxel_params, device, label_set_fps, label_set_smis
             )
 
-        if "test" in lbl_set_codes and not skip_test_set and len(test.targets) > 0:
+        if "test" in lbl_set_codes and not skip_test_set and test is not None and len(test.targets) > 0:
             label_set_fps, label_set_smis = self._add_to_label_set(
                 args, moad, test, voxel_params, device, label_set_fps, label_set_smis
             )
@@ -288,14 +290,14 @@ class MoadVoxelModelTest(object):
         return label_set_fps, label_set_smis
 
     def _on_first_checkpoint(
-        self: "MoadVoxelModelParent",
+        self,
         all_test_data: Any,
         args: Namespace,
         model: "pl.LightningModule",
         train: MOAD_split,
         val: MOAD_split,
         moad: MOADInterface,
-        lbl_set_codes: List[str],
+        lbl_set_codes: Optional[List[str]],
         device: torch.device,
         predictions_per_rot: ensemble_helper.AveragedEnsembled,
     ) -> Tuple["PCAProject", torch.Tensor, torch.Tensor, List[Entry_info]]:
@@ -364,7 +366,7 @@ class MoadVoxelModelTest(object):
         )
 
     def _run_test_on_single_checkpoint(
-        self: "MoadVoxelModelParent",
+        self,
         all_test_data: Any,
         args: Namespace,
         model: "pl.LightningModule",
@@ -375,7 +377,7 @@ class MoadVoxelModelTest(object):
         train: MOAD_split,
         val: MOAD_split,
         moad: MOADInterface,
-        lbl_set_codes: List[str],
+        lbl_set_codes: Optional[List[str]],
         avg_over_ckpts_of_avgs: Any,
     ) -> Union[Tuple["PCAProject", torch.Tensor, torch.Tensor, List[Entry_info]], None]:
         """Test run on a single checkpoint. You're iterating through
@@ -572,7 +574,7 @@ class MoadVoxelModelTest(object):
         #    f.write(s.getvalue())
 
     def _validate_run_test(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
+        self, args: Namespace, ckpt_filename: str
     ):
         """Validate the arguments for the test mode.
 
@@ -628,13 +630,13 @@ class MoadVoxelModelTest(object):
             )
 
     def run_test(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
+        self, args: Namespace, ckpt_filename: str
     ):
         """Run a model on the test and evaluates the output.
 
         Args:
             args (Namespace): The user arguments.
-            ckpt_filename (Optional[str]): The checkpoint to use.
+            ckpt_filename (str): The checkpoint to use.
         """
 
         pr = cProfile.Profile()
@@ -675,7 +677,7 @@ class MoadVoxelModelTest(object):
 
         # You'll always need the test data. Note that ligands are not fragmented
         # by calling the get_data_from_split function.
-        test_data = self.model_parent.get_data_from_split(
+        test_data: "DataLambda" = self.model_parent.get_data_from_split(
             cache_file=self._get_cache(args),
             args=args,
             dataset=dataset,
@@ -693,6 +695,12 @@ class MoadVoxelModelTest(object):
             "checkpoints": [{"name": c, "order": i + 1} for i, c in enumerate(ckpts)],
             "entries": [],
         }
+        model = None
+        label_set_fingerprints = None
+        avg_over_ckpts_of_avgs = None
+        pca_space = None
+        label_set_entry_infos = None
+        label_set_entry_infos = None
         avg_over_ckpts_of_avgs = None
         for ckpt_idx, ckpt_filename in enumerate(ckpts):
             # You're iterating through multiple checkpoints. This allows output
@@ -718,11 +726,13 @@ class MoadVoxelModelTest(object):
                 train,
                 val,
                 set2run_test_on_single_checkpoint,
-                None,
+                None,  # lbl_set_codes
                 avg_over_ckpts_of_avgs,
             )
 
             if ckpt_idx == 0:
+                assert payload is not None, "Payload should not be None if first checkpoint."
+
                 # Payload is not None if first checkpoint.
                 (
                     pca_space,
@@ -730,6 +740,12 @@ class MoadVoxelModelTest(object):
                     label_set_fingerprints,
                     label_set_entry_infos,
                 ) = payload
+
+        assert model is not None, "Model should not be None after loop."
+        assert label_set_fingerprints is not None, "Label set fingerprints should not be None after loop."
+        assert pca_space is not None, "PCA space should not be None after loop."
+        assert label_set_entry_infos is not None, "Label set entry infos should not be None after loop."
+        assert avg_over_ckpts_of_avgs is not None, "Average over checkpoints of averages should not be None after loop."
 
         # Get the average of averages (across all checkpoints)
         torch.div(
@@ -795,7 +811,8 @@ class MoadVoxelModelTest(object):
 
     def _read_datasets_to_run_test(
         self, args: Namespace, voxel_params: VoxelParams
-    ) -> Tuple[Any, Any]:
+    ) -> Tuple[Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface], Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface]]:
+        # TODO: All Interfaces should inferit from same parent.
         """Read the dataset to run test on.
         
         Args:

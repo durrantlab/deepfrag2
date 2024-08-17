@@ -3,7 +3,12 @@
 import numba
 import numba.cuda
 import math
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Tuple
+
+if TYPE_CHECKING:
+    import cuda
+    import numpy as np
+
 
 """Add atoms to the grid in a GPU kernel.
 
@@ -158,7 +163,7 @@ def get_atom(
 
 @numba.cuda.jit(device=True, inline=True)
 def add_sum_value_to_layers(
-    mask: List[int],
+    mask: "np.uint32",  # List[int],
     batch_idx: int,
     layer_offset: int,
     grid: "cuda.devicearray.DeviceNDArray",

@@ -9,7 +9,10 @@ import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
 import os.path
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    import pytorch_lightning as pl
 
 class AveragedEnsembled(ParentEnsembled):
 

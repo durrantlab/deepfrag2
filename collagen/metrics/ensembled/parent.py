@@ -3,12 +3,15 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
+from typing import TYPE_CHECKING, Any, Tuple
 import numpy as np
 import torch
 from collagen.core.loader import DataLambda
 from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import PCAProject
+
+if TYPE_CHECKING:
+    import pytorch_lightning as pl
 
 # TODO: Only averaged.py uses this. Is the inheritance really necessary?
 

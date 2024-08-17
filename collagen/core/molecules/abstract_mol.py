@@ -1,7 +1,7 @@
 """Classes for abstract molecules."""
 
 from dataclasses import dataclass
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 
@@ -14,7 +14,7 @@ class AbstractAtom(object):
 
     """An abstract atom."""
 
-    coord: "numpy.ndarray"
+    coord: "np.ndarray"
     num: Any = None
     metadata: Any = None
 
@@ -36,7 +36,7 @@ class AbstractMol(Mol):
     _atoms: List[AbstractAtom]
     _bonds: List[AbstractBond]
 
-    def __init__(self, meta: dict = None):
+    def __init__(self, meta: Optional[dict] = None):
         """Initialize an abstract molecule.
         
         Args:
@@ -107,7 +107,7 @@ class AbstractMol(Mol):
         return self._atoms
 
     @property
-    def coords(self) -> "numpy.ndarray":
+    def coords(self) -> "np.ndarray":
         """Return the coordinates of the atoms in the molecule.
         
         Returns:

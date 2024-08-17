@@ -5,7 +5,7 @@ as well.
 """
 
 from io import StringIO
-from typing import Generator, List, Tuple, Iterator, Any, Dict, Optional
+from typing import TYPE_CHECKING, Generator, List, Tuple, Iterator, Any, Dict, Optional
 import warnings
 
 import numpy as np
@@ -21,6 +21,10 @@ from ..voxelization.voxelizer import numba_ptr, mol_gridify
 from ..types import AnyAtom
 from ...draw import MolView
 
+if TYPE_CHECKING:
+    import rdkit
+    from ..voxelization.voxelizer import VoxelParams
+    import py3DMol
 
 class UnparsableSMILESException(Exception):
 
@@ -56,7 +60,7 @@ class Mol(object):
 
     _KW_MOL_NAME = "name"
 
-    def __init__(self, meta: dict = None):
+    def __init__(self, meta: Optional[dict] = None):
         """Initialize a Mol object.
 
         Args:
@@ -241,7 +245,7 @@ class Mol(object):
         raise NotImplementedError()
 
     @property
-    def coords(self) -> "numpy.ndarray":
+    def coords(self) -> "np.ndarray":
         """Atomic coordinates as a numpy array.
 
         Returns:
@@ -250,7 +254,7 @@ class Mol(object):
         return NotImplementedError()
 
     @property
-    def center(self) -> "numpy.ndarray":
+    def center(self) -> "np.ndarray":
         """Average atomic coordinate of this Mol.
         
         Returns:
@@ -265,7 +269,9 @@ class Mol(object):
         Returns:
             List[AnyAtom]: A list of atoms.
         """
-        return NotImplementedError()
+        assert False, "Not implemented"
+        return []
+        # return NotImplementedError()
 
     @property
     def num_atoms(self) -> int:
@@ -286,7 +292,7 @@ class Mol(object):
         raise NotImplementedError()
 
     @property
-    def connectors(self) -> List["numpy.ndarray"]:
+    def connectors(self) -> List["np.ndarray"]:
         """Return a list of connector atom coordinates.
         
         Returns:
@@ -334,8 +340,8 @@ class Mol(object):
         self,
         params: "VoxelParams",
         cpu: bool = False,
-        center: "numpy.ndarray" = None,
-        rot: "numpy.ndarray" = np.array([0, 0, 0, 1]),
+        center: "np.ndarray" = None,
+        rot: "np.ndarray" = np.array([0, 0, 0, 1]),
     ) -> "torch.Tensor":
         """Convert a Mol to a voxelized tensor.
 
@@ -375,8 +381,8 @@ class Mol(object):
         params: "VoxelParams",
         cpu: bool = False,
         layer_offset: int = 0,
-        center: "numpy.ndarray" = None,
-        rot: "numpy.ndarray" = np.array([0, 0, 0, 1]),
+        center: "np.ndarray" = None,
+        rot: "np.ndarray" = np.array([0, 0, 0, 1]),
     ):
         """Voxelize a Mol into an existing 5-D tensor.
 
@@ -418,6 +424,7 @@ class Mol(object):
                 describing a grid rotation.
         """
         grid = numba_ptr(tensor, cpu=cpu)
+        assert params.atom_featurizer is not None, "Atom featurizer is None"
         atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
         mol_gridify(
             grid=grid,
@@ -439,8 +446,8 @@ class Mol(object):
     def voxelize_delayed(
         self,
         params: "VoxelParams",
-        center: "numpy.ndarray" = None,
-        rot: "numpy.ndarray" = np.array([0, 0, 0, 1]),
+        center: "np.ndarray" = None,
+        rot: "np.ndarray" = np.array([0, 0, 0, 1]),
     ) -> "DelayedMolVoxel":
         """Pre-compute voxelation parameters without actually invoking
         ``voxelize``.
@@ -459,6 +466,7 @@ class Mol(object):
                 voxelation arguments.
         """
         params.validate()
+        assert params.atom_featurizer is not None, "Atom featurizer is None"
         atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
         return DelayedMolVoxel(
             atom_coords=self.coords,
@@ -545,7 +553,7 @@ class BackedMol(Mol):
     def __init__(
         self,
         rdmol: "rdkit.Chem.rdchem.Mol",
-        meta: dict = None,
+        meta: Optional[dict] = None,
         warn_no_confs: bool = True,
     ):
         """Initialize a new BackedMol with an existing RDMol.
@@ -618,7 +626,7 @@ class BackedMol(Mol):
         return smi
 
     @property
-    def coords(self) -> "numpy.ndarray":
+    def coords(self) -> "np.ndarray":
         """Return atomic coordinates as a numpy array.
         
         Returns:
@@ -629,7 +637,7 @@ class BackedMol(Mol):
         return self.rdmol.GetConformer().GetPositions()
 
     @property
-    def connectors(self) -> List["numpy.ndarray"]:
+    def connectors(self) -> List["np.ndarray"]:
         """Return a list of connector coordinates as numpy arrays.
 
         Returns:
@@ -739,7 +747,7 @@ class BackedMol(Mol):
 
         return pairs
 
-    def fingerprint(self, fp_type: str, size: int) -> "numpy.ndarray":
+    def fingerprint(self, fp_type: str, size: int) -> "np.ndarray":
         """Return a fingerprint for the molecule.
 
         Args:
@@ -777,7 +785,7 @@ class MolDataset(Dataset):
         raise NotImplementedError()
 
 
-def mols_from_smi_file(filename: str) -> Generator[Tuple[str, "Mol"], None, None]:
+def mols_from_smi_file(filename: str) -> Generator[Tuple[str, "BackedMol"], None, None]:
     """Serve up mols from a file with smiles.
     
     Args:

@@ -1,10 +1,16 @@
 
 
-from typing import Optional, Callable, Any, Tuple
+from typing import TYPE_CHECKING, List, Optional, Callable, Any, Tuple, Union
 
 from torch.utils.data import Dataset
 import numpy as np
 from collagen.external.moad.split import full_moad_split
+
+if TYPE_CHECKING:
+    from collagen.external.moad.interface import MOADInterface
+    from collagen.core.molecules.mol import Mol
+    from collagen.external.moad.types import MOAD_split
+    from collagen.external.moad.types import MOAD_target
 
 # TODO: NOT CURRENTLY USED
 
@@ -57,7 +63,7 @@ class MOADPocketDataset(Dataset):
         thresh (float, optional): Threshold to ligand atoms to consider a "binding pocket."
         padding (float, optional): Padding added to receptor bounding box to sample negative examples.
         split (MOAD_split, optional): An optional split to constrain the space of examples.
-        transform (Callable[[Mol, numpy.ndarray, numpy.ndarray], Any], optional): An optional transformation function to invoke before returning samples.
+        transform (Callable[[Mol, np.ndarray, np.ndarray], Any], optional): An optional transformation function to invoke before returning samples.
             Takes the arguments (receptor, pos, neg).
     """
 
@@ -68,7 +74,7 @@ class MOADPocketDataset(Dataset):
         padding: float = 5,
         split: Optional["MOAD_split"] = None,
         transform: Optional[
-            Callable[["Mol", "numpy.ndarray", "numpy.ndarray"], Any]
+            Callable[["Mol", "np.ndarray", "np.ndarray"], Any]
         ] = None,
         **kwargs
     ):
@@ -80,7 +86,7 @@ class MOADPocketDataset(Dataset):
         self._index = self._build_index()
 
     def _build_index(self):
-        index = []
+        index: List[Tuple[str, int]] = []
         for t in sorted(self.split.targets):
             for n in range(len(self.moad[t])):
                 index.append((t, n))
@@ -89,11 +95,12 @@ class MOADPocketDataset(Dataset):
     def __len__(self) -> int:
         return len(self._index)
 
-    def __getitem__(self, idx: int) -> Tuple["Mol", "numpy.ndarray", "numpy.ndarray"]:
+    def __getitem__(self, idx: int) -> Union[None, Tuple["Mol", "np.ndarray", "np.ndarray"]]:
         target, n = self._index[idx]
 
         try:
-            rec, ligs = self.moad[target][n]
+            moad_target: "MOAD_target" = self.moad[target]
+            rec, ligs = moad_target[n]
         except:
             return None
 

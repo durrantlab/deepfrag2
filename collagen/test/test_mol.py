@@ -1,8 +1,5 @@
-
 import unittest
-
 from collagen import Mol
-
 
 class TestMol(unittest.TestCase):
     

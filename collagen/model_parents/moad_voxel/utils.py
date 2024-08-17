@@ -1,15 +1,16 @@
 """Utilities for MOAD voxel model."""
 
 from argparse import Namespace
-from typing import Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 from collagen.checkpoints import get_last_checkpoint
 from collagen.core.loader import DataLambda, MultiLoader
 from collagen.core.molecules.mol import Mol
 from collagen.core.voxelization.voxelizer import VoxelParams
 import torch
-from collagen.external.moad.interface import MOADInterface
 from collagen.external.moad.types import MOAD_split
 
+if TYPE_CHECKING:
+    from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface
 
 class MoadVoxelModelUtils(object):
 
@@ -28,7 +29,8 @@ class MoadVoxelModelUtils(object):
         self: "MoadVoxelModelParent",
         cache_file: str,
         args: Namespace,
-        dataset: MOADInterface,
+        # TODO: All interfaces should inherit from same parent class.
+        dataset: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"],
         split: MOAD_split,
         voxel_params: VoxelParams,
         device: torch.device,

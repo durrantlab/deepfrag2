@@ -5,7 +5,7 @@ caching), but let's leave it here.
 
 from dataclasses import dataclass, field
 from collagen.core import args as user_args
-from typing import List, Tuple, Any
+from typing import List, Set, Tuple, Any, Union
 from collections import OrderedDict
 from pathlib import Path
 import textwrap
@@ -38,7 +38,7 @@ class MOAD_family(object):
     """MOAD family."""
 
     rep_pdb_id: str
-    targets: List["MOAD_target"]
+    targets: List[Union[None,"MOAD_target"]]
 
 
 @dataclass
@@ -68,7 +68,7 @@ class MOAD_target(object):
         """Return the number of on-disk structures."""
         return len(self.files)
 
-    def _get_pdb_from_disk_cache(self, idx: int) -> Tuple[Any]:
+    def _get_pdb_from_disk_cache(self, idx: int) -> Tuple[Any, Any]:
         # Load the protein/ligand complex (PDB formatted).
         pkl_filename = str(self.files[idx])
         if self.discard_distant_atoms:
@@ -257,7 +257,7 @@ class MOAD_target(object):
                 # print("Save pickle")
                 pickle.dump([rec_mol, ligands], f, protocol=pickle.HIGHEST_PROTOCOL)
 
-    def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
+    def __getitem__(self, idx: int) -> Tuple[Mol, List[Mol]]:
         """
         Load the Nth structure for this target.
 
@@ -277,7 +277,7 @@ class MOAD_target(object):
 
         not_part_of_protein_sels = []
         lig_sels = []
-        lig_mols = []
+        lig_mols: List[Mol] = []
 
         for lig in self.ligands:
             # Get the selection of the ligand. Accounts for multi-residue
@@ -343,7 +343,7 @@ class PdbSdfDir_target(MOAD_target):
 
     """Class to load a target/ligand from a directory of PDB/SDF files."""
 
-    def __getitem__(self, idx: int) -> Tuple[Mol, Mol]:
+    def __getitem__(self, idx: int) -> Tuple[Mol, List[Mol]]:
         """Load the Nth structure for this target.
 
         Args:
@@ -351,9 +351,12 @@ class PdbSdfDir_target(MOAD_target):
 
         Returns a (receptor, ligand) tuple of Mol objects.
         """
-        lig_mols = []
+        lig_mols: List[Mol] = []
 
         for lig in self.ligands:
+            # TODO: MOAD_ligand doens't have rdmol, though children that inherit
+            # it do. Throughout codebase, things shouldn't be inheriting from
+            # MOAD_ligand. they should be inheriting from a common base class.
             lig_mol = Mol.from_rdkit(lig.rdmol, strict=False)
             lig_mol.meta["name"] = lig.name
             lig_mol.meta["moad_ligand"] = lig
@@ -468,7 +471,7 @@ class PdbSdfDir_ligand(MOAD_ligand):
 
 @dataclass
 class PairedPdbSdfCsv_ligand(PdbSdfDir_ligand):
-    fragment_and_act: {}
+    fragment_and_act: dict
     backed_parent: Any
 
 
@@ -479,7 +482,7 @@ class MOAD_split(object):
 
     name: str
     targets: List[str]
-    smiles: List[str]
+    smiles: Union[Set[str], List[str]]
 
 
 @dataclass

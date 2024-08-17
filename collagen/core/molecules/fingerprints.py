@@ -12,6 +12,10 @@ import wget
 import sys
 from zipfile import ZipFile
 from functools import lru_cache
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import rdkit
 
 PATH_MOLBERT_MODEL = os.path.join(os.getcwd(), "molbert_model")
 PATH_MOLBERT_CKPT = os.path.join(
@@ -139,6 +143,10 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
         np.array: Fingerprint.
     """
     global MOLBERT_MODEL
+    
+    # Make sure MOLBER_MODEL is not None, using assert
+    assert MOLBERT_MODEL is not None, "Molbert model is not loaded"
+    
     fp = MOLBERT_MODEL.transform_single(smiles)
     return np.array(fp[0][0])
 
@@ -193,7 +201,7 @@ FINGERPRINTS = {
 
 def fingerprint_for(
     mol: "rdkit.Chem.rdchem.Mol", fp_type: str, size: int, smiles: str
-) -> "numpy.ndarray":
+) -> "np.ndarray":
     """Compute a fingerprint for an rdkit mol. Raises an exception if the
     fingerprint is not found.
     

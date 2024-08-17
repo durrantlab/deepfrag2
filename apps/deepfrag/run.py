@@ -1,10 +1,11 @@
 """Run DeepFrag."""
 
 import argparse
+from collagen.core.molecules.mol import BackedMol
 import torch
 import pytorch_lightning as pl
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from collagen.external.moad.types import Entry_info
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.external.moad import MOADFragmentDataset
@@ -19,7 +20,7 @@ TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
 OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 
 
-def _fingerprint_fn(args: argparse.Namespace, mol: Mol):
+def _fingerprint_fn(args: argparse.Namespace, mol: BackedMol):
     return torch.tensor(mol.fingerprint(args.fragment_representation, args.fp_size))
 
 
@@ -102,7 +103,7 @@ class DeepFrag(MoadVoxelModelParent):
             else None
         )
 
-        fingerprints = (
+        fingerprints: Union[torch.Tensor, None] = (
             torch.zeros(size=(len(batch), args.fp_size), device=device)
             if voxel_params.calc_fps
             else None
@@ -118,6 +119,9 @@ class DeepFrag(MoadVoxelModelParent):
                     voxels, batch_idx=i, layer_offset=0, cpu=(device.type == "cpu")
                 )
 
+                # atom_featurizer must not be None
+                assert voxel_params.atom_featurizer is not None, "Atom featurizer is None"
+
                 parent.voxelize_into(
                     voxels,
                     batch_idx=i,
@@ -126,6 +130,8 @@ class DeepFrag(MoadVoxelModelParent):
                 )
 
             if voxel_params.calc_fps:
+                # Make sure fingerprint is not None
+                assert fingerprints is not None, "Fingerprint tensor is None"
                 fingerprints[i] = frag
 
             frag_smis.append(smi)

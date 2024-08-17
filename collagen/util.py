@@ -2,7 +2,7 @@
 
 import numpy as np
 import time
-from typing import List
+from typing import List, Set, Union
 
 def rand_rot() -> np.ndarray:
     """Return a random uniform quaternion rotation.
@@ -147,14 +147,15 @@ def get_vdw_radius(num: int) -> float:
     """
     return VDW_RADIUS_BY_NUM[num] if num in VDW_RADIUS_BY_NUM else 0
 
-def sorted_list(st: set) -> List:
+def sorted_list(st: Union[Set[str], List[str]]) -> List[str]:
     """Return a sorted list from a set.
     
     Args:
-        st (set): Set to be sorted.
+        st (Union[Set[str], List[str]]): Set to be sorted.
     
     Returns:
-        List: Sorted list from a set.
+        List[str]: Sorted list from a set.
     """
+
     return sorted(st)
 

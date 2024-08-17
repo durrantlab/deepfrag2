@@ -1,11 +1,14 @@
 """The MOAD voxel model for training."""
 
 from argparse import Namespace
-from typing import Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 from collagen.core.loader import DataLambda
 from torchinfo import summary
 from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface
 from collagen.external.moad.split import compute_dataset_split
+
+if TYPE_CHECKING:
+    from collagen.model_parents.moad_voxel.moad_voxel import MoadVoxelModelParent
 
 
 class MoadVoxelModelTrain(object):
@@ -66,7 +69,8 @@ class MoadVoxelModelTrain(object):
 
     def get_train_val_sets(
         self, args: Namespace, train: bool
-    ) -> Tuple[Any, DataLambda, DataLambda]:
+    ) -> Tuple[Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface], DataLambda, DataLambda]:
+        # NOTE: All interfaces should inherit from a base class.
         """Get the training and validation sets.
 
         Args:
@@ -120,6 +124,7 @@ class MoadVoxelModelTrain(object):
                     "For 'fine-tuning' mode, you must specify the '--data_dir' parameter or the '--paired_data_csv' parameter."
                 )
 
+            # TODO: Below makes me uncomfortable. It would be better if there was a base class that everything inherited.
             if args.data_dir:  # for fine-tuning mode using a non-paired database other than MOAD
                 moad = PdbSdfDirInterface(
                     structures_dir=args.data_dir,

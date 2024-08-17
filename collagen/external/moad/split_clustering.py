@@ -1,9 +1,12 @@
 """Split MOAD data using clustering."""
 
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING, Any, List, Tuple
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
 from rdkit.ML.Cluster import Butina
+
+if TYPE_CHECKING:
+    from collagen.external.moad.interface import MOADInterface
 
 # TODO: Name of this file isn't obvious. Good to rename.
 
@@ -51,6 +54,9 @@ def generate_splits_using_butina_clustering(
     for c in moad.classes:
         for f in c.families:
             for x in f.targets:
+                if x is None:
+                    continue
+                # TODO: PdbSdfDir_ligand has .rdmol, but others don't (e.g., MOAD_ligand doesn't).
                 ligands.append(x.ligands[0].rdmol)
                 targets.append([x.pdb_id])
 

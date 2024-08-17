@@ -18,6 +18,8 @@ import numpy as np
 from collagen.core.molecules import smiles_utils
 
 
+
+
 class MOADInterface(object):
 
     """Base class for interacting with Binding MOAD data. Initialize by passing
@@ -83,6 +85,8 @@ class MOADInterface(object):
         for c in self.classes:
             for f in c.families:
                 for t in f.targets:
+                    if t is None:
+                        continue
                     self._lookup[t.pdb_id.lower()] = t
 
         self._all_targets = list(self._lookup)
@@ -156,9 +160,9 @@ class MOADInterface(object):
                     classes.append(curr_class)
                 curr_class = MOAD_class(ec_num=parts[0], families=[])
             elif parts[1] != "":  # 2: Protein Family
-                if curr_target is not None:
+                if curr_target is not None and curr_family is not None:
                     curr_family.targets.append(curr_target)
-                if curr_family is not None:
+                if curr_family is not None and curr_class is not None:
                     curr_class.families.append(curr_family)
                 curr_family = MOAD_family(rep_pdb_id=parts[2], targets=[])
                 curr_target = MOAD_target(
@@ -171,7 +175,7 @@ class MOADInterface(object):
                     discard_distant_atoms=discard_distant_atoms,
                 )
             elif parts[2] != "":  # 3: Protein target
-                if curr_target is not None:
+                if curr_target is not None and curr_family is not None:
                     curr_family.targets.append(curr_target)
 
                 # if "-" in parts[2]:
@@ -187,7 +191,7 @@ class MOADInterface(object):
                     noh=noh,
                     discard_distant_atoms=discard_distant_atoms,
                 )
-            elif parts[3] != "":  # 4: Ligand
+            elif parts[3] != "" and curr_target is not None and curr_target.ligands is not None:  # 4: Ligand
                 curr_target.ligands.append(
                     MOAD_ligand(
                         name=parts[3],
@@ -199,9 +203,9 @@ class MOADInterface(object):
                     )
                 )
 
-        if curr_target is not None:
+        if curr_target is not None and curr_family is not None:
             curr_family.targets.append(curr_target)
-        if curr_family is not None:
+        if curr_family is not None and curr_class is not None:
             curr_class.families.append(curr_family)
         if curr_class is not None:
             classes.append(curr_class)
@@ -240,6 +244,9 @@ class MOADInterface(object):
         for cls in self.classes:
             for fam in cls.families:
                 for targ_idx, targ in enumerate(fam.targets):
+                    if targ is None:
+                        continue
+
                     # Assume lower case
                     k = targ.pdb_id.lower()
 
@@ -264,7 +271,7 @@ class MOADInterface(object):
                 # Remove any Nones from the target list
                 fam.targets = [t for t in fam.targets if t is not None]
 
-    def _extension_for_resolve_paths(self):
+    def _extension_for_resolve_paths(self) -> Union[str, None]:
         return "bio*"
 
 
@@ -324,6 +331,10 @@ class PdbSdfDirInterface(MOADInterface):
         curr_target = None
         curr_target_name = None
 
+        # if every_csv_path is a Path, convert to str
+        if isinstance(every_csv_path, Path):
+            every_csv_path = str(every_csv_path)
+
         pdb_files = glob. glob(every_csv_path + os.sep + "*.pdb", recursive=True)
         pdb_files.sort()
         for line in pdb_files:
@@ -332,7 +343,7 @@ class PdbSdfDirInterface(MOADInterface):
             parts = full_pdb_name.split("_")
 
             if (curr_target is None) or (full_pdb_name != curr_target_name):
-                if curr_target is not None:
+                if curr_target is not None and curr_family is not None:
                     curr_family.targets.append(curr_target)
                 curr_target_name = full_pdb_name
                 curr_target = PdbSdfDir_target(
@@ -361,7 +372,7 @@ class PdbSdfDirInterface(MOADInterface):
                         )
 
             if (curr_family is None) or (parts[0] != curr_family_name):
-                if curr_family is not None:
+                if curr_family is not None and curr_class is not None:
                     curr_class.families.append(curr_family)
                 curr_family_name = parts[0]
                 curr_family = MOAD_family(rep_pdb_id=parts[0], targets=[])
@@ -374,9 +385,9 @@ class PdbSdfDirInterface(MOADInterface):
                 curr_class_name = parts[0]
                 curr_class = MOAD_class(ec_num=parts[0], families=[])
 
-        if curr_target is not None:
+        if curr_target is not None and curr_family is not None:
             curr_family.targets.append(curr_target)
-        if curr_family is not None:
+        if curr_family is not None and curr_class is not None:
             curr_class.families.append(curr_family)
         if curr_class is not None:
             classes.append(curr_class)
@@ -408,6 +419,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             noh: bool,
             discard_distant_atoms: bool,
     ):
+        # Make sure it is string, not Path
+        if isinstance(structures, Path):
+            structures = str(structures)
+
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
     def _creating_logger_files(self):
@@ -446,7 +461,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         for full_pdb_name in self.pdb_files:
             if (curr_target is None) or (full_pdb_name != curr_target_name):
-                if curr_target is not None:
+                if curr_target is not None and curr_family is not None:
                     curr_family.targets.append(curr_target)
                 curr_target_name = full_pdb_name
                 curr_target = PdbSdfDir_target(
@@ -479,7 +494,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         )
 
             if (curr_family is None) or (full_pdb_name != curr_family_name):
-                if curr_family is not None:
+                if curr_family is not None and curr_class is not None:
                     curr_class.families.append(curr_family)
                 curr_family_name = full_pdb_name
                 curr_family = MOAD_family(rep_pdb_id=full_pdb_name, targets=[])
@@ -492,9 +507,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 curr_class_name = full_pdb_name
                 curr_class = MOAD_class(ec_num=full_pdb_name, families=[])
 
-        if curr_target is not None:
+        if curr_target is not None and curr_family is not None:
             curr_family.targets.append(curr_target)
-        if curr_family is not None:
+        if curr_family is not None and curr_class is not None:
             curr_class.families.append(curr_family)
         if curr_class is not None:
             classes.append(curr_class)
@@ -541,7 +556,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                     try:
                         parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
                     except:
-                        self.error_loading_parents.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
+                        if self.error_loading_parents is not None:
+                            self.error_loading_parents.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
                         continue
 
                     # getting the smiles for first fragment.
@@ -549,20 +565,24 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         try:
                             first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
                         except:
-                            self.error_loading_first_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
+                            if self.error_loading_first_fragments is not None:
+                                self.error_loading_first_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
                             backed_first_frag = None
                     else:
-                        self.error_loading_first_fragments.info("First fragment was not read")
+                        if self.error_loading_first_fragments is not None:
+                            self.error_loading_first_fragments.info("First fragment was not read")
 
                     # getting the smiles for second fragment.
                     if backed_second_frag:
                         try:
                             second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
                         except:
-                            self.error_loading_second_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
+                            if self.error_loading_second_fragments is not None:
+                                self.error_loading_second_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
                             backed_second_frag = None
                     else:
-                        self.error_loading_first_fragments.info("Second fragment was not read")
+                        if self.error_loading_first_fragments is not None:
+                            self.error_loading_first_fragments.info("Second fragment was not read")
 
                     if not backed_first_frag and not backed_second_frag:
                         continue
@@ -588,8 +608,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                             self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor])
                         if backed_second_frag:
                             self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
-
-                    self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used")
+                    if self.finally_used is not None:
+                        self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used")
 
         self.pdb_files.sort()
 
@@ -708,16 +728,20 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 except:
                     atom_indices = None
 
-            if atom_indices is not None and len(atom_indices) == parent_mol.GetNumAtoms():
+            if atom_indices is not None and parent_mol is not None and len(atom_indices) == parent_mol.GetNumAtoms():
 
                 # Success in finding substructure. Make new mol of just substructure.
                 new_mol = self.__substruct_with_coords(pdb_mol, parent_mol, atom_indices)
 
                 # Get the connection point and add it to the data row
+                atom_idx = -1  # So never unbound
                 for atom in new_mol.GetAtoms():
                     if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
                         atom_idx = atom.GetIdx()
                         break
+
+                # atom_idx must not be -1
+                assert atom_idx != -1, "Atom index must not be -1"
 
                 conf = new_mol.GetConformer()
                 connect_coord = conf.GetAtomPosition(atom_idx)
@@ -736,7 +760,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 return backed_parent, backed_frag1, backed_frag2
 
             else:
-                self.error_loading_parents.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
+                if self.error_loading_parents is not None:
+                    self.error_loading_parents.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
 
         return None, None, None
 
@@ -802,6 +827,10 @@ class SdfDirInterface(MOADInterface):
         """
         # TODO: Concerned things like noh and dicard_distant_atoms not being
         # used. Need to investigate and understand this function better.
+        
+        # if every_csv_path is a Path, convert to str
+        if isinstance(every_csv_path, Path):
+            every_csv_path = str(every_csv_path)
 
         classes = []
         curr_target = PdbSdfDir_target(

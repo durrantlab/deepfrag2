@@ -1,6 +1,6 @@
 """Module for aggregation operators."""
 
-from typing import Any, Union
+from typing import Any, List, Union
 import torch
 from torch import Tensor
 from torch.nn.modules.pooling import AdaptiveAvgPool3d
@@ -40,6 +40,11 @@ class Operator(Enum):
     CHOQUET_SYM = "choquet_integral_symmetric"
     SUGENO = "sugeno_fuzzy_integral"
 
+    def startswith(self, prefix: str) -> bool:
+        return self.value.startswith(prefix)
+    
+    def rsplit(self, s: str) -> List[str]:
+        return self.value.rsplit(s)
 
 class Aggregate1DTensor:
 
@@ -53,8 +58,10 @@ class Aggregate1DTensor:
         """
         self.function = None
         self.weight_function = None
-        self.weight_function_alfa = None
         self.operator = operator
+
+        # Below will be overwritten.
+        self.weight_function_alpha: float = 0.0
 
         if self.operator == Operator.OWA1.value:
             self.function = owas.OWA1
@@ -65,13 +72,13 @@ class Aggregate1DTensor:
         elif self.operator.startswith("owa_exp_smooth1"):
             self.function = owas.owa
             self.weight_function = self._exponential_smoothing_weights_1
-            self.weight_function_alfa = float(
+            self.weight_function_alpha = float(
                 "0." + self.operator.rsplit("owa_exp_smooth1_0")[1]
             )
         elif self.operator.startswith("owa_exp_smooth2"):
             self.function = owas.owa
             self.weight_function = self._exponential_smoothing_weights_2
-            self.weight_function_alfa = float(
+            self.weight_function_alpha = float(
                 "0." + self.operator.rsplit("owa_exp_smooth2_0")[1]
             )
         elif self.operator == Operator.CHOQUET_CF.value:
@@ -81,7 +88,7 @@ class Aggregate1DTensor:
         elif self.operator == Operator.SUGENO.value:
             self.function = integrals.sugeno_fuzzy_integral
         elif self.operator != Operator.MEAN.value:
-            raise "Aggregation operator is not valid"
+            raise ValueError("Aggregation operator is not valid")
 
     def aggregate_on_pytorch_tensor(self, tensor: Tensor) -> Union[Tensor, None]:
         """Aggregate a 1D tensor using the aggregation operator specified in
@@ -106,7 +113,7 @@ class Aggregate1DTensor:
             numpy_array = tensor.cpu().detach().numpy()
             value = self.function(
                 numpy_array,
-                self.weight_function(len(numpy_array), self.weight_function_alfa),
+                self.weight_function(len(numpy_array), self.weight_function_alpha),
             )
             return torch.tensor(value, dtype=torch.float32, requires_grad=True)
         return None
@@ -129,7 +136,7 @@ class Aggregate1DTensor:
             else:
                 return self.function(
                     numpy_array,
-                    self.weight_function(len(numpy_array), self.weight_function_alfa),
+                    self.weight_function(len(numpy_array), self.weight_function_alpha),
                 )
         return None
 
@@ -150,9 +157,9 @@ class Aggregate1DTensor:
             np.ndarray: the weight vector.
         """
         if dim <= 0:
-            raise "The dimension of the weight vector must be greater than 0"
+            raise ValueError("The dimension of the weight vector must be greater than 0")
         if alpha < 0 or alpha > 1:
-            raise "The alpha value must be between 0 and 1"
+            raise ValueError("The alpha value must be between 0 and 1")
 
         weights = np.zeros(dim)
         weights[0] = alpha
@@ -179,9 +186,9 @@ class Aggregate1DTensor:
             np.ndarray: the weight vector.
         """
         if dim <= 0:
-            raise "The dimension of the weight vector must be greater than 0"
+            raise ValueError("The dimension of the weight vector must be greater than 0")
         if alpha < 0 or alpha > 1:
-            raise "The alpha value must be between 0 and 1"
+            raise ValueError("The alpha value must be between 0 and 1")
 
         weights = np.zeros(dim)
         weights[dim - 1] = 1.0 - alpha

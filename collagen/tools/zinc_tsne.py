@@ -98,7 +98,7 @@ def save_csv(csv_path: str, z_out: np.array, info: list):
     csv = [["x", "y", "z", "smiles", "idx", "zinc_id"]]
     for i in range(len(z_out)):
         x, y, z = z_out[i]
-        csv.append([float(x), float(y), float(z), info[i][0], info[i][1], info[i][2]])
+        csv.append([str(float(x)), str(float(y)), str(float(z)), info[i][0], info[i][1], info[i][2]])
 
     with open(csv_path, "w") as f:
         f.write(to_csv(csv))

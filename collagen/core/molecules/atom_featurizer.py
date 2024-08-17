@@ -1,6 +1,6 @@
 """Featurizes atoms in a molecule."""
 
-from typing import List, Any, Tuple, Optional
+from typing import TYPE_CHECKING, List, Any, Tuple, Optional, Union, cast
 import warnings
 
 import numpy as np
@@ -8,6 +8,9 @@ import rdkit
 
 from ..types import AnyAtom
 
+if TYPE_CHECKING:
+    from collagen.core.molecules.mol import Mol
+    from collagen.core.molecules.abstract_mol import AbstractAtom
 
 class AtomFeaturizer(object):
 
@@ -15,7 +18,7 @@ class AtomFeaturizer(object):
     once per atom in a Mol.
     """
 
-    def featurize_mol(self, mol: "Mol") -> Tuple["numpy.ndarray", "numpy.ndarray"]:
+    def featurize_mol(self, mol: "Mol") -> Tuple["np.ndarray", "np.ndarray"]:
         """Featurize a Mol, returns (atom_mask, atom_radii).
         
         Args:
@@ -76,21 +79,21 @@ class AtomicNumFeaturizer(AtomFeaturizer):
             # Radii not provided, so assign radius 1 to all atoms.
             self.radii = [1] * len(self.layers)
 
-    def featurize(self, atom: Any) -> Tuple[int, float]:
+    def featurize(self, atom: Union["rdkit.Chem.rdchem.Atom", "AbstractAtom"]) -> Tuple[int, float]:
         """Feature an atom.
 
         Args:
-            atom (Any): An atom.
+            atom (rdkit.Chem.rdchem.Atom): An atom.
 
         Returns:
             Tuple[int, float]: (bitmask, atom_radius)
         """
-        num = None
+        num: Union[int, None] = None
 
         if type(atom) is rdkit.Chem.rdchem.Atom:
-            num = atom.GetAtomicNum()
+            num = cast(int, atom.GetAtomicNum()) # type: ignore
         elif type(atom).__name__ == "AbstractAtom":
-            num = atom.num
+            num = cast(int, atom.num)
         else:
             warnings.warn(
                 f"Unknown unknown atom type {type(atom)} in AtomicNumFeaturizer"

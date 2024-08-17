@@ -7,12 +7,14 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
 import torch
-from typing import Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
 import pickle
 
+if TYPE_CHECKING:
+    from collagen.model_parents.moad_voxel.moad_voxel import MoadVoxelModelParent
 
 class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
 
@@ -28,17 +30,17 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
 
     def _create_label_set(
         self: "MoadVoxelModelParent",
-        args: ArgumentParser,
+        args: Namespace,
         device: torch.device,
         existing_label_set_fps: torch.Tensor = None,
-        existing_label_set_entry_infos: List[Entry_info] = None,
+        existing_label_set_entry_infos: Optional[List[Entry_info]] = None,
         skip_test_set=False,
-        train: MOAD_split = None,
-        val: MOAD_split = None,
-        test: MOAD_split = None,
-        moad: MOADInterface = None,
-        voxel_params: VoxelParams = None,
-        lbl_set_codes: List[str] = None,
+        train: Optional[MOAD_split] = None,
+        val: Optional[MOAD_split] = None,
+        test: Optional[MOAD_split] = None,
+        moad: Optional[MOADInterface] = None,
+        voxel_params: Optional[VoxelParams] = None,
+        lbl_set_codes: Optional[List[str]] = None,
     ) -> Tuple[torch.Tensor, List[Entry_info]]:
         """Create a label set (look-up) tensor and smiles list for inference
         on custom label set. It can be comprised of the fingerprints in the
@@ -123,6 +125,10 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
                     file.close()
             else:
                 # Cache file does not exist, so generate.
+                assert existing_label_set_entry_infos is not None, (
+                    "Must provide existing label set entry infos when generating "
+                    "a label set from scratch"
+                )
                 label_set_fps, label_set_smis = remove_redundant_fingerprints(
                     existing_label_set_fps,
                     existing_label_set_entry_infos,

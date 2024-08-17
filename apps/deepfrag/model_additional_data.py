@@ -1,8 +1,8 @@
 """DeepFrag model that uses additional SDF data for training."""
 
-from typing import List
+from typing import List, Union
 from apps.deepfrag.model import DeepFragModel
-from collagen.external.moad.interface import SdfDirInterface
+from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface, SdfDirInterface
 from collagen.external.moad.split import compute_dataset_split
 from collagen.external.moad.cache_filter import (
     CacheItemsToUpdate,
@@ -29,9 +29,10 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
 
         self.is_cpu = kwargs["cpu"]
         self.fragment_representation = kwargs["fragment_representation"]
-        self.database = None
+        self.database: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface", None] = None
 
-    def set_database(self, database):
+    def set_database(self, database: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"]):
+        # TODO: All interfaces should inherit from a common parent.
         """Method to specify the paired database.
 
         Args:
@@ -39,18 +40,21 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         """
         self.database = database
 
-    def loss(self, pred, fps, entry_infos, batch_size):
+    def loss(self, pred, fps, entry_infos: List[Entry_info], batch_size):
         """Loss function.
 
         Args:
             pred: tensor with the fingerprint values obtained from voxels.
             fps: tensor with the fingerprint values obtained from a given fragment representation.
-            entry_infos: list with each entry information.
+            entry_infos (List[Entry_info]): list with each entry information.
             batch_size: size of the tensors and list aforementioned.
 
         Returns:
             float: loss value
         """
+        # self.database must not be none
+        assert self.database is not None, "Database must be set before calling loss function."
+
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
         cos_loss_vector = cos_loss(pred, fps)
         for idx, entry in enumerate(entry_infos):
@@ -144,7 +148,7 @@ class DeepFragModelBadData(DeepFragModel):
             grid_width=None,
             grid_resolution=None,
             noh=None,
-            discard_distant_atoms=kwargs["discard_distant_atoms"],
+            discard_distant_atoms=kwargs["discard_distant_atoms"]
         )
 
         train, _, _ = compute_dataset_split(

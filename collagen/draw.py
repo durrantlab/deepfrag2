@@ -1,18 +1,20 @@
 """Classes for drawing molecules and voxels."""
 
-from typing import Tuple
-
+from typing import TYPE_CHECKING, Optional, Tuple
 import k3d
 import numpy as np
 import py3Dmol
 
+if TYPE_CHECKING:
+    from collagen.core.molecules.mol import Mol
+    import torch
 
 class VoxelView(object):
 
     """Useful for visualizing voxels."""
 
     @staticmethod
-    def draw(tensor: "torch.Tensor", color_map: list = None):
+    def draw(tensor: "torch.Tensor", color_map: Optional[list] = None):
         """Draw a 3D tensor using k3d.
 
         Args:
@@ -57,7 +59,7 @@ class MolView(object):
         """Return the underlying py3Dmol.view object."""
         return self._view
 
-    def add_cartoon(self, mol: "Mol", style: dict = None):
+    def add_cartoon(self, mol: "Mol", style: Optional[dict] = None):
         """Add a cartoon representation of a molecule to the viewer.
         
         Args:
@@ -69,7 +71,7 @@ class MolView(object):
         self._view.addModel(mol.pdb(), "pdb")
         self._view.setStyle({"model": -1}, {"cartoon": style})
 
-    def add_stick(self, mol: "Mol", style: dict = None):
+    def add_stick(self, mol: "Mol", style: Optional[dict] = None):
         """Add a stick representation of a molecule to the viewer.
 
         Args:
@@ -81,7 +83,7 @@ class MolView(object):
         self._view.addModel(mol.sdf(), "sdf")
         self._view.setStyle({"model": -1}, {"stick": style})
 
-    def add_sphere(self, mol: "Mol", style: dict = None):
+    def add_sphere(self, mol: "Mol", style: Optional[dict] = None):
         """Add a sphere representation of a molecule to the viewer.
 
         Args:

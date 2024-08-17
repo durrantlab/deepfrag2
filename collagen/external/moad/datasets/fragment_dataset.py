@@ -4,7 +4,7 @@ ligands on single bonds. Used in DeepFrag, for example.
 
 import argparse
 from dataclasses import dataclass
-from typing import List, Dict, Union, Tuple, Set, Optional, Any, Callable
+from typing import TYPE_CHECKING, List, Dict, Union, Tuple, Set, Optional, Any, Callable
 from pathlib import Path
 from torch.utils.data import Dataset
 from collagen.core import args as user_args
@@ -15,6 +15,13 @@ import sys
 from collagen.external.moad.interface import PairedPdbSdfCsvInterface
 from collagen.core.molecules.mol import BackedMol
 
+
+if TYPE_CHECKING:
+    from collagen.external.moad.interface import MOADInterface
+    from collagen.external.moad.split import MOAD_split
+    from collagen.core.molecules.mol import Mol
+    from collagen.external.moad.interface import PairedPdbSdfCsvInterface
+    from collagen.external.moad.types import MOAD_ligand
 
 @dataclass
 class MOADFragmentDataset_entry(object):
@@ -71,7 +78,7 @@ class MOADFragmentDataset(Dataset):
         cache_cores: int = 1,
         split: Optional["MOAD_split"] = None,
         transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
-        args: argparse.Namespace = None,
+        args: Optional[argparse.Namespace] = None,
     ):
         """Initialize a MOADFragmentDataset.
         
@@ -405,6 +412,9 @@ class MOADFragmentDataset(Dataset):
                 cache file. Defaults to None.
             cores (int, optional): The number of cores to use. Defaults to 1.
         """
+        # Make sure self.args is not None
+        assert self.args is not None, "MOADFragmentDataset args is None"
+
         cache, filtered_cache = load_cache_and_filter(
             self._lig_filter,
             self.moad,
@@ -439,7 +449,7 @@ class MOADFragmentDataset(Dataset):
         """
         return len(self._internal_index_valids_filtered)
 
-    def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
+    def __getitem__(self, idx: int) -> Union[None, Tuple[Mol, Mol, Mol]]:
         """Return (receptor, parent, fragment)
         
         Args:
@@ -449,7 +459,7 @@ class MOADFragmentDataset(Dataset):
             Tuple[Mol, Mol, Mol]: (receptor, parent, fragment)
         """
         assert 0 <= idx <= len(self), "Index out of bounds"
-        entry = None
+        entry: Union[MOADFragmentDataset_entry, None] = None
         counter = 1
         max_counter = 3
         # For some reason, id we repeat this code more than 1 times, then we
@@ -462,6 +472,10 @@ class MOADFragmentDataset(Dataset):
         while counter <= max_counter:
             try:
                 entry = self._internal_index_valids_filtered[idx]
+
+                # TODO: self.moad needs to be a parent class that all other
+                # interfaces inherit (e.g., MOADInterface,
+                # PairedPdbSdfCsvInterface)
 
                 receptor, ligands = self.moad[entry.pdb_id][
                     entry.lig_to_frag_masses_chunk_idx

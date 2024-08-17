@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 import torch
 from torch import nn
-from typing import List, Dict, Tuple, Any
+from typing import Callable, List, Dict, Optional, Tuple, Any, Union
 from tqdm.auto import tqdm
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -66,7 +66,7 @@ def bin_acc(pred, target):
     return torch.mean((torch.round(pred) == target).float())
 
 
-def _broadcast_fn(fn: callable, yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
+def _broadcast_fn(fn: Callable, yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
     """Broadcast a distance function.
     
     Args:
@@ -145,9 +145,9 @@ def most_similar_matches(
     label_set_fingerprints: torch.Tensor,
     label_set_smis: List[str],
     k: int,
-    pca_project: PCAProject = None,
+    pca_project: Optional[PCAProject] = None,
     ignore_duplicates=False,
-) -> List[Tuple[str, float, List[float]]]:
+) -> List[List[List[Union[str, float, List[float]]]]]:
     """Identify most similar entires in fingerprint library.
 
     Args:
@@ -157,26 +157,26 @@ def most_similar_matches(
         ignore_duplicates (bool): If True, ignore duplicate fingerprints.
 
     Returns:
-        List[Tuple[str, float, List[float]]]: List of [SMILES, distance,
-            projected fingerprint] for each entry.
+        List[List[List[Union[str, float, List[float]]]]]: List of [SMILES,
+            distance, projected fingerprint] for each entry.
     """
     if ignore_duplicates:
         label_set_fingerprints = label_set_fingerprints.unique(dim=0)
 
-    all_most_similar = []
+    all_most_similar: List[List[List[Union[str, float, List[float]]]]] = []
 
     for entry_idx in tqdm(range(len(predictions)), desc="Most Similar Matches"):
         dists = _broadcast_fn(cos_loss, predictions[entry_idx], label_set_fingerprints)
         sorted_idxs = torch.argsort(dists, dim=-1).narrow(0, 0, k)
-        sorted_dists = torch.index_select(dists, 0, sorted_idxs)
-        sorted_smis = [label_set_smis[idx] for idx in sorted_idxs]
+        sorted_dists: torch.Tensor = torch.index_select(dists, 0, sorted_idxs)
+        sorted_smis: List[str] = [label_set_smis[idx] for idx in sorted_idxs]
 
         # if pca_project is not None:
         sorted_label_set_fingerprints = torch.index_select(
             label_set_fingerprints, 0, sorted_idxs
         )
 
-        most_similar = []
+        most_similar: List[List[Union[str, float, List[float]]]] = []
 
         for cos_dist, smi, fp in zip(
             sorted_dists[:k], sorted_smis[:k], sorted_label_set_fingerprints[:k]
@@ -184,7 +184,7 @@ def most_similar_matches(
             cos_sim = 1 - float(
                 cos_dist
             )  # So reports cos similarity, not cosine distance.
-            similar_one_to_add = [smi, cos_sim]
+            similar_one_to_add: List[Union[str, float, List[float]]] = [smi, cos_sim]
             if pca_project is not None:
                 similar_one_to_add.append(pca_project.project(fp))
             most_similar.append(similar_one_to_add)

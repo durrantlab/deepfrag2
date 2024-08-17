@@ -1,6 +1,7 @@
 """Code to roughly identify aromatic/aliphatic and acid/base/neutral groups.
 """
 
+from typing import Literal, Tuple, Union
 from rdkit import Chem
 
 acid_substructs_smi = [
@@ -116,6 +117,8 @@ def is_acid(mol: Chem.Mol, testing=False) -> bool:
     mol = Chem.Mol(mol)
 
     if testing:
+        # NOTE: If testing, return is more complex. Don't worry about type
+        # incompatibility here.
         return next(
             (
                 (True, acid_substructs_smi[i])
@@ -146,7 +149,8 @@ def is_base(mol: Chem.Mol, testing=False) -> bool:
     mol = Chem.Mol(mol)
 
     if testing:
-
+        # NOTE: If testing, return is more complex. Don't worry about type
+        # incompatibility here.
         return next(
             (
                 (True, base_substructs_smi[i])

@@ -9,7 +9,7 @@ import json
 from torch import multiprocessing
 import os
 from pathlib import Path
-from typing import Tuple, Union, Any, Optional, List
+from typing import TYPE_CHECKING, Callable, Dict, Tuple, Union, Any, Optional, List
 from tqdm.std import tqdm
 from collagen.external.moad.chem_props import is_aromatic, is_acid, is_base, is_neutral
 import numpy as np
@@ -18,7 +18,9 @@ from scipy.spatial.distance import cdist
 from .moad_utils import fix_moad_smiles
 from collagen.external.moad.types import PairedPdbSdfCsv_ligand
 
-
+if TYPE_CHECKING:
+    from collagen.external.moad.interface import MOADInterface
+    from collagen.external.moad.types import MOAD_split
 @dataclass
 class CacheItemsToUpdate(object):
 
@@ -33,7 +35,7 @@ class CacheItemsToUpdate(object):
     frag_masses: bool = False
     frag_num_heavy_atoms: bool = False
     frag_dists_to_recep: bool = False
-    frag_smiles: str = False  # str || bool
+    frag_smiles: bool = False  # str || bool
     frag_aromatic: bool = False
     frag_acid: bool = False
     frag_base: bool = False
@@ -67,7 +69,7 @@ class CacheItemsToUpdate(object):
 CACHE_ITEMS_TO_UPDATE = CacheItemsToUpdate()
 
 
-def _set_molecular_prop(func: callable, func_input: Any, default_if_error: Any) -> Any:
+def _set_molecular_prop(func: Callable, func_input: Any, default_if_error: Any) -> Any:
     """Provide a way to provide a default value if function fails.
 
     Args:
@@ -112,6 +114,7 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
     moad_entry_info = payload[1]
     cache_items_to_update = payload[2]
 
+    # Maps string to dict
     lig_infs = {}
     for lig_chunk_idx in range(len(moad_entry_info)):
         try:
@@ -156,6 +159,8 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                 )
 
             # Now deal with properties by fragment (not entire ligand)
+
+            frags = []
 
             if (
                 cache_items_to_update.frag_masses
@@ -223,20 +228,23 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
     return pdb_id, lig_infs
 
 
-def _set_cache_params_to_update(cache: dict):
+def _set_cache_params_to_update(cache: Dict[str, Dict[str, Dict[str, Any]]]):
     """Look at the current cache and determines which properties need to be
     added to it. Sets flags in CACHE_ITEMS_TO_UPDATE as appropriate.
 
     Args:
         cache (dict): The current cache.
     """
-    pdb_ids_in_cache = list(cache.keys())
+    pdb_ids_in_cache: List[str] = list(cache.keys())
     if not pdb_ids_in_cache:  # empty
         return
 
     # Find the first entry in the existing cache that is not empty. Need to do
     # this check because sometimes cache entries are {} (not able to extract
     # ligand, for example).
+    assert len(pdb_ids_in_cache) > 0, "Cache is empty. Something is wrong."
+
+    pdb_id_in_cache = ""
     for pdb_id_in_cache in pdb_ids_in_cache:
         if cache[pdb_id_in_cache] != {}:
             break
@@ -274,10 +282,10 @@ def _set_cache_params_to_update(cache: dict):
 
 
 def _build_moad_cache_file(
-    filename: str,
+    filename: Optional[str],
     moad: "MOADInterface",
     cache_items_to_update: CacheItemsToUpdate,
-    cores: int = None,
+    cores: Optional[int] = None,
 ) -> dict:
     """Builds/updates the whole BindingMOAD cache (on disk).
 
@@ -293,10 +301,10 @@ def _build_moad_cache_file(
     # Load existing cache if it exists. So you can add to it.
     if filename and os.path.exists(filename):
         with open(filename) as f:
-            cache = json.load(f)
+            cache: Dict[str, Dict[str, Dict[str, Any]]] = json.load(f)
     else:
         # No existing cache, so start empty.
-        cache = {}
+        cache: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
     # Setup and modify cache items to update.
     global CACHE_ITEMS_TO_UPDATE
@@ -347,11 +355,11 @@ def _build_moad_cache_file(
 
 
 def load_cache_and_filter(
-    lig_filter_func: callable,  # The function used to filter the ligands
+    lig_filter_func: Callable,  # The function used to filter the ligands
     moad: "MOADInterface",
     split: "MOAD_split",
     args: argparse.Namespace,
-    make_dataset_entries_func: callable,
+    make_dataset_entries_func: Callable,
     cache_items_to_update: CacheItemsToUpdate,
     cache_file: Optional[Union[str, Path]] = None,
     cores: int = 1,

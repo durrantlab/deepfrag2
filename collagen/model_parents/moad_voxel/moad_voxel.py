@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser, Namespace
 import json
-from typing import Type, TypeVar, List, Union
+from typing import Optional, Type, TypeVar, List, Union
 from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
 from collagen.model_parents.moad_voxel.inference_custom_dataset import MoadVoxelModelInferenceCustomSet
 from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
@@ -21,6 +21,7 @@ ENTRY_T = TypeVar("ENTRY_T")
 TMP_T = TypeVar("TMP_T")
 OUT_T = TypeVar("OUT_T")
 
+# TODO: This is so problematic... What was I thinking?
 
 class MoadVoxelModelParent(
     MoadVoxelModelInits,
@@ -152,7 +153,7 @@ class MoadVoxelModelParent(
         else:
             raise Exception("The fragment representation is wrong.")
 
-    def load_checkpoint(self, args: Namespace = None, validate_args=True) -> Union[str, None]:
+    def load_checkpoint(self, args: Namespace, validate_args=True) -> Union[str, None]:
         """Load the checkpoint.
 
         Args:
@@ -168,8 +169,8 @@ class MoadVoxelModelParent(
 
         return ckpt_filename
 
-    def run(self, args: Namespace = None):
-        """Run he model.
+    def run(self, args: Namespace):
+        """Run the model.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
@@ -186,12 +187,15 @@ class MoadVoxelModelParent(
             self.run_warm_starting(args)
         elif args.mode == "test":
             print("Starting 'test' process")
+            assert ckpt_filename is not None, "Must specify a checkpoint to test"
             MoadVoxelModelTest(self).run_test(args, ckpt_filename)
         elif args.mode == "inference":
             print("Starting 'inference' process")
+            assert ckpt_filename is not None, "Must specify a checkpoint to run inference"
             self.run_inference(args, ckpt_filename)
         elif args.mode == "inference_custom_set":
             print("Starting 'inference_custom_set' process")
+            assert ckpt_filename is not None, "Must specify a checkpoint to run inference"
             MoadVoxelModelInferenceCustomSet(self).run_test(args, ckpt_filename)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")

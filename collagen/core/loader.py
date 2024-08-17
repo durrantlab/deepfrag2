@@ -2,7 +2,7 @@
 training and testing.
 """
 
-from typing import Any, List
+from typing import TYPE_CHECKING, Any, Callable, List, Union
 import numpy as np
 from torch import multiprocessing
 import time
@@ -12,8 +12,11 @@ from datetime import datetime
 import threading
 import platform
 
+if TYPE_CHECKING:
+    from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface
+
 DATA = None
-COLLATE = None
+COLLATE: Union[None, Callable] = None
 
 # If any thread takes longer than this, terminate it.
 TIMEOUT = 60.0 * 5
@@ -39,6 +42,8 @@ def _process2(batch_of_batches: List[List[Any]], return_list: List[Any], id: str
     """
     for batch in batch_of_batches:
         try:
+            assert COLLATE is not None, "COLLATE is None"
+            
             return_list.append(COLLATE([DATA[x] for x in batch]))
         except Exception as e:
             if os.path.exists("/mnt/extra/"):
@@ -71,12 +76,14 @@ class MultiLoader(object):
 
     def __init__(
         self,
+        # TODO: Below suggests need for parent class
+        # data: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"],
         data: Any,
         fragment_representation: str,
         num_dataloader_workers: int = 1,
         batch_size: int = 1,
         shuffle: bool = False,
-        collate_fn: callable = _collate_none,
+        collate_fn: Callable = _collate_none,
         max_voxels_in_memory: int = 80,
     ):
         """Initialize the MultiLoader.
@@ -333,7 +340,7 @@ class MultiLoader(object):
         """
         return DataBatch(self, batch_size)
 
-    def map(self, fn: callable) -> "DataLambda":
+    def map(self, fn: Callable) -> "DataLambda":
         """Apply a function to each item in the data.
 
         Args:
@@ -349,7 +356,7 @@ class DataLambda(MultiLoader):
 
     """Apply a function to each item in the data."""
 
-    def __init__(self, data: Any, fn: callable):
+    def __init__(self, data: Any, fn: Callable):
         """Initialize a DataLambda object.
         
         Args:

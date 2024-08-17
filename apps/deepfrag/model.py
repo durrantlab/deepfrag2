@@ -1,7 +1,7 @@
 """DeepFrag model."""
 
 import argparse
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from collagen.external.moad.types import Entry_info
 
 from torch import nn
@@ -245,8 +245,8 @@ class DeepFragModel(pl.LightningModule):
         self,
         pred: torch.Tensor,
         fps: torch.Tensor,
-        entry_infos: List[Entry_info],
-        batch_size: int,
+        entry_infos: Optional[List[Entry_info]],
+        batch_size: Optional[int],
     ) -> torch.Tensor:
         """Calculate the loss.
 

@@ -8,7 +8,7 @@ import itertools
 from dataclasses import dataclass
 from enum import Enum
 import math
-from typing import List, Any, Tuple
+from typing import TYPE_CHECKING, List, Any, Optional, Tuple
 
 import torch
 import numba
@@ -18,6 +18,9 @@ from collagen.core.voxelization import gen_grid_gpu
 
 from ..molecules.atom_featurizer import AtomicNumFeaturizer
 from functools import lru_cache
+
+if TYPE_CHECKING:
+    import collagen.core.molecules.atom_featurizer
 
 # There are max 1024 threads in each block. Found ** 6 ** to be optimal after
 # trial and error. 8 is what Harrison had. Note can't be greater than 10 because
@@ -67,7 +70,7 @@ class VoxelParams(object):
     atom_scale: float = 1
     atom_shape: AtomShapeType = AtomShapeType.EXP
     acc_type: AccType = AccType.SUM
-    atom_featurizer: "collagen.core.molecules.atom_featurizer.AtomFeaturizer" = None
+    atom_featurizer: Optional["collagen.core.molecules.atom_featurizer.AtomFeaturizer"] = None
     calc_voxels: bool = True
     calc_fps: bool = True
 
@@ -88,6 +91,8 @@ class VoxelParams(object):
         Returns:
             Tuple[int, int, int, int, int]: The tensor size.
         """
+        assert self.atom_featurizer is not None, "atom_featurizer must not be None"
+
         N = self.atom_featurizer.size() * feature_mult
         W = self.width
         return (batch, N, W, W, W)
@@ -555,7 +560,7 @@ def mol_gridify(
     width: int,
     res: float,
     center: Tuple[float, float, float],
-    rot: Tuple[float, float, float],
+    rot: Tuple[float, float, float, float],
     atom_scale: float,
     atom_shape: int,
     acc_type: int,
@@ -609,6 +614,7 @@ def mol_gridify(
         # import time
         # t1 = time.time()
         # for t in range(50):
+        gpu_func = None
         if acc_type == 0:  # AccType.SUM
             if atom_shape == 0:  # AtomShapeType.EXP
                 gpu_func = gen_grid_gpu.gpu_gridify_exp_sum
@@ -635,6 +641,8 @@ def mol_gridify(
                 gpu_func = gen_grid_gpu.gpu_gridify_lj_max
             elif atom_shape == 5:  # AtomShapeType.DISCRETE
                 gpu_func = gen_grid_gpu.gpu_gridify_discrete_max
+
+        assert gpu_func is not None, "Invalid atom_shape or acc_type"
 
         dw = ((width - 1) // GPU_DIM) + 1
 

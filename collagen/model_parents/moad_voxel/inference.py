@@ -8,7 +8,7 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
 import torch
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from collagen.core.molecules.mol import Mol, mols_from_smi_file
 from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import most_similar_matches
@@ -21,29 +21,30 @@ import pytorch_lightning as pl
 import os
 import json
 
+if TYPE_CHECKING:
+    from collagen.model_parents.moad_voxel.moad_voxel import MoadVoxelModelParent
 
 class MoadVoxelModelInference(object):
 
     """A model for inference."""
 
     def create_inference_label_set(
-        self: "MoadVoxelModelParent",
-        args: ArgumentParser,
+        self,
+        args: Namespace,
         device: torch.device,
         smi_files: List[str],
-    ) -> Tuple[torch.Tensor, List[Entry_info]]:
+    ) -> Tuple[torch.Tensor, List[str]]:
         """Create a label set (look-up) tensor and smiles list for testing.
         Can be comprised of the fingerprints in the train and/or test and/or
         val sets, as well as SMILES strings from a file.
 
         Args:
-            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
             smi_files (List[str]): The file(s) containing SMILES strings.
 
         Returns:
-            Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
+            Tuple[torch.Tensor, List[str]]: The updated fingerprint
                 tensor and smiles list.
         """
         # Can we cache the label_set_fps and label_set_smis variables to a disk
@@ -64,7 +65,7 @@ class MoadVoxelModelInference(object):
                     ).reshape((1, args.fp_size))
                 )
                 label_set_smis.append(smi)
-        label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
+        label_set_fps: torch.Tensor = torch.cat(fp_tnsrs_from_smi_file)
 
         # Remove redundancy
         label_set_fps, label_set_smis = remove_redundant_fingerprints(
@@ -79,12 +80,11 @@ class MoadVoxelModelInference(object):
         return label_set_fps, label_set_smis
 
     def _validate_run_inference(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
+        self, args: Namespace, ckpt: Optional[str]
     ):
         """Validate the arguments for inference mode.
         
         Args:
-            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             ckpt (Optional[str]): The checkpoint to load.
             
@@ -120,15 +120,14 @@ class MoadVoxelModelInference(object):
             )
 
     def run_inference(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
-        ckpt_filename: Optional[str],
+        ckpt_filename: str,
         save_results_to_disk=True,
     ) -> Union[Dict[str, Any], None]:
         """Run a model on the test and evaluates the output.
 
         Args:
-            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             ckpt_filename (Optional[str]): The checkpoint to load.
             save_results_to_disk (bool): Whether to save the results to disk.
@@ -207,7 +206,7 @@ class MoadVoxelModelInference(object):
         # Now get the label sets to use.
         (
             label_set_fingerprints,
-            label_set_entry_infos,
+            label_set_smis,
         ) = self.create_inference_label_set(
             args, device, [l.strip() for l in args.inference_label_sets.split(",")],
         )
@@ -215,7 +214,7 @@ class MoadVoxelModelInference(object):
         most_similar = most_similar_matches(
             avg_over_ckpts_of_avgs,
             label_set_fingerprints,
-            label_set_entry_infos,
+            label_set_smis,
             args.num_inference_predictions,
         )
 
