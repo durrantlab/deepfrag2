@@ -174,8 +174,9 @@ class DeepFragModelBadData(DeepFragModel):
                     frag_dists_to_recep=False,
                     frag_smiles=True,  # Good for debugging.
                     frag_aromatic=True,
-                    frag_charged=True,
-                ),
+                    frag_acid=True,
+                    frag_base=True,
+                    frag_neutral=True                ),
                 train.smiles,
             ]
         )
