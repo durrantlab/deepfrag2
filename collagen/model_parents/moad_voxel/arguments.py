@@ -179,11 +179,13 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         # default=16,
         help="The size of the batch. Defaults to 16.",
     )
-    parser.add_argument(
-        "--inference_limit",
-        default=None,
-        help="Maximum number of examples to run inference on. TODO: Not currently used.",
-    )
+
+    # parser.add_argument(
+    #     "--inference_limit",
+    #     default=None,
+    #     help="Maximum number of examples to run inference on. TODO: Not currently used.",
+    # )
+
     parser.add_argument(
         "--rotations",
         # default=8,

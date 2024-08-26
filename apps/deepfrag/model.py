@@ -25,9 +25,13 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
 
         self.fp_size = kwargs["fp_size"]
-        self.is_regression_mode = kwargs["fragment_representation"] in [
+
+        # Need to keep track of whether it is a continuous fingerprint because
+        # for continuous fingerprints better to use MSE (vs. cos sim) for loss
+        # function.
+        self.is_continuous_fingerprint = kwargs["fragment_representation"] in [
             "molbert",
-            "shuffled_molbert",
+            "molbert_shuffled",
         ]
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
@@ -162,7 +166,7 @@ class DeepFragModel(pl.LightningModule):
             # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
             # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
             nn.Linear(512, self.fp_size),
-        ) if self.is_regression_mode else nn.Sequential(
+        ) if self.is_continuous_fingerprint else nn.Sequential(
                 # Randomly zero some values
                 nn.Dropout(),
                 # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
@@ -199,7 +203,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, molbert, shuffled_molbert",
+            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, molbert",  # Intentionally leaving some off, like molbert_shuffled, which is for debugging.
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",
@@ -276,7 +280,7 @@ class DeepFragModel(pl.LightningModule):
         Returns:
             torch.Tensor: The loss.
         """
-        return mse_loss(pred, fps) if self.is_regression_mode else self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
+        return mse_loss(pred, fps) if self.is_continuous_fingerprint else self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int

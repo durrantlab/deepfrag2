@@ -157,7 +157,7 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return np.array(fp[0][0])
 
 
-def _shuffled_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+def _molbert_shuffled(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     molbert_fp = _molbert(m, size, smiles)
     np.random.shuffle(molbert_fp)
     return molbert_fp
@@ -207,7 +207,7 @@ FINGERPRINTS = {
     "random_binary_2048": _random_binary,
     "molbert": _molbert,
     "molbert_binary": _molbert_binary,
-    "shuffled_molbert": _shuffled_molbert,
+    "molbert_shuffled": _molbert_shuffled,
     "random_1536": _random_binary,
 }
 

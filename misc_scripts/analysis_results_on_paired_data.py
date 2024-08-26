@@ -8,7 +8,7 @@ from torch import nn
 
 
 class PairDataEntry:
-    def __init__(self, pdb_name, sdf_name, parent, frag1, frag2, act1, act2):
+    def __init__(self, pdb_name, sdf_name, parent, frag1, frag1_mol, frag2, frag2_mol, act1, act2, gene_book):
         self.pdb_name = pdb_name
         self.sdf_name = sdf_name
         self.parent = parent
@@ -311,7 +311,7 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return np.array(fp[0][0])
 
 
-def _binary_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
+def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints with positive values. Any value less than 0 is just
     set to 0.
 
@@ -335,7 +335,7 @@ def _binary_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.ar
 FINGERPRINTS = {
     "rdk10": _rdk10,
     "rdk10_x_morgan": _rdk10_x_morgan,
-    "binary_molbert": _binary_molbert,
+    "molbert_binary": _molbert_binary,
 }
 
 if __name__ == "__main__":
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     predicted_fps = {}
     calculated_fps = {}
 
-    if fps == "binary_molbert":
+    if fps == "molbert_binary":
         print("Loading MolBert model")
         PATH_MOLBERT_CKPT = os.path.join(
             "PATH_TO_MOLBERT_MODEL", f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",

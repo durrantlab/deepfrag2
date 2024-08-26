@@ -43,7 +43,7 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
         """
         # TODO: Is batch_size really needed? Redefined immediately below.
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
-        if self.is_regression_mode:
+        if self.is_continuous_fingerprint:
             return super().loss(pred, fps, entry_infos, batch_size)
 
         cos_loss_vector = cos_loss(pred, fps)
