@@ -67,7 +67,7 @@ class MoadVoxelModelTest(object):
         self.model_parent = model_parent
 
     def _add_to_label_set(
-        self,
+        self: "MoadVoxelModelParent",
         args: Namespace,
         moad: MOADInterface,
         split: MOAD_split,
@@ -82,6 +82,7 @@ class MoadVoxelModelTest(object):
         right from the split. A helper script.
         
         Args:
+            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             moad (MOADInterface): The MOAD dataset.
             split (MOAD_split): The splits of the MOAD dataset.
@@ -152,7 +153,7 @@ class MoadVoxelModelTest(object):
         return fps_tnsr, all_smis
 
     def _create_label_set(
-        self,
+        self: "MoadVoxelModelParent",
         args: Namespace,
         device: torch.device,
         existing_label_set_fps: torch.Tensor = None,
@@ -170,6 +171,7 @@ class MoadVoxelModelTest(object):
         val sets, as well as SMILES strings from a file.
 
         Args:
+            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
             existing_label_set_fps (torch.Tensor, optional): The existing tensor of 
@@ -213,6 +215,7 @@ class MoadVoxelModelTest(object):
         else:
             # If you get an existing set of fingerprints, be sure to keep only the
             # unique ones.
+            assert existing_label_set_entry_infos is not None, "Must provide entry infos with existing fingerprints"
             label_set_fps, label_set_smis = remove_redundant_fingerprints(
                 existing_label_set_fps, existing_label_set_entry_infos, device=device
             )
@@ -290,7 +293,7 @@ class MoadVoxelModelTest(object):
         return label_set_fps, label_set_smis
 
     def _on_first_checkpoint(
-        self,
+        self: "MoadVoxelModelParent",
         all_test_data: Any,
         args: Namespace,
         model: "pl.LightningModule",
@@ -366,7 +369,7 @@ class MoadVoxelModelTest(object):
         )
 
     def _run_test_on_single_checkpoint(
-        self,
+        self: "MoadVoxelModelParent",
         all_test_data: Any,
         args: Namespace,
         model: "pl.LightningModule",
@@ -419,6 +422,8 @@ class MoadVoxelModelTest(object):
             device,
             ckpt,
             args.aggregation_rotations,
+            args.fragment_representation,
+            args.save_fps,
         )
 
         if ckpt_idx == 0:
@@ -574,7 +579,7 @@ class MoadVoxelModelTest(object):
         #    f.write(s.getvalue())
 
     def _validate_run_test(
-        self, args: Namespace, ckpt_filename: str
+        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
     ):
         """Validate the arguments for the test mode.
 
@@ -624,13 +629,14 @@ class MoadVoxelModelTest(object):
             raise Exception(
                 "You cannot specify --split_method if using --load_splits."
             )
+        # TODO: jacob added below. Need to remember why added, make sure not redundant.
         elif args.test_predictions_file is not None and args.mode != "test":
             raise Exception(
                 "You cannot specify --test_predictions_file unless you are in test mode."
             )
 
     def run_test(
-        self, args: Namespace, ckpt_filename: str
+        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: str
     ):
         """Run a model on the test and evaluates the output.
 
@@ -671,7 +677,7 @@ class MoadVoxelModelTest(object):
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
-            split_method=args.split_method,
+            split_method=args.split_method,  # TODO: In cesar branch, this is None. Why?
             butina_cluster_cutoff=0.0, # Hardcoded because no need to split test set.
         )
 
@@ -707,7 +713,8 @@ class MoadVoxelModelTest(object):
             # from multiple trained models to be averaged.
 
             # Keep track of all fingerprints in case --test_predictions_file is
-            # set.
+            # set. # TODO: I have the vague impression this is redundant with a
+            # change cesar made, but not sure.
             all_fingerprints = []
 
             model = self.model_parent.init_model(args, ckpt_filename, fragment_set=set2run_test_on_single_checkpoint)

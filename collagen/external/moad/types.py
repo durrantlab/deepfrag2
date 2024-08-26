@@ -5,7 +5,7 @@ caching), but let's leave it here.
 
 from dataclasses import dataclass, field
 from collagen.core import args as user_args
-from typing import List, Set, Tuple, Any, Union
+from typing import TYPE_CHECKING, Dict, List, Set, Tuple, Any, Union
 from collections import OrderedDict
 from pathlib import Path
 import textwrap
@@ -22,6 +22,8 @@ from ... import Mol
 from .moad_utils import fix_moad_smiles
 import sys
 
+if TYPE_CHECKING:
+    from collagen.core.molecules.mol import BackedMol
 
 @dataclass
 class MOAD_class(object):
@@ -343,7 +345,7 @@ class PdbSdfDir_target(MOAD_target):
 
     """Class to load a target/ligand from a directory of PDB/SDF files."""
 
-    def __getitem__(self, idx: int) -> Tuple[Mol, List[Mol]]:
+    def __getitem__(self, idx: int) -> Tuple[BackedMol, List[Mol]]:
         """Load the Nth structure for this target.
 
         Args:

@@ -29,7 +29,7 @@ class MoadVoxelModelInference(object):
     """A model for inference."""
 
     def create_inference_label_set(
-        self,
+        self: "MoadVoxelModelParent",
         args: Namespace,
         device: torch.device,
         smi_files: List[str],
@@ -39,6 +39,7 @@ class MoadVoxelModelInference(object):
         val sets, as well as SMILES strings from a file.
 
         Args:
+            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
             smi_files (List[str]): The file(s) containing SMILES strings.
@@ -80,11 +81,12 @@ class MoadVoxelModelInference(object):
         return label_set_fps, label_set_smis
 
     def _validate_run_inference(
-        self, args: Namespace, ckpt: Optional[str]
+        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
     ):
         """Validate the arguments for inference mode.
         
         Args:
+            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             ckpt (Optional[str]): The checkpoint to load.
             
@@ -120,7 +122,7 @@ class MoadVoxelModelInference(object):
             )
 
     def run_inference(
-        self,
+        self: "MoadVoxelModelParent",
         args: Namespace,
         ckpt_filename: str,
         save_results_to_disk=True,
@@ -128,6 +130,7 @@ class MoadVoxelModelInference(object):
         """Run a model on the test and evaluates the output.
 
         Args:
+            self (MoadVoxelModelParent): This object
             args (Namespace): The user arguments.
             ckpt_filename (Optional[str]): The checkpoint to load.
             save_results_to_disk (bool): Whether to save the results to disk.
@@ -223,6 +226,7 @@ class MoadVoxelModelInference(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
+        # TODO: Need to understand why this is different, jacob vs. cesar
         output = {
             "most_similar": most_similar[0],
             "fps": {"per_rot": fps, "avg": avg_over_ckpts_of_avgs},
@@ -242,6 +246,7 @@ class MoadVoxelModelInference(object):
                 print(line)
                 f.write(line + "\n")
 
+        # TODO: All this added in jacob branch. Need to remember why.
         output["fps"]["per_rot"] = [v.detach().numpy().tolist() for v in output["fps"]["per_rot"]]
         output["fps"]["avg"] = output["fps"]["avg"].detach().numpy().tolist()
         

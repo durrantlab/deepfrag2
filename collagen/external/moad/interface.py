@@ -18,8 +18,6 @@ import numpy as np
 from collagen.core.molecules import smiles_utils
 
 
-
-
 class MOADInterface(object):
 
     """Base class for interacting with Binding MOAD data. Initialize by passing

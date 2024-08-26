@@ -555,6 +555,8 @@ class BackedMol(Mol):
         rdmol: "rdkit.Chem.rdchem.Mol",
         meta: Optional[dict] = None,
         warn_no_confs: bool = True,
+        # TODO: Chat with cesar about why coord_connector_atom now necessary
+        coord_connector_atom=np.empty([]),
     ):
         """Initialize a new BackedMol with an existing RDMol.
         
@@ -566,6 +568,7 @@ class BackedMol(Mol):
         """
         super(BackedMol, self).__init__(meta=meta)
         self.rdmol = rdmol
+        self.coord_connector_atom = coord_connector_atom
 
         if warn_no_confs and self.rdmol.GetNumConformers() == 0:
             warnings.warn("Internal rdmol has no conformers")
@@ -610,11 +613,13 @@ class BackedMol(Mol):
         self._ensure_structure()
         return Chem.MolToPDBBlock(self.rdmol)
 
-    def smiles(self, isomeric: bool = False) -> str:
+    # TODO: Chat with Cesar about why none_if_fails is required now
+    def smiles(self, isomeric: bool = False, none_if_fails: bool = False) -> str:
         """Convert the internal rdmol to a SMILES string.
 
         Args:
             isomeric (bool): If True, will return an isomeric SMILES.
+            none_if_fails (bool): If True, will return None if standardize_smiles fails.
 
         Note:
             This version returns a non-isomeric SMILES, even if isomeric = True
@@ -622,7 +627,7 @@ class BackedMol(Mol):
             rdkfingerprint does not account for chirality, so shouldn't matter.
         """
         smi = Chem.MolToSmiles(self.rdmol, isomericSmiles=isomeric)
-        smi = standardize_smiles(smi)
+        smi = standardize_smiles(smi, none_if_fails)
         return smi
 
     @property
@@ -644,12 +649,24 @@ class BackedMol(Mol):
             List[numpy.ndarray]: A list of numpy arrays of shape (N, 3)
                 containing connector coordinates.
         """
-        self._ensure_structure()
-        return [
-            self.coords[atom.GetIdx()]
-            for atom in self.atoms
-            if atom.GetAtomicNum() == 0
-        ]
+        # Older JDD verison for reference:
+        # self._ensure_structure()
+        # return [
+        #     self.coords[atom.GetIdx()]
+        #     for atom in self.atoms
+        #     if atom.GetAtomicNum() == 0
+        # ]
+
+        if len(self.coord_connector_atom.shape) == 0:
+            # self._ensure_structure()  # TODO: Why this now commented out?
+            return [
+                self.coords[atom.GetIdx()]
+                for atom in self.atoms
+                if atom.GetAtomicNum() == 0
+            ]
+        else:
+            return [self.coord_connector_atom]
+
 
     @property
     def atoms(self) -> List[AnyAtom]:

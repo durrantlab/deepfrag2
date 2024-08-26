@@ -1,6 +1,6 @@
 """DeepFrag model that uses additional SDF data for training."""
 
-from typing import List, Union
+from typing import List, Optional, Union
 from apps.deepfrag.model import DeepFragModel
 from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface, SdfDirInterface
 from collagen.external.moad.split import compute_dataset_split
@@ -40,7 +40,7 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         """
         self.database = database
 
-    def loss(self, pred, fps, entry_infos: List[Entry_info], batch_size):
+    def loss(self, pred, fps, entry_infos: Optional[List[Entry_info]], batch_size):
         """Loss function.
 
         Args:
@@ -54,6 +54,9 @@ class DeepFragModelPairedDataFinetune(DeepFragModel):
         """
         # self.database must not be none
         assert self.database is not None, "Database must be set before calling loss function."
+
+        # entry_infos must not be none.
+        assert entry_infos is not None, "Entry infos must not be None."
 
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
         cos_loss_vector = cos_loss(pred, fps)
@@ -88,8 +91,8 @@ class DeepFragModelBadData(DeepFragModel):
         self,
         pred: torch.Tensor,
         fps: torch.Tensor,
-        entry_infos: List[Entry_info],
-        batch_size: int,
+        entry_infos: Optional[List[Entry_info]],
+        batch_size: Optional[int],
     ) -> torch.Tensor:
         """Compute the loss.
         
@@ -102,8 +105,10 @@ class DeepFragModelBadData(DeepFragModel):
         Returns:
             torch.Tensor: The loss.
         """
+        # TODO: Is batch_size really needed? Redefined immediately below.
+
         # Look up the bad fragments that correspond to the good fragments fps.
-        batch_size = fps.shape[0]
+        batch_size: int = fps.shape[0]
         selected_bad_fragment_smis = random.choices(
             self.fragments, k=batch_size
         )  # Temp solution
@@ -148,7 +153,7 @@ class DeepFragModelBadData(DeepFragModel):
             grid_width=None,
             grid_resolution=None,
             noh=None,
-            discard_distant_atoms=kwargs["discard_distant_atoms"]
+            discard_distant_atoms=kwargs["discard_distant_atoms"],
         )
 
         train, _, _ = compute_dataset_split(
@@ -188,6 +193,8 @@ class DeepFragModelBadData(DeepFragModel):
 
         fragments = set()
         for ligand_id in lig_infs:
-            fragments_lig = lig_infs.get(ligand_id).get("frag_smiles")
+            lig = lig_infs.get(ligand_id)
+            assert lig is not None, "lig should not be None"
+            fragments_lig = lig.get("frag_smiles")
             fragments.update(fragments_lig)
         return list(fragments)

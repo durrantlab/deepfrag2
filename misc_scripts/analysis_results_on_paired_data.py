@@ -135,7 +135,7 @@ def read_mol(sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_fr
             new_mol = substruct_with_coords(pdb_mol, parent_mol, atom_indices)
 
             # Get the connection point and add it to the data row
-            atom_idx = -1
+            atom_idx = -1  # Set to make sure never unbound
             for atom in new_mol.GetAtoms():
                 if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
                     atom_idx = atom.GetIdx()

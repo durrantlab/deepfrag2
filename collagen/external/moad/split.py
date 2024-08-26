@@ -235,7 +235,7 @@ def _generate_splits_from_scratch(
 ):
     if split_method == "butina":
         # User must specify a butina_cluster_cutoff if using butina clustering.
-        assert butina_cluster_cutoff is not None
+        assert butina_cluster_cutoff is not None, "Must specify butina_cluster_cutoff if using butina split method."
 
         print("Building training/validation/test sets based on Butina clustering")
         (
@@ -269,6 +269,10 @@ def _generate_splits_from_scratch(
         print("Building training/validation/test sets")
         # Not loading previously determined splits from disk, so generate based
         # on random seed.
+
+        # Make sure the user knows you can't use butina clustering with anything
+        # but butina split method.
+        assert butina_cluster_cutoff is None, "Butina clustering only works with butina split method. Either change the split method or remove the butina_cluster_cutoff argument."
 
         # First, get a flat list of all the families (not grouped by class).
         families: List[List[str]] = []
@@ -557,7 +561,7 @@ def full_moad_split(moad: "MOADInterface") -> MOAD_split:
         max_pdbs_train=None,
         max_pdbs_val=None,
         max_pdbs_test=None,
-        butina_cluster_cutoff=0.0
+        butina_cluster_cutoff=0.0,
     )
 
     return MOAD_split(name="Full", targets=pdb_ids.train, smiles=all_smis.train)

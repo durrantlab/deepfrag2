@@ -144,7 +144,7 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """
     global MOLBERT_MODEL
     
-    # Make sure MOLBER_MODEL is not None, using assert
+    # Make sure MOLBERT_MODEL is not None, using assert
     assert MOLBERT_MODEL is not None, "Molbert model is not loaded"
     
     fp = MOLBERT_MODEL.transform_single(smiles)

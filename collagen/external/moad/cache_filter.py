@@ -160,6 +160,7 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
 
             # Now deal with properties by fragment (not entire ligand)
 
+            # Prevents frags from being unbound.
             frags = []
 
             if (
@@ -326,6 +327,7 @@ def _build_moad_cache_file(
     # NOTE: Filename specified via --cache parameter
 
     print("Building/updating " + (filename or "dataset"))
+    # TODO: Why didn't cesar's branch have cores in line below?
     with multiprocessing.Pool(cores) as p:
         for pdb_id, lig_infs in tqdm(
             p.imap_unordered(get_info_given_pdb_id, list_ids_moad),

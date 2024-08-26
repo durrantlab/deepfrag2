@@ -82,7 +82,7 @@ class MoadVoxelModelInits(object):
         return pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
 
     def init_model(
-        self, args: Namespace, ckpt_filename: Optional[str], fragment_set: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"]=None,
+        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str], fragment_set: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"]=None,
     ) -> pl.LightningModule:
         """Initialize the model.
 

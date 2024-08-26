@@ -100,7 +100,10 @@ class MOADPocketDataset(Dataset):
 
         try:
             moad_target: "MOAD_target" = self.moad[target]
-            rec, ligs = moad_target[n]
+            # TODO: jacob version
+            # rec, ligs = moad_target[n]
+            # TODO: cesar version. Why the change?
+            rec, ligs = self.moad[target][n]
         except:
             return None
 
