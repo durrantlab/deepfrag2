@@ -21,6 +21,7 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
         self.use_prevalence = kwargs["use_prevalence"]
 
     def set_database(self, database):
+        # TODO: All interfaces should inherit from a common parent.
         """Method to specify the paired database.
 
         Args:
@@ -40,6 +41,7 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
         Returns:
             float: loss value
         """
+        # TODO: Is batch_size really needed? Redefined immediately below.
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
         if self.is_regression_mode:
             return super().loss(pred, fps, entry_infos, batch_size)
