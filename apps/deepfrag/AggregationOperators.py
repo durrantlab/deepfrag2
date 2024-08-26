@@ -239,5 +239,4 @@ class Aggregate3x3Patches(Aggregate1DTensor, AdaptiveAvgPool3d):
         # Only to check if the same result is obtained when using the mean operator (original)
         # original_via = AdaptiveAvgPool3d.forward(self, tensor)
         # alternat_via = torch.tensor(tensor_resp, dtype=torch.float32, requires_grad=True)
-
         return torch.tensor(tensor_resp, dtype=torch.float32, requires_grad=True)

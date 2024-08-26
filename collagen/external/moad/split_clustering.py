@@ -7,6 +7,7 @@ from rdkit.ML.Cluster import Butina
 
 # TODO: Name of this file isn't obvious. Good to rename.
 
+
 def _cluster_fps(fps: List[List[float]], cutoff: float=0.2) -> Any:
     """Cluster fingerprints using the Butina algorithm.
     

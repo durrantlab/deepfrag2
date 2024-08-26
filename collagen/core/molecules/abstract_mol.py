@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from typing import Any, List, Tuple
-
 import numpy as np
 
 from .mol import Mol

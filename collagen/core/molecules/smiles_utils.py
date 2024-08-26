@@ -1,7 +1,6 @@
 """SMILES utilities."""
 
 from rdkit import Chem
-from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import rdmolops
 
 

@@ -15,9 +15,7 @@ from collagen.metrics.metrics import most_similar_matches
 import prody
 import numpy as np
 from collagen.util import rand_rot
-import rdkit
 from rdkit import Chem
-import pytorch_lightning as pl
 import os
 
 

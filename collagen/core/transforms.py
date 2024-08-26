@@ -1,5 +1,4 @@
 import torch
-
 from collagen.core import Mol, VoxelParams
 
 # Note that this class is only used by the autoencoder app, currently in

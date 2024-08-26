@@ -1,8 +1,8 @@
 """Functions and classes for assessing model predictions and performance."""
 
 from dataclasses import dataclass
-import torch
 from torch import nn
+import torch
 from typing import List, Dict, Tuple, Any
 from tqdm.auto import tqdm
 from sklearn.decomposition import PCA

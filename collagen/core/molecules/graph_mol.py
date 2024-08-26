@@ -1,9 +1,7 @@
 import torch
 from torch import Tensor
-
 from torch_geometric.data import Data
 from torch_geometric.utils import to_dense_adj
-
 import numpy as np
 
 

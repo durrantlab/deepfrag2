@@ -76,7 +76,6 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         action="store_true",
         help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
     )
-
     parser.add_argument(
         "--split_method",
         required=False,

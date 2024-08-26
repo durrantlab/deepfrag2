@@ -7,7 +7,6 @@ as well.
 from io import StringIO
 from typing import Generator, List, Tuple, Iterator, Any, Dict, Optional
 import warnings
-
 import numpy as np
 from collagen.core.molecules.smiles_utils import standardize_smiles
 import prody
@@ -15,7 +14,6 @@ import rdkit.Chem.AllChem as Chem
 from rdkit.Chem.Descriptors import ExactMolWt
 import torch
 from torch.utils.data import Dataset
-
 from .fingerprints import fingerprint_for
 from ..voxelization.voxelizer import numba_ptr, mol_gridify
 from ..types import AnyAtom

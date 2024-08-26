@@ -14,7 +14,6 @@ from collagen.model_parents.moad_voxel.utils import MoadVoxelModelUtils
 from collagen.core.molecules.fingerprints import download_molbert_ckpt
 import pytorch_lightning as pl
 import torch
-
 from ... import VoxelParams
 
 ENTRY_T = TypeVar("ENTRY_T")

@@ -2,10 +2,8 @@
 
 from typing import List, Any, Tuple, Optional
 import warnings
-
 import numpy as np
 import rdkit
-
 from ..types import AnyAtom
 
 

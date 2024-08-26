@@ -1,5 +1,6 @@
 """MOAD utilities."""
 
+
 def fix_moad_smiles(smi: str) -> str:
     """Fix some of the MOAD smiles that are not valid.
     

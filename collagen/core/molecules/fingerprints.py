@@ -7,11 +7,11 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
 from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
 from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
+from zipfile import ZipFile
+from functools import lru_cache
 import os
 import wget
 import sys
-from zipfile import ZipFile
-from functools import lru_cache
 
 PATH_MOLBERT_MODEL = os.path.join(os.getcwd(), "molbert_model")
 PATH_MOLBERT_CKPT = os.path.join(

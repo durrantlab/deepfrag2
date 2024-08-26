@@ -1,6 +1,4 @@
-
 import unittest
-
 from collagen import Mol
 
 

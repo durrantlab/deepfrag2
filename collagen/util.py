@@ -4,6 +4,7 @@ import numpy as np
 import time
 from typing import List
 
+
 def rand_rot() -> np.ndarray:
     """Return a random uniform quaternion rotation.
     

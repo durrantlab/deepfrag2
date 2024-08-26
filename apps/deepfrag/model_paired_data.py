@@ -59,3 +59,4 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
             cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
 
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
+

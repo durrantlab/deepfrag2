@@ -10,8 +10,8 @@ from torch.utils.data import Dataset
 from collagen.core import args as user_args
 from collagen.external.moad.split import full_moad_split
 from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
-from .... import Mol
 import sys
+from .... import Mol
 from collagen.external.moad.interface import PairedPdbSdfCsvInterface
 from collagen.core.molecules.mol import BackedMol
 

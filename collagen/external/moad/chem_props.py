@@ -137,4 +137,3 @@ def is_charged(mol: Chem.Mol) -> bool:
         mol.HasSubstructMatch(charged_substruct)
         for charged_substruct in charged_substructs
     )
-

@@ -2,20 +2,17 @@
 structures into voxel tensors.
 """
 
-
 import ctypes
 import itertools
 from dataclasses import dataclass
 from enum import Enum
 import math
 from typing import List, Any, Tuple
-
 import torch
 import numba
 import numba.cuda
 import numpy as np
 from collagen.core.voxelization import gen_grid_gpu
-
 from ..molecules.atom_featurizer import AtomicNumFeaturizer
 from functools import lru_cache
 

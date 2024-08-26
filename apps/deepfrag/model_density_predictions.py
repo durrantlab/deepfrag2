@@ -27,7 +27,7 @@ class VoxelAutoencoder(DeepFragModel):
                 nn.Flatten(),
                 nn.Dropout(),
                 nn.Linear(8192, 512),  # Here latent space
-                nn.ReLU(),
+                nn.ReLU()
             )
             self.density_decoder = nn.Sequential(
                 # Decoder

@@ -10,8 +10,6 @@ import json
 from collagen.external.moad.split_clustering import (
     generate_splits_using_butina_clustering,
 )
-from tqdm import tqdm
-
 
 split_rand_num_gen = None
 
@@ -155,6 +153,7 @@ def _limit_split_size(
         pdb_ids.test = pdb_ids.test[:max_pdbs_test]
 
     return pdb_ids
+
 
 def get_families_and_smiles(moad: "MOADInterface"):
     families: List[List[str]] = []

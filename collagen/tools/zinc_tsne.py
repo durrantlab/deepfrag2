@@ -5,17 +5,16 @@ database in the format that viz/fragment_explorer expects.
 """
 import argparse
 import time
-
 import numpy as np
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import torch
 from tqdm import tqdm
-
-from ..data.zinc import ZINCMolGraphProviderH5
-from ..models.dense_graph_autoencoder import DenseGraphAutoencoder
+# from ..data.zinc import ZINCMolGraphProviderH5
+# from ..models.dense_graph_autoencoder import DenseGraphAutoencoder
 
 # TODO: Not used anywhere.
+
 
 def generate_samples(zinc_path: str, gcn_model: str, num: int, cpu_only: bool):
     print("[*] Loading data...")

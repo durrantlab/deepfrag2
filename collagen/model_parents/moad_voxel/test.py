@@ -15,9 +15,6 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
 import torch
 from tqdm.std import tqdm
 from typing import Any, List, Optional, Tuple, Union
-
-# import multiprocessing
-# from torch import multiprocessing
 from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split

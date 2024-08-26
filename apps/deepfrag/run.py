@@ -3,7 +3,6 @@
 import argparse
 import torch
 import pytorch_lightning as pl
-
 from typing import List, Tuple
 from collagen.external.moad.types import Entry_info
 from collagen import Mol, DelayedMolVoxel, VoxelParams

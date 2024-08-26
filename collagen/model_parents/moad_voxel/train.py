@@ -162,7 +162,6 @@ class MoadVoxelModelTrain(object):
 
         # pr = cProfile.Profile()
         # pr.enable()
-
         # pr.disable()
         # s = StringIO()
         # ps = pstats.Stats(pr, stream=s).sort_stats('tottime')

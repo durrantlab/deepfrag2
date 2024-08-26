@@ -14,13 +14,13 @@ from collagen.core.molecules.mol import (
     UnparsableGeometryException,
     UnparsableSMILESException,
 )
-import os
 import pickle
 from io import StringIO
 import prody
 from ... import Mol
 from .moad_utils import fix_moad_smiles
 import sys
+import os
 
 
 @dataclass

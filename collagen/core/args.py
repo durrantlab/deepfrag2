@@ -58,7 +58,6 @@ def _add_generic_params(
         + "\tIf inference_custom_set, runs inference on an external set comprised of protein-ligand pairs, that is, a SDF file per each ligand and a PDB file per each receptor.\n",
         default="train",
     )
-
     parser.add_argument(
         "--receptor",
         type=str,
@@ -77,14 +76,12 @@ def _add_generic_params(
         help="A comma-separated list of x,y,z coordinates to use when running in inference mode.",
         default=None,
     )
-
     parser.add_argument(
         "--num_inference_predictions",
         type=int,
         help="The number of top-k matching fragments (SMILES strings) to return when running DeepFrag in inference mode.",
         default=10,
     )
-
     parser.add_argument(
         "--load_checkpoint",
         type=str,

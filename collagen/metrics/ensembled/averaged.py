@@ -3,12 +3,12 @@ the "meat" is in ParentEnsembled.
 """
 
 from collagen.core.loader import DataLambda
-import torch
 from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
 import os.path
+import torch
 
 
 class AveragedEnsembled(ParentEnsembled):

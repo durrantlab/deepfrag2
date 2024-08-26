@@ -1,7 +1,4 @@
-
-
 from typing import Optional, Callable, Any, Tuple
-
 from torch.utils.data import Dataset
 import numpy as np
 from collagen.external.moad.split import full_moad_split

@@ -247,7 +247,6 @@ class MultiLoader(object):
         # time.sleep(15)
 
         num_warnings = 0
-
         count = 0
         while len(self.groups_of_batches) > 0:
             self._add_procs(iden)

@@ -1,10 +1,8 @@
 """Testing and inference share a lot of code. Let's put the common code here."""
 
-from argparse import Namespace
-from collagen.external.moad.interface import MOADInterface
-from collagen.external.moad.types import MOAD_split
 import torch
-from typing import Any, List, Optional, Tuple
+from typing import List, Tuple
+
 
 def remove_redundant_fingerprints(
         label_set_fps: torch.Tensor, label_set_smis: List[str], device: torch.device

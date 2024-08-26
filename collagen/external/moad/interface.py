@@ -11,8 +11,8 @@ import linecache
 import csv
 from collagen.core.molecules.mol import BackedMol
 from rdkit.Chem import AllChem
-import logging
 import numpy as np
+import logging
 
 
 class MOADInterface(object):

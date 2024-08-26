@@ -1,8 +1,8 @@
 """A model for inference on a custom dataset."""
 
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
-from argparse import ArgumentParser, Namespace
 import os
+from argparse import ArgumentParser, Namespace
 from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )

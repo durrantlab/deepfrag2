@@ -164,7 +164,7 @@ class DeepFragModel(pl.LightningModule):
                 # Applies sigmoid activation function. See
                 # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
                 # Values ranging between 0 and 1
-                nn.Sigmoid(),
+                nn.Sigmoid()
             )
 
     @staticmethod

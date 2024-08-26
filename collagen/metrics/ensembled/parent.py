@@ -4,8 +4,8 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Tuple
-import numpy as np
 import torch
+import numpy as np
 from collagen.core.loader import DataLambda
 from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import PCAProject
