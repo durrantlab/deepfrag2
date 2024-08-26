@@ -7,7 +7,7 @@ import torch
 from typing import Any, List, Optional, Tuple
 
 def remove_redundant_fingerprints(
-        label_set_fps: torch.Tensor, label_set_associted_data: List[Any], device: torch.device
+        label_set_fps: torch.Tensor, label_set_associated_data: List[Any], device: torch.device
 ) -> Tuple[torch.Tensor, List[Any]]:
     """Given ordered lists of fingerprints and smiles strings, removes
     redundant fingerprints and smis while maintaining the consistent order
@@ -15,7 +15,7 @@ def remove_redundant_fingerprints(
 
     Args:
         label_set_fps (torch.Tensor): A tensor with the fingerprints.
-        label_set_associted_data (List[Any]): A list of the associatd smiles strings or entry infos.
+        label_set_associated_data (List[Any]): A list of the associatd smiles strings or entry infos.
         device (torch.device): The device.
 
     Returns:
@@ -27,11 +27,11 @@ def remove_redundant_fingerprints(
         dim=0, return_inverse=True
     )
 
-    label_set_associted_data = [
+    label_set_associated_data = [
         inf[1]
         for inf in sorted(
             [
-                (inverse_idx, label_set_associted_data[smi_idx])
+                (inverse_idx, label_set_associated_data[smi_idx])
                 for inverse_idx, smi_idx in {
                     int(inverse_idx): data_idx
                     for data_idx, inverse_idx in enumerate(inverse_indices)
@@ -40,4 +40,4 @@ def remove_redundant_fingerprints(
         )
     ]
 
-    return label_set_fps, label_set_associted_data
+    return label_set_fps, label_set_associated_data

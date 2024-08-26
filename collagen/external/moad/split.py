@@ -320,7 +320,6 @@ def _generate_splits_from_scratch(
     else:
         # Throw error here.
         raise ValueError(f"Unknown split method: {split_method}")
-        # return None, None
 
     return pdb_ids, all_smis
 

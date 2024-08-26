@@ -375,11 +375,6 @@ class MOADFragmentDataset(Dataset):
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):
             mass = frag_masses[frag_idx]
-
-            # TODO: jacob branch
-            # dist_to_recep = frag_dists_to_recep[frag_idx]
-
-            # TODO: cesar branch (why changed?)
             dist_to_recep = 0 if len(frag_dists_to_recep) == 0 else frag_dists_to_recep[frag_idx]
             num_heavy_atom = frag_num_heavy_atoms[frag_idx]
             frag_aromatic = frag_aromatics[frag_idx]
@@ -463,10 +458,6 @@ class MOADFragmentDataset(Dataset):
         Returns:
             Tuple[Mol, Mol, Mol]: (receptor, parent, fragment)
         """
-        # TODO: jacob version
-        # assert 0 <= idx <= len(self), "Index out of bounds"
-
-        # TODO: cesar version. Why the change?
         assert 0 <= idx < len(self), "Index out of bounds"
 
         entry: Union[MOADFragmentDataset_entry, None] = None
@@ -491,7 +482,6 @@ class MOADFragmentDataset(Dataset):
                     entry.lig_to_frag_masses_chunk_idx
                 ]
 
-                # TODO: Cesar added below assertions. Why?
                 assert isinstance(receptor, BackedMol), "Receptor not found"
                 assert len(ligands) >= 1, "Ligand list not found"
 
@@ -504,18 +494,12 @@ class MOADFragmentDataset(Dataset):
                 for ligand in ligands:
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
                         if isinstance(self.moad, PairedPdbSdfCsvInterface):
-                            # TODO: cesar version
                             list_frag_and_act = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id]
                             assert 0 <= entry.frag_idx < len(list_frag_and_act), "Fragment index out of bounds"
 
                             backed_frag = list_frag_and_act[entry.frag_idx][2]
                             parent = ligand.meta["moad_ligand"].backed_parent  # BackedMol(rdmol=ligand.rdmol)
                             fragment = backed_frag  # BackedMol(rdmol=backed_frag.rdmol)
-
-                            # TODO: old jacob version. Why changed?
-                            # backed_frag = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.frag_idx][2]
-                            # parent = BackedMol(rdmol=ligand.rdmol)
-                            # fragment = BackedMol(rdmol=backed_frag.rdmol)
                             break
                         else:
                             pairs = ligand.split_bonds()
@@ -524,7 +508,6 @@ class MOADFragmentDataset(Dataset):
                 else:
                     raise Exception(f"Ligand not found: {str(receptor)} -- {str(ligands)}")
 
-                # TODO: Why did cesar add these assertions?
                 assert isinstance(parent, BackedMol), "Parent not found"
                 assert isinstance(fragment, BackedMol), "Fragment not found"
                 sample = (receptor, parent, fragment, entry.ligand_id, entry.frag_idx)
@@ -534,7 +517,6 @@ class MOADFragmentDataset(Dataset):
                 return self.transform(sample) if self.transform else sample
 
             except AssertionError as e:
-                # TODO: Why did cesar add this additional assertion?
                 print(
                     f"\nMethod __getitem__ in 'fragment_dataset.py'. Assertion Error: {str(e)}",
                     file=sys.stderr,

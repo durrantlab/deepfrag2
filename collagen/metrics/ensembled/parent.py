@@ -111,9 +111,6 @@ class ParentEnsembled(ABC):
             "pcaProjection": self.correct_fp_pca_projected[entry_idx],
             "parentSmiles": entry_inf.parent_smiles,
             "receptor": entry_inf.receptor_name,
-            # TODO: jacob version
-            # "connectionPoint": entry_inf.connection_pt.tolist(),
-            # TODO: cesar version. Why the change?
             "connectionPoint": entry_inf.connection_pt.tolist() if entry_inf.connection_pt.size > 0 else None,
         }
 

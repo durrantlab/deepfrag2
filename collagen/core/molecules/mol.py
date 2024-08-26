@@ -555,7 +555,6 @@ class BackedMol(Mol):
         rdmol: "rdkit.Chem.rdchem.Mol",
         meta: Optional[dict] = None,
         warn_no_confs: bool = True,
-        # TODO: Chat with cesar about why coord_connector_atom now necessary
         coord_connector_atom=np.empty([]),
     ):
         """Initialize a new BackedMol with an existing RDMol.
@@ -613,7 +612,6 @@ class BackedMol(Mol):
         self._ensure_structure()
         return Chem.MolToPDBBlock(self.rdmol)
 
-    # TODO: Chat with Cesar about why none_if_fails is required now
     def smiles(self, isomeric: bool = False, none_if_fails: bool = False) -> str:
         """Convert the internal rdmol to a SMILES string.
 
@@ -649,16 +647,8 @@ class BackedMol(Mol):
             List[numpy.ndarray]: A list of numpy arrays of shape (N, 3)
                 containing connector coordinates.
         """
-        # Older JDD verison for reference:
-        # self._ensure_structure()
-        # return [
-        #     self.coords[atom.GetIdx()]
-        #     for atom in self.atoms
-        #     if atom.GetAtomicNum() == 0
-        # ]
-
         if len(self.coord_connector_atom.shape) == 0:
-            # self._ensure_structure()  # TODO: Why this now commented out?
+            # self._ensure_structure()
             return [
                 self.coords[atom.GetIdx()]
                 for atom in self.atoms

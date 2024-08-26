@@ -226,7 +226,6 @@ class MoadVoxelModelInference(object):
         ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
         ps.print_stats()
 
-        # TODO: Need to understand why this is different, jacob vs. cesar
         output = {
             "most_similar": most_similar[0],
             "fps": {"per_rot": fps, "avg": avg_over_ckpts_of_avgs},
@@ -246,7 +245,6 @@ class MoadVoxelModelInference(object):
                 print(line)
                 f.write(line + "\n")
 
-        # TODO: All this added in jacob branch. Need to remember why.
         output["fps"]["per_rot"] = [v.detach().numpy().tolist() for v in output["fps"]["per_rot"]]
         output["fps"]["avg"] = output["fps"]["avg"].detach().numpy().tolist()
         
