@@ -142,11 +142,17 @@ class MoadVoxelModelParent(
         Args:
             args (Namespace): The arguments parsed by argparse.
         """
-        if args.fragment_representation in ["rdk10", "rdk10_x_morgan", "random_2048"]:
+        if args.fragment_representation in [
+            "rdk10",
+            "rdk10_x_morgan",
+            "random_binary_2048",
+        ]:
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation in [
+            "molbert",
             "molbert_binary",
-            "random_1536",
+            "random_binary_1536",
+            "shuffled_molbert",
         ]:
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()

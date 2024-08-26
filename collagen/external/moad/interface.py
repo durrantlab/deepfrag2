@@ -416,10 +416,13 @@ class PairedPdbSdfCsvInterface(MOADInterface):
             grid_resolution: float,
             noh: bool,
             discard_distant_atoms: bool,
+            use_prevalence: bool
     ):
         # Make sure it is string, not Path
         if isinstance(structures, Path):
             structures = str(structures)
+
+        self.use_prevalence = use_prevalence
 
         super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
 
@@ -531,8 +534,10 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         col_act_second_frag_smi = paired_data_csv_sep[8]  # activity for the second fragment
         col_first_ligand_template = paired_data_csv_sep[9]  # first SMILES string for assigning bonds to the ligand
         col_second_ligand_template = paired_data_csv_sep[10]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
-        col_prevalence = paired_data_csv_sep[11] if len(paired_data_csv_sep) == 12 else None  # prevalence value (optional). Default is 1 (even prevalence for the fragments)
+        col_gen_book_id = paired_data_csv_sep[11]  # Gene Book ID column
 
+        total_entries = 0
+        gene_book_id_counter = {}
         with open(path_csv_file, newline='') as csvfile:
             reader = csv.DictReader(csvfile, delimiter='\t')
             for row in reader:
@@ -587,7 +592,8 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                     act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
                     act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
-                    prevalence_receptor = row[col_prevalence] if col_prevalence else 1
+                    gen_book_id = row[col_gen_book_id]
+                    prevalence_receptor = float(0.0)
 
                     key_sdf_pdb = self.__get_key_sdf_pdb(pdb_name, sdf_name)
                     key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(pdb_name, sdf_name, parent_smi)
@@ -603,11 +609,22 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         self.backed_mol_x_parent[parent_smi] = backed_parent
                         self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb] = []
                         if backed_first_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor])
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor, gen_book_id])
                         if backed_second_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor])
-                    if self.finally_used is not None:
-                        self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used")
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor, gen_book_id])
+
+                    self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used")
+                    if self.use_prevalence:
+                        total_entries = total_entries + 1
+                        if gen_book_id not in gene_book_id_counter.keys():
+                            gene_book_id_counter[gen_book_id] = 0
+                        gene_book_id_counter[gen_book_id] = gene_book_id_counter[gen_book_id] + 1
+
+        if self.use_prevalence:
+            for list_for_parent_sdf_pdb in self.frag_and_act_x_parent_x_sdf_x_pdb.values():
+                for entry in list_for_parent_sdf_pdb:
+                    entry[3] = float(gene_book_id_counter[entry[4]] / total_entries)
+                    print(str(gene_book_id_counter[entry[4]]) + " / " + str(total_entries) + " = " + str(entry[3]))
 
         self.pdb_files.sort()
 
@@ -636,6 +653,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         eds = Chem.EditableMol(mol)
                         eds.RemoveAtom(atom.GetIdx())
                         mol = eds.GetMol()
+                    break
 
             # Now dummy atom removed, but connection marked.
             mol.UpdatePropertyCache()
@@ -748,12 +766,12 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 backed_parent = BackedMol(rdmol=new_mol)
 
                 # first_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(first_frag_smi)
-                first_frag_smi = self.__parent_smarts_to_mol(first_frag_smi)
-                backed_frag1 = BackedMol(rdmol=first_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
+                # first_frag_smi = self.__parent_smarts_to_mol(first_frag_smi)
+                backed_frag1 = BackedMol(rdmol=Chem.MolFromSmiles(first_frag_smi.replace("[R*]", "*")), warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
 
                 # second_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(second_frag_smi)
-                second_frag_smi = self.__parent_smarts_to_mol(second_frag_smi)
-                backed_frag2 = BackedMol(rdmol=second_frag_smi, warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
+                # second_frag_smi = self.__parent_smarts_to_mol(second_frag_smi)
+                backed_frag2 = BackedMol(rdmol=Chem.MolFromSmiles(second_frag_smi.replace("[R*]", "*")), warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
 
                 return backed_parent, backed_frag1, backed_frag2
 

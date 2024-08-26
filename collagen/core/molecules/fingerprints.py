@@ -106,11 +106,17 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
             array,
         )
     except BaseException as e:
-        print("Error calculating Morgan Fingerprints on " + smiles + " because of " + str(e), file=sys.stderr)
-        array = np.zeros((size,))
+        try:
+            assert smiles is not None, "smiles as parameter is None"
+            DataStructs.ConvertToNumpyArray(
+                AllChem.GetHashedMorganFingerprint(Chem.MolFromSmiles(smiles), 3, nBits=size),
+                array,
+            )
+        except BaseException as e:
+            print("Error calculating Morgan Fingerprints on " + smiles + " because of " + str(e), file=sys.stderr)
+            array = np.zeros((size,))
 
     return array
-
 
 def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """A vector fusing RDK and Morgan Fingerprints.
@@ -150,6 +156,11 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     fp = MOLBERT_MODEL.transform_single(smiles)
     return np.array(fp[0][0])
 
+
+def _shuffled_molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    molbert_fp = _molbert(m, size, smiles)
+    np.random.shuffle(molbert_fp)
+    return molbert_fp
 
 def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints with positive values. Any value less than 0 is just
@@ -193,9 +204,11 @@ def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.ar
 FINGERPRINTS = {
     "rdk10": _rdk10,
     "rdk10_x_morgan": _rdk10_x_morgan,
+    "random_binary_2048": _random_binary,
+    "molbert": _molbert,
     "molbert_binary": _molbert_binary,
+    "shuffled_molbert": _shuffled_molbert,
     "random_1536": _random_binary,
-    "random_2048": _random_binary,
 }
 
 

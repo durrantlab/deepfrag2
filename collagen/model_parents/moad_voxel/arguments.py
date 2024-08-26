@@ -28,11 +28,6 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter can be used for both training and fine-tuning."
     )
     parser.add_argument(
-        "--bad_data_dir",
-        required=False,  # Not required if running in --mode "inference"
-        help="Path to a folder containing bad ligands. This parameter is to be only used in the training mode as additional information to the data contained in --data_dir"
-    )
-    parser.add_argument(
         "--paired_data_csv",
         required=False,  # Not required if running in --mode "inference"
         help="This parameter is to be only used in the fine-tuning mode. This parameter is a set of comma separated values in the next order:\n"

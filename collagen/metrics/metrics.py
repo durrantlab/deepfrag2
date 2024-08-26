@@ -13,6 +13,7 @@ import numpy as np
 
 # Closer to 1 means more similar, closer to 0 means more dissimilar.
 _cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+_mse = nn.MSELoss()
 
 
 @dataclass
@@ -60,6 +61,18 @@ def cos_loss(yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
 
     return 1 - _cos(yp, yt)
 
+def mse_loss(yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
+    """
+    Args:
+        yp (torch.Tensor): Predicted fingerprint.
+        yt (torch.Tensor): Target fingerprint.
+
+    Returns:
+        torch.Tensor: The loss.
+    """
+    # Closer to 0 means more similar.
+
+    return _mse(yp, yt)
 
 def bin_acc(pred, target):
     """Binary accuracy. TODO: Not currently used."""

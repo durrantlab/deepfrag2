@@ -101,7 +101,8 @@ class MoadVoxelModelInits(object):
         print(f"\nLoading model from checkpoint {ckpt_filename}\n")
         model = self.model_cls.load_from_checkpoint(ckpt_filename)
 
-        # TODO: Clarify with Cesar below
+        # NOTE: This is how you load the dataset only when using paired data for
+        # finetuning.
         if fragment_set and isinstance(model, DeepFragModelPairedDataFinetune):
             model.set_database(fragment_set)
         return model

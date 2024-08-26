@@ -25,6 +25,10 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
 
         self.fp_size = kwargs["fp_size"]
+        self.is_regression_mode = kwargs["fragment_representation"] in [
+            "molbert",
+            "shuffled_molbert",
+        ]
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
@@ -151,17 +155,25 @@ class DeepFragModel(pl.LightningModule):
         #     # fragment.
         # )
 
+        TODO: JDD revisit
         self.deepfrag_after_encoder = nn.Sequential(
             # Randomly zero some values
             nn.Dropout(),
             # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
             # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
             nn.Linear(512, self.fp_size),
-            # Applies sigmoid activation function. See
-            # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
-            # Values ranging between 0 and 1
-            nn.Sigmoid(),
-        )
+        ) if self.is_regression_mode else nn.Sequential(
+                # Randomly zero some values
+                nn.Dropout(),
+                # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
+                # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+                nn.Linear(512, self.fp_size),
+                # Applies sigmoid activation function. See
+                # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
+                # Values ranging between 0 and 1
+                nn.Sigmoid()
+            )
+
 
     @staticmethod
     def add_model_args(
@@ -187,7 +199,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, molbert_binary",
+            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, molbert, shuffled_molbert",
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",
@@ -211,6 +223,11 @@ class DeepFragModel(pl.LightningModule):
             "--save_fps",
             action="store_true",
             help="If given, predicted and calculated fingerprints will be saved in binary files during test mode.",
+        )
+        parser.add_argument(
+            "--use_prevalence",
+            action="store_true",
+            help="If given, prevalence values are calculated and used during fine-tuning on paired data.",
         )
         return parent_parser
 
@@ -259,7 +276,7 @@ class DeepFragModel(pl.LightningModule):
         Returns:
             torch.Tensor: The loss.
         """
-        return self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
+        return mse_loss(pred, fps) if self.is_regression_mode else self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
