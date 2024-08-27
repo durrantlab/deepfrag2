@@ -63,7 +63,7 @@ def _process2(batch_of_batches: List[List[Any]], return_list: List[Any], id: str
                     )
 
             print("FAILED", id, batch)
-            traceback.print_exc(e)
+            traceback.print_exc()
 
 
 def _collate_none(x: List[Any]) -> Any:

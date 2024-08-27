@@ -5,7 +5,17 @@ as well.
 """
 
 from io import StringIO
-from typing import TYPE_CHECKING, Generator, List, Tuple, Iterator, Any, Dict, Optional
+from typing import (
+    TYPE_CHECKING,
+    Generator,
+    List,
+    Tuple,
+    Iterator,
+    Any,
+    Dict,
+    Optional,
+    Union,
+)
 import warnings
 
 import numpy as np
@@ -233,7 +243,7 @@ class Mol(object):
         """
         raise NotImplementedError()
 
-    def smiles(self, isomeric: bool = False) -> str:
+    def smiles(self, isomeric: bool = False) -> Union[str, None]:
         """
         Compute a SMILES string for this Mol.
 
@@ -241,7 +251,7 @@ class Mol(object):
             isomeric (bool, optional): True if this string should be isomeric.
 
         Returns:
-            str: A SMILES string.
+            str: A SMILES string. None if generating SMILES string failes.
         """
         raise NotImplementedError()
 
@@ -613,7 +623,9 @@ class BackedMol(Mol):
         self._ensure_structure()
         return Chem.MolToPDBBlock(self.rdmol)
 
-    def smiles(self, isomeric: bool = False, none_if_fails: bool = False) -> str:
+    def smiles(
+        self, isomeric: bool = False, none_if_fails: bool = False
+    ) -> Union[str, None]:
         """Convert the internal rdmol to a SMILES string.
 
         Args:
@@ -764,7 +776,9 @@ class BackedMol(Mol):
         Returns:
             numpy.ndarray: The computed fingerprint.
         """
-        return fingerprint_for(self.rdmol, fp_type, size, self.smiles(True))
+        smi = self.smiles(True)
+        assert smi is not None, "Error: SMILES is None."
+        return fingerprint_for(self.rdmol, fp_type, size, smi)
 
 
 class MolDataset(Dataset):

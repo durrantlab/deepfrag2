@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser, Namespace
 import json
-from typing import Optional, Type, TypeVar, List, Union
+from typing import Optional, Sequence, Type, TypeVar, List, Union
 from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
 from collagen.model_parents.moad_voxel.inference_custom_dataset import (
     MoadVoxelModelInferenceCustomSet,
@@ -103,7 +103,7 @@ class MoadVoxelModelParent(
         args: Namespace,
         voxel_params: VoxelParams,
         device: torch.device,
-        batch: List[TMP_T],
+        batch: Sequence[TMP_T],
     ) -> OUT_T:
         """Voxelize the batch. Should be overwritten by child class.
         

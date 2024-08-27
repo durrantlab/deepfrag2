@@ -106,14 +106,27 @@ class ParentEnsembled(ABC):
             )
 
         entry_inf: Entry_info = self.model.prediction_targets_entry_infos[entry_idx]
+
+        # Check if entry_inf is a List
+        connectionPoint = None
+        if isinstance(entry_inf.connection_pt, list):
+            connectionPoint = (
+                entry_inf.connection_pt if len(entry_inf.connection_pt) > 0 else None
+            )
+        else:
+            # Numpy array
+            connectionPoint = (
+                entry_inf.connection_pt.tolist()
+                if entry_inf.connection_pt.size > 0
+                else None
+            )
+
         return {
             "fragmentSmiles": entry_inf.fragment_smiles,
             "pcaProjection": self.correct_fp_pca_projected[entry_idx],
             "parentSmiles": entry_inf.parent_smiles,
             "receptor": entry_inf.receptor_name,
-            "connectionPoint": entry_inf.connection_pt.tolist()
-            if entry_inf.connection_pt.size > 0
-            else None,
+            "connectionPoint": connectionPoint,
         }
 
     def get_predictions_info(self, entry_idx: int) -> dict:

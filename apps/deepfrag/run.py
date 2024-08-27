@@ -6,7 +6,7 @@ from collagen.core.molecules.mol import BackedMol
 import torch
 import pytorch_lightning as pl
 
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 from collagen.external.moad.types import Entry_info
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.external.moad import MOADFragmentDataset
@@ -16,7 +16,7 @@ from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
 from apps.deepfrag.model_density_predictions import VoxelAutoencoder
 
-ENTRY_T = Tuple[Mol, Mol, Mol]
+ENTRY_T = Tuple[Mol, Mol, Mol, str, int]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
 OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 
@@ -86,7 +86,7 @@ class DeepFrag(MoadVoxelModelParent):
         args: argparse.Namespace,
         voxel_params: VoxelParams,
         device: torch.device,
-        batch: List[TMP_T],
+        batch: Sequence[TMP_T],
     ) -> OUT_T:
         """Voxelize the batch.
         

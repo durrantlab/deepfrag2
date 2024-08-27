@@ -90,7 +90,7 @@ class MoadVoxelModelInits(object):
         args: Namespace,
         ckpt_filename: Optional[str],
         fragment_set: Union[
-            "MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"
+            "MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface", None
         ] = None,
     ) -> pl.LightningModule:
         """Initialize the model.

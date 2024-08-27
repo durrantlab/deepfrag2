@@ -527,6 +527,12 @@ class MOADFragmentDataset(Dataset):
                 # Actually performs voxelization and fingerprinting.
                 return self.transform(sample) if self.transform else sample
 
+                # TODO: NOTE: LLM suggested improvement to above:
+                # if self.transform:
+                #     return self.transform(*sample[:3])  # Only pass receptor, parent, fragment
+                # else:
+                #     return sample[:3]  # Only return receptor, parent, fragment
+
             except AssertionError as e:
                 print(
                     f"\nMethod __getitem__ in 'fragment_dataset.py'. Assertion Error: {str(e)}",

@@ -641,6 +641,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         continue
 
                     # getting the smiles for first fragment.
+                    first_frag_smi = None
                     if backed_first_frag:
                         try:
                             first_frag_smi = Chem.MolToSmiles(
@@ -659,6 +660,7 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                             )
 
                     # getting the smiles for second fragment.
+                    second_frag_smi = None
                     if backed_second_frag:
                         try:
                             second_frag_smi = Chem.MolToSmiles(
