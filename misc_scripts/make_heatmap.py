@@ -16,7 +16,7 @@ import math
 # 2. Load a tab delimited file named "coors.txt" containing XYZ coordinates
 import csv
 
-#with open('coors.txt', 'r') as f:
+# with open('coors.txt', 'r') as f:
 #    reader = csv.reader(f, delimiter='\t')
 #    for row in reader:
 #        print(row)
@@ -28,8 +28,8 @@ import numpy as np
 x = []
 y = []
 
-with open('coors.txt', 'r') as f:
-    reader = csv.reader(f, delimiter='\t')
+with open("coors.txt", "r") as f:
+    reader = csv.reader(f, delimiter="\t")
 for row in reader:
     x.append(float(row[0]))
     y.append(float(row[1]))
@@ -44,4 +44,4 @@ plt.imshow(heatmap, extent=extent)
 plt.show()
 
 # 4. Save the heat map to a PNG file.
-plt.savefig('heatmap.png')
+plt.savefig("heatmap.png")

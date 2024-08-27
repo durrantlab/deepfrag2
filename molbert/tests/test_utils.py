@@ -33,7 +33,7 @@ def test_get_seq_lenghts_without_issame():
 
 def test_get_unmasked_labels():
     random.seed(1)
-    tokens_a = list('C1CCCCC1')
+    tokens_a = list("C1CCCCC1")
     tokens_b = None
     example = InputExample(guid=1, tokens_a=tokens_a, tokens_b=tokens_b, is_next=False)
 
@@ -55,13 +55,15 @@ def test_get_unmasked_labels():
 
 
 def test_random_word():
-    smiles = list('C1CCCCC1')
+    smiles = list("C1CCCCC1")
     random.seed(1)
     expected_output_labels = np.array([TOKENIZER.token_to_idx[t] for t in smiles])
 
     masked_tokens, output_labels = random_word(smiles, TOKENIZER)
 
-    assert np.array_equal(masked_tokens, np.array(['F', '1', 'C', 'C', 'C', 'C', '[MASK]', '[MASK]']))
+    assert np.array_equal(
+        masked_tokens, np.array(["F", "1", "C", "C", "C", "C", "[MASK]", "[MASK]"])
+    )
     mask = np.array([True, False, False, False, False, False, True, True])
     expected_output_labels[~mask] = -1
 
@@ -69,7 +71,7 @@ def test_random_word():
 
 
 def test_convert_example_to_features():
-    example = InputExample(guid=1, tokens_a=list('C1CCCCC1'), tokens_b=None)
+    example = InputExample(guid=1, tokens_a=list("C1CCCCC1"), tokens_b=None)
 
     convert_example_to_features(example, TOKENIZER.max_length, TOKENIZER)
 

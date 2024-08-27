@@ -7,7 +7,7 @@ num_epochs = 60
 result_paths = {
     "1.rdk10": "path/to/json/files",
     "2.rdk10Morgan": "path/to/json/files",
-    "3.molbertBinary": "path/to/json/files"
+    "3.molbertBinary": "path/to/json/files",
 }
 
 data_sorted_by_topk = {
@@ -15,13 +15,15 @@ data_sorted_by_topk = {
     "testTop8": {},
     "testTop16": {},
     "testTop32": {},
-    "testTop64": {}
+    "testTop64": {},
 }
 
 for key in result_paths:
     path = result_paths[key]
     all_files = os.listdir(path)
-    json_files = [os.path.abspath(os.path.join(path, f)) for f in all_files if f.endswith(".json")]
+    json_files = [
+        os.path.abspath(os.path.join(path, f)) for f in all_files if f.endswith(".json")
+    ]
 
     for json_file in json_files:
         with open(json_file) as f:
@@ -40,5 +42,5 @@ for key in result_paths:
 for key_top_k in data_sorted_by_topk:
     data = data_sorted_by_topk[key_top_k]
     df = pd.DataFrame(data=data)
-    df.plot(title=key_top_k, xlabel='Epochs', ylabel='Accuracy')
+    df.plot(title=key_top_k, xlabel="Epochs", ylabel="Accuracy")
     plt.savefig(os.getcwd() + os.sep + key_top_k + ".png")

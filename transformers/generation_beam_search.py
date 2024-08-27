@@ -82,11 +82,13 @@ FINALIZE_INPUTS_DOCSTRING = r"""
 
 """
 
+
 class BeamScorer(ABC):
     """
     Abstract base class for all beam scorers that are used for :meth:`~transformers.PretrainedModel.beam_search` and
     :meth:`~transformers.PretrainedModel.beam_sample`.
     """
+
     @abstractmethod
     @add_start_docstrings(PROCESS_INPUTS_DOCSTRING)
     def process(
@@ -95,7 +97,7 @@ class BeamScorer(ABC):
         next_scores: torch.FloatTensor,
         next_tokens: torch.LongTensor,
         next_indices: torch.LongTensor,
-        **kwargs
+        **kwargs,
     ) -> Tuple[torch.Tensor]:
         raise NotImplementedError("This is an abstract method.")
 
@@ -107,7 +109,7 @@ class BeamScorer(ABC):
         next_scores: torch.FloatTensor,
         next_tokens: torch.LongTensor,
         next_indices: torch.LongTensor,
-        **kwargs
+        **kwargs,
     ) -> torch.LongTensor:
         raise NotImplementedError("This is an abstract method.")
 
@@ -139,6 +141,7 @@ class BeamSearchScorer(BeamScorer):
             The number of beam hypotheses that shall be returned upon calling
             :meth:`~transformer.BeamSearchScorer.finalize`.
     """
+
     def __init__(
         self,
         batch_size: int,
@@ -166,7 +169,9 @@ class BeamSearchScorer(BeamScorer):
             )
             for _ in range(batch_size)
         ]
-        self._done = torch.tensor([False for _ in range(batch_size)], dtype=torch.bool, device=self.device)
+        self._done = torch.tensor(
+            [False for _ in range(batch_size)], dtype=torch.bool, device=self.device
+        )
 
         if not isinstance(num_beams, int) or num_beams <= 1:
             raise ValueError(
@@ -191,15 +196,23 @@ class BeamSearchScorer(BeamScorer):
         assert batch_size == (input_ids.shape[0] // self.num_beams)
 
         device = input_ids.device
-        next_beam_scores = torch.zeros((batch_size, self.num_beams), dtype=next_scores.dtype, device=device)
-        next_beam_tokens = torch.zeros((batch_size, self.num_beams), dtype=next_tokens.dtype, device=device)
-        next_beam_indices = torch.zeros((batch_size, self.num_beams), dtype=next_indices.dtype, device=device)
+        next_beam_scores = torch.zeros(
+            (batch_size, self.num_beams), dtype=next_scores.dtype, device=device
+        )
+        next_beam_tokens = torch.zeros(
+            (batch_size, self.num_beams), dtype=next_tokens.dtype, device=device
+        )
+        next_beam_indices = torch.zeros(
+            (batch_size, self.num_beams), dtype=next_indices.dtype, device=device
+        )
 
         for batch_idx, beam_hyp in enumerate(self._beam_hyps):
             if self._done[batch_idx]:
                 assert (
                     len(beam_hyp) >= self.num_beams
-                ), "Batch can only be done if at least {} beams have been generated".format(self.num_beams)
+                ), "Batch can only be done if at least {} beams have been generated".format(
+                    self.num_beams
+                )
                 assert (
                     eos_token_id is not None and pad_token_id is not None
                 ), "generated beams >= num_beams -> eos_token_id and pad_token have to be defined"
@@ -212,18 +225,23 @@ class BeamSearchScorer(BeamScorer):
             # next tokens for this sentence
             beam_idx = 0
             for beam_token_rank, (next_token, next_score, next_index) in enumerate(
-                zip(next_tokens[batch_idx], next_scores[batch_idx], next_indices[batch_idx])
+                zip(
+                    next_tokens[batch_idx],
+                    next_scores[batch_idx],
+                    next_indices[batch_idx],
+                )
             ):
                 batch_beam_idx = batch_idx * self.num_beams + next_index
                 # add to generated hypotheses if end of sentence
                 if (eos_token_id is not None) and (next_token.item() == eos_token_id):
                     # if beam_token does not belong to top num_beams tokens, it should not be added
-                    is_beam_token_worse_than_top_num_beams = beam_token_rank >= self.num_beams
+                    is_beam_token_worse_than_top_num_beams = (
+                        beam_token_rank >= self.num_beams
+                    )
                     if is_beam_token_worse_than_top_num_beams:
                         continue
                     beam_hyp.add(
-                        input_ids[batch_beam_idx].clone(),
-                        next_score.item(),
+                        input_ids[batch_beam_idx].clone(), next_score.item(),
                     )
                 else:
                     # add next predicted token since it is not eos_token
@@ -291,7 +309,9 @@ class BeamSearchScorer(BeamScorer):
 
         # prepare for adding eos
         sent_max_len = min(sent_lengths.max().item() + 1, self.max_length)
-        decoded: torch.LongTensor = input_ids.new(batch_size * self.num_beam_hyps_to_keep, sent_max_len)
+        decoded: torch.LongTensor = input_ids.new(
+            batch_size * self.num_beam_hyps_to_keep, sent_max_len
+        )
         # shorter batches are padded if needed
         if sent_lengths.min().item() != sent_lengths.max().item():
             assert pad_token_id is not None, "`pad_token_id` has to be defined"
@@ -306,7 +326,13 @@ class BeamSearchScorer(BeamScorer):
 
 
 class BeamHypotheses:
-    def __init__(self, num_beams: int, max_length: int, length_penalty: float, early_stopping: bool):
+    def __init__(
+        self,
+        num_beams: int,
+        max_length: int,
+        length_penalty: float,
+        early_stopping: bool,
+    ):
         """
         Initialize n-best list of hypotheses.
         """
@@ -331,7 +357,9 @@ class BeamHypotheses:
         if len(self) < self.num_beams or score > self.worst_score:
             self.beams.append((score, hyp))
             if len(self) > self.num_beams:
-                sorted_next_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.beams)])
+                sorted_next_scores = sorted(
+                    [(s, idx) for idx, (s, _) in enumerate(self.beams)]
+                )
                 del self.beams[sorted_next_scores[0][1]]
                 self.worst_score = sorted_next_scores[1][0]
             else:

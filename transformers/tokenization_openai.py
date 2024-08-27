@@ -32,8 +32,12 @@ VOCAB_FILES_NAMES = {
 }
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {"openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/vocab.json"},
-    "merges_file": {"openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/merges.txt"},
+    "vocab_file": {
+        "openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/vocab.json"
+    },
+    "merges_file": {
+        "openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/merges.txt"
+    },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
@@ -63,7 +67,11 @@ def text_standardize(text):
     text = text.replace("―", "-")
     text = text.replace("…", "...")
     text = text.replace("´", "'")
-    text = re.sub(r"""(-+|~+|!+|"+|;+|\?+|\++|,+|\)+|\(+|\\+|\/+|\*+|\[+|\]+|}+|{+|\|+|_+)""", r" \1 ", text)
+    text = re.sub(
+        r"""(-+|~+|!+|"+|;+|\?+|\++|,+|\)+|\(+|\\+|\/+|\*+|\[+|\]+|}+|{+|\|+|_+)""",
+        r" \1 ",
+        text,
+    )
     text = re.sub(r"\s*\n\s*", " \n ", text)
     text = re.sub(r"[^\S\n]+", " ", text)
     return text.strip()
@@ -89,6 +97,7 @@ class OpenAIGPTTokenizer(PreTrainedTokenizer):
             The unknown token. A token that is not in the vocabulary cannot be converted to an ID and is set to be this
             token instead.
     """
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
@@ -105,7 +114,9 @@ class OpenAIGPTTokenizer(PreTrainedTokenizer):
             self.nlp = _nlp.Defaults.create_tokenizer(_nlp)
             self.fix_text = ftfy.fix_text
         except ImportError:
-            logger.warning("ftfy or spacy is not installed using BERT BasicTokenizer instead of SpaCy & ftfy.")
+            logger.warning(
+                "ftfy or spacy is not installed using BERT BasicTokenizer instead of SpaCy & ftfy."
+            )
             self.nlp = BasicTokenizer(do_lower_case=True)
             self.fix_text = None
 
@@ -185,7 +196,9 @@ class OpenAIGPTTokenizer(PreTrainedTokenizer):
             # Using SpaCy & ftfy (original tokenization process of OpenAI GPT)
             text = self.nlp(text_standardize(self.fix_text(text)))
             for token in text:
-                split_tokens.extend([t for t in self.bpe(token.text.lower()).split(" ")])
+                split_tokens.extend(
+                    [t for t in self.bpe(token.text.lower()).split(" ")]
+                )
         return split_tokens
 
     def _convert_token_to_id(self, token):
@@ -201,15 +214,23 @@ class OpenAIGPTTokenizer(PreTrainedTokenizer):
         out_string = "".join(tokens).replace("</w>", " ").strip()
         return out_string
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(
+        self, save_directory: str, filename_prefix: Optional[str] = None
+    ) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error(
+                "Vocabulary path ({}) should be a directory".format(save_directory)
+            )
             return
         vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "")
+            + VOCAB_FILES_NAMES["vocab_file"],
         )
         merge_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["merges_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "")
+            + VOCAB_FILES_NAMES["merges_file"],
         )
 
         with open(vocab_file, "w", encoding="utf-8") as f:
@@ -218,11 +239,15 @@ class OpenAIGPTTokenizer(PreTrainedTokenizer):
         index = 0
         with open(merge_file, "w", encoding="utf-8") as writer:
             writer.write("#version: 0.2\n")
-            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(), key=lambda kv: kv[1]):
+            for bpe_tokens, token_index in sorted(
+                self.bpe_ranks.items(), key=lambda kv: kv[1]
+            ):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: BPE merge indices are not consecutive."
-                        " Please check that the tokenizer is not corrupted!".format(merge_file)
+                        " Please check that the tokenizer is not corrupted!".format(
+                            merge_file
+                        )
                     )
                     index = token_index
                 writer.write(" ".join(bpe_tokens) + "\n")

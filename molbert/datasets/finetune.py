@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from molbert.datasets.base import BaseBertDataset
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +21,9 @@ class BertFinetuneSmilesDataset(BaseBertDataset):
         *args,
         **kwargs,
     ):
-        super().__init__(input_path, featurizer, single_seq_len, total_seq_len, *args, **kwargs)
+        super().__init__(
+            input_path, featurizer, single_seq_len, total_seq_len, *args, **kwargs
+        )
         self.permute = permute
         data = pd.read_csv(input_path)
         self.labels = data[label_column]
@@ -29,17 +31,23 @@ class BertFinetuneSmilesDataset(BaseBertDataset):
     @staticmethod
     def load_sequences(sequence_file):
         data = pd.read_csv(sequence_file)
-        return data['SMILES']
+        return data["SMILES"]
 
-    def get_related_seq(self, index: int, max_retries: int = 10) -> Tuple[Optional[List[str]], bool]:
+    def get_related_seq(
+        self, index: int, max_retries: int = 10
+    ) -> Tuple[Optional[List[str]], bool]:
         # unused for finetuning
         raise NotImplementedError
 
-    def get_unrelated_seq(self, avoid_idx, max_retries: int = 10) -> Tuple[Optional[List[str]], bool]:
+    def get_unrelated_seq(
+        self, avoid_idx, max_retries: int = 10
+    ) -> Tuple[Optional[List[str]], bool]:
         # unused for finetuning
         raise NotImplementedError
 
-    def get_sequence(self, index: int, *args, **kwargs) -> Tuple[Optional[List[str]], bool]:
+    def get_sequence(
+        self, index: int, *args, **kwargs
+    ) -> Tuple[Optional[List[str]], bool]:
         """
         Returns a permuted SMILES given a position index
         """
@@ -73,13 +81,15 @@ class BertFinetuneSmilesDataset(BaseBertDataset):
 
         inputs, labels = super().prepare_sample(cur_id, encoded_tokens_a, None, is_same)
 
-        labels['finetune'] = torch.tensor(self.labels[cur_id], dtype=torch.float).unsqueeze(0)
+        labels["finetune"] = torch.tensor(
+            self.labels[cur_id], dtype=torch.float
+        ).unsqueeze(0)
 
         return inputs, labels
 
     def get_invalid_sample(self):
 
         inputs, labels = super().get_invalid_sample()
-        labels['finetune'] = torch.tensor(0, dtype=torch.float).unsqueeze(0)
+        labels["finetune"] = torch.tensor(0, dtype=torch.float).unsqueeze(0)
 
         return inputs, labels

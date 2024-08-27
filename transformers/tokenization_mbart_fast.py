@@ -33,8 +33,12 @@ else:
 logger = logging.get_logger(__name__)
 
 _all_mbart_models = ["facebook/mbart-large-en-ro", "facebook/mbart-large-cc25"]
-SPM_URL = "https://huggingface.co/facebook/mbart-large-en-ro/resolve/main/sentence.bpe.model"
-tokenizer_URL = "https://huggingface.co/facebook/mbart-large-en-ro/resolve/main/tokenizer.json"
+SPM_URL = (
+    "https://huggingface.co/facebook/mbart-large-en-ro/resolve/main/sentence.bpe.model"
+)
+tokenizer_URL = (
+    "https://huggingface.co/facebook/mbart-large-en-ro/resolve/main/tokenizer.json"
+)
 
 FAIRSEQ_LANGUAGE_CODES = [
     "ar_AR",
@@ -92,6 +96,7 @@ class MBartTokenizerFast(XLMRobertaTokenizerFast):
         ...     example_english_phrase, src_lang="en_XX", tgt_lang="ro_RO", tgt_texts=expected_translation_romanian
         ... )
     """
+
     vocab_files_names = {"vocab_file": "sentencepiece.bpe.model"}
     max_model_input_sizes = {m: 1024 for m in _all_mbart_models}
     pretrained_vocab_files_map = {"vocab_file": {m: SPM_URL for m in _all_mbart_models}}
@@ -109,7 +114,10 @@ class MBartTokenizerFast(XLMRobertaTokenizerFast):
         self.add_special_tokens({"additional_special_tokens": FAIRSEQ_LANGUAGE_CODES})
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -132,12 +140,22 @@ class MBartTokenizerFast(XLMRobertaTokenizerFast):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                )
+            )
         prefix_ones = [1] * len(self.prefix_tokens)
         suffix_ones = [1] * len(self.suffix_tokens)
         if token_ids_1 is None:
             return prefix_ones + ([0] * len(token_ids_0)) + suffix_ones
-        return prefix_ones + ([0] * len(token_ids_0)) + ([0] * len(token_ids_1)) + suffix_ones
+        return (
+            prefix_ones
+            + ([0] * len(token_ids_0))
+            + ([0] * len(token_ids_1))
+            + suffix_ones
+        )
 
     def build_inputs_with_special_tokens(
         self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
@@ -226,7 +244,12 @@ class MBartTokenizerFast(XLMRobertaTokenizerFast):
         self._tokenizer.post_processor = processors.TemplateProcessing(
             single=prefix_tokens_str + ["$A"] + suffix_tokens_str,
             pair=prefix_tokens_str + ["$A", "$B"] + suffix_tokens_str,
-            special_tokens=list(zip(prefix_tokens_str + suffix_tokens_str, self.prefix_tokens + self.suffix_tokens)),
+            special_tokens=list(
+                zip(
+                    prefix_tokens_str + suffix_tokens_str,
+                    self.prefix_tokens + self.suffix_tokens,
+                )
+            ),
         )
 
     def set_tgt_lang_special_tokens(self, lang: str) -> None:
@@ -241,5 +264,10 @@ class MBartTokenizerFast(XLMRobertaTokenizerFast):
         self._tokenizer.post_processor = processors.TemplateProcessing(
             single=prefix_tokens_str + ["$A"] + suffix_tokens_str,
             pair=prefix_tokens_str + ["$A", "$B"] + suffix_tokens_str,
-            special_tokens=list(zip(prefix_tokens_str + suffix_tokens_str, self.prefix_tokens + self.suffix_tokens)),
+            special_tokens=list(
+                zip(
+                    prefix_tokens_str + suffix_tokens_str,
+                    self.prefix_tokens + self.suffix_tokens,
+                )
+            ),
         )

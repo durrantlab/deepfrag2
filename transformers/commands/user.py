@@ -16,31 +16,56 @@ UPLOAD_MAX_FILES = 15
 class UserCommands(BaseTransformersCLICommand):
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
-        login_parser = parser.add_parser("login", help="Log in using the same credentials as on huggingface.co")
+        login_parser = parser.add_parser(
+            "login", help="Log in using the same credentials as on huggingface.co"
+        )
         login_parser.set_defaults(func=lambda args: LoginCommand(args))
-        whoami_parser = parser.add_parser("whoami", help="Find out which huggingface.co account you are logged in as.")
+        whoami_parser = parser.add_parser(
+            "whoami", help="Find out which huggingface.co account you are logged in as."
+        )
         whoami_parser.set_defaults(func=lambda args: WhoamiCommand(args))
         logout_parser = parser.add_parser("logout", help="Log out")
         logout_parser.set_defaults(func=lambda args: LogoutCommand(args))
         # s3_datasets (s3-based system)
         s3_parser = parser.add_parser(
-            "s3_datasets", help="{ls, rm} Commands to interact with the files you upload on S3."
+            "s3_datasets",
+            help="{ls, rm} Commands to interact with the files you upload on S3.",
         )
         s3_subparsers = s3_parser.add_subparsers(help="s3 related commands")
         ls_parser = s3_subparsers.add_parser("ls")
-        ls_parser.add_argument("--organization", type=str, help="Optional: organization namespace.")
+        ls_parser.add_argument(
+            "--organization", type=str, help="Optional: organization namespace."
+        )
         ls_parser.set_defaults(func=lambda args: ListObjsCommand(args))
         rm_parser = s3_subparsers.add_parser("rm")
-        rm_parser.add_argument("filename", type=str, help="individual object filename to delete from S3.")
-        rm_parser.add_argument("--organization", type=str, help="Optional: organization namespace.")
+        rm_parser.add_argument(
+            "filename", type=str, help="individual object filename to delete from S3."
+        )
+        rm_parser.add_argument(
+            "--organization", type=str, help="Optional: organization namespace."
+        )
         rm_parser.set_defaults(func=lambda args: DeleteObjCommand(args))
         upload_parser = s3_subparsers.add_parser("upload", help="Upload a file to S3.")
-        upload_parser.add_argument("path", type=str, help="Local path of the folder or individual file to upload.")
-        upload_parser.add_argument("--organization", type=str, help="Optional: organization namespace.")
         upload_parser.add_argument(
-            "--filename", type=str, default=None, help="Optional: override individual object filename on S3."
+            "path",
+            type=str,
+            help="Local path of the folder or individual file to upload.",
         )
-        upload_parser.add_argument("-y", "--yes", action="store_true", help="Optional: answer Yes to the prompt")
+        upload_parser.add_argument(
+            "--organization", type=str, help="Optional: organization namespace."
+        )
+        upload_parser.add_argument(
+            "--filename",
+            type=str,
+            default=None,
+            help="Optional: override individual object filename on S3.",
+        )
+        upload_parser.add_argument(
+            "-y",
+            "--yes",
+            action="store_true",
+            help="Optional: answer Yes to the prompt",
+        )
         upload_parser.set_defaults(func=lambda args: UploadCommand(args))
         # deprecated model upload
         upload_parser = parser.add_parser(
@@ -55,20 +80,36 @@ class UserCommands(BaseTransformersCLICommand):
 
         # new system: git-based repo system
         repo_parser = parser.add_parser(
-            "repo", help="{create, ls-files} Commands to interact with your huggingface.co repos."
+            "repo",
+            help="{create, ls-files} Commands to interact with your huggingface.co repos.",
         )
-        repo_subparsers = repo_parser.add_subparsers(help="huggingface.co repos related commands")
-        ls_parser = repo_subparsers.add_parser("ls-files", help="List all your files on huggingface.co")
-        ls_parser.add_argument("--organization", type=str, help="Optional: organization namespace.")
+        repo_subparsers = repo_parser.add_subparsers(
+            help="huggingface.co repos related commands"
+        )
+        ls_parser = repo_subparsers.add_parser(
+            "ls-files", help="List all your files on huggingface.co"
+        )
+        ls_parser.add_argument(
+            "--organization", type=str, help="Optional: organization namespace."
+        )
         ls_parser.set_defaults(func=lambda args: ListReposObjsCommand(args))
-        repo_create_parser = repo_subparsers.add_parser("create", help="Create a new repo on huggingface.co")
+        repo_create_parser = repo_subparsers.add_parser(
+            "create", help="Create a new repo on huggingface.co"
+        )
         repo_create_parser.add_argument(
             "name",
             type=str,
             help="Name for your model's repo. Will be namespaced under your username to build the model id.",
         )
-        repo_create_parser.add_argument("--organization", type=str, help="Optional: organization namespace.")
-        repo_create_parser.add_argument("-y", "--yes", action="store_true", help="Optional: answer Yes to the prompt")
+        repo_create_parser.add_argument(
+            "--organization", type=str, help="Optional: organization namespace."
+        )
+        repo_create_parser.add_argument(
+            "-y",
+            "--yes",
+            action="store_true",
+            help="Optional: answer Yes to the prompt",
+        )
         repo_create_parser.set_defaults(func=lambda args: RepoCreateCommand(args))
 
 
@@ -76,6 +117,7 @@ class ANSI:
     """
     Helper for en.wikipedia.org/wiki/ANSI_escape_code
     """
+
     _bold = "\u001b[1m"
     _red = "\u001b[31m"
     _gray = "\u001b[90m"
@@ -198,7 +240,9 @@ class DeleteObjCommand(BaseUserCommand):
             print("Not logged in")
             exit(1)
         try:
-            self._api.delete_obj(token, filename=self.args.filename, organization=self.args.organization)
+            self._api.delete_obj(
+                token, filename=self.args.filename, organization=self.args.organization
+            )
         except HTTPError as e:
             print(e)
             print(ANSI.red(e.response.text))
@@ -222,7 +266,9 @@ class ListReposObjsCommand(BaseUserCommand):
             print("No shared file yet")
             exit()
         rows = [[obj.filename, obj.lastModified, obj.commit, obj.size] for obj in objs]
-        print(tabulate(rows, headers=["Filename", "LastModified", "Commit-Sha", "Size"]))
+        print(
+            tabulate(rows, headers=["Filename", "LastModified", "Commit-Sha", "Size"])
+        )
 
 
 class RepoCreateCommand(BaseUserCommand):
@@ -251,9 +297,15 @@ class RepoCreateCommand(BaseUserCommand):
         print("")
 
         user, _ = self._api.whoami(token)
-        namespace = self.args.organization if self.args.organization is not None else user
+        namespace = (
+            self.args.organization if self.args.organization is not None else user
+        )
 
-        print("You are about to create {}".format(ANSI.bold(namespace + "/" + self.args.name)))
+        print(
+            "You are about to create {}".format(
+                ANSI.bold(namespace + "/" + self.args.name)
+            )
+        )
 
         if not self.args.yes:
             choice = input("Proceed? [Y/n] ").lower()
@@ -261,14 +313,19 @@ class RepoCreateCommand(BaseUserCommand):
                 print("Abort")
                 exit()
         try:
-            url = self._api.create_repo(token, name=self.args.name, organization=self.args.organization)
+            url = self._api.create_repo(
+                token, name=self.args.name, organization=self.args.organization
+            )
         except HTTPError as e:
             print(e)
             print(ANSI.red(e.response.text))
             exit(1)
         print("\nYour repo now lives at:")
         print("  {}".format(ANSI.bold(url)))
-        print("\nYou can clone it locally with the command below," " and commit/push as usual.")
+        print(
+            "\nYou can clone it locally with the command below,"
+            " and commit/push as usual."
+        )
         print(f"\n  git clone {url}")
         print("")
 
@@ -291,7 +348,9 @@ class UploadCommand(BaseUserCommand):
         Recursively list all files in a folder.
         """
         entries: List[os.DirEntry] = list(os.scandir(rel_path))
-        files = [(os.path.join(os.getcwd(), f.path), f.path) for f in entries if f.is_file()]  # (filepath, filename)
+        files = [
+            (os.path.join(os.getcwd(), f.path), f.path) for f in entries if f.is_file()
+        ]  # (filepath, filename)
         for f in entries:
             if f.is_dir():
                 files += self.walk_dir(f.path)
@@ -305,17 +364,26 @@ class UploadCommand(BaseUserCommand):
         local_path = os.path.abspath(self.args.path)
         if os.path.isdir(local_path):
             if self.args.filename is not None:
-                raise ValueError("Cannot specify a filename override when uploading a folder.")
+                raise ValueError(
+                    "Cannot specify a filename override when uploading a folder."
+                )
             rel_path = os.path.basename(local_path)
             files = self.walk_dir(rel_path)
         elif os.path.isfile(local_path):
-            filename = self.args.filename if self.args.filename is not None else os.path.basename(local_path)
+            filename = (
+                self.args.filename
+                if self.args.filename is not None
+                else os.path.basename(local_path)
+            )
             files = [(local_path, filename)]
         else:
             raise ValueError("Not a valid file or directory: {}".format(local_path))
 
         if sys.platform == "win32":
-            files = [(filepath, filename.replace(os.sep, "/")) for filepath, filename in files]
+            files = [
+                (filepath, filename.replace(os.sep, "/"))
+                for filepath, filename in files
+            ]
 
         if len(files) > UPLOAD_MAX_FILES:
             print(
@@ -326,7 +394,9 @@ class UploadCommand(BaseUserCommand):
             exit(1)
 
         user, _ = self._api.whoami(token)
-        namespace = self.args.organization if self.args.organization is not None else user
+        namespace = (
+            self.args.organization if self.args.organization is not None else user
+        )
 
         for filepath, filename in files:
             print(
@@ -344,7 +414,10 @@ class UploadCommand(BaseUserCommand):
         for filepath, filename in files:
             try:
                 access_url = self._api.presign_and_upload(
-                    token=token, filename=filename, filepath=filepath, organization=self.args.organization
+                    token=token,
+                    filename=filename,
+                    filepath=filepath,
+                    organization=self.args.organization,
                 )
             except HTTPError as e:
                 print(e)

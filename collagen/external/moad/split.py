@@ -14,7 +14,11 @@ from collagen.external.moad.split_clustering import (
 from tqdm import tqdm
 
 if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface
+    from collagen.external.moad.interface import (
+        MOADInterface,
+        PairedPdbSdfCsvInterface,
+        PdbSdfDirInterface,
+    )
 
 
 split_rand_num_gen: Union[np.random.Generator, None] = None
@@ -76,7 +80,9 @@ def _flatten(seq: List[List]) -> List:
     return a
 
 
-def _random_divide_two_prts(seq: Union[Set[str], List[str]]) -> Tuple[Set[str], Set[str]]:
+def _random_divide_two_prts(
+    seq: Union[Set[str], List[str]]
+) -> Tuple[Set[str], Set[str]]:
     """Divide a sequence into two parts.
 
     Args:
@@ -98,7 +104,9 @@ def _random_divide_two_prts(seq: Union[Set[str], List[str]]) -> Tuple[Set[str], 
     return (set(l[:half_size]), set(l[half_size:]))
 
 
-def _random_divide_three_prts(seq: Union[Set[str], List[str]]) -> Tuple[Set[str], Set[str], Set[str]]:
+def _random_divide_three_prts(
+    seq: Union[Set[str], List[str]]
+) -> Tuple[Set[str], Set[str], Set[str]]:
     """Divide a sequence into three parts.
 
     Args:
@@ -165,14 +173,18 @@ def _limit_split_size(
 
     return pdb_ids
 
+
 def get_families_and_smiles(moad: "MOADInterface"):
     families: List[List[str]] = []
     for c in moad.classes:
-        families.extend([x.pdb_id for x in f.targets if x is not None] for f in c.families)
+        families.extend(
+            [x.pdb_id for x in f.targets if x is not None] for f in c.families
+        )
 
     smiles: List[List[str]] = [list(_smiles_for(moad, family)) for family in families]
 
     return families, smiles
+
 
 def _flatten_and_limit_pdb_ids(
     train_families,
@@ -195,6 +207,7 @@ def _flatten_and_limit_pdb_ids(
     pdb_ids = _limit_split_size(max_pdbs_train, max_pdbs_val, max_pdbs_test, pdb_ids,)
 
     return pdb_ids
+
 
 def report_sizes(train_set, test_set, val_set):
     print(f"Training set size: {len(train_set)}")
@@ -222,6 +235,7 @@ def report_sizes(train_set, test_set, val_set):
     # What is the number that were not assigned to any cluster?
     # print(f"Number of complexes not assigned to any cluster: {len(data) - len(train_set) - len(test_set) - len(val_set)}")
 
+
 def _generate_splits_from_scratch(
     moad: "MOADInterface",
     fraction_train: float = 0.6,
@@ -235,7 +249,9 @@ def _generate_splits_from_scratch(
 ):
     if split_method == "butina":
         # User must specify a butina_cluster_cutoff if using butina clustering.
-        assert butina_cluster_cutoff is not None, "Must specify butina_cluster_cutoff if using butina split method."
+        assert (
+            butina_cluster_cutoff is not None
+        ), "Must specify butina_cluster_cutoff if using butina split method."
 
         print("Building training/validation/test sets based on Butina clustering")
         (
@@ -272,12 +288,16 @@ def _generate_splits_from_scratch(
 
         # Make sure the user knows you can't use butina clustering with anything
         # but butina split method.
-        assert butina_cluster_cutoff is None, "Butina clustering only works with butina split method. Either change the split method or remove the butina_cluster_cutoff argument."
+        assert (
+            butina_cluster_cutoff is None
+        ), "Butina clustering only works with butina split method. Either change the split method or remove the butina_cluster_cutoff argument."
 
         # First, get a flat list of all the families (not grouped by class).
         families: List[List[str]] = []
         for c in moad.classes:
-            families.extend([x.pdb_id for x in f.targets if x is not None] for f in c.families)
+            families.extend(
+                [x.pdb_id for x in f.targets if x is not None] for f in c.families
+            )
 
         # Note that we're working with families (not individual targets in those
         # families) so members of same family are not shared across train, val,
@@ -312,10 +332,14 @@ def _generate_splits_from_scratch(
                 print("    Reassigning overlapping SMILES randomly")
                 randomly_reassign_overlapping_smiles(all_smis)
             elif split_method == "high_priority":
-                print("    Reassigning overlapping SMILES by priority, favoring the training and validation sets")
+                print(
+                    "    Reassigning overlapping SMILES by priority, favoring the training and validation sets"
+                )
                 __priority_reassign_overlapping_smiles(all_smis)
             else:  # it is low priority
-                print("    Reassigning overlapping SMILES by priority, favoring the testing and validation sets")
+                print(
+                    "    Reassigning overlapping SMILES by priority, favoring the testing and validation sets"
+                )
                 __priority_reassign_overlapping_smiles(all_smis, False)
     else:
         # Throw error here.

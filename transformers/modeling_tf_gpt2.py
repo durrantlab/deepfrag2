@@ -72,8 +72,12 @@ class TFAttention(tf.keras.layers.Layer):
         self.scale = scale
         self.output_attentions = config.output_attentions
 
-        self.c_attn = TFConv1D(n_state * 3, nx, initializer_range=config.initializer_range, name="c_attn")
-        self.c_proj = TFConv1D(n_state, nx, initializer_range=config.initializer_range, name="c_proj")
+        self.c_attn = TFConv1D(
+            n_state * 3, nx, initializer_range=config.initializer_range, name="c_attn"
+        )
+        self.c_proj = TFConv1D(
+            n_state, nx, initializer_range=config.initializer_range, name="c_proj"
+        )
         self.attn_dropout = tf.keras.layers.Dropout(config.attn_pdrop)
         self.resid_dropout = tf.keras.layers.Dropout(config.resid_pdrop)
         self.pruned_heads = set()
@@ -92,7 +96,9 @@ class TFAttention(tf.keras.layers.Layer):
         m = i >= j - ns + nd
         return tf.cast(m, dtype)
 
-    def _attn(self, q, k, v, attention_mask, head_mask, output_attentions, training=False):
+    def _attn(
+        self, q, k, v, attention_mask, head_mask, output_attentions, training=False
+    ):
         # q, k, v have shape [batch, heads, sequence, features]
         w = tf.matmul(q, k, transpose_b=True)
         if self.scale:
@@ -133,7 +139,16 @@ class TFAttention(tf.keras.layers.Layer):
         x = tf.reshape(x, new_x_shape)
         return tf.transpose(x, (0, 2, 1, 3))  # (batch, head, seq_length, head_features)
 
-    def call(self, x, layer_past, attention_mask, head_mask, use_cache, output_attentions, training=False):
+    def call(
+        self,
+        x,
+        layer_past,
+        attention_mask,
+        head_mask,
+        use_cache,
+        output_attentions,
+        training=False,
+    ):
         x = self.c_attn(x)
         query, key, value = tf.split(x, 3, axis=2)
         query = self.split_heads(query)
@@ -150,7 +165,15 @@ class TFAttention(tf.keras.layers.Layer):
         else:
             present = (None,)
 
-        attn_outputs = self._attn(query, key, value, attention_mask, head_mask, output_attentions, training=training)
+        attn_outputs = self._attn(
+            query,
+            key,
+            value,
+            attention_mask,
+            head_mask,
+            output_attentions,
+            training=training,
+        )
         a = attn_outputs[0]
 
         a = self.merge_heads(a)
@@ -165,8 +188,12 @@ class TFMLP(tf.keras.layers.Layer):
     def __init__(self, n_state, config, **kwargs):
         super().__init__(**kwargs)
         nx = config.n_embd
-        self.c_fc = TFConv1D(n_state, nx, initializer_range=config.initializer_range, name="c_fc")
-        self.c_proj = TFConv1D(nx, n_state, initializer_range=config.initializer_range, name="c_proj")
+        self.c_fc = TFConv1D(
+            n_state, nx, initializer_range=config.initializer_range, name="c_fc"
+        )
+        self.c_proj = TFConv1D(
+            nx, n_state, initializer_range=config.initializer_range, name="c_proj"
+        )
         self.act = get_tf_activation("gelu")
         self.dropout = tf.keras.layers.Dropout(config.resid_pdrop)
 
@@ -182,15 +209,34 @@ class TFBlock(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         nx = config.n_embd
         inner_dim = config.n_inner if config.n_inner is not None else 4 * nx
-        self.ln_1 = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_epsilon, name="ln_1")
+        self.ln_1 = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_epsilon, name="ln_1"
+        )
         self.attn = TFAttention(nx, n_ctx, config, scale, name="attn")
-        self.ln_2 = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_epsilon, name="ln_2")
+        self.ln_2 = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_epsilon, name="ln_2"
+        )
         self.mlp = TFMLP(inner_dim, config, name="mlp")
 
-    def call(self, x, layer_past, attention_mask, head_mask, use_cache, output_attentions, training=False):
+    def call(
+        self,
+        x,
+        layer_past,
+        attention_mask,
+        head_mask,
+        use_cache,
+        output_attentions,
+        training=False,
+    ):
         a = self.ln_1(x)
         output_attn = self.attn(
-            a, layer_past, attention_mask, head_mask, use_cache, output_attentions, training=training
+            a,
+            layer_past,
+            attention_mask,
+            head_mask,
+            use_cache,
+            output_attentions,
+            training=training,
         )
         a = output_attn[0]  # output_attn: a, present, (attentions)
         x = x + a
@@ -219,7 +265,10 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
         self.n_embd = config.n_embd
 
         self.wte = TFSharedEmbeddings(
-            config.vocab_size, config.hidden_size, initializer_range=config.initializer_range, name="wte"
+            config.vocab_size,
+            config.hidden_size,
+            initializer_range=config.initializer_range,
+            name="wte",
         )
         self.wpe = tf.keras.layers.Embedding(
             config.n_positions,
@@ -228,8 +277,13 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             name="wpe",
         )
         self.drop = tf.keras.layers.Dropout(config.embd_pdrop)
-        self.h = [TFBlock(config.n_ctx, config, scale=True, name="h_._{}".format(i)) for i in range(config.n_layer)]
-        self.ln_f = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_epsilon, name="ln_f")
+        self.h = [
+            TFBlock(config.n_ctx, config, scale=True, name="h_._{}".format(i))
+            for i in range(config.n_layer)
+        ]
+        self.ln_f = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_epsilon, name="ln_f"
+        )
 
     def get_input_embeddings(self):
         return self.wte
@@ -269,7 +323,9 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             inputs_embeds = inputs[6] if len(inputs) > 6 else inputs_embeds
             use_cache = inputs[7] if len(inputs) > 7 else use_cache
             output_attentions = inputs[8] if len(inputs) > 8 else output_attentions
-            output_hidden_states = inputs[9] if len(inputs) > 9 else output_hidden_states
+            output_hidden_states = (
+                inputs[9] if len(inputs) > 9 else output_hidden_states
+            )
             return_dict = inputs[10] if len(inputs) > 10 else return_dict
             assert len(inputs) <= 11, "Too many inputs."
         elif isinstance(inputs, (dict, BatchEncoding)):
@@ -282,19 +338,31 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             use_cache = inputs.get("use_cache", use_cache)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             assert len(inputs) <= 11, "Too many inputs."
         else:
             input_ids = inputs
 
-        output_attentions = output_attentions if output_attentions is not None else self.output_attentions
-        output_hidden_states = output_hidden_states if output_hidden_states is not None else self.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.output_attentions
+        )
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.output_hidden_states
+        )
         use_cache = use_cache if use_cache is not None else self.use_cache
         return_dict = return_dict if return_dict is not None else self.return_dict
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = shape_list(input_ids)
             input_ids = tf.reshape(input_ids, [-1, input_shape[-1]])
@@ -309,7 +377,9 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
         else:
             past_length = shape_list(past[0][0])[-2]
         if position_ids is None:
-            position_ids = tf.range(past_length, input_shape[-1] + past_length, dtype=tf.int32)[tf.newaxis, :]
+            position_ids = tf.range(
+                past_length, input_shape[-1] + past_length, dtype=tf.int32
+            )[tf.newaxis, :]
 
         if attention_mask is not None:
             # We create a 3D attention mask from a 2D tensor mask.
@@ -347,7 +417,9 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             inputs_embeds = self.wte(input_ids, mode="embedding")
         position_embeds = self.wpe(position_ids)
         if token_type_ids is not None:
-            token_type_ids = tf.reshape(token_type_ids, [-1, shape_list(token_type_ids)[-1]])
+            token_type_ids = tf.reshape(
+                token_type_ids, [-1, shape_list(token_type_ids)[-1]]
+            )
             token_type_embeds = self.wte(token_type_ids, mode="embedding")
         else:
             token_type_embeds = 0
@@ -361,7 +433,9 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
         all_hidden_states = () if output_hidden_states else None
         for i, (block, layer_past) in enumerate(zip(self.h, past)):
             if output_hidden_states:
-                all_hidden_states = all_hidden_states + (tf.reshape(hidden_states, output_shape),)
+                all_hidden_states = all_hidden_states + (
+                    tf.reshape(hidden_states, output_shape),
+                )
 
             outputs = block(
                 hidden_states,
@@ -389,11 +463,19 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
 
         if output_attentions:
             # let the number of heads free (-1) so we can extract attention even after head pruning
-            attention_output_shape = input_shape[:-1] + [-1] + shape_list(all_attentions[0])[-2:]
-            all_attentions = tuple(tf.reshape(t, attention_output_shape) for t in all_attentions)
+            attention_output_shape = (
+                input_shape[:-1] + [-1] + shape_list(all_attentions[0])[-2:]
+            )
+            all_attentions = tuple(
+                tf.reshape(t, attention_output_shape) for t in all_attentions
+            )
 
         if not return_dict:
-            return tuple(v for v in [hidden_states, presents, all_hidden_states, all_attentions] if v is not None)
+            return tuple(
+                v
+                for v in [hidden_states, presents, all_hidden_states, all_attentions]
+                if v is not None
+            )
 
         return TFBaseModelOutputWithPast(
             last_hidden_state=hidden_states,
@@ -408,6 +490,7 @@ class TFGPT2PreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = GPT2Config
     base_model_prefix = "transformer"
 
@@ -440,6 +523,7 @@ class TFGPT2DoubleHeadsModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
+
     logits: tf.Tensor = None
     mc_logits: tf.Tensor = None
     past_key_values: Optional[List[tf.Tensor]] = None
@@ -542,6 +626,7 @@ GPT2_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
+
 @add_start_docstrings(
     "The bare GPT2 Model transformer outputting raw hidden-states without any specific head on top.",
     GPT2_START_DOCSTRING,
@@ -613,7 +698,9 @@ class TFGPT2LMHeadModel(TFGPT2PreTrainedModel, TFCausalLanguageModelingLoss):
             Labels for computing the cross entropy classification loss. Indices should be in ``[0, ...,
             config.vocab_size - 1]``.
         """
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             labels = inputs[11] if len(inputs) > 11 else labels
             if len(inputs) > 11:
@@ -675,14 +762,18 @@ class TFGPT2DoubleHeadsModel(TFGPT2PreTrainedModel):
         config.num_labels = 1
         self.transformer = TFGPT2MainLayer(config, name="transformer")
         self.multiple_choice_head = TFSequenceSummary(
-            config, initializer_range=config.initializer_range, name="multiple_choice_head"
+            config,
+            initializer_range=config.initializer_range,
+            name="multiple_choice_head",
         )
 
     def get_output_embeddings(self):
         return self.transformer.wte
 
     @add_start_docstrings_to_model_forward(GPT2_INPUTS_DOCSTRING)
-    @replace_return_docstrings(output_type=TFGPT2DoubleHeadsModelOutput, config_class=_CONFIG_FOR_DOC)
+    @replace_return_docstrings(
+        output_type=TFGPT2DoubleHeadsModelOutput, config_class=_CONFIG_FOR_DOC
+    )
     def call(
         self,
         inputs,
@@ -741,7 +832,9 @@ class TFGPT2DoubleHeadsModel(TFGPT2PreTrainedModel):
             mc_token_ids = inputs[7] if len(inputs) > 7 else mc_token_ids
             use_cache = inputs[8] if len(inputs) > 8 else use_cache
             output_attentions = inputs[9] if len(inputs) > 9 else output_attentions
-            output_hidden_states = inputs[10] if len(inputs) > 10 else output_hidden_states
+            output_hidden_states = (
+                inputs[10] if len(inputs) > 10 else output_hidden_states
+            )
             return_dict = inputs[11] if len(inputs) > 11 else return_dict
             assert len(inputs) <= 12, "Too many inputs."
         elif isinstance(inputs, dict):
@@ -755,12 +848,16 @@ class TFGPT2DoubleHeadsModel(TFGPT2PreTrainedModel):
             mc_token_ids = inputs.get("mc_token_ids", mc_token_ids)
             use_cache = inputs.get("use_cache", use_cache)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             assert len(inputs) <= 12, "Too many inputs."
         else:
             input_ids = inputs
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
 
         if input_ids is not None:
             input_shapes = shape_list(input_ids)
@@ -768,10 +865,24 @@ class TFGPT2DoubleHeadsModel(TFGPT2PreTrainedModel):
             input_shapes = shape_list(inputs_embeds)[:-1]
 
         seq_length = input_shapes[-1]
-        flat_input_ids = tf.reshape(input_ids, (-1, seq_length)) if input_ids is not None else None
-        flat_attention_mask = tf.reshape(attention_mask, (-1, seq_length)) if attention_mask is not None else None
-        flat_token_type_ids = tf.reshape(token_type_ids, (-1, seq_length)) if token_type_ids is not None else None
-        flat_position_ids = tf.reshape(position_ids, (-1, seq_length)) if position_ids is not None else None
+        flat_input_ids = (
+            tf.reshape(input_ids, (-1, seq_length)) if input_ids is not None else None
+        )
+        flat_attention_mask = (
+            tf.reshape(attention_mask, (-1, seq_length))
+            if attention_mask is not None
+            else None
+        )
+        flat_token_type_ids = (
+            tf.reshape(token_type_ids, (-1, seq_length))
+            if token_type_ids is not None
+            else None
+        )
+        flat_position_ids = (
+            tf.reshape(position_ids, (-1, seq_length))
+            if position_ids is not None
+            else None
+        )
         transformer_outputs = self.transformer(
             flat_input_ids,
             past,
@@ -787,9 +898,13 @@ class TFGPT2DoubleHeadsModel(TFGPT2PreTrainedModel):
             training=training,
         )
         hidden_states = transformer_outputs[0]
-        hidden_states = tf.reshape(hidden_states, input_shapes + shape_list(hidden_states)[-1:])
+        hidden_states = tf.reshape(
+            hidden_states, input_shapes + shape_list(hidden_states)[-1:]
+        )
         lm_logits = self.transformer.wte(hidden_states, mode="linear")
-        mc_logits = self.multiple_choice_head(hidden_states, mc_token_ids, training=training)
+        mc_logits = self.multiple_choice_head(
+            hidden_states, mc_token_ids, training=training
+        )
         mc_logits = tf.squeeze(mc_logits, axis=-1)
 
         if not return_dict:

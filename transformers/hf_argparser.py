@@ -19,9 +19,12 @@ class HfArgumentParser(ArgumentParser):
     arguments to the parser after initialization and you'll get the output back after parsing as an additional
     namespace.
     """
+
     dataclass_types: Iterable[DataClassType]
 
-    def __init__(self, dataclass_types: Union[DataClassType, Iterable[DataClassType]], **kwargs):
+    def __init__(
+        self, dataclass_types: Union[DataClassType, Iterable[DataClassType]], **kwargs
+    ):
         """
         Args:
             dataclass_types:
@@ -62,12 +65,19 @@ class HfArgumentParser(ArgumentParser):
                 if field.default is not dataclasses.MISSING:
                     kwargs["default"] = field.default
             elif field.type is bool or field.type is Optional[bool]:
-                if field.type is bool or (field.default is not None and field.default is not dataclasses.MISSING):
-                    kwargs["action"] = "store_false" if field.default is True else "store_true"
+                if field.type is bool or (
+                    field.default is not None
+                    and field.default is not dataclasses.MISSING
+                ):
+                    kwargs["action"] = (
+                        "store_false" if field.default is True else "store_true"
+                    )
                 if field.default is True:
                     field_name = f"--no_{field.name}"
                     kwargs["dest"] = field.name
-            elif hasattr(field.type, "__origin__") and issubclass(field.type.__origin__, List):
+            elif hasattr(field.type, "__origin__") and issubclass(
+                field.type.__origin__, List
+            ):
                 kwargs["nargs"] = "+"
                 kwargs["type"] = field.type.__args__[0]
                 assert all(
@@ -86,7 +96,11 @@ class HfArgumentParser(ArgumentParser):
             self.add_argument(field_name, **kwargs)
 
     def parse_args_into_dataclasses(
-        self, args=None, return_remaining_strings=False, look_for_args_file=True, args_filename=None
+        self,
+        args=None,
+        return_remaining_strings=False,
+        look_for_args_file=True,
+        args_filename=None,
     ) -> Tuple[DataClass, ...]:
         """
         Parse command-line args into instances of the specified dataclass types.
@@ -140,7 +154,9 @@ class HfArgumentParser(ArgumentParser):
             return (*outputs, remaining_args)
         else:
             if remaining_args:
-                raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {remaining_args}")
+                raise ValueError(
+                    f"Some specified arguments are not used by the HfArgumentParser: {remaining_args}"
+                )
 
             return (*outputs,)
 

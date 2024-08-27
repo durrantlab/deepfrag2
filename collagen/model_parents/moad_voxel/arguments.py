@@ -17,30 +17,26 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     """
     parser = parent_parser.add_argument_group("Binding MOAD")
 
-    parser.add_argument(
-        "--every_csv",
-        required=False,
-        help="Path to MOAD every.csv"
-    )
+    parser.add_argument("--every_csv", required=False, help="Path to MOAD every.csv")
     parser.add_argument(
         "--data_dir",
         required=False,  # Not required if running in --mode "inference"
-        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter can be used for both training and fine-tuning."
+        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter can be used for both training and fine-tuning.",
     )
     parser.add_argument(
         "--paired_data_csv",
         required=False,  # Not required if running in --mode "inference"
         help="This parameter is to be only used in the fine-tuning mode. This parameter is a set of comma separated values in the next order:\n"
-             "1 - Path to the CSV file where information related to the paired data are stored\n"
-             "2 - Column related to the PDB files\n"
-             "3 - Column related to the SDF files\n"
-             "4 - Column related to the parent SMILES strings\n"
-             "5 - Column related to the SMILES strings of the first fragment\n"
-             "6 - Column related to the SMILES strings of the second fragment\n"
-             "7 - Column related to the activity value of the first fragment\n"
-             "8 - Column related to the activity value of the second fragment\n"
-             "9 - Column related to the receptor prevalence"
-             "10 - Path to the PDB and SDF files"
+        "1 - Path to the CSV file where information related to the paired data are stored\n"
+        "2 - Column related to the PDB files\n"
+        "3 - Column related to the SDF files\n"
+        "4 - Column related to the parent SMILES strings\n"
+        "5 - Column related to the SMILES strings of the first fragment\n"
+        "6 - Column related to the SMILES strings of the second fragment\n"
+        "7 - Column related to the activity value of the first fragment\n"
+        "8 - Column related to the activity value of the second fragment\n"
+        "9 - Column related to the receptor prevalence"
+        "10 - Path to the PDB and SDF files",
     )
 
     # For many of these, good to define default values in args_defaults.py
@@ -53,35 +49,35 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         required=False,
         # default=None,
         type=str,
-        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). Used for testing on a user-specified directory of protein/ligand pairs."
+        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). Used for testing on a user-specified directory of protein/ligand pairs.",
     )
     parser.add_argument(
         "--fraction_train",
         required=False,
         # default=0.6,
         type=float,
-        help="Percentage of targets to use in the TRAIN set."
+        help="Percentage of targets to use in the TRAIN set.",
     )
     parser.add_argument(
         "--fraction_val",
         required=False,
         # default=0.5,
         type=float,
-        help="Percentage of (non-train) targets to use in the VAL set. The remaining ones will be used in the test set"
+        help="Percentage of (non-train) targets to use in the VAL set. The remaining ones will be used in the test set",
     )
     parser.add_argument(
         "--save_every_epoch",
         required=False,
         # default=False,
         action="store_true",
-        help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch"
+        help="To set if a checkpoint will be saved after finishing every training (or fine-tuning) epoch",
     )
 
     parser.add_argument(
         "--split_method",
         required=False,
         type=str,
-        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If any fragments are present in more than one set, some will be randomly removed to ensure independence. If 'high_priority', duplicate fragments will be removed so as to favor the training set first, then the validation set (i.e., training and validation sets will be larger that user-specified fraction). If 'low_priority', duplicate fragment will be removed so as to favor the test set, then the validation set (i.e., test and validation sets will be larger than the user-specified fraction). If 'butina', butina clustering will be used. Used only for finetuning. TODO: More details needed."
+        help="Method to use for splitting the data into TRAIN/VAL/TEST sets: (1) If 'random' (default), the data will be partitioned randomly according to the specified fractions. If any fragments are present in more than one set, some will be randomly removed to ensure independence. If 'high_priority', duplicate fragments will be removed so as to favor the training set first, then the validation set (i.e., training and validation sets will be larger that user-specified fraction). If 'low_priority', duplicate fragment will be removed so as to favor the test set, then the validation set (i.e., test and validation sets will be larger than the user-specified fraction). If 'butina', butina clustering will be used. Used only for finetuning. TODO: More details needed.",
     )
 
     # Note that --prevent_smiles_overlap is no longer a user-definable
@@ -92,7 +88,7 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         required=False,
         # default=None,
         type=float,
-        help="Cutoff value to be applied for the Butina clustering method"
+        help="Cutoff value to be applied for the Butina clustering method",
     )
     parser.add_argument(
         "--cache",
@@ -216,11 +212,13 @@ def fix_moad_args(args: Namespace) -> Namespace:
         # Append `.cache.json` to the file path given by `--every_csv. Happens
         # when --cache not specified.
         import os
+
         args.cache = f"{args.default_root_dir + os.sep}cache.json"
     elif args.cache == "none":
         # Recreate cache every time. Note that this is now the default.
         # Essentially, to recreate cache every time (no cache from run to run,
         # just within a run).
         import tempfile
+
         args.cache = tempfile.NamedTemporaryFile().name
     return args

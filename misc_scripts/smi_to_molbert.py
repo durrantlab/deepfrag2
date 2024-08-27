@@ -1,17 +1,22 @@
 import numpy as np
 import os
 import sys
+
 sys.path.append("../")
 
 from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 
 PATH_MOLBERT_MODEL = "./molbert_model"
 PATH_MOLBERT_CKPT = os.path.join(
-    PATH_MOLBERT_MODEL,
-    "molbert_100epochs/checkpoints/last.ckpt"
+    PATH_MOLBERT_MODEL, "molbert_100epochs/checkpoints/last.ckpt"
 )
 
-MOLBERT_MODEL = MolBertFeaturizer(PATH_MOLBERT_CKPT, embedding_type='average-1-cat-pooled', max_seq_len=200, device='cuda')
+MOLBERT_MODEL = MolBertFeaturizer(
+    PATH_MOLBERT_CKPT,
+    embedding_type="average-1-cat-pooled",
+    max_seq_len=200,
+    device="cuda",
+)
 
 
 mn = 1e100
@@ -36,4 +41,6 @@ for i, line in enumerate(lines):
     print("    min:", mn)
     print("    max:", mx)
 
-import pdb; pdb.set_trace()
+import pdb
+
+pdb.set_trace()

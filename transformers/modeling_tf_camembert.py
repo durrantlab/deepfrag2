@@ -69,6 +69,7 @@ CAMEMBERT_START_DOCSTRING = r"""
             weights.
 """
 
+
 @add_start_docstrings(
     "The bare CamemBERT Model transformer outputting raw hidden-states without any specific head on top.",
     CAMEMBERT_START_DOCSTRING,
@@ -78,6 +79,7 @@ class TFCamembertModel(TFRobertaModel):
     This class overrides :class:`~transformers.TFRobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -90,6 +92,7 @@ class TFCamembertForMaskedLM(TFRobertaForMaskedLM):
     This class overrides :class:`~transformers.TFRobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -105,6 +108,7 @@ class TFCamembertForSequenceClassification(TFRobertaForSequenceClassification):
     This class overrides :class:`~transformers.TFRobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -120,6 +124,7 @@ class TFCamembertForTokenClassification(TFRobertaForTokenClassification):
     This class overrides :class:`~transformers.TFRobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -135,6 +140,7 @@ class TFCamembertForMultipleChoice(TFRobertaForMultipleChoice):
     This class overrides :class:`~transformers.TFRobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -150,4 +156,5 @@ class TFCamembertForQuestionAnswering(TFRobertaForQuestionAnswering):
     This class overrides :class:`~transformers.TFRobertaForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig

@@ -25,7 +25,9 @@ result_counts = {}
 
 for entry in tqdm(data["entries"], desc="Collecting results"):
     correct_smi = entry["groundTruth"]["fragmentSmiles"]
-    top_predictions = [entry["avgOfCheckpoints"]["closestFromLabelSet"][i]["smiles"] for i in range(4)]
+    top_predictions = [
+        entry["avgOfCheckpoints"]["closestFromLabelSet"][i]["smiles"] for i in range(4)
+    ]
 
     # Use RDKit to make sure both smiles are cannonical
     correct_smi = Chem.MolToSmiles(Chem.MolFromSmiles(correct_smi))
@@ -33,14 +35,8 @@ for entry in tqdm(data["entries"], desc="Collecting results"):
 
     if correct_smi not in result_counts:
         result_counts[correct_smi] = {
-            "top-1": {
-                "correct": 0,
-                "incorrect": 0,
-            },
-            "top-4": {
-                "correct": 0,
-                "incorrect": 0,
-            }
+            "top-1": {"correct": 0, "incorrect": 0,},
+            "top-4": {"correct": 0, "incorrect": 0,},
         }
     if correct_smi == top_predictions[0]:
         result_counts[correct_smi]["top-1"]["correct"] += 1

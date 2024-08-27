@@ -4,12 +4,13 @@ import random
 import numpy as np
 from transformers import BertConfig
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class InputFeatures(object):
     """A single set of original_features of data."""
+
     def __init__(self, input_ids, input_mask, segment_ids, is_next, lm_label_ids):
         self.input_ids = input_ids
         self.input_mask = input_mask
@@ -20,6 +21,7 @@ class InputFeatures(object):
 
 class InputExample(object):
     """A single training/test example for the language model."""
+
     def __init__(self, guid, tokens_a, tokens_b=None, is_next=None, lm_labels=None):
         """Construct a InputExample.
 
@@ -91,7 +93,7 @@ def random_word(tokens, tokenizer, inference_mode: bool = False):
 
             # 80% randomly change token to mask token
             if prob < 0.8:
-                token = '[MASK]'
+                token = "[MASK]"
             # 10% randomly change token to random token
             elif prob < 0.9:
                 token = random.choice(list(tokenizer.token_to_idx.items()))[0]
@@ -107,8 +109,12 @@ def random_word(tokens, tokenizer, inference_mode: bool = False):
                 tokens[i] = token
             except KeyError:
                 # For unknown words (should not occur with BPE vocab)
-                output_label.append(tokenizer.token_to_idx['[UNK]'])
-                logger.warning('Cannot find token "{}" in token_to_idx. Using [UNK] instead'.format(tokens[i]))
+                output_label.append(tokenizer.token_to_idx["[UNK]"])
+                logger.warning(
+                    'Cannot find token "{}" in token_to_idx. Using [UNK] instead'.format(
+                        tokens[i]
+                    )
+                )
         else:
             # no masking token (will be ignored by loss function later)
             output_label.append(-1)
@@ -116,7 +122,9 @@ def random_word(tokens, tokenizer, inference_mode: bool = False):
     return tokens, output_label
 
 
-def convert_example_to_features(example, max_seq_length, tokenizer, inference_mode: bool = False):
+def convert_example_to_features(
+    example, max_seq_length, tokenizer, inference_mode: bool = False
+):
     """
     Convert a raw sample (pair of sentences as tokenized strings) into a proper training sample with
     IDs, LM labels, input_mask, CLS and SEP tokens etc.
@@ -140,7 +148,9 @@ def convert_example_to_features(example, max_seq_length, tokenizer, inference_mo
     tokens_b, t2_label = random_word(tokens_b, tokenizer, inference_mode)
 
     # concatenate lm labels and account for CLS, SEP, SEP
-    lm_label_ids = [-1] + t1_label + [-1] + (t2_label + [-1] if len(t2_label) > 0 else [])
+    lm_label_ids = (
+        [-1] + t1_label + [-1] + (t2_label + [-1] if len(t2_label) > 0 else [])
+    )
 
     # The convention in BERT is:
     # (a) For sequence pairs:
@@ -162,19 +172,19 @@ def convert_example_to_features(example, max_seq_length, tokenizer, inference_mo
     # the entire model is fine-tuned.
     tokens = []
     segment_ids = []
-    tokens.append('[CLS]')
+    tokens.append("[CLS]")
     segment_ids.append(0)
     for token in tokens_a:
         tokens.append(token)
         segment_ids.append(0)
-    tokens.append('[SEP]')
+    tokens.append("[SEP]")
     segment_ids.append(0)
 
     if len(tokens_b) > 0:
         for token in tokens_b:
             tokens.append(token)
             segment_ids.append(1)
-        tokens.append('[SEP]')
+        tokens.append("[SEP]")
         segment_ids.append(1)
 
     input_ids = tokenizer.convert_tokens_to_ids(tokens)
@@ -236,6 +246,7 @@ class BertConfigExtras(BertConfig):
     Same as BertConfig, BUT
     adds any kwarg as a member field
     """
+
     def __init__(
         self,
         vocab_size_or_config_json_file,

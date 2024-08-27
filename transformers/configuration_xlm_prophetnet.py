@@ -30,4 +30,5 @@ class XLMProphetNetConfig(ProphetNetConfig):
     This class overrides :class:`~transformers.ProphetNetConfig`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     model_type = "xlm-prophetnet"

@@ -46,6 +46,7 @@ class ModelCard:
 
     Parameters:
     """
+
     def __init__(self, **kwargs):
         # Recommended attributes from https://arxiv.org/abs/1810.03993 (see papers)
         self.model_details = kwargs.pop("model_details", {})
@@ -63,14 +64,18 @@ class ModelCard:
             try:
                 setattr(self, key, value)
             except AttributeError as err:
-                logger.error("Can't set {} with value {} for {}".format(key, value, self))
+                logger.error(
+                    "Can't set {} with value {} for {}".format(key, value, self)
+                )
                 raise err
 
     def save_pretrained(self, save_directory_or_file):
         """Save a model card object to the directory or file `save_directory_or_file`."""
         if os.path.isdir(save_directory_or_file):
             # If we save using the predefined names, we can load using `from_pretrained`
-            output_model_card_file = os.path.join(save_directory_or_file, MODEL_CARD_NAME)
+            output_model_card_file = os.path.join(
+                save_directory_or_file, MODEL_CARD_NAME
+            )
         else:
             output_model_card_file = save_directory_or_file
 
@@ -136,27 +141,42 @@ class ModelCard:
         if pretrained_model_name_or_path in ALL_PRETRAINED_CONFIG_ARCHIVE_MAP:
             # For simplicity we use the same pretrained url than the configuration files
             # but with a different suffix (modelcard.json). This suffix is replaced below.
-            model_card_file = ALL_PRETRAINED_CONFIG_ARCHIVE_MAP[pretrained_model_name_or_path]
+            model_card_file = ALL_PRETRAINED_CONFIG_ARCHIVE_MAP[
+                pretrained_model_name_or_path
+            ]
         elif os.path.isdir(pretrained_model_name_or_path):
-            model_card_file = os.path.join(pretrained_model_name_or_path, MODEL_CARD_NAME)
-        elif os.path.isfile(pretrained_model_name_or_path) or is_remote_url(pretrained_model_name_or_path):
+            model_card_file = os.path.join(
+                pretrained_model_name_or_path, MODEL_CARD_NAME
+            )
+        elif os.path.isfile(pretrained_model_name_or_path) or is_remote_url(
+            pretrained_model_name_or_path
+        ):
             model_card_file = pretrained_model_name_or_path
         else:
-            model_card_file = hf_bucket_url(pretrained_model_name_or_path, filename=MODEL_CARD_NAME, mirror=None)
+            model_card_file = hf_bucket_url(
+                pretrained_model_name_or_path, filename=MODEL_CARD_NAME, mirror=None
+            )
 
-        if find_from_standard_name or pretrained_model_name_or_path in ALL_PRETRAINED_CONFIG_ARCHIVE_MAP:
+        if (
+            find_from_standard_name
+            or pretrained_model_name_or_path in ALL_PRETRAINED_CONFIG_ARCHIVE_MAP
+        ):
             model_card_file = model_card_file.replace(CONFIG_NAME, MODEL_CARD_NAME)
             model_card_file = model_card_file.replace(WEIGHTS_NAME, MODEL_CARD_NAME)
             model_card_file = model_card_file.replace(TF2_WEIGHTS_NAME, MODEL_CARD_NAME)
 
         try:
             # Load from URL or cache if already cached
-            resolved_model_card_file = cached_path(model_card_file, cache_dir=cache_dir, proxies=proxies)
+            resolved_model_card_file = cached_path(
+                model_card_file, cache_dir=cache_dir, proxies=proxies
+            )
             if resolved_model_card_file == model_card_file:
                 logger.info("loading model card file {}".format(model_card_file))
             else:
                 logger.info(
-                    "loading model card file {} from cache at {}".format(model_card_file, resolved_model_card_file)
+                    "loading model card file {} from cache at {}".format(
+                        model_card_file, resolved_model_card_file
+                    )
                 )
             # Load model card
             modelcard = cls.from_json_file(resolved_model_card_file)

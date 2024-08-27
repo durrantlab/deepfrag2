@@ -42,7 +42,12 @@ def convert_pytorch_checkpoint_to_tf(model: BertModel, ckpt_dir: str, model_name
         - N BertForSequenceClassification
         - N BertForQuestionAnswering
     """
-    tensors_to_transpose = ("dense.weight", "attention.self.query", "attention.self.key", "attention.self.value")
+    tensors_to_transpose = (
+        "dense.weight",
+        "attention.self.query",
+        "attention.self.key",
+        "attention.self.value",
+    )
 
     var_map = (
         ("layer.", "layer_"),
@@ -67,7 +72,12 @@ def convert_pytorch_checkpoint_to_tf(model: BertModel, ckpt_dir: str, model_name
 
     def create_tf_var(tensor: np.ndarray, name: str, session: tf.Session):
         tf_dtype = tf.dtypes.as_dtype(tensor.dtype)
-        tf_var = tf.get_variable(dtype=tf_dtype, shape=tensor.shape, name=name, initializer=tf.zeros_initializer())
+        tf_var = tf.get_variable(
+            dtype=tf_dtype,
+            shape=tensor.shape,
+            name=name,
+            initializer=tf.zeros_initializer(),
+        )
         session.run(tf.variables_initializer([tf_var]))
         session.run(tf_var)
         return tf_var
@@ -82,20 +92,45 @@ def convert_pytorch_checkpoint_to_tf(model: BertModel, ckpt_dir: str, model_name
             tf_var = create_tf_var(tensor=torch_tensor, name=tf_name, session=session)
             tf.keras.backend.set_value(tf_var, torch_tensor)
             tf_weight = session.run(tf_var)
-            print("Successfully created {}: {}".format(tf_name, np.allclose(tf_weight, torch_tensor)))
+            print(
+                "Successfully created {}: {}".format(
+                    tf_name, np.allclose(tf_weight, torch_tensor)
+                )
+            )
 
         saver = tf.train.Saver(tf.trainable_variables())
-        saver.save(session, os.path.join(ckpt_dir, model_name.replace("-", "_") + ".ckpt"))
+        saver.save(
+            session, os.path.join(ckpt_dir, model_name.replace("-", "_") + ".ckpt")
+        )
 
 
 def main(raw_args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, required=True, help="model name e.g. bert-base-uncased")
     parser.add_argument(
-        "--cache_dir", type=str, default=None, required=False, help="Directory containing pytorch model"
+        "--model_name",
+        type=str,
+        required=True,
+        help="model name e.g. bert-base-uncased",
     )
-    parser.add_argument("--pytorch_model_path", type=str, required=True, help="/path/to/<pytorch-model-name>.bin")
-    parser.add_argument("--tf_cache_dir", type=str, required=True, help="Directory in which to save tensorflow model")
+    parser.add_argument(
+        "--cache_dir",
+        type=str,
+        default=None,
+        required=False,
+        help="Directory containing pytorch model",
+    )
+    parser.add_argument(
+        "--pytorch_model_path",
+        type=str,
+        required=True,
+        help="/path/to/<pytorch-model-name>.bin",
+    )
+    parser.add_argument(
+        "--tf_cache_dir",
+        type=str,
+        required=True,
+        help="Directory in which to save tensorflow model",
+    )
     args = parser.parse_args(raw_args)
 
     model = BertModel.from_pretrained(
@@ -104,7 +139,9 @@ def main(raw_args=None):
         cache_dir=args.cache_dir,
     )
 
-    convert_pytorch_checkpoint_to_tf(model=model, ckpt_dir=args.tf_cache_dir, model_name=args.model_name)
+    convert_pytorch_checkpoint_to_tf(
+        model=model, ckpt_dir=args.tf_cache_dir, model_name=args.model_name
+    )
 
 
 if __name__ == "__main__":

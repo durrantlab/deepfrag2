@@ -20,7 +20,11 @@ import torch
 from torch.nn import functional as F
 
 from .configuration_flaubert import FlaubertConfig
-from .file_utils import add_code_sample_docstrings, add_start_docstrings, add_start_docstrings_to_model_forward
+from .file_utils import (
+    add_code_sample_docstrings,
+    add_start_docstrings,
+    add_start_docstrings_to_model_forward,
+)
 from .modeling_outputs import BaseModelOutput
 from .modeling_xlm import (
     XLMForMultipleChoice,
@@ -123,6 +127,7 @@ FLAUBERT_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
+
 @add_start_docstrings(
     "The bare Flaubert Model transformer outputting raw hidden-states without any specific head on top.",
     FLAUBERT_START_DOCSTRING,
@@ -158,11 +163,19 @@ class FlaubertModel(XLMModel):
         output_hidden_states=None,
         return_dict=None,
     ):
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.config.output_attentions
         )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.config.output_hidden_states
+        )
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         # removed: src_enc=None, src_len=None
         if input_ids is not None:
@@ -189,7 +202,9 @@ class FlaubertModel(XLMModel):
         #     assert src_enc.size(0) == bs
 
         # generate masks
-        mask, attn_mask = get_masks(slen, lengths, self.causal, padding_mask=attention_mask)
+        mask, attn_mask = get_masks(
+            slen, lengths, self.causal, padding_mask=attention_mask
+        )
         # if self.is_decoder and src_enc is not None:
         #     src_mask = torch.arange(src_len.max(), dtype=torch.long, device=lengths.device) < src_len[:, None]
 
@@ -223,7 +238,9 @@ class FlaubertModel(XLMModel):
         if inputs_embeds is None:
             inputs_embeds = self.embeddings(input_ids)
 
-        tensor = inputs_embeds + self.position_embeddings(position_ids).expand_as(inputs_embeds)
+        tensor = inputs_embeds + self.position_embeddings(position_ids).expand_as(
+            inputs_embeds
+        )
         if langs is not None and self.use_lang_emb and self.config.n_langs > 1:
             tensor = tensor + self.lang_embeddings(langs)
         if token_type_ids is not None:
@@ -261,7 +278,9 @@ class FlaubertModel(XLMModel):
                 tensor = self.layer_norm1[i](tensor)
             else:
                 tensor_normalized = self.layer_norm1[i](tensor)
-                attn_outputs = self.attentions[i](tensor_normalized, attn_mask, cache=cache, head_mask=head_mask[i])
+                attn_outputs = self.attentions[i](
+                    tensor_normalized, attn_mask, cache=cache, head_mask=head_mask[i]
+                )
                 attn = attn_outputs[0]
                 if output_attentions:
                     attentions = attentions + (attn_outputs[1],)
@@ -297,9 +316,13 @@ class FlaubertModel(XLMModel):
         # tensor = tensor.transpose(0, 1)
 
         if not return_dict:
-            return tuple(v for v in [tensor, hidden_states, attentions] if v is not None)
+            return tuple(
+                v for v in [tensor, hidden_states, attentions] if v is not None
+            )
 
-        return BaseModelOutput(last_hidden_state=tensor, hidden_states=hidden_states, attentions=attentions)
+        return BaseModelOutput(
+            last_hidden_state=tensor, hidden_states=hidden_states, attentions=attentions
+        )
 
 
 @add_start_docstrings(
@@ -314,6 +337,7 @@ class FlaubertWithLMHeadModel(XLMWithLMHeadModel):
     This class overrides :class:`~transformers.XLMWithLMHeadModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -334,6 +358,7 @@ class FlaubertForSequenceClassification(XLMForSequenceClassification):
     This class overrides :class:`~transformers.XLMForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -354,6 +379,7 @@ class FlaubertForTokenClassification(XLMForTokenClassification):
     This class overrides :class:`~transformers.XLMForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -374,6 +400,7 @@ class FlaubertForQuestionAnsweringSimple(XLMForQuestionAnsweringSimple):
     This class overrides :class:`~transformers.XLMForQuestionAnsweringSimple`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -394,6 +421,7 @@ class FlaubertForQuestionAnswering(XLMForQuestionAnswering):
     This class overrides :class:`~transformers.XLMForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = FlaubertConfig
 
     def __init__(self, config):
@@ -414,6 +442,7 @@ class FlaubertForMultipleChoice(XLMForMultipleChoice):
     This class overrides :class:`~transformers.XLMForMultipleChoice`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = FlaubertConfig
 
     def __init__(self, config):

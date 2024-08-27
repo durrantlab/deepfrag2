@@ -19,8 +19,10 @@ prody.confProDy(verbosity="none")
 def run(args):
     # Not sure this used. But if it is, moad = MOADInterface(args.every_csv,
     # args.data_dir, args.cache_pdbs_to_disk) missing params
-    print("HEREHEREHERE???")  
-    import pdb; pdb.set_trace()
+    print("HEREHEREHERE???")
+    import pdb
+
+    pdb.set_trace()
     moad = MOADInterface(args.every_csv, args.data_dir, args.cache_pdbs_to_disk)
     dat = MOADFragmentDataset(moad, cache_file=args.out, cache_cores=args.cores)
     print("Done")

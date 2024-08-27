@@ -23,7 +23,8 @@ test_json_filename = sys.argv[1]
 
 pattern = re.compile("<\?xml.*\?>")
 
-def DrawMol(mol, molSize: Tuple[int, int]=(450,150), kekulize: bool=True) -> str:
+
+def DrawMol(mol, molSize: Tuple[int, int] = (450, 150), kekulize: bool = True) -> str:
     """Draw molecule in SVG format.
     
     Args:
@@ -46,9 +47,10 @@ def DrawMol(mol, molSize: Tuple[int, int]=(450,150), kekulize: bool=True) -> str
     drawer = rdMolDraw2D.MolDraw2DSVG(*molSize)
     drawer.DrawMolecule(mc)
     drawer.FinishDrawing()
-    svg = drawer.GetDrawingText().replace('svg:', '')
-    svg = re.sub(pattern, '', svg)
+    svg = drawer.GetDrawingText().replace("svg:", "")
+    svg = re.sub(pattern, "", svg)
     return svg
+
 
 def toHTMLTable(list_of_smi: List[str]) -> str:
     """
@@ -72,7 +74,11 @@ def toHTMLTable(list_of_smi: List[str]) -> str:
         table_cell = "<td><center>{}</center></td>"
         smi_to_use = list_of_smi[i]
         if "[MATCH]" in smi_to_use:
-            smi_to_use = "<span class=\"red-text\">" + smi_to_use.replace("[MATCH]", "") + "</span>"
+            smi_to_use = (
+                '<span class="red-text">'
+                + smi_to_use.replace("[MATCH]", "")
+                + "</span>"
+            )
         # Add the SVG text to the table cell
         table_cell = table_cell.format(f"{svg}<br>{smi_to_use}")
         # Add the table cell to the list
@@ -94,10 +100,12 @@ for entry in data["entries"]:
         closest[closest.index(correct)] = f"[MATCH]{correct}"
 
     lines.append(f"{correct} " + " ".join(closest))
-    
-num_closest = len(data["entries"][0]["perCheckpoint"][0]["averagedPrediction"]["closestFromLabelSet"])
 
-#lines = open("correct_and_closest.txt").readlines()
+num_closest = len(
+    data["entries"][0]["perCheckpoint"][0]["averagedPrediction"]["closestFromLabelSet"]
+)
+
+# lines = open("correct_and_closest.txt").readlines()
 random.shuffle(lines)
 num_closest = len(lines[0].split()) - 1
 print("<style>")

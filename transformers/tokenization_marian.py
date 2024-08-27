@@ -20,9 +20,15 @@ vocab_files_names = {
 }
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "source_spm": {"Helsinki-NLP/opus-mt-en-de": "https://cdn.huggingface.co/Helsinki-NLP/opus-mt-en-de/source.spm"},
-    "target_spm": {"Helsinki-NLP/opus-mt-en-de": "https://cdn.huggingface.co/Helsinki-NLP/opus-mt-en-de/target.spm"},
-    "vocab": {"Helsinki-NLP/opus-mt-en-de": "https://cdn.huggingface.co/Helsinki-NLP/opus-mt-en-de/vocab.json"},
+    "source_spm": {
+        "Helsinki-NLP/opus-mt-en-de": "https://cdn.huggingface.co/Helsinki-NLP/opus-mt-en-de/source.spm"
+    },
+    "target_spm": {
+        "Helsinki-NLP/opus-mt-en-de": "https://cdn.huggingface.co/Helsinki-NLP/opus-mt-en-de/target.spm"
+    },
+    "vocab": {
+        "Helsinki-NLP/opus-mt-en-de": "https://cdn.huggingface.co/Helsinki-NLP/opus-mt-en-de/vocab.json"
+    },
     "tokenizer_config_file": {
         "Helsinki-NLP/opus-mt-en-de": "https://cdn.huggingface.co/Helsinki-NLP/opus-mt-en-de/tokenizer_config.json"
     },
@@ -92,7 +98,7 @@ class MarianTokenizer(PreTrainedTokenizer):
         eos_token="</s>",
         pad_token="<pad>",
         model_max_length=512,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             # bos_token=bos_token,  unused. Start decoding with config.decoder_start_token_id
@@ -113,7 +119,9 @@ class MarianTokenizer(PreTrainedTokenizer):
 
         self.source_lang = source_lang
         self.target_lang = target_lang
-        self.supported_language_codes: list = [k for k in self.encoder if k.startswith(">>") and k.endswith("<<")]
+        self.supported_language_codes: list = [
+            k for k in self.encoder if k.startswith(">>") and k.endswith("<<")
+        ]
         self.spm_files = [source_spm, target_spm]
 
         # load SentencePiece model for pre-processing
@@ -160,7 +168,9 @@ class MarianTokenizer(PreTrainedTokenizer):
         """Uses target language sentencepiece model"""
         return self.spm_target.DecodePieces(tokens)
 
-    def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None) -> List[int]:
+    def build_inputs_with_special_tokens(
+        self, token_ids_0, token_ids_1=None
+    ) -> List[int]:
         """Build model inputs from a sequence by appending eos_token_id."""
         if token_ids_1 is None:
             return token_ids_0 + [self.eos_token_id]
@@ -182,7 +192,9 @@ class MarianTokenizer(PreTrainedTokenizer):
         if "" in src_texts:
             raise ValueError(f"found empty string in src_texts: {src_texts}")
         self.current_spm = self.spm_source
-        src_texts = [self.normalize(t) for t in src_texts]  # this does not appear to do much
+        src_texts = [
+            self.normalize(t) for t in src_texts
+        ]  # this does not appear to do much
         tokenizer_kwargs = dict(
             add_special_tokens=True,
             return_tensors=return_tensors,
@@ -206,21 +218,30 @@ class MarianTokenizer(PreTrainedTokenizer):
     def vocab_size(self) -> int:
         return len(self.encoder)
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(
+        self, save_directory: str, filename_prefix: Optional[str] = None
+    ) -> Tuple[str]:
         save_dir = Path(save_directory)
         assert save_dir.is_dir(), f"{save_directory} should be a directory"
         save_json(
             self.encoder,
-            save_dir / ((filename_prefix + "-" if filename_prefix else "") + self.vocab_files_names["vocab"]),
+            save_dir
+            / (
+                (filename_prefix + "-" if filename_prefix else "")
+                + self.vocab_files_names["vocab"]
+            ),
         )
 
         for orig, f in zip(["source.spm", "target.spm"], self.spm_files):
-            dest_path = save_dir / ((filename_prefix + "-" if filename_prefix else "") + Path(f).name)
+            dest_path = save_dir / (
+                (filename_prefix + "-" if filename_prefix else "") + Path(f).name
+            )
             if not dest_path.exists():
                 copyfile(f, save_dir / orig)
 
         return tuple(
-            save_dir / ((filename_prefix + "-" if filename_prefix else "") + f) for f in self.vocab_files_names
+            save_dir / ((filename_prefix + "-" if filename_prefix else "") + f)
+            for f in self.vocab_files_names
         )
 
     def get_vocab(self) -> Dict:
@@ -230,7 +251,12 @@ class MarianTokenizer(PreTrainedTokenizer):
 
     def __getstate__(self) -> Dict:
         state = self.__dict__.copy()
-        state.update({k: None for k in ["spm_source", "spm_target", "current_spm", "punc_normalizer"]})
+        state.update(
+            {
+                k: None
+                for k in ["spm_source", "spm_target", "current_spm", "punc_normalizer"]
+            }
+        )
         return state
 
     def __setstate__(self, d: Dict) -> None:
@@ -244,12 +270,17 @@ class MarianTokenizer(PreTrainedTokenizer):
         return 1
 
     def _special_token_mask(self, seq):
-        all_special_ids = set(self.all_special_ids)  # call it once instead of inside list comp
+        all_special_ids = set(
+            self.all_special_ids
+        )  # call it once instead of inside list comp
         all_special_ids.remove(self.unk_token_id)  # <unk> is only sometimes special
         return [1 if x in all_special_ids else 0 for x in seq]
 
     def get_special_tokens_mask(
-        self, token_ids_0: List, token_ids_1: Optional[List] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List,
+        token_ids_1: Optional[List] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """Get list where entries are [1] if a token is [eos] or [pad] else 0."""
         if already_has_special_tokens:

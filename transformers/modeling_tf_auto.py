@@ -112,7 +112,11 @@ from .modeling_tf_funnel import (
     TFFunnelModel,
 )
 from .modeling_tf_gpt2 import TFGPT2LMHeadModel, TFGPT2Model
-from .modeling_tf_longformer import TFLongformerForMaskedLM, TFLongformerForQuestionAnswering, TFLongformerModel
+from .modeling_tf_longformer import (
+    TFLongformerForMaskedLM,
+    TFLongformerForQuestionAnswering,
+    TFLongformerModel,
+)
 from .modeling_tf_lxmert import TFLxmertForPreTraining, TFLxmertModel
 from .modeling_tf_marian import TFMarianMTModel
 from .modeling_tf_mbart import TFMBartForConditionalGeneration
@@ -437,6 +441,7 @@ TF_AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
                       attribute will be passed to the underlying model's ``__init__`` function.
 """
 
+
 class TFAutoModel(object):
     r"""
     This is a generic model class that will be instantiated as one of the base model classes of the library when
@@ -445,6 +450,7 @@ class TFAutoModel(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModel is designed to be instantiated "
@@ -480,7 +486,9 @@ class TFAutoModel(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys()),
             )
         )
 
@@ -521,7 +529,9 @@ class TFAutoModel(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys()),
             )
         )
 
@@ -535,6 +545,7 @@ class TFAutoModelForPreTraining(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForPreTraining is designed to be instantiated "
@@ -543,7 +554,9 @@ class TFAutoModelForPreTraining(object):
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_PRETRAINING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_PRETRAINING_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with the architecture used for pretraining this
@@ -572,7 +585,9 @@ class TFAutoModelForPreTraining(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys()),
             )
         )
 
@@ -614,7 +629,9 @@ class TFAutoModelForPreTraining(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys()),
             )
         )
 
@@ -635,6 +652,7 @@ class TFAutoModelWithLMHead(object):
         :class:`~transformers.TFAutoModelForMaskedLM` for masked language models and
         :class:`~transformers.TFAutoModelForSeq2SeqLM` for encoder-decoder models.
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelWithLMHead is designed to be instantiated "
@@ -643,7 +661,9 @@ class TFAutoModelWithLMHead(object):
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_WITH_LM_HEAD_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_WITH_LM_HEAD_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a language modeling head---from a configuration.
@@ -677,7 +697,9 @@ class TFAutoModelWithLMHead(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys()),
             )
         )
 
@@ -726,7 +748,9 @@ class TFAutoModelWithLMHead(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys()),
             )
         )
 
@@ -740,6 +764,7 @@ class TFAutoModelForCausalLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForCausalLM is designed to be instantiated "
@@ -748,7 +773,9 @@ class TFAutoModelForCausalLM:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_CAUSAL_LM_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a causal language modeling head---from a
@@ -777,7 +804,9 @@ class TFAutoModelForCausalLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
             )
         )
 
@@ -819,7 +848,9 @@ class TFAutoModelForCausalLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
             )
         )
 
@@ -833,6 +864,7 @@ class TFAutoModelForMaskedLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForMaskedLM is designed to be instantiated "
@@ -841,7 +873,9 @@ class TFAutoModelForMaskedLM:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_MASKED_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_MASKED_LM_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a masked language modeling head---from a
@@ -870,7 +904,9 @@ class TFAutoModelForMaskedLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys()),
             )
         )
 
@@ -912,7 +948,9 @@ class TFAutoModelForMaskedLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys()),
             )
         )
 
@@ -926,6 +964,7 @@ class TFAutoModelForSeq2SeqLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForSeq2SeqLM is designed to be instantiated "
@@ -934,7 +973,9 @@ class TFAutoModelForSeq2SeqLM:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence-to-sequence language modeling
@@ -965,12 +1006,16 @@ class TFAutoModelForSeq2SeqLM:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()
+                ),
             )
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False
+    )
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a sequence-to-sequence language modeling "
         "head---from a pretrained model.",
@@ -1001,7 +1046,9 @@ class TFAutoModelForSeq2SeqLM:
             )
 
         if type(config) in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys():
-            return TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[type(config)].from_pretrained(
+            return TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[
+                type(config)
+            ].from_pretrained(
                 pretrained_model_name_or_path, *model_args, config=config, **kwargs
             )
         raise ValueError(
@@ -1009,7 +1056,9 @@ class TFAutoModelForSeq2SeqLM:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()
+                ),
             )
         )
 
@@ -1023,6 +1072,7 @@ class TFAutoModelForSequenceClassification(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForSequenceClassification is designed to be instantiated "
@@ -1031,7 +1081,9 @@ class TFAutoModelForSequenceClassification(object):
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence classification head---from a
@@ -1062,7 +1114,10 @@ class TFAutoModelForSequenceClassification(object):
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1098,7 +1153,9 @@ class TFAutoModelForSequenceClassification(object):
             )
 
         if type(config) in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys():
-            return TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)].from_pretrained(
+            return TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[
+                type(config)
+            ].from_pretrained(
                 pretrained_model_name_or_path, *model_args, config=config, **kwargs
             )
         raise ValueError(
@@ -1106,7 +1163,10 @@ class TFAutoModelForSequenceClassification(object):
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1120,6 +1180,7 @@ class TFAutoModelForQuestionAnswering(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForQuestionAnswering is designed to be instantiated "
@@ -1128,7 +1189,9 @@ class TFAutoModelForQuestionAnswering(object):
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a question answering head---from a configuration.
@@ -1158,7 +1221,9 @@ class TFAutoModelForQuestionAnswering(object):
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()
+                ),
             )
         )
 
@@ -1194,7 +1259,9 @@ class TFAutoModelForQuestionAnswering(object):
             )
 
         if type(config) in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys():
-            return TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING[type(config)].from_pretrained(
+            return TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING[
+                type(config)
+            ].from_pretrained(
                 pretrained_model_name_or_path, *model_args, config=config, **kwargs
             )
         raise ValueError(
@@ -1202,7 +1269,9 @@ class TFAutoModelForQuestionAnswering(object):
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()
+                ),
             )
         )
 
@@ -1216,6 +1285,7 @@ class TFAutoModelForTokenClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForTokenClassification is designed to be instantiated "
@@ -1224,7 +1294,9 @@ class TFAutoModelForTokenClassification:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a token classification head---from a configuration.
@@ -1254,7 +1326,9 @@ class TFAutoModelForTokenClassification:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1290,7 +1364,9 @@ class TFAutoModelForTokenClassification:
             )
 
         if type(config) in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys():
-            return TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[type(config)].from_pretrained(
+            return TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[
+                type(config)
+            ].from_pretrained(
                 pretrained_model_name_or_path, *model_args, config=config, **kwargs
             )
         raise ValueError(
@@ -1298,7 +1374,9 @@ class TFAutoModelForTokenClassification:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1312,6 +1390,7 @@ class TFAutoModelForMultipleChoice:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForMultipleChoice is designed to be instantiated "
@@ -1320,7 +1399,9 @@ class TFAutoModelForMultipleChoice:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a multiple choice classification head---from a
@@ -1351,7 +1432,9 @@ class TFAutoModelForMultipleChoice:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()
+                ),
             )
         )
 
@@ -1395,6 +1478,8 @@ class TFAutoModelForMultipleChoice:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()
+                ),
             )
         )

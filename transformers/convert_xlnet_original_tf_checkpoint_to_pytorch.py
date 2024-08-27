@@ -55,7 +55,11 @@ def convert_xlnet_checkpoint_to_pytorch(
 
     finetuning_task = finetuning_task.lower() if finetuning_task is not None else ""
     if finetuning_task in GLUE_TASKS_NUM_LABELS:
-        print("Building PyTorch XLNetForSequenceClassification model from configuration: {}".format(str(config)))
+        print(
+            "Building PyTorch XLNetForSequenceClassification model from configuration: {}".format(
+                str(config)
+            )
+        )
         config.finetuning_task = finetuning_task
         config.num_labels = GLUE_TASKS_NUM_LABELS[finetuning_task]
         model = XLNetForSequenceClassification(config)
@@ -73,7 +77,11 @@ def convert_xlnet_checkpoint_to_pytorch(
     pytorch_config_dump_path = os.path.join(pytorch_dump_folder_path, CONFIG_NAME)
     print("Save PyTorch model to {}".format(os.path.abspath(pytorch_weights_dump_path)))
     torch.save(model.state_dict(), pytorch_weights_dump_path)
-    print("Save configuration file to {}".format(os.path.abspath(pytorch_config_dump_path)))
+    print(
+        "Save configuration file to {}".format(
+            os.path.abspath(pytorch_config_dump_path)
+        )
+    )
     with open(pytorch_config_dump_path, "w", encoding="utf-8") as f:
         f.write(config.to_json_string())
 
@@ -82,7 +90,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Required parameters
     parser.add_argument(
-        "--tf_checkpoint_path", default=None, type=str, required=True, help="Path to the TensorFlow checkpoint path."
+        "--tf_checkpoint_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path to the TensorFlow checkpoint path.",
     )
     parser.add_argument(
         "--xlnet_config_file",
@@ -109,5 +121,8 @@ if __name__ == "__main__":
     print(args)
 
     convert_xlnet_checkpoint_to_pytorch(
-        args.tf_checkpoint_path, args.xlnet_config_file, args.pytorch_dump_folder_path, args.finetuning_task
+        args.tf_checkpoint_path,
+        args.xlnet_config_file,
+        args.pytorch_dump_folder_path,
+        args.finetuning_task,
     )

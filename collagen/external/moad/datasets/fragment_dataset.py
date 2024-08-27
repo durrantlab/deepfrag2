@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from collagen.external.moad.interface import PairedPdbSdfCsvInterface
     from collagen.external.moad.types import MOAD_ligand
 
+
 @dataclass
 class MOADFragmentDataset_entry(object):
 
@@ -295,14 +296,14 @@ class MOADFragmentDataset(Dataset):
                     f"Fragment rejected; has too few heavy atoms: {frag_num_heavy_atom}"
                 )
             return False
-        
+
         if frag_num_heavy_atom > args.max_frag_num_heavy_atoms:
             if user_args.verbose:
                 print(
                     f"Fragment rejected; has too many heavy atoms: {frag_num_heavy_atom}"
                 )
             return False
-        
+
         if args.max_frag_repeats is not None:
             if frag_smi not in self.smi_counts:
                 self.smi_counts[frag_smi] = 0
@@ -375,7 +376,9 @@ class MOADFragmentDataset(Dataset):
         entries_to_return = []
         for frag_idx in range(len(frag_masses)):
             mass = frag_masses[frag_idx]
-            dist_to_recep = 0 if len(frag_dists_to_recep) == 0 else frag_dists_to_recep[frag_idx]
+            dist_to_recep = (
+                0 if len(frag_dists_to_recep) == 0 else frag_dists_to_recep[frag_idx]
+            )
             num_heavy_atom = frag_num_heavy_atoms[frag_idx]
             frag_aromatic = frag_aromatics[frag_idx]
             frag_acid = frag_acids[frag_idx]
@@ -494,11 +497,17 @@ class MOADFragmentDataset(Dataset):
                 for ligand in ligands:
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
                         if isinstance(self.moad, PairedPdbSdfCsvInterface):
-                            list_frag_and_act = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id]
-                            assert 0 <= entry.frag_idx < len(list_frag_and_act), "Fragment index out of bounds"
+                            list_frag_and_act = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[
+                                entry.ligand_id
+                            ]
+                            assert (
+                                0 <= entry.frag_idx < len(list_frag_and_act)
+                            ), "Fragment index out of bounds"
 
                             backed_frag = list_frag_and_act[entry.frag_idx][2]
-                            parent = ligand.meta["moad_ligand"].backed_parent  # BackedMol(rdmol=ligand.rdmol)
+                            parent = ligand.meta[
+                                "moad_ligand"
+                            ].backed_parent  # BackedMol(rdmol=ligand.rdmol)
                             fragment = backed_frag  # BackedMol(rdmol=backed_frag.rdmol)
                             break
                         else:
@@ -506,7 +515,9 @@ class MOADFragmentDataset(Dataset):
                             parent, fragment = pairs[entry.frag_idx]
                             break
                 else:
-                    raise Exception(f"Ligand not found: {str(receptor)} -- {str(ligands)}")
+                    raise Exception(
+                        f"Ligand not found: {str(receptor)} -- {str(ligands)}"
+                    )
 
                 assert isinstance(parent, BackedMol), "Parent not found"
                 assert isinstance(fragment, BackedMol), "Fragment not found"

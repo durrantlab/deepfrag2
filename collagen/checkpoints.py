@@ -9,8 +9,9 @@ import argparse
 # see  https://github.com/PyTorchLightning/pytorch-lightning/issues/4911 Saves
 # and loads checkpoints in a way that respects previously saved checkpoints.
 
+
 class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
-    
+
     """Save a checkpoint when the monitored metric improves. Inherits from the
     ModelCheckpoint class.
     """
@@ -68,7 +69,9 @@ class MyModelCheckpointEveryEpoch(MyModelCheckpoint):
         """
         super()._save_checkpoint(trainer, filepath)
 
-        state_dict_model = trainer._checkpoint_connector.dump_checkpoint(False)["state_dict"]
+        state_dict_model = trainer._checkpoint_connector.dump_checkpoint(False)[
+            "state_dict"
+        ]
         torch.save(state_dict_model, f"{filepath}.pt")
 
 
@@ -86,7 +89,8 @@ def get_last_checkpoint(args: "argparse.Namespace") -> str:
         str: The path to the last saved checkpoint.
     """
     saved_checkpoints = glob.glob(
-        args.default_root_dir + os.sep + "last.ckpt", recursive=True
+        args.default_root_dir + os.sep + "last.ckpt",
+        recursive=True
         # args.default_root_dir + os.sep + "**" + os.sep + "last.ckpt", recursive=True
     )
 

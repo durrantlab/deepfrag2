@@ -44,14 +44,19 @@ sys.modules["vocabulary"] = data_utils
 
 
 def convert_transfo_xl_checkpoint_to_pytorch(
-    tf_checkpoint_path, transfo_xl_config_file, pytorch_dump_folder_path, transfo_xl_dataset_file
+    tf_checkpoint_path,
+    transfo_xl_config_file,
+    pytorch_dump_folder_path,
+    transfo_xl_dataset_file,
 ):
     if transfo_xl_dataset_file:
         # Convert a pre-processed corpus (see original TensorFlow repo)
         with open(transfo_xl_dataset_file, "rb") as fp:
             corpus = pickle.load(fp, encoding="latin1")
         # Save vocabulary and dataset cache as Dictionaries (should be better than pickles for the long-term)
-        pytorch_vocab_dump_path = pytorch_dump_folder_path + "/" + VOCAB_FILES_NAMES["pretrained_vocab_file"]
+        pytorch_vocab_dump_path = (
+            pytorch_dump_folder_path + "/" + VOCAB_FILES_NAMES["pretrained_vocab_file"]
+        )
         print("Save vocabulary to {}".format(pytorch_vocab_dump_path))
         corpus_vocab_dict = corpus.vocab.__dict__
         torch.save(corpus_vocab_dict, pytorch_vocab_dump_path)
@@ -67,7 +72,11 @@ def convert_transfo_xl_checkpoint_to_pytorch(
         config_path = os.path.abspath(transfo_xl_config_file)
         tf_path = os.path.abspath(tf_checkpoint_path)
 
-        print("Converting Transformer XL checkpoint from {} with config at {}".format(tf_path, config_path))
+        print(
+            "Converting Transformer XL checkpoint from {} with config at {}".format(
+                tf_path, config_path
+            )
+        )
         # Initialise PyTorch model
         if transfo_xl_config_file == "":
             config = TransfoXLConfig()
@@ -80,9 +89,17 @@ def convert_transfo_xl_checkpoint_to_pytorch(
         # Save pytorch-model
         pytorch_weights_dump_path = os.path.join(pytorch_dump_folder_path, WEIGHTS_NAME)
         pytorch_config_dump_path = os.path.join(pytorch_dump_folder_path, CONFIG_NAME)
-        print("Save PyTorch model to {}".format(os.path.abspath(pytorch_weights_dump_path)))
+        print(
+            "Save PyTorch model to {}".format(
+                os.path.abspath(pytorch_weights_dump_path)
+            )
+        )
         torch.save(model.state_dict(), pytorch_weights_dump_path)
-        print("Save configuration file to {}".format(os.path.abspath(pytorch_config_dump_path)))
+        print(
+            "Save configuration file to {}".format(
+                os.path.abspath(pytorch_config_dump_path)
+            )
+        )
         with open(pytorch_config_dump_path, "w", encoding="utf-8") as f:
             f.write(config.to_json_string())
 

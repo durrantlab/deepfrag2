@@ -19,7 +19,9 @@ from .utils import logging
 
 logger = logging.get_logger(__name__)
 
-CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP = {"ctrl": "https://huggingface.co/ctrl/resolve/main/config.json"}
+CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP = {
+    "ctrl": "https://huggingface.co/ctrl/resolve/main/config.json"
+}
 
 
 class CTRLConfig(PretrainedConfig):
@@ -74,6 +76,7 @@ class CTRLConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "ctrl"
 
     def __init__(

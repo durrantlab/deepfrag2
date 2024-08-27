@@ -35,4 +35,5 @@ class XLMRobertaConfig(RobertaConfig):
     This class overrides :class:`~transformers.RobertaConfig`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     model_type = "xlm-roberta"

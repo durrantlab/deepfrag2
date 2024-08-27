@@ -16,6 +16,7 @@ import pickle
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import MoadVoxelModelParent
 
+
 class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
 
     """A model for inference on a custom set."""

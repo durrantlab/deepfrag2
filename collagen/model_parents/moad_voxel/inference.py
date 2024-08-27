@@ -24,6 +24,7 @@ import json
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import MoadVoxelModelParent
 
+
 class MoadVoxelModelInference(object):
 
     """A model for inference."""
@@ -207,10 +208,7 @@ class MoadVoxelModelInference(object):
         avg_over_ckpts_of_avgs = torch.mean(torch.stack(fps), dim=0)
 
         # Now get the label sets to use.
-        (
-            label_set_fingerprints,
-            label_set_smis,
-        ) = self.create_inference_label_set(
+        (label_set_fingerprints, label_set_smis,) = self.create_inference_label_set(
             args, device, [l.strip() for l in args.inference_label_sets.split(",")],
         )
 
@@ -245,21 +243,20 @@ class MoadVoxelModelInference(object):
                 print(line)
                 f.write(line + "\n")
 
-        output["fps"]["per_rot"] = [v.detach().numpy().tolist() for v in output["fps"]["per_rot"]]
+        output["fps"]["per_rot"] = [
+            v.detach().numpy().tolist() for v in output["fps"]["per_rot"]
+        ]
         output["fps"]["avg"] = output["fps"]["avg"].detach().numpy().tolist()
-        
+
         with open(f"{args.default_root_dir}{os.sep}inference_out.tsv", "w") as f:
             f.write("most_similar\t" + json.dumps(output["most_similar"]) + "\n")
             f.write(f"fps_avg\t" + json.dumps(output["fps"]["avg"][0]) + "\n")
             for i, per_rot in enumerate(output["fps"]["per_rot"]):
                 f.write(f"fps_rot_{i + 1}\t" + json.dumps(per_rot[0]) + "\n")
-            
-            # json.dump(output, f)
 
-        
+            # json.dump(output, f)
 
         # TODO: Need to check on some known answers as a "sanity check".
 
         # TODO: DISCUSS WITH CESAR. Can we add the fragments in most_similar[0] to the parent
         # molecule, to make a composite ligand ready for docking?
-

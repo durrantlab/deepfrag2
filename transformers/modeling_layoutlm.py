@@ -22,7 +22,11 @@ from torch.nn import CrossEntropyLoss
 
 from .activations import ACT2FN
 from .configuration_layoutlm import LayoutLMConfig
-from .file_utils import add_code_sample_docstrings, add_start_docstrings, add_start_docstrings_to_model_forward
+from .file_utils import (
+    add_code_sample_docstrings,
+    add_start_docstrings,
+    add_start_docstrings_to_model_forward,
+)
 from .modeling_outputs import (
     BaseModelOutputWithCrossAttentions,
     BaseModelOutputWithPoolingAndCrossAttentions,
@@ -54,20 +58,39 @@ LayoutLMLayerNorm = torch.nn.LayerNorm
 
 class LayoutLMEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
+
     def __init__(self, config):
         super(LayoutLMEmbeddings, self).__init__()
-        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
-        self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
-        self.x_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
-        self.y_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
-        self.h_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
-        self.w_position_embeddings = nn.Embedding(config.max_2d_position_embeddings, config.hidden_size)
-        self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        self.word_embeddings = nn.Embedding(
+            config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id
+        )
+        self.position_embeddings = nn.Embedding(
+            config.max_position_embeddings, config.hidden_size
+        )
+        self.x_position_embeddings = nn.Embedding(
+            config.max_2d_position_embeddings, config.hidden_size
+        )
+        self.y_position_embeddings = nn.Embedding(
+            config.max_2d_position_embeddings, config.hidden_size
+        )
+        self.h_position_embeddings = nn.Embedding(
+            config.max_2d_position_embeddings, config.hidden_size
+        )
+        self.w_position_embeddings = nn.Embedding(
+            config.max_2d_position_embeddings, config.hidden_size
+        )
+        self.token_type_embeddings = nn.Embedding(
+            config.type_vocab_size, config.hidden_size
+        )
 
-        self.LayerNorm = LayoutLMLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.LayerNorm = LayoutLMLayerNorm(
+            config.hidden_size, eps=config.layer_norm_eps
+        )
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
-        self.register_buffer("position_ids", torch.arange(config.max_position_embeddings).expand((1, -1)))
+        self.register_buffer(
+            "position_ids", torch.arange(config.max_position_embeddings).expand((1, -1))
+        )
 
     def forward(
         self,
@@ -103,10 +126,16 @@ class LayoutLMEmbeddings(nn.Module):
             right_position_embeddings = self.x_position_embeddings(bbox[:, :, 2])
             lower_position_embeddings = self.y_position_embeddings(bbox[:, :, 3])
         except IndexError as e:
-            raise IndexError("The :obj:`bbox`coordinate values should be within 0-1000 range.") from e
+            raise IndexError(
+                "The :obj:`bbox`coordinate values should be within 0-1000 range."
+            ) from e
 
-        h_position_embeddings = self.h_position_embeddings(bbox[:, :, 3] - bbox[:, :, 1])
-        w_position_embeddings = self.w_position_embeddings(bbox[:, :, 2] - bbox[:, :, 0])
+        h_position_embeddings = self.h_position_embeddings(
+            bbox[:, :, 3] - bbox[:, :, 1]
+        )
+        w_position_embeddings = self.w_position_embeddings(
+            bbox[:, :, 2] - bbox[:, :, 0]
+        )
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
 
         embeddings = (
@@ -129,7 +158,9 @@ class LayoutLMEmbeddings(nn.Module):
 class LayoutLMSelfAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
-        if config.hidden_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
+        if config.hidden_size % config.num_attention_heads != 0 and not hasattr(
+            config, "embedding_size"
+        ):
             raise ValueError(
                 "The hidden size (%d) is not a multiple of the number of attention "
                 "heads (%d)" % (config.hidden_size, config.num_attention_heads)
@@ -146,7 +177,10 @@ class LayoutLMSelfAttention(nn.Module):
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
 
     def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
+        new_x_shape = x.size()[:-1] + (
+            self.num_attention_heads,
+            self.attention_head_size,
+        )
         x = x.view(*new_x_shape)
         return x.permute(0, 2, 1, 3)
 
@@ -200,7 +234,9 @@ class LayoutLMSelfAttention(nn.Module):
         new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
         context_layer = context_layer.view(*new_context_layer_shape)
 
-        outputs = (context_layer, attention_probs) if output_attentions else (context_layer,)
+        outputs = (
+            (context_layer, attention_probs) if output_attentions else (context_layer,)
+        )
         return outputs
 
 
@@ -231,7 +267,10 @@ class LayoutLMAttention(nn.Module):
         if len(heads) == 0:
             return
         heads, index = find_pruneable_heads_and_indices(
-            heads, self.self.num_attention_heads, self.self.attention_head_size, self.pruned_heads
+            heads,
+            self.self.num_attention_heads,
+            self.self.attention_head_size,
+            self.pruned_heads,
         )
 
         # Prune linear layers
@@ -242,7 +281,9 @@ class LayoutLMAttention(nn.Module):
 
         # Update hyper params and store pruned heads
         self.self.num_attention_heads = self.self.num_attention_heads - len(heads)
-        self.self.all_head_size = self.self.attention_head_size * self.self.num_attention_heads
+        self.self.all_head_size = (
+            self.self.attention_head_size * self.self.num_attention_heads
+        )
         self.pruned_heads = self.pruned_heads.union(heads)
 
     def forward(
@@ -263,7 +304,9 @@ class LayoutLMAttention(nn.Module):
             output_attentions,
         )
         attention_output = self.output(self_outputs[0], hidden_states)
-        outputs = (attention_output,) + self_outputs[1:]  # add attentions if we output them
+        outputs = (attention_output,) + self_outputs[
+            1:
+        ]  # add attentions if we output them
         return outputs
 
 
@@ -308,7 +351,9 @@ class LayoutLMLayer(nn.Module):
         self.is_decoder = config.is_decoder
         self.add_cross_attention = config.add_cross_attention
         if self.add_cross_attention:
-            assert self.is_decoder, f"{self} should be used as a decoder model if cross attention is added"
+            assert (
+                self.is_decoder
+            ), f"{self} should be used as a decoder model if cross attention is added"
             self.crossattention = LayoutLMAttention(config)
         self.intermediate = LayoutLMIntermediate(config)
         self.output = LayoutLMOutput(config)
@@ -329,7 +374,9 @@ class LayoutLMLayer(nn.Module):
             output_attentions=output_attentions,
         )
         attention_output = self_attention_outputs[0]
-        outputs = self_attention_outputs[1:]  # add self attentions if we output attention weights
+        outputs = self_attention_outputs[
+            1:
+        ]  # add self attentions if we output attention weights
 
         if self.is_decoder and encoder_hidden_states is not None:
             assert hasattr(
@@ -344,10 +391,15 @@ class LayoutLMLayer(nn.Module):
                 output_attentions,
             )
             attention_output = cross_attention_outputs[0]
-            outputs = outputs + cross_attention_outputs[1:]  # add cross attentions if we output attention weights
+            outputs = (
+                outputs + cross_attention_outputs[1:]
+            )  # add cross attentions if we output attention weights
 
         layer_output = apply_chunking_to_forward(
-            self.feed_forward_chunk, self.chunk_size_feed_forward, self.seq_len_dim, attention_output
+            self.feed_forward_chunk,
+            self.chunk_size_feed_forward,
+            self.seq_len_dim,
+            attention_output,
         )
         outputs = (layer_output,) + outputs
         return outputs
@@ -363,7 +415,9 @@ class LayoutLMEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.layer = nn.ModuleList([LayoutLMLayer(config) for _ in range(config.num_hidden_layers)])
+        self.layer = nn.ModuleList(
+            [LayoutLMLayer(config) for _ in range(config.num_hidden_layers)]
+        )
 
     def forward(
         self,
@@ -378,7 +432,9 @@ class LayoutLMEncoder(nn.Module):
     ):
         all_hidden_states = () if output_hidden_states else None
         all_self_attentions = () if output_attentions else None
-        all_cross_attentions = () if output_attentions and self.config.add_cross_attention else None
+        all_cross_attentions = (
+            () if output_attentions and self.config.add_cross_attention else None
+        )
         for i, layer_module in enumerate(self.layer):
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
@@ -422,7 +478,12 @@ class LayoutLMEncoder(nn.Module):
         if not return_dict:
             return tuple(
                 v
-                for v in [hidden_states, all_hidden_states, all_self_attentions, all_cross_attentions]
+                for v in [
+                    hidden_states,
+                    all_hidden_states,
+                    all_self_attentions,
+                    all_cross_attentions,
+                ]
                 if v is not None
             )
         return BaseModelOutputWithCrossAttentions(
@@ -504,6 +565,7 @@ class LayoutLMPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = LayoutLMConfig
     base_model_prefix = "layoutlm"
     authorized_missing_keys = [r"position_ids"]
@@ -583,6 +645,7 @@ LAYOUTLM_INPUTS_DOCSTRING = r"""
             plain tuple.
 """
 
+
 @add_start_docstrings(
     "The bare LayoutLM Model transformer outputting raw hidden-states without any specific head on top.",
     LAYOUTLM_START_DOCSTRING,
@@ -617,7 +680,9 @@ class LayoutLMModel(LayoutLMPreTrainedModel):
         for layer, heads in heads_to_prune.items():
             self.encoder.layer[layer].attention.prune_heads(heads)
 
-    @add_start_docstrings_to_model_forward(LAYOUTLM_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        LAYOUTLM_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="layoutlm-base-uncased",
@@ -665,14 +730,24 @@ class LayoutLMModel(LayoutLMPreTrainedModel):
         return_dict (bool, optional):
             If set to True, the model will return a ModelOutput instead of a plain tuple.
         """
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.config.output_attentions
         )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.config.output_hidden_states
+        )
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = input_ids.size()
         elif inputs_embeds is not None:
@@ -688,7 +763,9 @@ class LayoutLMModel(LayoutLMPreTrainedModel):
             token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
 
         if bbox is None:
-            bbox = torch.zeros(tuple(list(input_shape) + [4]), dtype=torch.long, device=device)
+            bbox = torch.zeros(
+                tuple(list(input_shape) + [4]), dtype=torch.long, device=device
+            )
 
         extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
 
@@ -697,8 +774,12 @@ class LayoutLMModel(LayoutLMPreTrainedModel):
 
         if head_mask is not None:
             if head_mask.dim() == 1:
-                head_mask = head_mask.unsqueeze(0).unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
-                head_mask = head_mask.expand(self.config.num_hidden_layers, -1, -1, -1, -1)
+                head_mask = (
+                    head_mask.unsqueeze(0).unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
+                )
+                head_mask = head_mask.expand(
+                    self.config.num_hidden_layers, -1, -1, -1, -1
+                )
             elif head_mask.dim() == 2:
                 head_mask = head_mask.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)
             head_mask = head_mask.to(dtype=next(self.parameters()).dtype)
@@ -735,7 +816,10 @@ class LayoutLMModel(LayoutLMPreTrainedModel):
         )
 
 
-@add_start_docstrings("""LayoutLM Model with a `language modeling` head on top. """, LAYOUTLM_START_DOCSTRING)
+@add_start_docstrings(
+    """LayoutLM Model with a `language modeling` head on top. """,
+    LAYOUTLM_START_DOCSTRING,
+)
 class LayoutLMForMaskedLM(LayoutLMPreTrainedModel):
     config_class = LayoutLMConfig
     pretrained_model_archive_map = LAYOUTLM_PRETRAINED_MODEL_ARCHIVE_LIST
@@ -755,7 +839,9 @@ class LayoutLMForMaskedLM(LayoutLMPreTrainedModel):
     def get_output_embeddings(self):
         return self.cls.predictions.decoder
 
-    @add_start_docstrings_to_model_forward(LAYOUTLM_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        LAYOUTLM_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="layoutlm-base-uncased",
@@ -779,7 +865,9 @@ class LayoutLMForMaskedLM(LayoutLMPreTrainedModel):
         return_dict=None,
     ):
 
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         outputs = self.layoutlm(
             input_ids,
@@ -803,13 +891,14 @@ class LayoutLMForMaskedLM(LayoutLMPreTrainedModel):
         if labels is not None:
             loss_fct = CrossEntropyLoss()
             masked_lm_loss = loss_fct(
-                prediction_scores.view(-1, self.config.vocab_size),
-                labels.view(-1),
+                prediction_scores.view(-1, self.config.vocab_size), labels.view(-1),
             )
 
         if not return_dict:
             output = (prediction_scores,) + outputs[2:]
-            return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
+            return (
+                ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
+            )
 
         return MaskedLMOutput(
             loss=masked_lm_loss,
@@ -843,7 +932,9 @@ class LayoutLMForTokenClassification(LayoutLMPreTrainedModel):
     def get_input_embeddings(self):
         return self.layoutlm.embeddings.word_embeddings
 
-    @add_start_docstrings_to_model_forward(LAYOUTLM_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        LAYOUTLM_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="layoutlm-base-uncased",
@@ -864,7 +955,9 @@ class LayoutLMForTokenClassification(LayoutLMPreTrainedModel):
         output_hidden_states=None,
         return_dict=None,
     ):
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         outputs = self.layoutlm(
             input_ids=input_ids,

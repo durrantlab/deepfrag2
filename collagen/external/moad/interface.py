@@ -3,7 +3,15 @@
 from dataclasses import field
 from pathlib import Path
 from typing import Dict, List, Union
-from .types import MOAD_family, MOAD_class, MOAD_ligand, MOAD_target, PdbSdfDir_target, PdbSdfDir_ligand, PairedPdbSdfCsv_ligand
+from .types import (
+    MOAD_family,
+    MOAD_class,
+    MOAD_ligand,
+    MOAD_target,
+    PdbSdfDir_target,
+    PdbSdfDir_ligand,
+    PairedPdbSdfCsv_ligand,
+)
 import glob
 import os
 from rdkit import Chem
@@ -177,7 +185,7 @@ class MOADInterface(object):
                     curr_family.targets.append(curr_target)
 
                 # if "-" in parts[2]:
-                    # print(parts[2], "+++++")
+                # print(parts[2], "+++++")
                 # logit(f"Loading {parts[2]}", "~/work_dir/make_moad_target.txt")
 
                 curr_target = MOAD_target(
@@ -189,7 +197,11 @@ class MOADInterface(object):
                     noh=noh,
                     discard_distant_atoms=discard_distant_atoms,
                 )
-            elif parts[3] != "" and curr_target is not None and curr_target.ligands is not None:  # 4: Ligand
+            elif (
+                parts[3] != ""
+                and curr_target is not None
+                and curr_target.ligands is not None
+            ):  # 4: Ligand
                 curr_target.ligands.append(
                     MOAD_ligand(
                         name=parts[3],
@@ -261,7 +273,9 @@ class MOADInterface(object):
                         targ.files = sorted(files[k])
                     else:
                         # No structures for this pdb id!
-                        print(f"No structures for {k}. Is your copy of BindingMOAD complete?")
+                        print(
+                            f"No structures for {k}. Is your copy of BindingMOAD complete?"
+                        )
 
                         # Mark this target in familes for deletion
                         fam.targets[targ_idx] = None
@@ -279,13 +293,13 @@ class PdbSdfDirInterface(MOADInterface):
     """Interface for data stored in a directory of PDBs and SDFs."""
 
     def __init__(
-            self,
-            structures_dir: Union[str, Path],
-            cache_pdbs_to_disk: bool,
-            grid_width: int,
-            grid_resolution: float,
-            noh: bool,
-            discard_distant_atoms: bool,
+        self,
+        structures_dir: Union[str, Path],
+        cache_pdbs_to_disk: bool,
+        grid_width: int,
+        grid_resolution: float,
+        noh: bool,
+        discard_distant_atoms: bool,
     ):
         """Interface for data stored in a directory of PDBs and SDFs.
 
@@ -298,7 +312,15 @@ class PdbSdfDirInterface(MOADInterface):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-        super().__init__(structures_dir, structures_dir, cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
+        super().__init__(
+            structures_dir,
+            structures_dir,
+            cache_pdbs_to_disk,
+            grid_width,
+            grid_resolution,
+            noh,
+            discard_distant_atoms,
+        )
 
     def _load_classes_families_targets_ligands(
         self,
@@ -333,7 +355,7 @@ class PdbSdfDirInterface(MOADInterface):
         if isinstance(every_csv_path, Path):
             every_csv_path = str(every_csv_path)
 
-        pdb_files = glob. glob(every_csv_path + os.sep + "*.pdb", recursive=True)
+        pdb_files = glob.glob(every_csv_path + os.sep + "*.pdb", recursive=True)
         pdb_files.sort()
         for line in pdb_files:
             parts = line.split(os.sep)
@@ -354,12 +376,20 @@ class PdbSdfDirInterface(MOADInterface):
                     discard_distant_atoms=discard_distant_atoms,
                 )
                 sdf_name = f"{parts[0]}_lig_{parts[2]}"
-                sdf_reader = Chem.SDMolSupplier(every_csv_path + os.sep + sdf_name + ".sdf")
-                for ligand_ in sdf_reader:  # it is expected only one iteration because each SDF file must have a single molecule
+                sdf_reader = Chem.SDMolSupplier(
+                    every_csv_path + os.sep + sdf_name + ".sdf"
+                )
+                for (
+                    ligand_
+                ) in (
+                    sdf_reader
+                ):  # it is expected only one iteration because each SDF file must have a single molecule
                     if ligand_ is not None:
                         curr_target.ligands.append(
                             PdbSdfDir_ligand(
-                                name=linecache.getline(every_csv_path + os.sep + sdf_name + ".sdf", 1).rstrip(),
+                                name=linecache.getline(
+                                    every_csv_path + os.sep + sdf_name + ".sdf", 1
+                                ).rstrip(),
                                 validity="valid",
                                 affinity_measure="",
                                 affinity_value="",
@@ -395,6 +425,7 @@ class PdbSdfDirInterface(MOADInterface):
     def _extension_for_resolve_paths(self):
         return "pdb"
 
+
 # TODO: Good to move this class into its own file
 class PairedPdbSdfCsvInterface(MOADInterface):
     pdb_files = []
@@ -409,14 +440,14 @@ class PairedPdbSdfCsvInterface(MOADInterface):
     finally_used = None
 
     def __init__(
-            self,
-            structures: Union[str, Path],
-            cache_pdbs_to_disk: bool,
-            grid_width: int,
-            grid_resolution: float,
-            noh: bool,
-            discard_distant_atoms: bool,
-            use_prevalence: bool
+        self,
+        structures: Union[str, Path],
+        cache_pdbs_to_disk: bool,
+        grid_width: int,
+        grid_resolution: float,
+        noh: bool,
+        discard_distant_atoms: bool,
+        use_prevalence: bool,
     ):
         # Make sure it is string, not Path
         if isinstance(structures, Path):
@@ -424,21 +455,35 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         self.use_prevalence = use_prevalence
 
-        super().__init__(structures, structures.split(",")[1], cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
+        super().__init__(
+            structures,
+            structures.split(",")[1],
+            cache_pdbs_to_disk,
+            grid_width,
+            grid_resolution,
+            noh,
+            discard_distant_atoms,
+        )
 
     def _creating_logger_files(self):
-        self.__setup_logger('log_one', os.getcwd() + os.sep + "01_error_loading_parents.log")
-        self.__setup_logger('log_two', os.getcwd() + os.sep + "02_error_loading_first_fragments.log")
-        self.__setup_logger('log_three', os.getcwd() + os.sep + "03_error_loading_second_fragments.log")
-        self.__setup_logger('log_four', os.getcwd() + os.sep + "04_finally_used.log")
+        self.__setup_logger(
+            "log_one", os.getcwd() + os.sep + "01_error_loading_parents.log"
+        )
+        self.__setup_logger(
+            "log_two", os.getcwd() + os.sep + "02_error_loading_first_fragments.log"
+        )
+        self.__setup_logger(
+            "log_three", os.getcwd() + os.sep + "03_error_loading_second_fragments.log"
+        )
+        self.__setup_logger("log_four", os.getcwd() + os.sep + "04_finally_used.log")
 
-        self.error_loading_parents = logging.getLogger('log_one')
+        self.error_loading_parents = logging.getLogger("log_one")
         self.error_loading_parents.propagate = False
-        self.error_loading_first_fragments = logging.getLogger('log_two')
+        self.error_loading_first_fragments = logging.getLogger("log_two")
         self.error_loading_first_fragments.propagate = False
-        self.error_loading_second_fragments = logging.getLogger('log_three')
+        self.error_loading_second_fragments = logging.getLogger("log_three")
         self.error_loading_second_fragments.propagate = False
-        self.finally_used = logging.getLogger('log_four')
+        self.finally_used = logging.getLogger("log_four")
         self.finally_used.propagate = False
 
     def _load_classes_families_targets_ligands(
@@ -478,7 +523,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                 for sdf_name in self.sdf_x_pdb[full_pdb_name]:
                     key_sdf_pdb = self.__get_key_sdf_pdb(full_pdb_name, sdf_name)
                     for parent_smi in self.parent_x_sdf_x_pdb[key_sdf_pdb]:
-                        key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(full_pdb_name, sdf_name, parent_smi)
+                        key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(
+                            full_pdb_name, sdf_name, parent_smi
+                        )
                         backed_parent = self.backed_mol_x_parent[parent_smi]
                         curr_target.ligands.append(
                             PairedPdbSdfCsv_ligand(
@@ -489,7 +536,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                                 affinity_unit="",
                                 smiles=parent_smi,
                                 rdmol=backed_parent.rdmol,
-                                fragment_and_act=self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb],
+                                fragment_and_act=self.frag_and_act_x_parent_x_sdf_x_pdb[
+                                    key_parent_sdf_pdb
+                                ],
                                 backed_parent=backed_parent,
                             )
                         )
@@ -524,79 +573,125 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         # reading input parameters
         paired_data_csv_sep = paired_data_csv.split(",")
         path_csv_file = paired_data_csv_sep[0]  # path to the csv (or tab) file
-        path_pdb_sdf_files = paired_data_csv_sep[1]  # path containing the pdb and/or sdf files
+        path_pdb_sdf_files = paired_data_csv_sep[
+            1
+        ]  # path containing the pdb and/or sdf files
         col_pdb_name = paired_data_csv_sep[2]  # pdb file name containing the receptor
-        col_sdf_name = paired_data_csv_sep[3]  # sdf (or pdb) file name containing the ligand
+        col_sdf_name = paired_data_csv_sep[
+            3
+        ]  # sdf (or pdb) file name containing the ligand
         col_parent_smi = paired_data_csv_sep[4]  # SMILES string for the parent
-        col_first_frag_smi = paired_data_csv_sep[5]  # SMILES string for the first fragment
-        col_second_frag_smi = paired_data_csv_sep[6]  # SMILES string for the second fragment
-        col_act_first_frag_smi = paired_data_csv_sep[7]  # activity for the first fragment
-        col_act_second_frag_smi = paired_data_csv_sep[8]  # activity for the second fragment
-        col_first_ligand_template = paired_data_csv_sep[9]  # first SMILES string for assigning bonds to the ligand
-        col_second_ligand_template = paired_data_csv_sep[10]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
+        col_first_frag_smi = paired_data_csv_sep[
+            5
+        ]  # SMILES string for the first fragment
+        col_second_frag_smi = paired_data_csv_sep[
+            6
+        ]  # SMILES string for the second fragment
+        col_act_first_frag_smi = paired_data_csv_sep[
+            7
+        ]  # activity for the first fragment
+        col_act_second_frag_smi = paired_data_csv_sep[
+            8
+        ]  # activity for the second fragment
+        col_first_ligand_template = paired_data_csv_sep[
+            9
+        ]  # first SMILES string for assigning bonds to the ligand
+        col_second_ligand_template = paired_data_csv_sep[
+            10
+        ]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
         col_gen_book_id = paired_data_csv_sep[11]  # Gene Book ID column
 
         total_entries = 0
         gene_book_id_counter = {}
-        with open(path_csv_file, newline='') as csvfile:
-            reader = csv.DictReader(csvfile, delimiter='\t')
+        with open(path_csv_file, newline="") as csvfile:
+            reader = csv.DictReader(csvfile, delimiter="\t")
             for row in reader:
                 pdb_name = row[col_pdb_name]
                 sdf_name = row[col_sdf_name]
-                if os.path.exists(path_pdb_sdf_files + os.sep + pdb_name) and os.path.exists(path_pdb_sdf_files + os.sep + sdf_name):
-                    backed_parent, backed_first_frag, backed_second_frag = self.read_mol(sdf_name,
-                                                                                         path_pdb_sdf_files,
-                                                                                         row[col_parent_smi],
-                                                                                         row[col_first_frag_smi],
-                                                                                         row[col_second_frag_smi],
-                                                                                         row[col_first_ligand_template],
-                                                                                         row[col_second_ligand_template])
+                if os.path.exists(
+                    path_pdb_sdf_files + os.sep + pdb_name
+                ) and os.path.exists(path_pdb_sdf_files + os.sep + sdf_name):
+                    (
+                        backed_parent,
+                        backed_first_frag,
+                        backed_second_frag,
+                    ) = self.read_mol(
+                        sdf_name,
+                        path_pdb_sdf_files,
+                        row[col_parent_smi],
+                        row[col_first_frag_smi],
+                        row[col_second_frag_smi],
+                        row[col_first_ligand_template],
+                        row[col_second_ligand_template],
+                    )
 
                     if not backed_parent:
                         continue
 
                     # getting the smiles for parent.
                     try:
-                        parent_smi = Chem.MolToSmiles(backed_parent.rdmol, isomericSmiles=True)
+                        parent_smi = Chem.MolToSmiles(
+                            backed_parent.rdmol, isomericSmiles=True
+                        )
                     except:
                         if self.error_loading_parents is not None:
-                            self.error_loading_parents.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}")
+                            self.error_loading_parents.info(
+                                f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_parent.rdmol)}"
+                            )
                         continue
 
                     # getting the smiles for first fragment.
                     if backed_first_frag:
                         try:
-                            first_frag_smi = Chem.MolToSmiles(backed_first_frag.rdmol, isomericSmiles=True)
+                            first_frag_smi = Chem.MolToSmiles(
+                                backed_first_frag.rdmol, isomericSmiles=True
+                            )
                         except:
                             if self.error_loading_first_fragments is not None:
-                                self.error_loading_first_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}")
+                                self.error_loading_first_fragments.info(
+                                    f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_first_frag.rdmol)}"
+                                )
                             backed_first_frag = None
                     else:
                         if self.error_loading_first_fragments is not None:
-                            self.error_loading_first_fragments.info("First fragment was not read")
+                            self.error_loading_first_fragments.info(
+                                "First fragment was not read"
+                            )
 
                     # getting the smiles for second fragment.
                     if backed_second_frag:
                         try:
-                            second_frag_smi = Chem.MolToSmiles(backed_second_frag.rdmol, isomericSmiles=True)
+                            second_frag_smi = Chem.MolToSmiles(
+                                backed_second_frag.rdmol, isomericSmiles=True
+                            )
                         except:
                             if self.error_loading_second_fragments is not None:
-                                self.error_loading_second_fragments.info(f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}")
+                                self.error_loading_second_fragments.info(
+                                    f"CAUGHT EXCEPTION: Could not standardize SMILES: {Chem.MolToSmiles(backed_second_frag.rdmol)}"
+                                )
                             backed_second_frag = None
                     else:
                         if self.error_loading_first_fragments is not None:
-                            self.error_loading_first_fragments.info("Second fragment was not read")
+                            self.error_loading_first_fragments.info(
+                                "Second fragment was not read"
+                            )
 
                     if not backed_first_frag and not backed_second_frag:
                         continue
 
-                    act_first_frag_smi = row[col_act_first_frag_smi] if backed_first_frag else None
-                    act_second_frag_smi = row[col_act_second_frag_smi] if backed_second_frag else None
+                    act_first_frag_smi = (
+                        row[col_act_first_frag_smi] if backed_first_frag else None
+                    )
+                    act_second_frag_smi = (
+                        row[col_act_second_frag_smi] if backed_second_frag else None
+                    )
                     gen_book_id = row[col_gen_book_id]
                     prevalence_receptor = float(0.0)
 
                     key_sdf_pdb = self.__get_key_sdf_pdb(pdb_name, sdf_name)
-                    key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(pdb_name, sdf_name, parent_smi)
+                    key_parent_sdf_pdb = self.__get_key_parent_sdf_pdb(
+                        pdb_name, sdf_name, parent_smi
+                    )
 
                     if pdb_name not in self.pdb_files:
                         self.pdb_files.append(pdb_name)
@@ -609,22 +704,59 @@ class PairedPdbSdfCsvInterface(MOADInterface):
                         self.backed_mol_x_parent[parent_smi] = backed_parent
                         self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb] = []
                         if backed_first_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([first_frag_smi, act_first_frag_smi, backed_first_frag, prevalence_receptor, gen_book_id])
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[
+                                key_parent_sdf_pdb
+                            ].append(
+                                [
+                                    first_frag_smi,
+                                    act_first_frag_smi,
+                                    backed_first_frag,
+                                    prevalence_receptor,
+                                    gen_book_id,
+                                ]
+                            )
                         if backed_second_frag:
-                            self.frag_and_act_x_parent_x_sdf_x_pdb[key_parent_sdf_pdb].append([second_frag_smi, act_second_frag_smi, backed_second_frag, prevalence_receptor, gen_book_id])
+                            self.frag_and_act_x_parent_x_sdf_x_pdb[
+                                key_parent_sdf_pdb
+                            ].append(
+                                [
+                                    second_frag_smi,
+                                    act_second_frag_smi,
+                                    backed_second_frag,
+                                    prevalence_receptor,
+                                    gen_book_id,
+                                ]
+                            )
 
-                    self.finally_used.info("Receptor in " + pdb_name + " and Ligand in " + sdf_name + " were used")
+                    if self.finally_used is not None:
+                        self.finally_used.info(
+                            "Receptor in "
+                            + pdb_name
+                            + " and Ligand in "
+                            + sdf_name
+                            + " were used"
+                        )
                     if self.use_prevalence:
                         total_entries = total_entries + 1
                         if gen_book_id not in gene_book_id_counter.keys():
                             gene_book_id_counter[gen_book_id] = 0
-                        gene_book_id_counter[gen_book_id] = gene_book_id_counter[gen_book_id] + 1
+                        gene_book_id_counter[gen_book_id] = (
+                            gene_book_id_counter[gen_book_id] + 1
+                        )
 
         if self.use_prevalence:
-            for list_for_parent_sdf_pdb in self.frag_and_act_x_parent_x_sdf_x_pdb.values():
+            for (
+                list_for_parent_sdf_pdb
+            ) in self.frag_and_act_x_parent_x_sdf_x_pdb.values():
                 for entry in list_for_parent_sdf_pdb:
                     entry[3] = float(gene_book_id_counter[entry[4]] / total_entries)
-                    print(str(gene_book_id_counter[entry[4]]) + " / " + str(total_entries) + " = " + str(entry[3]))
+                    print(
+                        str(gene_book_id_counter[entry[4]])
+                        + " / "
+                        + str(total_entries)
+                        + " = "
+                        + str(entry[3])
+                    )
 
         self.pdb_files.sort()
 
@@ -674,7 +806,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         emol = Chem.EditableMol(mol)
         for bond in mol.GetBonds():
             emol.RemoveBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
-            emol.AddBond(bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), Chem.BondType.SINGLE)
+            emol.AddBond(
+                bond.GetBeginAtomIdx(), bond.GetEndAtomIdx(), Chem.BondType.SINGLE
+            )
 
         mol = emol.GetMol()
         Chem.SanitizeMol(mol)
@@ -706,7 +840,16 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
         return new_mol
 
-    def read_mol(self, sdf_name, path_pdb_sdf_files, parent_smi, first_frag_smi, second_frag_smi, first_ligand_template, second_ligand_template):
+    def read_mol(
+        self,
+        sdf_name,
+        path_pdb_sdf_files,
+        parent_smi,
+        first_frag_smi,
+        second_frag_smi,
+        first_ligand_template,
+        second_ligand_template,
+    ):
         path_to_mol = path_pdb_sdf_files + os.sep + sdf_name
         if sdf_name.endswith(".pdb"):
 
@@ -723,7 +866,9 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
             try:
                 # Check if substructure match
-                atom_indices = pdb_mol.GetSubstructMatch(parent_mol, useChirality=False, useQueryQueryMatches=False)
+                atom_indices = pdb_mol.GetSubstructMatch(
+                    parent_mol, useChirality=False, useQueryQueryMatches=False
+                )
                 atom_indices = None if len(atom_indices) == 0 else atom_indices
             except:
                 atom_indices = None
@@ -739,20 +884,31 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                 # Note: Not necessary to remove chirality given useChirality=False flag below.
                 try:
-                    atom_indices = pdb_mol.GetSubstructMatch(parent_mol, useChirality=False, useQueryQueryMatches=False)
+                    atom_indices = pdb_mol.GetSubstructMatch(
+                        parent_mol, useChirality=False, useQueryQueryMatches=False
+                    )
                     atom_indices = None if len(atom_indices) == 0 else atom_indices
                 except:
                     atom_indices = None
 
-            if atom_indices is not None and parent_mol is not None and len(atom_indices) == parent_mol.GetNumAtoms():
+            if (
+                atom_indices is not None
+                and parent_mol is not None
+                and len(atom_indices) == parent_mol.GetNumAtoms()
+            ):
 
                 # Success in finding substructure. Make new mol of just substructure.
-                new_mol = self.__substruct_with_coords(pdb_mol, parent_mol, atom_indices)
+                new_mol = self.__substruct_with_coords(
+                    pdb_mol, parent_mol, atom_indices
+                )
 
                 # Get the connection point and add it to the data row
                 atom_idx = -1  # So never unbound
                 for atom in new_mol.GetAtoms():
-                    if atom.HasProp("was_dummy_connected") and atom.GetProp("was_dummy_connected") == "yes":
+                    if (
+                        atom.HasProp("was_dummy_connected")
+                        and atom.GetProp("was_dummy_connected") == "yes"
+                    ):
                         atom_idx = atom.GetIdx()
                         break
 
@@ -761,31 +917,53 @@ class PairedPdbSdfCsvInterface(MOADInterface):
 
                 conf = new_mol.GetConformer()
                 connect_coord = conf.GetAtomPosition(atom_idx)
-                connect_coord = np.array([connect_coord.x, connect_coord.y, connect_coord.z])
+                connect_coord = np.array(
+                    [connect_coord.x, connect_coord.y, connect_coord.z]
+                )
 
                 backed_parent = BackedMol(rdmol=new_mol)
 
                 # first_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(first_frag_smi)
                 # first_frag_smi = self.__parent_smarts_to_mol(first_frag_smi)
-                backed_frag1 = BackedMol(rdmol=Chem.MolFromSmiles(first_frag_smi.replace("[R*]", "*")), warn_no_confs=False, coord_connector_atom=connect_coord) if first_frag_smi else None
+                backed_frag1 = (
+                    BackedMol(
+                        rdmol=Chem.MolFromSmiles(first_frag_smi.replace("[R*]", "*")),
+                        warn_no_confs=False,
+                        coord_connector_atom=connect_coord,
+                    )
+                    if first_frag_smi
+                    else None
+                )
 
                 # second_frag_smi = self.__remove_mult_bonds_by_smi_to_smi(second_frag_smi)
                 # second_frag_smi = self.__parent_smarts_to_mol(second_frag_smi)
-                backed_frag2 = BackedMol(rdmol=Chem.MolFromSmiles(second_frag_smi.replace("[R*]", "*")), warn_no_confs=False, coord_connector_atom=connect_coord) if second_frag_smi else None
+                backed_frag2 = (
+                    BackedMol(
+                        rdmol=Chem.MolFromSmiles(second_frag_smi.replace("[R*]", "*")),
+                        warn_no_confs=False,
+                        coord_connector_atom=connect_coord,
+                    )
+                    if second_frag_smi
+                    else None
+                )
 
                 return backed_parent, backed_frag1, backed_frag2
 
             else:
                 if self.error_loading_parents is not None:
-                    self.error_loading_parents.info("Ligand " + sdf_name + " has not parent structure " + parent_smi)
+                    self.error_loading_parents.info(
+                        "Ligand " + sdf_name + " has not parent structure " + parent_smi
+                    )
 
         return None, None, None
 
     def __setup_logger(self, logger_name, log_file, level=logging.INFO):
 
         log_setup = logging.getLogger(logger_name)
-        formatter = logging.Formatter('%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-        file_handler = logging.FileHandler(log_file, mode='a')
+        formatter = logging.Formatter(
+            "%(levelname)s: %(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p"
+        )
+        file_handler = logging.FileHandler(log_file, mode="a")
         file_handler.setFormatter(formatter)
         # stream_handler = logging.StreamHandler()
         # stream_handler.setFormatter(formatter)
@@ -793,19 +971,20 @@ class PairedPdbSdfCsvInterface(MOADInterface):
         log_setup.addHandler(file_handler)
         # log_setup.addHandler(stream_handler)
 
+
 # TODO: Good to move this class into its own file
 class SdfDirInterface(MOADInterface):
 
     """Interface for data stored in a directory of SDFs."""
 
     def __init__(
-            self,
-            structures_dir: Union[str, Path],
-            cache_pdbs_to_disk: bool,
-            grid_width: int,
-            grid_resolution: float,
-            noh: bool,
-            discard_distant_atoms: bool,
+        self,
+        structures_dir: Union[str, Path],
+        cache_pdbs_to_disk: bool,
+        grid_width: int,
+        grid_resolution: float,
+        noh: bool,
+        discard_distant_atoms: bool,
     ):
         """Initialize the interface.
         
@@ -818,7 +997,15 @@ class SdfDirInterface(MOADInterface):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-        super().__init__(structures_dir, structures_dir, cache_pdbs_to_disk, grid_width, grid_resolution, noh, discard_distant_atoms)
+        super().__init__(
+            structures_dir,
+            structures_dir,
+            cache_pdbs_to_disk,
+            grid_width,
+            grid_resolution,
+            noh,
+            discard_distant_atoms,
+        )
 
     def _load_classes_families_targets_ligands(
         self,
@@ -843,7 +1030,7 @@ class SdfDirInterface(MOADInterface):
         """
         # TODO: Concerned things like noh and dicard_distant_atoms not being
         # used. Need to investigate and understand this function better.
-        
+
         # if every_csv_path is a Path, convert to str
         if isinstance(every_csv_path, Path):
             every_csv_path = str(every_csv_path)
@@ -852,25 +1039,32 @@ class SdfDirInterface(MOADInterface):
         curr_target = PdbSdfDir_target(
             pdb_id="Non",
             ligands=[],
-            cache_pdbs_to_disk=None,
-            grid_width=None,
-            grid_resolution=None,
-            noh=None,
-            discard_distant_atoms=None,
+            # JDD commented out below so will use defaults in PdbSdfDir_target.
+            # cache_pdbs_to_disk=None,
+            # grid_width=None,
+            # grid_resolution=None,
+            # noh=None,
+            # discard_distant_atoms=None,
         )
 
-        sdf_files = glob. glob(every_csv_path + os.sep + "*.sdf", recursive=True)
+        sdf_files = glob.glob(every_csv_path + os.sep + "*.sdf", recursive=True)
         sdf_files.sort()
         for line in sdf_files:
             parts = line.split(os.sep)
             sdf_name = parts[len(parts) - 1].split(".")[0]
 
             sdf_reader = Chem.SDMolSupplier(every_csv_path + os.sep + sdf_name + ".sdf")
-            for ligand_ in sdf_reader:  # it is expected only one iteration because each SDF file must have a single molecule
+            for (
+                ligand_
+            ) in (
+                sdf_reader
+            ):  # it is expected only one iteration because each SDF file must have a single molecule
                 if ligand_ is not None:
                     curr_target.ligands.append(
                         PdbSdfDir_ligand(
-                            name=linecache.getline(every_csv_path + os.sep + sdf_name + ".sdf", 1).rstrip(),
+                            name=linecache.getline(
+                                every_csv_path + os.sep + sdf_name + ".sdf", 1
+                            ).rstrip(),
                             validity="valid",
                             affinity_measure="",
                             affinity_value="",

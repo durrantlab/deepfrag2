@@ -181,9 +181,15 @@ class BartConfig(PretrainedConfig):
         self.activation_function = activation_function
 
         # Params introduced for Mbart
-        self.scale_embedding = scale_embedding  # scale factor will be sqrt(d_model) if True
-        self.normalize_embedding = normalize_embedding  # True for mbart, False otherwise
-        self.normalize_before = normalize_before  # combo of fairseq's encoder_ and decoder_normalize_before
+        self.scale_embedding = (
+            scale_embedding  # scale factor will be sqrt(d_model) if True
+        )
+        self.normalize_embedding = (
+            normalize_embedding  # True for mbart, False otherwise
+        )
+        self.normalize_before = (
+            normalize_before  # combo of fairseq's encoder_ and decoder_normalize_before
+        )
         self.add_final_layer_norm = add_final_layer_norm
 
         # Params introduced for Marian

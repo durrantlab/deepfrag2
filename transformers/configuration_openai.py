@@ -20,7 +20,9 @@ from .utils import logging
 
 logger = logging.get_logger(__name__)
 
-OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP = {"openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/config.json"}
+OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
+    "openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/config.json"
+}
 
 
 class OpenAIGPTConfig(PretrainedConfig):
@@ -109,6 +111,7 @@ class OpenAIGPTConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "openai-gpt"
 
     def __init__(

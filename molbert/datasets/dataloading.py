@@ -12,6 +12,7 @@ class MolbertDataLoader(DataLoader):
        created.
     2) it does the valid filtering and trimming in the workers
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # See dataloader.pyi for examplanation of type: ignore
@@ -19,13 +20,13 @@ class MolbertDataLoader(DataLoader):
 
     @staticmethod
     def trim_batch(batch_inputs, batch_labels):
-        _, cols = torch.where(batch_inputs['attention_mask'] == 1)
+        _, cols = torch.where(batch_inputs["attention_mask"] == 1)
         max_idx: int = int(cols.max().item() + 1)
 
-        for k in ['input_ids', 'token_type_ids', 'attention_mask']:
+        for k in ["input_ids", "token_type_ids", "attention_mask"]:
             batch_inputs[k] = batch_inputs[k][:, :max_idx].contiguous()
 
-        for k in ['lm_label_ids', 'unmasked_lm_label_ids']:
+        for k in ["lm_label_ids", "unmasked_lm_label_ids"]:
             batch_labels[k] = batch_labels[k][:, :max_idx].contiguous()
 
         return batch_inputs, batch_labels
@@ -64,12 +65,12 @@ class MolbertDataLoader(DataLoader):
             for (batch_inputs, batch_labels), valids in super().__iter__():
                 num_accessed_batches += 1
                 if len(valids) == 0:
-                    logging.info('EMPTY BATCH ENCOUNTERED. Skipping...')
+                    logging.info("EMPTY BATCH ENCOUNTERED. Skipping...")
                     continue
                 num_batches_so_far += 1
                 yield (batch_inputs, batch_labels), valids
 
         logging.info(
-            f'Epoch finished. Accessed {num_accessed_batches} batches in order to train on '
-            f'{num_total_batches} batches.'
+            f"Epoch finished. Accessed {num_accessed_batches} batches in order to train on "
+            f"{num_total_batches} batches."
         )

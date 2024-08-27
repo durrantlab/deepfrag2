@@ -27,19 +27,19 @@ class FinetuneTask(BaseTask):
         super().__init__(name)
         self.loss: nn.Module
         self.mode = config.mode
-        if config.mode == 'regression':
+        if config.mode == "regression":
             self.loss = MSELoss()
-        elif config.mode == 'classification':
+        elif config.mode == "classification":
             self.loss = CrossEntropyLoss()
         else:
-            raise ValueError(f'config.mode must be in [regression, classification] but was {config.mode}')
+            raise ValueError(
+                f"config.mode must be in [regression, classification] but was {config.mode}"
+            )
 
         self.head = FinetuneHead(config)
 
     def forward(
-        self,
-        sequence_output,
-        pooled_output,
+        self, sequence_output, pooled_output,
     ):
         return self.head(pooled_output)
 
@@ -47,7 +47,7 @@ class FinetuneTask(BaseTask):
         predictions = batch_predictions[self.name]
         labels = batch_labels[self.name]
 
-        if self.mode == 'classification':
+        if self.mode == "classification":
             labels = labels.long().squeeze(1)
 
         return self.loss(predictions, labels)
@@ -79,7 +79,8 @@ class MaskedLMTask(BaseTask):
 
     def compute_loss(self, batch_labels, batch_predictions) -> torch.Tensor:
         return self.loss(
-            batch_predictions['masked_lm'].view(-1, self.vocab_size), batch_labels['lm_label_ids'].view(-1)
+            batch_predictions["masked_lm"].view(-1, self.vocab_size),
+            batch_labels["lm_label_ids"].view(-1),
         )
 
 
@@ -93,4 +94,6 @@ class IsSameTask(BaseTask):
         return self.is_same_head(pooled_output)
 
     def compute_loss(self, batch_labels, batch_predictions) -> torch.Tensor:
-        return self.loss(batch_predictions[self.name].view(-1, 2), batch_labels[self.name].view(-1))
+        return self.loss(
+            batch_predictions[self.name].view(-1, 2), batch_labels[self.name].view(-1)
+        )

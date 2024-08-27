@@ -4,7 +4,11 @@ from argparse import Namespace
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 from collagen.core.loader import DataLambda
 from torchinfo import summary
-from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface
+from collagen.external.moad.interface import (
+    MOADInterface,
+    PdbSdfDirInterface,
+    PairedPdbSdfCsvInterface,
+)
 from collagen.external.moad.split import compute_dataset_split
 
 if TYPE_CHECKING:
@@ -69,7 +73,11 @@ class MoadVoxelModelTrain(object):
 
     def get_train_val_sets(
         self, args: Namespace, train: bool
-    ) -> Tuple[Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface], DataLambda, DataLambda]:
+    ) -> Tuple[
+        Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface],
+        DataLambda,
+        Union[DataLambda, None],
+    ]:
         # NOTE: All interfaces should inherit from a base class.
         """Get the training and validation sets.
 
@@ -119,20 +127,24 @@ class MoadVoxelModelTrain(object):
                 raise ValueError(
                     "For 'fine-tuning' mode, you must not specify the '--every_csv' parameter."
                 )
-            if (args.data_dir and args.paired_data_csv) or (not args.data_dir and not args.paired_data_csv):
+            if (args.data_dir and args.paired_data_csv) or (
+                not args.data_dir and not args.paired_data_csv
+            ):
                 raise ValueError(
                     "For 'fine-tuning' mode, you must specify the '--data_dir' parameter or the '--paired_data_csv' parameter."
                 )
 
             # TODO: Below makes me uncomfortable. It would be better if there was a base class that everything inherited.
-            if args.data_dir:  # for fine-tuning mode using a non-paired database other than MOAD
+            if (
+                args.data_dir
+            ):  # for fine-tuning mode using a non-paired database other than MOAD
                 moad = PdbSdfDirInterface(
                     structures_dir=args.data_dir,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
                     grid_resolution=voxel_params.resolution,
                     noh=args.noh,
-                    discard_distant_atoms=args.discard_distant_atoms
+                    discard_distant_atoms=args.discard_distant_atoms,
                 )
             else:  # for fine-tuning mode using a paired database other than MOAD
                 moad = PairedPdbSdfCsvInterface(
@@ -142,7 +154,7 @@ class MoadVoxelModelTrain(object):
                     grid_resolution=voxel_params.resolution,
                     noh=args.noh,
                     discard_distant_atoms=args.discard_distant_atoms,
-                    use_prevalence=args.use_prevalence
+                    use_prevalence=args.use_prevalence,
                 )
 
         train, val, _ = compute_dataset_split(
@@ -150,12 +162,10 @@ class MoadVoxelModelTrain(object):
             seed=args.split_seed,
             fraction_train=args.fraction_train,
             fraction_val=args.fraction_val,
-
             # Should be true to ensure independence when using
             # split_method="random". TODO: Could remove this parameter, force it
             # to be true. Also, could be user parameter.
-            prevent_smiles_overlap=True,  
-
+            prevent_smiles_overlap=True,
             save_splits=args.save_splits,
             load_splits=args.load_splits,
             max_pdbs_train=args.max_pdbs_train,
@@ -185,7 +195,7 @@ class MoadVoxelModelTrain(object):
         print(f"Number of batches for the training data: {len(train_data)}")
 
         if len(val.targets) > 0:
-            val_data: DataLambda = self.get_data_from_split(
+            val_data: Union[DataLambda, None] = self.get_data_from_split(
                 cache_file=args.cache,
                 args=args,
                 dataset=moad,

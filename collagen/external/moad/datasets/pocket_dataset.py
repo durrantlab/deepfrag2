@@ -1,5 +1,3 @@
-
-
 from typing import TYPE_CHECKING, List, Optional, Callable, Any, Tuple, Union
 
 from torch.utils.data import Dataset
@@ -13,6 +11,7 @@ if TYPE_CHECKING:
     from collagen.external.moad.types import MOAD_target
 
 # TODO: NOT CURRENTLY USED
+
 
 def _unit_rand(thresh):
     u = np.random.uniform(size=3)
@@ -73,9 +72,7 @@ class MOADPocketDataset(Dataset):
         thresh: float = 3,
         padding: float = 5,
         split: Optional["MOAD_split"] = None,
-        transform: Optional[
-            Callable[["Mol", "np.ndarray", "np.ndarray"], Any]
-        ] = None,
+        transform: Optional[Callable[["Mol", "np.ndarray", "np.ndarray"], Any]] = None,
         **kwargs
     ):
         self.moad = moad
@@ -95,7 +92,9 @@ class MOADPocketDataset(Dataset):
     def __len__(self) -> int:
         return len(self._index)
 
-    def __getitem__(self, idx: int) -> Union[None, Tuple["Mol", "np.ndarray", "np.ndarray"]]:
+    def __getitem__(
+        self, idx: int
+    ) -> Union[None, Tuple["Mol", "np.ndarray", "np.ndarray"]]:
         target, n = self._index[idx]
 
         try:

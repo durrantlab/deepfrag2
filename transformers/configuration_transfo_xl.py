@@ -105,6 +105,7 @@ class TransfoXLConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "transfo-xl"
 
     def __init__(
@@ -135,7 +136,7 @@ class TransfoXLConfig(PretrainedConfig):
         init_std=0.02,
         layer_norm_epsilon=1e-5,
         eos_token_id=0,
-        **kwargs
+        **kwargs,
     ):
         if "tie_weight" in kwargs:
             warnings.warn(
@@ -178,7 +179,9 @@ class TransfoXLConfig(PretrainedConfig):
     @property
     def max_position_embeddings(self):
         # Message copied from Transformer-XL documentation
-        logger.info(f"The model {self.model_type} is one of the few models that has no sequence length limit.")
+        logger.info(
+            f"The model {self.model_type} is one of the few models that has no sequence length limit."
+        )
         return -1
 
     @property

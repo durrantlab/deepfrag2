@@ -77,7 +77,12 @@ TF_XLM_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 
 def create_sinusoidal_embeddings(n_pos, dim, out):
-    position_enc = np.array([[pos / np.power(10000, 2 * (j // 2) / dim) for j in range(dim)] for pos in range(n_pos)])
+    position_enc = np.array(
+        [
+            [pos / np.power(10000, 2 * (j // 2) / dim) for j in range(dim)]
+            for pos in range(n_pos)
+        ]
+    )
     out[:, 0::2] = tf.constant(np.sin(position_enc[:, 0::2]))
     out[:, 1::2] = tf.constant(np.cos(position_enc[:, 1::2]))
 
@@ -97,7 +102,8 @@ def get_masks(slen, lengths, causal, padding_mask=None, dtype=tf.float32):
     # attention mask is the same as mask, or triangular inferior attention (causal)
     if causal:
         attn_mask = tf.less_equal(
-            tf.tile(alen[tf.newaxis, tf.newaxis, :], (bs, slen, 1)), alen[tf.newaxis, :, tf.newaxis]
+            tf.tile(alen[tf.newaxis, tf.newaxis, :], (bs, slen, 1)),
+            alen[tf.newaxis, :, tf.newaxis],
         )
     else:
         attn_mask = mask
@@ -124,17 +130,27 @@ class TFXLMMultiHeadAttention(tf.keras.layers.Layer):
         self.output_attentions = config.output_attentions
         assert self.dim % self.n_heads == 0
 
-        self.q_lin = tf.keras.layers.Dense(dim, kernel_initializer=get_initializer(config.init_std), name="q_lin")
-        self.k_lin = tf.keras.layers.Dense(dim, kernel_initializer=get_initializer(config.init_std), name="k_lin")
-        self.v_lin = tf.keras.layers.Dense(dim, kernel_initializer=get_initializer(config.init_std), name="v_lin")
-        self.out_lin = tf.keras.layers.Dense(dim, kernel_initializer=get_initializer(config.init_std), name="out_lin")
+        self.q_lin = tf.keras.layers.Dense(
+            dim, kernel_initializer=get_initializer(config.init_std), name="q_lin"
+        )
+        self.k_lin = tf.keras.layers.Dense(
+            dim, kernel_initializer=get_initializer(config.init_std), name="k_lin"
+        )
+        self.v_lin = tf.keras.layers.Dense(
+            dim, kernel_initializer=get_initializer(config.init_std), name="v_lin"
+        )
+        self.out_lin = tf.keras.layers.Dense(
+            dim, kernel_initializer=get_initializer(config.init_std), name="out_lin"
+        )
         self.dropout = tf.keras.layers.Dropout(config.attention_dropout)
         self.pruned_heads = set()
 
     def prune_heads(self, heads):
         raise NotImplementedError
 
-    def call(self, input, mask, kv, cache, head_mask, output_attentions, training=False):
+    def call(
+        self, input, mask, kv, cache, head_mask, output_attentions, training=False
+    ):
         """
         Self-attention (if kv is None) or attention over source sentence (provided by kv).
         """
@@ -150,15 +166,22 @@ class TFXLMMultiHeadAttention(tf.keras.layers.Layer):
         # assert dim == self.dim, 'Dimensions do not match: %s input vs %s configured' % (dim, self.dim)
         dim_per_head = tf.math.divide(self.dim, self.n_heads)
         dim_per_head = tf.cast(dim_per_head, dtype=tf.int32)
-        mask_reshape = (bs, 1, qlen, klen) if len(shape_list(mask)) == 3 else (bs, 1, 1, klen)
+        mask_reshape = (
+            (bs, 1, qlen, klen) if len(shape_list(mask)) == 3 else (bs, 1, 1, klen)
+        )
 
         def shape(x):
             """  projection """
-            return tf.transpose(tf.reshape(x, (bs, -1, self.n_heads, dim_per_head)), perm=(0, 2, 1, 3))
+            return tf.transpose(
+                tf.reshape(x, (bs, -1, self.n_heads, dim_per_head)), perm=(0, 2, 1, 3)
+            )
 
         def unshape(x):
             """  compute context """
-            return tf.reshape(tf.transpose(x, perm=(0, 2, 1, 3)), (bs, -1, self.n_heads * dim_per_head))
+            return tf.reshape(
+                tf.transpose(x, perm=(0, 2, 1, 3)),
+                (bs, -1, self.n_heads * dim_per_head),
+            )
 
         q = shape(self.q_lin(input))  # (bs, n_heads, qlen, dim_per_head)
 
@@ -182,7 +205,9 @@ class TFXLMMultiHeadAttention(tf.keras.layers.Layer):
             cache[self.layer_id] = (k, v)
 
         q = tf.cast(q, dtype=tf.float32)
-        q = tf.multiply(q, tf.math.rsqrt(tf.cast(dim_per_head, dtype=tf.float32)))  # (bs, n_heads, qlen, dim_per_head)
+        q = tf.multiply(
+            q, tf.math.rsqrt(tf.cast(dim_per_head, dtype=tf.float32))
+        )  # (bs, n_heads, qlen, dim_per_head)
         k = tf.cast(k, dtype=q.dtype)
         scores = tf.matmul(q, k, transpose_b=True)  # (bs, n_heads, qlen, klen)
         mask = tf.reshape(mask, mask_reshape)  # (bs, n_heads, qlen, klen)
@@ -210,9 +235,17 @@ class TFXLMTransformerFFN(tf.keras.layers.Layer):
     def __init__(self, in_dim, dim_hidden, out_dim, config, **kwargs):
         super().__init__(**kwargs)
 
-        self.lin1 = tf.keras.layers.Dense(dim_hidden, kernel_initializer=get_initializer(config.init_std), name="lin1")
-        self.lin2 = tf.keras.layers.Dense(out_dim, kernel_initializer=get_initializer(config.init_std), name="lin2")
-        self.act = get_tf_activation("gelu") if config.gelu_activation else get_tf_activation("relu")
+        self.lin1 = tf.keras.layers.Dense(
+            dim_hidden, kernel_initializer=get_initializer(config.init_std), name="lin1"
+        )
+        self.lin2 = tf.keras.layers.Dense(
+            out_dim, kernel_initializer=get_initializer(config.init_std), name="lin2"
+        )
+        self.act = (
+            get_tf_activation("gelu")
+            if config.gelu_activation
+            else get_tf_activation("relu")
+        )
         self.dropout = tf.keras.layers.Dropout(config.dropout)
 
     def call(self, input, training=False):
@@ -262,7 +295,9 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
         self.hidden_dim = self.dim * 4  # 2048 by default
         self.n_heads = config.n_heads  # 8 by default
         self.n_layers = config.n_layers
-        assert self.dim % self.n_heads == 0, "transformer dim must be a multiple of n_heads"
+        assert (
+            self.dim % self.n_heads == 0
+        ), "transformer dim must be a multiple of n_heads"
 
         # embeddings
         self.dropout = tf.keras.layers.Dropout(config.dropout)
@@ -287,9 +322,14 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
             )
 
         self.embeddings = TFSharedEmbeddings(
-            self.n_words, self.dim, initializer_range=config.embed_init_std, name="embeddings"
+            self.n_words,
+            self.dim,
+            initializer_range=config.embed_init_std,
+            name="embeddings",
         )  # padding_idx=self.pad_index)
-        self.layer_norm_emb = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="layer_norm_emb")
+        self.layer_norm_emb = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="layer_norm_emb"
+        )
 
         # transformer layers
         self.attentions = []
@@ -302,19 +342,34 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
 
         for i in range(self.n_layers):
             self.attentions.append(
-                TFXLMMultiHeadAttention(self.n_heads, self.dim, config=config, name="attentions_._{}".format(i))
+                TFXLMMultiHeadAttention(
+                    self.n_heads,
+                    self.dim,
+                    config=config,
+                    name="attentions_._{}".format(i),
+                )
             )
             self.layer_norm1.append(
-                tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="layer_norm1_._{}".format(i))
+                tf.keras.layers.LayerNormalization(
+                    epsilon=config.layer_norm_eps, name="layer_norm1_._{}".format(i)
+                )
             )
             # if self.is_decoder:
             #     self.layer_norm15.append(nn.LayerNorm(self.dim, eps=config.layer_norm_eps))
             #     self.encoder_attn.append(MultiHeadAttention(self.n_heads, self.dim, dropout=self.attention_dropout))
             self.ffns.append(
-                TFXLMTransformerFFN(self.dim, self.hidden_dim, self.dim, config=config, name="ffns_._{}".format(i))
+                TFXLMTransformerFFN(
+                    self.dim,
+                    self.hidden_dim,
+                    self.dim,
+                    config=config,
+                    name="ffns_._{}".format(i),
+                )
             )
             self.layer_norm2.append(
-                tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="layer_norm2_._{}".format(i))
+                tf.keras.layers.LayerNormalization(
+                    epsilon=config.layer_norm_eps, name="layer_norm2_._{}".format(i)
+                )
             )
 
         if hasattr(config, "pruned_heads"):
@@ -369,7 +424,9 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
             head_mask = inputs[7] if len(inputs) > 7 else head_mask
             inputs_embeds = inputs[8] if len(inputs) > 8 else inputs_embeds
             output_attentions = inputs[9] if len(inputs) > 9 else output_attentions
-            output_hidden_states = inputs[10] if len(inputs) > 10 else output_hidden_states
+            output_hidden_states = (
+                inputs[10] if len(inputs) > 10 else output_hidden_states
+            )
             return_dict = inputs[11] if len(inputs) > 11 else return_dict
             assert len(inputs) <= 12, "Too many inputs."
         elif isinstance(inputs, (dict, BatchEncoding)):
@@ -383,18 +440,30 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
             head_mask = inputs.get("head_mask", head_mask)
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             assert len(inputs) <= 12, "Too many inputs."
         else:
             input_ids = inputs
 
-        output_attentions = output_attentions if output_attentions is not None else self.output_attentions
-        output_hidden_states = output_hidden_states if output_hidden_states is not None else self.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.output_attentions
+        )
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.output_hidden_states
+        )
         return_dict = return_dict if return_dict is not None else self.return_dict
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             bs, slen = shape_list(input_ids)
         elif inputs_embeds is not None:
@@ -404,7 +473,10 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
 
         if lengths is None:
             if input_ids is not None:
-                lengths = tf.reduce_sum(tf.cast(tf.not_equal(input_ids, self.pad_index), dtype=tf.int32), axis=1)
+                lengths = tf.reduce_sum(
+                    tf.cast(tf.not_equal(input_ids, self.pad_index), dtype=tf.int32),
+                    axis=1,
+                )
             else:
                 lengths = tf.convert_to_tensor([slen] * bs, tf.int32)
         # mask = input_ids != self.pad_index
@@ -422,7 +494,9 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
         #     assert src_enc.size(0) == bs
 
         # generate masks
-        mask, attn_mask = get_masks(slen, lengths, self.causal, padding_mask=attention_mask)
+        mask, attn_mask = get_masks(
+            slen, lengths, self.causal, padding_mask=attention_mask
+        )
         # if self.is_decoder and src_enc is not None:
         #     src_mask = torch.arange(src_len.max(), dtype=torch.long, device=lengths.device) < src_len[:, None]
 
@@ -489,7 +563,13 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
 
             # self attention
             attn_outputs = self.attentions[i](
-                tensor, attn_mask, None, cache, head_mask[i], output_attentions, training=training
+                tensor,
+                attn_mask,
+                None,
+                cache,
+                head_mask[i],
+                output_attentions,
+                training=training,
             )
             attn = attn_outputs[0]
 
@@ -524,9 +604,13 @@ class TFXLMMainLayer(tf.keras.layers.Layer):
         # tensor = tensor.transpose(0, 1)
 
         if not return_dict:
-            return tuple(v for v in [tensor, hidden_states, attentions] if v is not None)
+            return tuple(
+                v for v in [tensor, hidden_states, attentions] if v is not None
+            )
 
-        return TFBaseModelOutput(last_hidden_state=tensor, hidden_states=hidden_states, attentions=attentions)
+        return TFBaseModelOutput(
+            last_hidden_state=tensor, hidden_states=hidden_states, attentions=attentions
+        )
 
 
 class TFXLMPreTrainedModel(TFPreTrainedModel):
@@ -534,6 +618,7 @@ class TFXLMPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = XLMConfig
     base_model_prefix = "transformer"
 
@@ -543,10 +628,16 @@ class TFXLMPreTrainedModel(TFPreTrainedModel):
         inputs_list = tf.constant([[7, 6, 0, 0, 1], [1, 2, 3, 0, 0], [0, 0, 0, 4, 5]])
         attns_list = tf.constant([[1, 1, 0, 0, 1], [1, 1, 1, 0, 0], [1, 0, 0, 1, 1]])
         if self.config.use_lang_emb and self.config.n_langs > 1:
-            langs_list = tf.constant([[1, 1, 0, 0, 1], [1, 1, 1, 0, 0], [1, 0, 0, 1, 1]])
+            langs_list = tf.constant(
+                [[1, 1, 0, 0, 1], [1, 1, 1, 0, 0], [1, 0, 0, 1, 1]]
+            )
         else:
             langs_list = None
-        return {"input_ids": inputs_list, "attention_mask": attns_list, "langs": langs_list}
+        return {
+            "input_ids": inputs_list,
+            "attention_mask": attns_list,
+            "langs": langs_list,
+        }
 
 
 # Remove when XLMWithLMHead computes loss like other LM models
@@ -570,6 +661,7 @@ class TFXLMWithLMHeadModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
+
     logits: tf.Tensor = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
     attentions: Optional[Tuple[tf.Tensor]] = None
@@ -681,6 +773,7 @@ XLM_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
+
 @add_start_docstrings(
     "The bare XLM Model transformer outputting raw hidden-states without any specific head on top.",
     XLM_START_DOCSTRING,
@@ -690,7 +783,9 @@ class TFXLMModel(TFXLMPreTrainedModel):
         super().__init__(config, *inputs, **kwargs)
         self.transformer = TFXLMMainLayer(config, name="transformer")
 
-    @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="xlm-mlm-en-2048",
@@ -706,6 +801,7 @@ class TFXLMPredLayer(tf.keras.layers.Layer):
     """
     Prediction layer (cross_entropy or adaptive_softmax).
     """
+
     def __init__(self, config, input_embeddings, **kwargs):
         super().__init__(**kwargs)
 
@@ -727,7 +823,9 @@ class TFXLMPredLayer(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         # The output weights are the same as the input embeddings, but there is an output-only bias for each token.
-        self.bias = self.add_weight(shape=(self.n_words,), initializer="zeros", trainable=True, name="bias")
+        self.bias = self.add_weight(
+            shape=(self.n_words,), initializer="zeros", trainable=True, name="bias"
+        )
 
         super().build(input_shape)
 
@@ -749,7 +847,9 @@ class TFXLMWithLMHeadModel(TFXLMPreTrainedModel):
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
         self.transformer = TFXLMMainLayer(config, name="transformer")
-        self.pred_layer = TFXLMPredLayer(config, self.transformer.embeddings, name="pred_layer_._proj")
+        self.pred_layer = TFXLMPredLayer(
+            config, self.transformer.embeddings, name="pred_layer_._proj"
+        )
 
     def get_output_embeddings(self):
         return self.pred_layer.input_embeddings
@@ -768,7 +868,9 @@ class TFXLMWithLMHeadModel(TFXLMPreTrainedModel):
             langs = None
         return {"inputs": inputs, "langs": langs}
 
-    @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="xlm-mlm-en-2048",
@@ -777,7 +879,9 @@ class TFXLMWithLMHeadModel(TFXLMPreTrainedModel):
     )
     def call(self, inputs, **kwargs):
         return_dict = kwargs.get("return_dict")
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
         transformer_outputs = self.transformer(inputs, **kwargs)
 
         output = transformer_outputs[0]
@@ -787,7 +891,9 @@ class TFXLMWithLMHeadModel(TFXLMPreTrainedModel):
             return (outputs,) + transformer_outputs[1:]
 
         return TFXLMWithLMHeadModelOutput(
-            logits=outputs, hidden_states=transformer_outputs.hidden_states, attentions=transformer_outputs.attentions
+            logits=outputs,
+            hidden_states=transformer_outputs.hidden_states,
+            attentions=transformer_outputs.attentions,
         )
 
 
@@ -798,15 +904,21 @@ class TFXLMWithLMHeadModel(TFXLMPreTrainedModel):
     """,
     XLM_START_DOCSTRING,
 )
-class TFXLMForSequenceClassification(TFXLMPreTrainedModel, TFSequenceClassificationLoss):
+class TFXLMForSequenceClassification(
+    TFXLMPreTrainedModel, TFSequenceClassificationLoss
+):
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
         self.num_labels = config.num_labels
 
         self.transformer = TFXLMMainLayer(config, name="transformer")
-        self.sequence_summary = TFSequenceSummary(config, initializer_range=config.init_std, name="sequence_summary")
+        self.sequence_summary = TFSequenceSummary(
+            config, initializer_range=config.init_std, name="sequence_summary"
+        )
 
-    @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="xlm-mlm-en-2048",
@@ -836,7 +948,9 @@ class TFXLMForSequenceClassification(TFXLMPreTrainedModel, TFSequenceClassificat
             config.num_labels - 1]``. If ``config.num_labels == 1`` a regression loss is computed (Mean-Square loss),
             If ``config.num_labels > 1`` a classification loss is computed (Cross-Entropy).
         """
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             labels = inputs[12] if len(inputs) > 12 else labels
             if len(inputs) > 12:
@@ -889,9 +1003,13 @@ class TFXLMForMultipleChoice(TFXLMPreTrainedModel, TFMultipleChoiceLoss):
         super().__init__(config, *inputs, **kwargs)
 
         self.transformer = TFXLMMainLayer(config, name="transformer")
-        self.sequence_summary = TFSequenceSummary(config, initializer_range=config.init_std, name="sequence_summary")
+        self.sequence_summary = TFSequenceSummary(
+            config, initializer_range=config.init_std, name="sequence_summary"
+        )
         self.logits_proj = tf.keras.layers.Dense(
-            1, kernel_initializer=get_initializer(config.initializer_range), name="logits_proj"
+            1,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="logits_proj",
         )
 
     @property
@@ -907,7 +1025,9 @@ class TFXLMForMultipleChoice(TFXLMPreTrainedModel, TFMultipleChoiceLoss):
             "langs": tf.constant(MULTIPLE_CHOICE_DUMMY_INPUTS),
         }
 
-    @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, num_choices, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        XLM_INPUTS_DOCSTRING.format("batch_size, num_choices, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="xlm-mlm-en-2048",
@@ -948,7 +1068,9 @@ class TFXLMForMultipleChoice(TFXLMPreTrainedModel, TFMultipleChoiceLoss):
             head_mask = inputs[7] if len(inputs) > 7 else head_mask
             inputs_embeds = inputs[8] if len(inputs) > 8 else inputs_embeds
             output_attentions = inputs[9] if len(inputs) > 9 else output_attentions
-            output_hidden_states = inputs[10] if len(inputs) > 10 else output_hidden_states
+            output_hidden_states = (
+                inputs[10] if len(inputs) > 10 else output_hidden_states
+            )
             return_dict = inputs[11] if len(inputs) > 11 else return_dict
             labels = inputs[12] if len(inputs) > 12 else labels
             assert len(inputs) <= 13, "Too many inputs."
@@ -963,13 +1085,17 @@ class TFXLMForMultipleChoice(TFXLMPreTrainedModel, TFMultipleChoiceLoss):
             head_mask = inputs.get("head_mask", head_mask)
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             labels = inputs.get("labels", labels)
             assert len(inputs) <= 13, "Too many inputs."
         else:
             input_ids = inputs
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
 
         if input_ids is not None:
             num_choices = shape_list(input_ids)[1]
@@ -978,10 +1104,24 @@ class TFXLMForMultipleChoice(TFXLMPreTrainedModel, TFMultipleChoiceLoss):
             num_choices = shape_list(inputs_embeds)[1]
             seq_length = shape_list(inputs_embeds)[2]
 
-        flat_input_ids = tf.reshape(input_ids, (-1, seq_length)) if input_ids is not None else None
-        flat_attention_mask = tf.reshape(attention_mask, (-1, seq_length)) if attention_mask is not None else None
-        flat_token_type_ids = tf.reshape(token_type_ids, (-1, seq_length)) if token_type_ids is not None else None
-        flat_position_ids = tf.reshape(position_ids, (-1, seq_length)) if position_ids is not None else None
+        flat_input_ids = (
+            tf.reshape(input_ids, (-1, seq_length)) if input_ids is not None else None
+        )
+        flat_attention_mask = (
+            tf.reshape(attention_mask, (-1, seq_length))
+            if attention_mask is not None
+            else None
+        )
+        flat_token_type_ids = (
+            tf.reshape(token_type_ids, (-1, seq_length))
+            if token_type_ids is not None
+            else None
+        )
+        flat_position_ids = (
+            tf.reshape(position_ids, (-1, seq_length))
+            if position_ids is not None
+            else None
+        )
         flat_langs = tf.reshape(langs, (-1, seq_length)) if langs is not None else None
         flat_inputs_embeds = (
             tf.reshape(inputs_embeds, (-1, seq_length, shape_list(inputs_embeds)[3]))
@@ -1046,10 +1186,14 @@ class TFXLMForTokenClassification(TFXLMPreTrainedModel, TFTokenClassificationLos
         self.transformer = TFXLMMainLayer(config, name="transformer")
         self.dropout = tf.keras.layers.Dropout(config.dropout)
         self.classifier = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.init_std), name="classifier"
+            config.num_labels,
+            kernel_initializer=get_initializer(config.init_std),
+            name="classifier",
         )
 
-    @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="xlm-mlm-en-2048",
@@ -1078,7 +1222,9 @@ class TFXLMForTokenClassification(TFXLMPreTrainedModel, TFTokenClassificationLos
             Labels for computing the token classification loss. Indices should be in ``[0, ..., config.num_labels -
             1]``.
         """
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             labels = inputs[12] if len(inputs) > 12 else labels
             if len(inputs) > 12:
@@ -1133,10 +1279,14 @@ class TFXLMForQuestionAnsweringSimple(TFXLMPreTrainedModel, TFQuestionAnsweringL
         super().__init__(config, *inputs, **kwargs)
         self.transformer = TFXLMMainLayer(config, name="transformer")
         self.qa_outputs = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.init_std), name="qa_outputs"
+            config.num_labels,
+            kernel_initializer=get_initializer(config.init_std),
+            name="qa_outputs",
         )
 
-    @add_start_docstrings_to_model_forward(XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        XLM_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="xlm-mlm-en-2048",
@@ -1171,7 +1321,9 @@ class TFXLMForQuestionAnsweringSimple(TFXLMPreTrainedModel, TFQuestionAnsweringL
             Positions are clamped to the length of the sequence (:obj:`sequence_length`). Position outside of the
             sequence are not taken into account for computing the loss.
         """
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             start_positions = inputs[12] if len(inputs) > 12 else start_positions
             end_positions = inputs[13] if len(inputs) > 13 else end_positions

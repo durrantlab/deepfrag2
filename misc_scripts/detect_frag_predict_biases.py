@@ -12,6 +12,7 @@ from rdkit.Chem import Draw
 
 precision = 5
 
+
 def _smiles_to_filename(smiles: str) -> str:
     """Convert a SMILES string into a filename.
 
@@ -153,7 +154,9 @@ def main():
     df["present_4_enrichment"] = (df["present_4"] / df["groundTruth"]).round(precision)
 
     # Same for accuracy_4
-    df["accuracy_4_enrichment"] = (df["accuracy_4"] / df["groundTruth"]).round(precision)
+    df["accuracy_4_enrichment"] = (df["accuracy_4"] / df["groundTruth"]).round(
+        precision
+    )
 
     # Save as a csv string
     data_csv = df.to_csv()

@@ -21,6 +21,8 @@ from collagen.external.moad.types import PairedPdbSdfCsv_ligand
 if TYPE_CHECKING:
     from collagen.external.moad.interface import MOADInterface
     from collagen.external.moad.types import MOAD_split
+
+
 @dataclass
 class CacheItemsToUpdate(object):
 
@@ -434,7 +436,9 @@ def load_cache_and_filter(
 
                 if lig.smiles not in split.smiles:
                     # It is not in the split, so always skip it.
-                    print(f"Skipping {pdb_id}:{lig_name} because ligand not allowed in this split to ensure independence.")
+                    print(
+                        f"Skipping {pdb_id}:{lig_name} because ligand not allowed in this split to ensure independence."
+                    )
                     fails_filter = True
                     break
 
@@ -444,10 +448,12 @@ def load_cache_and_filter(
                     # You've found the ligand, but it doesn't pass the filter.
                     # (Note that lig_filter_func likely just returns true, so
                     # code never gets here, everything passes).
-                    print(f"Skipping {pdb_id}:{lig_name} because ligand did not pass whole-ligand filter.")
+                    print(
+                        f"Skipping {pdb_id}:{lig_name} because ligand did not pass whole-ligand filter."
+                    )
                     fails_filter = True
                     break
-                
+
                 total_complexes_passed_lig_filter += 1
 
             if fails_filter:
@@ -457,7 +463,9 @@ def load_cache_and_filter(
             examples_to_add = make_dataset_entries_func(args, pdb_id, lig_name, lig_inf)
             filtered_cache.extend(examples_to_add)
             if len(examples_to_add) == 0:
-                print(f"Skipping {pdb_id}:{lig_name} because no valid fragments for ligand found.")
+                print(
+                    f"Skipping {pdb_id}:{lig_name} because no valid fragments for ligand found."
+                )
             else:
                 total_complexes_with_useful_fragments += 1
                 pdbs_with_useful_fragments.add(pdb_id)
@@ -470,11 +478,19 @@ def load_cache_and_filter(
     print(f"\nSPLIT SUMMARY AFTER FRAGMENTING/FILTERING: {split.name}")
     print(f"Proteins (some with multiple ligands): {len(split.targets)}")
     print(f"Unique protein/ligand complexes: {total_complexes}")
-    print(f"Complexes with both receptor and ligand in this split: {total_complexes_with_both_in_split}")
-    print(f"Complexes that also passed whole-ligand filter: {total_complexes_passed_lig_filter}")
-    print(f"Complexes that also had useful fragments: {total_complexes_with_useful_fragments}")
+    print(
+        f"Complexes with both receptor and ligand in this split: {total_complexes_with_both_in_split}"
+    )
+    print(
+        f"Complexes that also passed whole-ligand filter: {total_complexes_passed_lig_filter}"
+    )
+    print(
+        f"Complexes that also had useful fragments: {total_complexes_with_useful_fragments}"
+    )
     print(f"Protein/parent/fragment examples: {len(filtered_cache)}")
-    print(f"Proteins with useful fragments (any ligand): {len(pdbs_with_useful_fragments)}")
+    print(
+        f"Proteins with useful fragments (any ligand): {len(pdbs_with_useful_fragments)}"
+    )
     print("")
 
     return cache, filtered_cache

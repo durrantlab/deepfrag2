@@ -106,17 +106,19 @@ class TFTrainingArguments(TrainingArguments):
         xla (:obj:`bool`, `optional`):
             Whether to activate the XLA compilation or not.
     """
+
     tpu_name: str = field(
-        default=None,
-        metadata={"help": "Name of TPU"},
+        default=None, metadata={"help": "Name of TPU"},
     )
 
     poly_power: float = field(
-        default=1.0,
-        metadata={"help": "Power for the Polynomial decay LR scheduler."},
+        default=1.0, metadata={"help": "Power for the Polynomial decay LR scheduler."},
     )
 
-    xla: bool = field(default=False, metadata={"help": "Whether to activate the XLA compilation or not"})
+    xla: bool = field(
+        default=False,
+        metadata={"help": "Whether to activate the XLA compilation or not"},
+    )
 
     @cached_property
     @tf_required
@@ -138,7 +140,9 @@ class TFTrainingArguments(TrainingArguments):
         else:
             try:
                 if self.tpu_name:
-                    tpu = tf.distribute.cluster_resolver.TPUClusterResolver(self.tpu_name)
+                    tpu = tf.distribute.cluster_resolver.TPUClusterResolver(
+                        self.tpu_name
+                    )
                 else:
                     tpu = tf.distribute.cluster_resolver.TPUClusterResolver()
             except ValueError:
@@ -147,7 +151,9 @@ class TFTrainingArguments(TrainingArguments):
             if tpu:
                 # Set to bfloat16 in case of TPU
                 if self.fp16:
-                    policy = tf.keras.mixed_precision.experimental.Policy("mixed_bfloat16")
+                    policy = tf.keras.mixed_precision.experimental.Policy(
+                        "mixed_bfloat16"
+                    )
                     tf.keras.mixed_precision.experimental.set_policy(policy)
 
                 tf.config.experimental_connect_to_cluster(tpu)
@@ -163,7 +169,9 @@ class TFTrainingArguments(TrainingArguments):
                 # If you only want to use a specific subset of GPUs use `CUDA_VISIBLE_DEVICES=0`
                 strategy = tf.distribute.MirroredStrategy()
             else:
-                raise ValueError("Cannot find the proper strategy please check your environment properties.")
+                raise ValueError(
+                    "Cannot find the proper strategy please check your environment properties."
+                )
 
         return strategy
 
@@ -193,7 +201,9 @@ class TFTrainingArguments(TrainingArguments):
                 "Using deprecated `--per_gpu_train_batch_size` argument which will be removed in a future "
                 "version. Using `--per_device_train_batch_size` is preferred."
             )
-        per_device_batch_size = self.per_gpu_train_batch_size or self.per_device_train_batch_size
+        per_device_batch_size = (
+            self.per_gpu_train_batch_size or self.per_device_train_batch_size
+        )
         return per_device_batch_size * self.n_replicas
 
     @property
@@ -206,7 +216,9 @@ class TFTrainingArguments(TrainingArguments):
                 "Using deprecated `--per_gpu_eval_batch_size` argument which will be removed in a future "
                 "version. Using `--per_device_eval_batch_size` is preferred."
             )
-        per_device_batch_size = self.per_gpu_eval_batch_size or self.per_device_eval_batch_size
+        per_device_batch_size = (
+            self.per_gpu_eval_batch_size or self.per_device_eval_batch_size
+        )
         return per_device_batch_size * self.n_replicas
 
     @property

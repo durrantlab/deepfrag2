@@ -22,7 +22,11 @@ from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.metrics.ensembled import averaged as ensemble_helper
-from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface
+from collagen.external.moad.interface import (
+    MOADInterface,
+    PdbSdfDirInterface,
+    PairedPdbSdfCsvInterface,
+)
 from collagen.external.moad.split import compute_dataset_split
 from collagen.metrics.metrics import (
     most_similar_matches,
@@ -215,7 +219,9 @@ class MoadVoxelModelTest(object):
         else:
             # If you get an existing set of fingerprints, be sure to keep only the
             # unique ones.
-            assert existing_label_set_entry_infos is not None, "Must provide entry infos with existing fingerprints"
+            assert (
+                existing_label_set_entry_infos is not None
+            ), "Must provide entry infos with existing fingerprints"
             label_set_fps, label_set_smis = remove_redundant_fingerprints(
                 existing_label_set_fps, existing_label_set_entry_infos, device=device
             )
@@ -230,7 +236,12 @@ class MoadVoxelModelTest(object):
                 args, moad, val, voxel_params, device, label_set_fps, label_set_smis
             )
 
-        if "test" in lbl_set_codes and not skip_test_set and test is not None and len(test.targets) > 0:
+        if (
+            "test" in lbl_set_codes
+            and not skip_test_set
+            and test is not None
+            and len(test.targets) > 0
+        ):
             label_set_fps, label_set_smis = self._add_to_label_set(
                 args, moad, test, voxel_params, device, label_set_fps, label_set_smis
             )
@@ -626,18 +637,14 @@ class MoadVoxelModelTest(object):
                 "To run the test mode is required loading a previously saved test dataset"
             )
         elif args.load_splits and args.split_method != "random_default":
-            raise Exception(
-                "You cannot specify --split_method if using --load_splits."
-            )
+            raise Exception("You cannot specify --split_method if using --load_splits.")
         # TODO: jacob added below. Need to remember why added, make sure not redundant.
         elif args.test_predictions_file is not None and args.mode != "test":
             raise Exception(
                 "You cannot specify --test_predictions_file unless you are in test mode."
             )
 
-    def run_test(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: str
-    ):
+    def run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: str):
         """Run a model on the test and evaluates the output.
 
         Args:
@@ -666,19 +673,17 @@ class MoadVoxelModelTest(object):
             seed=None,
             fraction_train=0.0,
             fraction_val=0.0,
-
             # Should be true to ensure independence when using
             # split_method="random". TODO: Could remove this parameter, force it
             # to be true. Also, could be user parameter.
             prevent_smiles_overlap=True,
-
             save_splits=None,
             load_splits=self._get_load_splits(args),
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
             split_method=args.split_method,  # TODO: In cesar branch, this is None. Why?
-            butina_cluster_cutoff=0.0, # Hardcoded because no need to split test set.
+            butina_cluster_cutoff=0.0,  # Hardcoded because no need to split test set.
         )
 
         # You'll always need the test data. Note that ligands are not fragmented
@@ -717,7 +722,9 @@ class MoadVoxelModelTest(object):
             # change cesar made, but not sure.
             all_fingerprints = []
 
-            model = self.model_parent.init_model(args, ckpt_filename, fragment_set=set2run_test_on_single_checkpoint)
+            model = self.model_parent.init_model(
+                args, ckpt_filename, fragment_set=set2run_test_on_single_checkpoint
+            )
             model.eval()
 
             # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
@@ -738,7 +745,9 @@ class MoadVoxelModelTest(object):
             )
 
             if ckpt_idx == 0:
-                assert payload is not None, "Payload should not be None if first checkpoint."
+                assert (
+                    payload is not None
+                ), "Payload should not be None if first checkpoint."
 
                 # Payload is not None if first checkpoint.
                 (
@@ -749,10 +758,16 @@ class MoadVoxelModelTest(object):
                 ) = payload
 
         assert model is not None, "Model should not be None after loop."
-        assert label_set_fingerprints is not None, "Label set fingerprints should not be None after loop."
+        assert (
+            label_set_fingerprints is not None
+        ), "Label set fingerprints should not be None after loop."
         assert pca_space is not None, "PCA space should not be None after loop."
-        assert label_set_entry_infos is not None, "Label set entry infos should not be None after loop."
-        assert avg_over_ckpts_of_avgs is not None, "Average over checkpoints of averages should not be None after loop."
+        assert (
+            label_set_entry_infos is not None
+        ), "Label set entry infos should not be None after loop."
+        assert (
+            avg_over_ckpts_of_avgs is not None
+        ), "Average over checkpoints of averages should not be None after loop."
 
         # Get the average of averages (across all checkpoints)
         torch.div(
@@ -818,7 +833,10 @@ class MoadVoxelModelTest(object):
 
     def _read_datasets_to_run_test(
         self, args: Namespace, voxel_params: VoxelParams
-    ) -> Tuple[Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface], Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface]]:
+    ) -> Tuple[
+        Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface],
+        Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface],
+    ]:
         # TODO: All Interfaces should inferit from same parent.
         """Read the dataset to run test on.
         
@@ -834,7 +852,9 @@ class MoadVoxelModelTest(object):
         if args.every_csv and args.data_dir:  # test mode on MOAD database
             print("Loading MOAD database.")
             dataset = self._read_BindingMOAD_database(args, voxel_params)
-        elif args.data_dir:  # test mode on a non-paired database other than MOAD database
+        elif (
+            args.data_dir
+        ):  # test mode on a non-paired database other than MOAD database
             print("Loading a database other than MOAD database.")
             dataset = PdbSdfDirInterface(
                 structures_dir=args.data_dir,
@@ -852,7 +872,7 @@ class MoadVoxelModelTest(object):
                 grid_resolution=voxel_params.resolution,
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
-                use_prevalence=args.use_prevalence
+                use_prevalence=args.use_prevalence,
             )
 
         return dataset, dataset

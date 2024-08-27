@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 # TODO: I don't think this is ever used.
 
+
 def append_file(d_smiles: h5py.Dataset, d_zinc: h5py.Dataset, fp: pathlib.Path):
 
     arr_smiles = []

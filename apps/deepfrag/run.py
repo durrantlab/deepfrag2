@@ -1,6 +1,7 @@
 """Run DeepFrag."""
 
 import argparse
+from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.molecules.mol import BackedMol
 import torch
 import pytorch_lightning as pl
@@ -13,7 +14,7 @@ from collagen.util import rand_rot
 from collagen.model_parents import MoadVoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
-from apps.deepfrag.model_additional_data import DeepFragModelPairedDataFinetune
+from apps.deepfrag.model_density_predictions import VoxelAutoencoder
 
 ENTRY_T = Tuple[Mol, Mol, Mol]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
@@ -35,8 +36,12 @@ class DeepFrag(MoadVoxelModelParent):
             args (argparse.Namespace): The arguments.
         """
         super().__init__(
-            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else VoxelAutoencoder if args.use_density_net else DeepFragModel,
-            dataset_cls=MOADFragmentDataset
+            model_cls=DeepFragModelPairedDataFinetune
+            if args.paired_data_csv
+            else VoxelAutoencoder
+            if args.use_density_net
+            else DeepFragModel,
+            dataset_cls=MOADFragmentDataset,
         )
 
     @staticmethod
@@ -120,7 +125,9 @@ class DeepFrag(MoadVoxelModelParent):
                 )
 
                 # atom_featurizer must not be None
-                assert voxel_params.atom_featurizer is not None, "Atom featurizer is None"
+                assert (
+                    voxel_params.atom_featurizer is not None
+                ), "Atom featurizer is None"
 
                 parent.voxelize_into(
                     voxels,

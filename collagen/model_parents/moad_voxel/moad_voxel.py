@@ -4,7 +4,9 @@ from argparse import ArgumentParser, Namespace
 import json
 from typing import Optional, Type, TypeVar, List, Union
 from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
-from collagen.model_parents.moad_voxel.inference_custom_dataset import MoadVoxelModelInferenceCustomSet
+from collagen.model_parents.moad_voxel.inference_custom_dataset import (
+    MoadVoxelModelInferenceCustomSet,
+)
 from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
 from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
 from collagen.model_parents.moad_voxel.train import MoadVoxelModelTrain
@@ -23,6 +25,7 @@ OUT_T = TypeVar("OUT_T")
 
 # TODO: This is so problematic... What was I thinking?
 
+
 class MoadVoxelModelParent(
     MoadVoxelModelInits,
     MoadVoxelModelTrain,
@@ -33,12 +36,12 @@ class MoadVoxelModelParent(
     """Parent class for all MOAD voxel models."""
 
     # TODO: I should not have done this multiple-inheritance thing. Need to
-    # refactor. Very confusing. 
+    # refactor. Very confusing.
 
     def __init__(
-            self,
-            model_cls: Type[pl.LightningModule],
-            dataset_cls: Type[torch.utils.data.Dataset],
+        self,
+        model_cls: Type[pl.LightningModule],
+        dataset_cls: Type[torch.utils.data.Dataset],
     ):
         """Initialize the model parent.
         
@@ -80,7 +83,7 @@ class MoadVoxelModelParent(
 
     @staticmethod
     def pre_voxelize(
-            args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T
+        args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T
     ) -> TMP_T:
         """Preprocess the entry before voxelization. Should be overwritten by
         child class.
@@ -97,10 +100,10 @@ class MoadVoxelModelParent(
 
     @staticmethod
     def voxelize(
-            args: Namespace,
-            voxel_params: VoxelParams,
-            device: torch.device,
-            batch: List[TMP_T],
+        args: Namespace,
+        voxel_params: VoxelParams,
+        device: torch.device,
+        batch: List[TMP_T],
     ) -> OUT_T:
         """Voxelize the batch. Should be overwritten by child class.
         
@@ -197,11 +200,15 @@ class MoadVoxelModelParent(
             MoadVoxelModelTest(self).run_test(args, ckpt_filename)
         elif args.mode == "inference":
             print("Starting 'inference' process")
-            assert ckpt_filename is not None, "Must specify a checkpoint to run inference"
+            assert (
+                ckpt_filename is not None
+            ), "Must specify a checkpoint to run inference"
             self.run_inference(args, ckpt_filename)
         elif args.mode == "inference_custom_set":
             print("Starting 'inference_custom_set' process")
-            assert ckpt_filename is not None, "Must specify a checkpoint to run inference"
+            assert (
+                ckpt_filename is not None
+            ), "Must specify a checkpoint to run inference"
             MoadVoxelModelInferenceCustomSet(self).run_test(args, ckpt_filename)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")

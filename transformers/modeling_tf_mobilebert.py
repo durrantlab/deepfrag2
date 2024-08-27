@@ -96,7 +96,9 @@ class TFNoNorm(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         self.bias = self.add_weight("bias", shape=[self.feat_size], initializer="zeros")
-        self.weight = self.add_weight("weight", shape=[self.feat_size], initializer="ones")
+        self.weight = self.add_weight(
+            "weight", shape=[self.feat_size], initializer="ones"
+        )
 
     def call(self, inputs: tf.Tensor):
         return inputs * self.weight + self.bias
@@ -107,6 +109,7 @@ NORM2FN = {"layer_norm": TFLayerNorm, "no_norm": TFNoNorm}
 
 class TFMobileBertEmbeddings(tf.keras.layers.Layer):
     """Construct the embeddings from word, position and token_type embeddings."""
+
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         self.trigram_input = config.trigram_input
@@ -128,7 +131,9 @@ class TFMobileBertEmbeddings(tf.keras.layers.Layer):
             name="token_type_embeddings",
         )
 
-        self.embedding_transformation = tf.keras.layers.Dense(config.hidden_size, name="embedding_transformation")
+        self.embedding_transformation = tf.keras.layers.Dense(
+            config.hidden_size, name="embedding_transformation"
+        )
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
@@ -177,13 +182,21 @@ class TFMobileBertEmbeddings(tf.keras.layers.Layer):
         https://github.com/tensorflow/models/blob/a009f4fb9d2fc4949e32192a944688925ef78659/official/transformer/v2/embedding_layer.py#L24
         """
         if mode == "embedding":
-            return self._embedding(input_ids, position_ids, token_type_ids, inputs_embeds, training=training)
+            return self._embedding(
+                input_ids,
+                position_ids,
+                token_type_ids,
+                inputs_embeds,
+                training=training,
+            )
         elif mode == "linear":
             return self._linear(input_ids)
         else:
             raise ValueError("mode {} is not valid.".format(mode))
 
-    def _embedding(self, input_ids, position_ids, token_type_ids, inputs_embeds, training=False):
+    def _embedding(
+        self, input_ids, position_ids, token_type_ids, inputs_embeds, training=False
+    ):
         """Applies embedding based on inputs tensor."""
         assert not (input_ids is None and inputs_embeds is None)
 
@@ -261,27 +274,44 @@ class TFMobileBertSelfAttention(tf.keras.layers.Layer):
         self.num_attention_heads = config.num_attention_heads
         self.output_attentions = config.output_attentions
         assert config.hidden_size % config.num_attention_heads == 0
-        self.attention_head_size = int(config.true_hidden_size / config.num_attention_heads)
+        self.attention_head_size = int(
+            config.true_hidden_size / config.num_attention_heads
+        )
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
         self.query = tf.keras.layers.Dense(
-            self.all_head_size, kernel_initializer=get_initializer(config.initializer_range), name="query"
+            self.all_head_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="query",
         )
         self.key = tf.keras.layers.Dense(
-            self.all_head_size, kernel_initializer=get_initializer(config.initializer_range), name="key"
+            self.all_head_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="key",
         )
         self.value = tf.keras.layers.Dense(
-            self.all_head_size, kernel_initializer=get_initializer(config.initializer_range), name="value"
+            self.all_head_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="value",
         )
 
         self.dropout = tf.keras.layers.Dropout(config.attention_probs_dropout_prob)
 
     def transpose_for_scores(self, x, batch_size):
-        x = tf.reshape(x, (batch_size, -1, self.num_attention_heads, self.attention_head_size))
+        x = tf.reshape(
+            x, (batch_size, -1, self.num_attention_heads, self.attention_head_size)
+        )
         return tf.transpose(x, perm=[0, 2, 1, 3])
 
     def call(
-        self, query_tensor, key_tensor, value_tensor, attention_mask, head_mask, output_attentions, training=False
+        self,
+        query_tensor,
+        key_tensor,
+        value_tensor,
+        attention_mask,
+        head_mask,
+        output_attentions,
+        training=False,
     ):
         batch_size = shape_list(attention_mask)[0]
         mixed_query_layer = self.query(query_tensor)
@@ -320,7 +350,9 @@ class TFMobileBertSelfAttention(tf.keras.layers.Layer):
             context_layer, (batch_size, -1, self.all_head_size)
         )  # (batch_size, seq_len_q, all_head_size)
 
-        outputs = (context_layer, attention_probs) if output_attentions else (context_layer,)
+        outputs = (
+            (context_layer, attention_probs) if output_attentions else (context_layer,)
+        )
 
         return outputs
 
@@ -330,7 +362,9 @@ class TFMobileBertSelfOutput(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.use_bottleneck = config.use_bottleneck
         self.dense = tf.keras.layers.Dense(
-            config.true_hidden_size, kernel_initializer=get_initializer(config.initializer_range), name="dense"
+            config.true_hidden_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="dense",
         )
         self.LayerNorm = NORM2FN[config.normalization_type](
             config.true_hidden_size, epsilon=config.layer_norm_eps, name="LayerNorm"
@@ -367,11 +401,21 @@ class TFMobileBertAttention(tf.keras.layers.Layer):
         training=False,
     ):
         self_outputs = self.self(
-            query_tensor, key_tensor, value_tensor, attention_mask, head_mask, output_attentions, training=training
+            query_tensor,
+            key_tensor,
+            value_tensor,
+            attention_mask,
+            head_mask,
+            output_attentions,
+            training=training,
         )
 
-        attention_output = self.mobilebert_output(self_outputs[0], layer_input, training=training)
-        outputs = (attention_output,) + self_outputs[1:]  # add attentions if we output them
+        attention_output = self.mobilebert_output(
+            self_outputs[0], layer_input, training=training
+        )
+        outputs = (attention_output,) + self_outputs[
+            1:
+        ]  # add attentions if we output them
         return outputs
 
 
@@ -396,7 +440,9 @@ class TFMobileBertOutput(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.use_bottleneck = config.use_bottleneck
         self.dense = tf.keras.layers.Dense(
-            config.true_hidden_size, kernel_initializer=get_initializer(config.initializer_range), name="dense"
+            config.true_hidden_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="dense",
         )
         self.LayerNorm = NORM2FN[config.normalization_type](
             config.true_hidden_size, epsilon=config.layer_norm_eps, name="LayerNorm"
@@ -422,7 +468,9 @@ class TFBottleneckLayer(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.dense = tf.keras.layers.Dense(config.intra_bottleneck_size, name="dense")
         self.LayerNorm = NORM2FN[config.normalization_type](
-            config.intra_bottleneck_size, epsilon=config.layer_norm_eps, name="LayerNorm"
+            config.intra_bottleneck_size,
+            epsilon=config.layer_norm_eps,
+            name="LayerNorm",
         )
 
     def call(self, inputs):
@@ -462,9 +510,19 @@ class TFBottleneck(tf.keras.layers.Layer):
             return (bottlenecked_hidden_states,) * 4
         elif self.key_query_shared_bottleneck:
             shared_attention_input = self.attention(hidden_states)
-            return (shared_attention_input, shared_attention_input, hidden_states, bottlenecked_hidden_states)
+            return (
+                shared_attention_input,
+                shared_attention_input,
+                hidden_states,
+                bottlenecked_hidden_states,
+            )
         else:
-            return (hidden_states, hidden_states, hidden_states, bottlenecked_hidden_states)
+            return (
+                hidden_states,
+                hidden_states,
+                hidden_states,
+                bottlenecked_hidden_states,
+            )
 
 
 class TFFFNOutput(tf.keras.layers.Layer):
@@ -506,12 +564,22 @@ class TFMobileBertLayer(tf.keras.layers.Layer):
             self.bottleneck = TFBottleneck(config, name="bottleneck")
         if config.num_feedforward_networks > 1:
             self.ffn = [
-                TFFFNLayer(config, name="ffn.{}".format(i)) for i in range(config.num_feedforward_networks - 1)
+                TFFFNLayer(config, name="ffn.{}".format(i))
+                for i in range(config.num_feedforward_networks - 1)
             ]
 
-    def call(self, hidden_states, attention_mask, head_mask, output_attentions, training=False):
+    def call(
+        self,
+        hidden_states,
+        attention_mask,
+        head_mask,
+        output_attentions,
+        training=False,
+    ):
         if self.use_bottleneck:
-            query_tensor, key_tensor, value_tensor, layer_input = self.bottleneck(hidden_states)
+            query_tensor, key_tensor, value_tensor, layer_input = self.bottleneck(
+                hidden_states
+            )
         else:
             query_tensor, key_tensor, value_tensor, layer_input = [hidden_states] * 4
 
@@ -535,7 +603,9 @@ class TFMobileBertLayer(tf.keras.layers.Layer):
                 s += (attention_output,)
 
         intermediate_output = self.intermediate(attention_output)
-        layer_output = self.mobilebert_output(intermediate_output, attention_output, hidden_states, training=training)
+        layer_output = self.mobilebert_output(
+            intermediate_output, attention_output, hidden_states, training=training
+        )
 
         outputs = (
             (layer_output,)
@@ -560,7 +630,10 @@ class TFMobileBertEncoder(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.output_attentions = config.output_attentions
         self.output_hidden_states = config.output_hidden_states
-        self.layer = [TFMobileBertLayer(config, name="layer_._{}".format(i)) for i in range(config.num_hidden_layers)]
+        self.layer = [
+            TFMobileBertLayer(config, name="layer_._{}".format(i))
+            for i in range(config.num_hidden_layers)
+        ]
 
     def call(
         self,
@@ -579,7 +652,11 @@ class TFMobileBertEncoder(tf.keras.layers.Layer):
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
             layer_outputs = layer_module(
-                hidden_states, attention_mask, head_mask[i], output_attentions, training=training
+                hidden_states,
+                attention_mask,
+                head_mask[i],
+                output_attentions,
+                training=training,
             )
 
             hidden_states = layer_outputs[0]
@@ -592,9 +669,15 @@ class TFMobileBertEncoder(tf.keras.layers.Layer):
             all_hidden_states = all_hidden_states + (hidden_states,)
 
         if not return_dict:
-            return tuple(v for v in [hidden_states, all_hidden_states, all_attentions] if v is not None)
+            return tuple(
+                v
+                for v in [hidden_states, all_hidden_states, all_attentions]
+                if v is not None
+            )
         return TFBaseModelOutput(
-            last_hidden_state=hidden_states, hidden_states=all_hidden_states, attentions=all_attentions
+            last_hidden_state=hidden_states,
+            hidden_states=all_hidden_states,
+            attentions=all_attentions,
         )
 
 
@@ -625,13 +708,17 @@ class TFMobileBertPredictionHeadTransform(tf.keras.layers.Layer):
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         self.dense = tf.keras.layers.Dense(
-            config.hidden_size, kernel_initializer=get_initializer(config.initializer_range), name="dense"
+            config.hidden_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="dense",
         )
         if isinstance(config.hidden_act, str):
             self.transform_act_fn = get_tf_activation(config.hidden_act)
         else:
             self.transform_act_fn = config.hidden_act
-        self.LayerNorm = NORM2FN["layer_norm"](config.hidden_size, epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = NORM2FN["layer_norm"](
+            config.hidden_size, epsilon=config.layer_norm_eps, name="LayerNorm"
+        )
 
     def call(self, hidden_states):
         hidden_states = self.dense(hidden_states)
@@ -648,9 +735,14 @@ class TFMobileBertLMPredictionHead(tf.keras.layers.Layer):
         self.config = config
 
     def build(self, input_shape):
-        self.bias = self.add_weight(shape=(self.vocab_size,), initializer="zeros", trainable=True, name="bias")
+        self.bias = self.add_weight(
+            shape=(self.vocab_size,), initializer="zeros", trainable=True, name="bias"
+        )
         self.dense = self.add_weight(
-            shape=(self.config.hidden_size - self.config.embedding_size, self.vocab_size),
+            shape=(
+                self.config.hidden_size - self.config.embedding_size,
+                self.vocab_size,
+            ),
             initializer="zeros",
             trainable=True,
             name="dense/weight",
@@ -665,7 +757,9 @@ class TFMobileBertLMPredictionHead(tf.keras.layers.Layer):
 
     def call(self, hidden_states):
         hidden_states = self.transform(hidden_states)
-        hidden_states = tf.matmul(hidden_states, tf.concat([tf.transpose(self.decoder), self.dense], axis=0))
+        hidden_states = tf.matmul(
+            hidden_states, tf.concat([tf.transpose(self.decoder), self.dense], axis=0)
+        )
         hidden_states = hidden_states + self.bias
         return hidden_states
 
@@ -729,7 +823,9 @@ class TFMobileBertMainLayer(tf.keras.layers.Layer):
             head_mask = inputs[4] if len(inputs) > 4 else head_mask
             inputs_embeds = inputs[5] if len(inputs) > 5 else inputs_embeds
             output_attentions = inputs[6] if len(inputs) > 6 else output_attentions
-            output_hidden_states = inputs[7] if len(inputs) > 7 else output_hidden_states
+            output_hidden_states = (
+                inputs[7] if len(inputs) > 7 else output_hidden_states
+            )
             return_dict = inputs[8] if len(inputs) > 8 else return_dict
             assert len(inputs) <= 9, "Too many inputs."
         elif isinstance(inputs, (dict, BatchEncoding)):
@@ -740,18 +836,30 @@ class TFMobileBertMainLayer(tf.keras.layers.Layer):
             head_mask = inputs.get("head_mask", head_mask)
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             assert len(inputs) <= 9, "Too many inputs."
         else:
             input_ids = inputs
 
-        output_attentions = output_attentions if output_attentions is not None else self.output_attentions
-        output_hidden_states = output_hidden_states if output_hidden_states is not None else self.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.output_attentions
+        )
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.output_hidden_states
+        )
         return_dict = return_dict if return_dict is not None else self.return_dict
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = shape_list(input_ids)
         elif inputs_embeds is not None:
@@ -790,7 +898,9 @@ class TFMobileBertMainLayer(tf.keras.layers.Layer):
         else:
             head_mask = [None] * self.num_hidden_layers
 
-        embedding_output = self.embeddings(input_ids, position_ids, token_type_ids, inputs_embeds, training=training)
+        embedding_output = self.embeddings(
+            input_ids, position_ids, token_type_ids, inputs_embeds, training=training
+        )
         encoder_outputs = self.encoder(
             embedding_output,
             extended_attention_mask,
@@ -805,10 +915,7 @@ class TFMobileBertMainLayer(tf.keras.layers.Layer):
         pooled_output = self.pooler(sequence_output)
 
         if not return_dict:
-            return (
-                sequence_output,
-                pooled_output,
-            ) + encoder_outputs[1:]
+            return (sequence_output, pooled_output,) + encoder_outputs[1:]
 
         return TFBaseModelOutputWithPooling(
             last_hidden_state=sequence_output,
@@ -823,6 +930,7 @@ class TFMobileBertPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = MobileBertConfig
     base_model_prefix = "mobilebert"
 
@@ -850,6 +958,7 @@ class TFMobileBertForPreTrainingOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
+
     loss: Optional[tf.Tensor] = None
     prediction_logits: tf.Tensor = None
     seq_relationship_logits: tf.Tensor = None
@@ -944,6 +1053,7 @@ MOBILEBERT_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
+
 @add_start_docstrings(
     "The bare MobileBert Model transformer outputting raw hidden-states without any specific head on top.",
     MOBILEBERT_START_DOCSTRING,
@@ -953,7 +1063,9 @@ class TFMobileBertModel(TFMobileBertPreTrainedModel):
         super().__init__(config, *inputs, **kwargs)
         self.mobilebert = TFMobileBertMainLayer(config, name="mobilebert")
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -977,13 +1089,19 @@ class TFMobileBertForPreTraining(TFMobileBertPreTrainedModel):
         super().__init__(config, *inputs, **kwargs)
         self.mobilebert = TFMobileBertMainLayer(config, name="mobilebert")
         self.predictions = TFMobileBertMLMHead(config, name="predictions___cls")
-        self.seq_relationship = TFMobileBertOnlyNSPHead(2, name="seq_relationship___cls")
+        self.seq_relationship = TFMobileBertOnlyNSPHead(
+            2, name="seq_relationship___cls"
+        )
 
     def get_output_embeddings(self):
         return self.mobilebert.embeddings
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @replace_return_docstrings(output_type=TFMobileBertForPreTrainingOutput, config_class=_CONFIG_FOR_DOC)
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
+    @replace_return_docstrings(
+        output_type=TFMobileBertForPreTrainingOutput, config_class=_CONFIG_FOR_DOC
+    )
     def call(self, inputs, **kwargs):
         r"""
         Return:
@@ -1001,7 +1119,9 @@ class TFMobileBertForPreTraining(TFMobileBertPreTrainedModel):
 
         """
         return_dict = kwargs.get("return_dict")
-        return_dict = return_dict if return_dict is not None else self.mobilebert.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.mobilebert.return_dict
+        )
         outputs = self.mobilebert(inputs, **kwargs)
 
         sequence_output, pooled_output = outputs[:2]
@@ -1019,8 +1139,13 @@ class TFMobileBertForPreTraining(TFMobileBertPreTrainedModel):
         )
 
 
-@add_start_docstrings("""MobileBert Model with a `language modeling` head on top. """, MOBILEBERT_START_DOCSTRING)
-class TFMobileBertForMaskedLM(TFMobileBertPreTrainedModel, TFMaskedLanguageModelingLoss):
+@add_start_docstrings(
+    """MobileBert Model with a `language modeling` head on top. """,
+    MOBILEBERT_START_DOCSTRING,
+)
+class TFMobileBertForMaskedLM(
+    TFMobileBertPreTrainedModel, TFMaskedLanguageModelingLoss
+):
 
     authorized_missing_keys = [r"pooler"]
 
@@ -1033,7 +1158,9 @@ class TFMobileBertForMaskedLM(TFMobileBertPreTrainedModel, TFMaskedLanguageModel
     def get_output_embeddings(self):
         return self.mobilebert.embeddings
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1060,7 +1187,9 @@ class TFMobileBertForMaskedLM(TFMobileBertPreTrainedModel, TFMaskedLanguageModel
             config.vocab_size]`` (see ``input_ids`` docstring) Tokens with indices set to ``-100`` are ignored
             (masked), the loss is only computed for the tokens with labels
         """
-        return_dict = return_dict if return_dict is not None else self.mobilebert.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.mobilebert.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             labels = inputs[9] if len(inputs) > 9 else labels
             if len(inputs) > 9:
@@ -1119,8 +1248,12 @@ class TFMobileBertForNextSentencePrediction(TFMobileBertPreTrainedModel):
         self.mobilebert = TFMobileBertMainLayer(config, name="mobilebert")
         self.cls = TFMobileBertOnlyNSPHead(config, name="seq_relationship___cls")
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @replace_return_docstrings(output_type=TFNextSentencePredictorOutput, config_class=_CONFIG_FOR_DOC)
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
+    @replace_return_docstrings(
+        output_type=TFNextSentencePredictorOutput, config_class=_CONFIG_FOR_DOC
+    )
     def call(self, inputs, **kwargs):
         r"""
         Return:
@@ -1140,7 +1273,9 @@ class TFMobileBertForNextSentencePrediction(TFMobileBertPreTrainedModel):
             >>> logits = model(encoding['input_ids'], token_type_ids=encoding['token_type_ids'])[0]
         """
         return_dict = kwargs.get("return_dict")
-        return_dict = return_dict if return_dict is not None else self.mobilebert.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.mobilebert.return_dict
+        )
         outputs = self.mobilebert(inputs, **kwargs)
 
         pooled_output = outputs[1]
@@ -1163,7 +1298,9 @@ class TFMobileBertForNextSentencePrediction(TFMobileBertPreTrainedModel):
     """,
     MOBILEBERT_START_DOCSTRING,
 )
-class TFMobileBertForSequenceClassification(TFMobileBertPreTrainedModel, TFSequenceClassificationLoss):
+class TFMobileBertForSequenceClassification(
+    TFMobileBertPreTrainedModel, TFSequenceClassificationLoss
+):
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
         self.num_labels = config.num_labels
@@ -1171,10 +1308,14 @@ class TFMobileBertForSequenceClassification(TFMobileBertPreTrainedModel, TFSeque
         self.mobilebert = TFMobileBertMainLayer(config, name="mobilebert")
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.classifier = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="classifier"
+            config.num_labels,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="classifier",
         )
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1201,7 +1342,9 @@ class TFMobileBertForSequenceClassification(TFMobileBertPreTrainedModel, TFSeque
             config.num_labels - 1]`. If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
             If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
         """
-        return_dict = return_dict if return_dict is not None else self.mobilebert.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.mobilebert.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             labels = inputs[9] if len(inputs) > 9 else labels
             if len(inputs) > 9:
@@ -1248,7 +1391,9 @@ class TFMobileBertForSequenceClassification(TFMobileBertPreTrainedModel, TFSeque
     """,
     MOBILEBERT_START_DOCSTRING,
 )
-class TFMobileBertForQuestionAnswering(TFMobileBertPreTrainedModel, TFQuestionAnsweringLoss):
+class TFMobileBertForQuestionAnswering(
+    TFMobileBertPreTrainedModel, TFQuestionAnsweringLoss
+):
 
     authorized_missing_keys = [r"pooler"]
 
@@ -1258,10 +1403,14 @@ class TFMobileBertForQuestionAnswering(TFMobileBertPreTrainedModel, TFQuestionAn
 
         self.mobilebert = TFMobileBertMainLayer(config, name="mobilebert")
         self.qa_outputs = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="qa_outputs"
+            config.num_labels,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="qa_outputs",
         )
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1293,7 +1442,9 @@ class TFMobileBertForQuestionAnswering(TFMobileBertPreTrainedModel, TFQuestionAn
             Positions are clamped to the length of the sequence (:obj:`sequence_length`). Position outside of the
             sequence are not taken into account for computing the loss.
         """
-        return_dict = return_dict if return_dict is not None else self.mobilebert.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.mobilebert.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             start_positions = inputs[9] if len(inputs) > 9 else start_positions
             end_positions = inputs[10] if len(inputs) > 10 else end_positions
@@ -1356,7 +1507,9 @@ class TFMobileBertForMultipleChoice(TFMobileBertPreTrainedModel, TFMultipleChoic
         self.mobilebert = TFMobileBertMainLayer(config, name="mobilebert")
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.classifier = tf.keras.layers.Dense(
-            1, kernel_initializer=get_initializer(config.initializer_range), name="classifier"
+            1,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="classifier",
         )
 
     @property
@@ -1406,7 +1559,9 @@ class TFMobileBertForMultipleChoice(TFMobileBertPreTrainedModel, TFMultipleChoic
             head_mask = inputs[4] if len(inputs) > 4 else head_mask
             inputs_embeds = inputs[5] if len(inputs) > 5 else inputs_embeds
             output_attentions = inputs[6] if len(inputs) > 6 else output_attentions
-            output_hidden_states = inputs[7] if len(inputs) > 7 else output_hidden_states
+            output_hidden_states = (
+                inputs[7] if len(inputs) > 7 else output_hidden_states
+            )
             return_dict = inputs[8] if len(inputs) > 8 else return_dict
             labels = inputs[9] if len(inputs) > 9 else labels
             assert len(inputs) <= 10, "Too many inputs."
@@ -1418,13 +1573,17 @@ class TFMobileBertForMultipleChoice(TFMobileBertPreTrainedModel, TFMultipleChoic
             head_mask = inputs.get("head_mask", head_mask)
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             labels = inputs.get("labels", labels)
             assert len(inputs) <= 10, "Too many inputs."
         else:
             input_ids = inputs
-        return_dict = return_dict if return_dict is not None else self.mobilebert.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.mobilebert.return_dict
+        )
 
         if input_ids is not None:
             num_choices = shape_list(input_ids)[1]
@@ -1433,10 +1592,24 @@ class TFMobileBertForMultipleChoice(TFMobileBertPreTrainedModel, TFMultipleChoic
             num_choices = shape_list(inputs_embeds)[1]
             seq_length = shape_list(inputs_embeds)[2]
 
-        flat_input_ids = tf.reshape(input_ids, (-1, seq_length)) if input_ids is not None else None
-        flat_attention_mask = tf.reshape(attention_mask, (-1, seq_length)) if attention_mask is not None else None
-        flat_token_type_ids = tf.reshape(token_type_ids, (-1, seq_length)) if token_type_ids is not None else None
-        flat_position_ids = tf.reshape(position_ids, (-1, seq_length)) if position_ids is not None else None
+        flat_input_ids = (
+            tf.reshape(input_ids, (-1, seq_length)) if input_ids is not None else None
+        )
+        flat_attention_mask = (
+            tf.reshape(attention_mask, (-1, seq_length))
+            if attention_mask is not None
+            else None
+        )
+        flat_token_type_ids = (
+            tf.reshape(token_type_ids, (-1, seq_length))
+            if token_type_ids is not None
+            else None
+        )
+        flat_position_ids = (
+            tf.reshape(position_ids, (-1, seq_length))
+            if position_ids is not None
+            else None
+        )
         flat_inputs_embeds = (
             tf.reshape(inputs_embeds, (-1, seq_length, shape_list(inputs_embeds)[3]))
             if inputs_embeds is not None
@@ -1480,7 +1653,9 @@ class TFMobileBertForMultipleChoice(TFMobileBertPreTrainedModel, TFMultipleChoic
     """,
     MOBILEBERT_START_DOCSTRING,
 )
-class TFMobileBertForTokenClassification(TFMobileBertPreTrainedModel, TFTokenClassificationLoss):
+class TFMobileBertForTokenClassification(
+    TFMobileBertPreTrainedModel, TFTokenClassificationLoss
+):
 
     authorized_missing_keys = [r"pooler"]
 
@@ -1491,10 +1666,14 @@ class TFMobileBertForTokenClassification(TFMobileBertPreTrainedModel, TFTokenCla
         self.mobilebert = TFMobileBertMainLayer(config, name="mobilebert")
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.classifier = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="classifier"
+            config.num_labels,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="classifier",
         )
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1520,7 +1699,9 @@ class TFMobileBertForTokenClassification(TFMobileBertPreTrainedModel, TFTokenCla
             Labels for computing the token classification loss. Indices should be in ``[0, ..., config.num_labels -
             1]``.
         """
-        return_dict = return_dict if return_dict is not None else self.mobilebert.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.mobilebert.return_dict
+        )
         if isinstance(inputs, (tuple, list)):
             labels = inputs[9] if len(inputs) > 9 else labels
             if len(inputs) > 9:

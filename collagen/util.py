@@ -4,6 +4,7 @@ import numpy as np
 import time
 from typing import List, Set, Union
 
+
 def rand_rot() -> np.ndarray:
     """Return a random uniform quaternion rotation.
     
@@ -14,9 +15,7 @@ def rand_rot() -> np.ndarray:
     # during inferance. Note that if two rotations are requested within a
     # microsecond of each other, will return same rotation. But even that
     # wouldn't necessarily be problematic.
-    rot_rand_num_gen = np.random.default_rng(
-        int(time.time() * 1000000)
-    )
+    rot_rand_num_gen = np.random.default_rng(int(time.time() * 1000000))
 
     q = rot_rand_num_gen.normal(size=4)  # sample quaternion from normal distribution
     # q = np.random.normal(size=4)
@@ -147,6 +146,7 @@ def get_vdw_radius(num: int) -> float:
     """
     return VDW_RADIUS_BY_NUM[num] if num in VDW_RADIUS_BY_NUM else 0
 
+
 def sorted_list(st: Union[Set[str], List[str]]) -> List[str]:
     """Return a sorted list from a set.
     
@@ -158,4 +158,3 @@ def sorted_list(st: Union[Set[str], List[str]]) -> List[str]:
     """
 
     return sorted(st)
-

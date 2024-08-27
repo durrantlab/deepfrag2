@@ -4,6 +4,7 @@ import argparse
 from typing import List, Optional, Tuple
 from collagen.external.moad.types import Entry_info
 
+from collagen.metrics.metrics import mse_loss
 from torch import nn
 import pytorch_lightning as pl
 from apps.deepfrag.AggregationOperators import *
@@ -159,25 +160,30 @@ class DeepFragModel(pl.LightningModule):
         #     # fragment.
         # )
 
-        TODO: JDD revisit
-        self.deepfrag_after_encoder = nn.Sequential(
-            # Randomly zero some values
-            nn.Dropout(),
-            # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
-            # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-            nn.Linear(512, self.fp_size),
-        ) if self.is_continuous_fingerprint else nn.Sequential(
+        if self.is_continuous_fingerprint:
+            self.deepfrag_after_encoder = nn.Sequential(
                 # Randomly zero some values
                 nn.Dropout(),
-                # Linear transform (fully connected). Increases/Decreases features to the --fp_size argument.
-                # It could generate negative values https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+                # Linear transform (fully connected). Increases/Decreases
+                # features to the --fp_size argument. It could generate negative
+                # values
+                # https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+                nn.Linear(512, self.fp_size),
+            )
+        else:
+            self.deepfrag_after_encoder = nn.Sequential(
+                # Randomly zero some values
+                nn.Dropout(),
+                # Linear transform (fully connected). Increases/Decreases
+                # features to the --fp_size argument. It could generate negative
+                # values
+                # https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
                 nn.Linear(512, self.fp_size),
                 # Applies sigmoid activation function. See
                 # https://pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html
                 # Values ranging between 0 and 1
-                nn.Sigmoid()
+                nn.Sigmoid(),
             )
-
 
     @staticmethod
     def add_model_args(
@@ -280,7 +286,11 @@ class DeepFragModel(pl.LightningModule):
         Returns:
             torch.Tensor: The loss.
         """
-        return mse_loss(pred, fps) if self.is_continuous_fingerprint else self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
+        return (
+            mse_loss(pred, fps)
+            if self.is_continuous_fingerprint
+            else self.aggregation.aggregate_on_pytorch_tensor(cos_loss(pred, fps))
+        )
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
@@ -430,8 +440,8 @@ class DeepFragModel(pl.LightningModule):
 
         # See https://github.com/Lightning-AI/lightning/issues/2110
         try:
-            # Sometimes x["val_loss"] is an empty TensorList. Not sure why. TODO:
-            # Using try catch like this is bad practice.
+            # Sometimes x["val_loss"] is an empty TensorList. Not sure why.
+            # TODO: Using try catch like this is bad practice.
             avg_loss = torch.stack([x["val_loss"] for x in outputs]).mean()
             self.log(
                 "val_loss_per_epoch",
@@ -532,4 +542,3 @@ class DeepFragModel(pl.LightningModule):
                 },
             }
         return to_return
-

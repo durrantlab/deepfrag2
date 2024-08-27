@@ -68,12 +68,19 @@ def load_tf_weights_in_openai_gpt(model, config, openai_checkpoint_folder_path):
 
     logger.info("Loading weights from {}".format(openai_checkpoint_folder_path))
 
-    with open(openai_checkpoint_folder_path + "/parameters_names.json", "r", encoding="utf-8") as names_handle:
+    with open(
+        openai_checkpoint_folder_path + "/parameters_names.json", "r", encoding="utf-8"
+    ) as names_handle:
         names = json.load(names_handle)
-    with open(openai_checkpoint_folder_path + "/params_shapes.json", "r", encoding="utf-8") as shapes_handle:
+    with open(
+        openai_checkpoint_folder_path + "/params_shapes.json", "r", encoding="utf-8"
+    ) as shapes_handle:
         shapes = json.load(shapes_handle)
     offsets = np.cumsum([np.prod(shape) for shape in shapes])
-    init_params = [np.load(openai_checkpoint_folder_path + "/params_{}.npy".format(n)) for n in range(10)]
+    init_params = [
+        np.load(openai_checkpoint_folder_path + "/params_{}.npy".format(n))
+        for n in range(10)
+    ]
     init_params = np.split(np.concatenate(init_params, 0), offsets)[:-1]
     init_params = [param.reshape(shape) for param, shape in zip(init_params, shapes)]
 
@@ -97,7 +104,9 @@ def load_tf_weights_in_openai_gpt(model, config, openai_checkpoint_folder_path):
     init_params.pop(0)
     init_params.pop(0)
 
-    for name, array in zip(names, init_params):  # names[1:n_transfer], init_params[1:n_transfer]):
+    for name, array in zip(
+        names, init_params
+    ):  # names[1:n_transfer], init_params[1:n_transfer]):
         name = name[6:]  # skip "model/"
         assert name[-2:] == ":0"
         name = name[:-2]
@@ -147,7 +156,9 @@ class Attention(nn.Module):
         n_state = nx  # in Attention: n_state=768 (nx=n_embd)
         # [switch nx => n_state from Block to Attention to keep identical to TF implem]
         assert n_state % config.n_head == 0
-        self.register_buffer("bias", torch.tril(torch.ones(n_ctx, n_ctx)).view(1, 1, n_ctx, n_ctx))
+        self.register_buffer(
+            "bias", torch.tril(torch.ones(n_ctx, n_ctx)).view(1, 1, n_ctx, n_ctx)
+        )
         self.n_head = config.n_head
         self.split_size = n_state
         self.scale = scale
@@ -164,7 +175,9 @@ class Attention(nn.Module):
         heads, index = find_pruneable_heads_and_indices(
             heads, self.n_head, self.split_size // self.n_head, self.pruned_heads
         )
-        index_attn = torch.cat([index, index + self.split_size, index + (2 * self.split_size)])
+        index_attn = torch.cat(
+            [index, index + self.split_size, index + (2 * self.split_size)]
+        )
         # Prune conv1d layers
         self.c_attn = prune_conv1d_layer(self.c_attn, index_attn, dim=1)
         self.c_proj = prune_conv1d_layer(self.c_proj, index, dim=0)
@@ -173,7 +186,9 @@ class Attention(nn.Module):
         self.n_head = self.n_head - len(heads)
         self.pruned_heads = self.pruned_heads.union(heads)
 
-    def _attn(self, q, k, v, attention_mask=None, head_mask=None, output_attentions=False):
+    def _attn(
+        self, q, k, v, attention_mask=None, head_mask=None, output_attentions=False
+    ):
         w = torch.matmul(q, k)
         if self.scale:
             w = w / math.sqrt(v.size(-1))
@@ -218,7 +233,9 @@ class Attention(nn.Module):
         key = self.split_heads(key, k=True)
         value = self.split_heads(value)
 
-        attn_outputs = self._attn(query, key, value, attention_mask, head_mask, output_attentions)
+        attn_outputs = self._attn(
+            query, key, value, attention_mask, head_mask, output_attentions
+        )
         a = attn_outputs[0]
 
         a = self.merge_heads(a)
@@ -275,6 +292,7 @@ class OpenAIGPTPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = OpenAIGPTConfig
     load_tf_weights = load_tf_weights_in_openai_gpt
     base_model_prefix = "transformer"
@@ -319,6 +337,7 @@ class OpenAIGPTDoubleHeadsModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
+
     loss: Optional[torch.FloatTensor] = None
     mc_loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
@@ -392,6 +411,7 @@ OPENAI_GPT_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
+
 @add_start_docstrings(
     "The bare OpenAI GPT transformer model outputting raw hidden-states without any specific head on top.",
     OPENAI_GPT_START_DOCSTRING,
@@ -403,7 +423,9 @@ class OpenAIGPTModel(OpenAIGPTPreTrainedModel):
         self.tokens_embed = nn.Embedding(config.vocab_size, config.n_embd)
         self.positions_embed = nn.Embedding(config.n_positions, config.n_embd)
         self.drop = nn.Dropout(config.embd_pdrop)
-        self.h = nn.ModuleList([Block(config.n_ctx, config, scale=True) for _ in range(config.n_layer)])
+        self.h = nn.ModuleList(
+            [Block(config.n_ctx, config, scale=True) for _ in range(config.n_layer)]
+        )
 
         self.register_buffer("position_ids", torch.arange(config.n_positions))
         self.init_weights()
@@ -440,14 +462,24 @@ class OpenAIGPTModel(OpenAIGPTPreTrainedModel):
         output_hidden_states=None,
         return_dict=None,
     ):
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.config.output_attentions
         )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.config.output_hidden_states
+        )
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = input_ids.size()
             input_ids = input_ids.view(-1, input_shape[-1])
@@ -474,7 +506,9 @@ class OpenAIGPTModel(OpenAIGPTPreTrainedModel):
             # positions we want to attend and -10000.0 for masked positions.
             # Since we are adding it to the raw scores before the softmax, this is
             # effectively the same as removing these entirely.
-            attention_mask = attention_mask.to(dtype=next(self.parameters()).dtype)  # fp16 compatibility
+            attention_mask = attention_mask.to(
+                dtype=next(self.parameters()).dtype
+            )  # fp16 compatibility
             attention_mask = (1.0 - attention_mask) * -10000.0
 
         # Prepare head mask if needed
@@ -497,9 +531,16 @@ class OpenAIGPTModel(OpenAIGPTPreTrainedModel):
         all_hidden_states = () if output_hidden_states else None
         for i, block in enumerate(self.h):
             if output_hidden_states:
-                all_hidden_states = all_hidden_states + (hidden_states.view(*output_shape),)
+                all_hidden_states = all_hidden_states + (
+                    hidden_states.view(*output_shape),
+                )
 
-            outputs = block(hidden_states, attention_mask, head_mask[i], output_attentions=output_attentions)
+            outputs = block(
+                hidden_states,
+                attention_mask,
+                head_mask[i],
+                output_attentions=output_attentions,
+            )
             hidden_states = outputs[0]
             if output_attentions:
                 all_attentions = all_attentions + (outputs[1],)
@@ -510,7 +551,11 @@ class OpenAIGPTModel(OpenAIGPTPreTrainedModel):
             all_hidden_states = all_hidden_states + (hidden_states,)
 
         if not return_dict:
-            return tuple(v for v in [hidden_states, all_hidden_states, all_attentions] if v is not None)
+            return tuple(
+                v
+                for v in [hidden_states, all_hidden_states, all_attentions]
+                if v is not None
+            )
 
         return BaseModelOutput(
             last_hidden_state=hidden_states,
@@ -563,7 +608,9 @@ class OpenAIGPTLMHeadModel(OpenAIGPTPreTrainedModel):
             ``labels = input_ids`` Indices are selected in ``[-100, 0, ..., config.vocab_size]`` All labels set to
             ``-100`` are ignored (masked), the loss is only computed for labels in ``[0, ..., config.vocab_size]``
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         transformer_outputs = self.transformer(
             input_ids,
@@ -586,7 +633,9 @@ class OpenAIGPTLMHeadModel(OpenAIGPTPreTrainedModel):
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
             loss_fct = CrossEntropyLoss()
-            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+            loss = loss_fct(
+                shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)
+            )
 
         if not return_dict:
             output = (lm_logits,) + transformer_outputs[1:]
@@ -624,7 +673,9 @@ class OpenAIGPTDoubleHeadsModel(OpenAIGPTPreTrainedModel):
         return self.lm_head
 
     @add_start_docstrings_to_model_forward(OPENAI_GPT_INPUTS_DOCSTRING)
-    @replace_return_docstrings(output_type=OpenAIGPTDoubleHeadsModelOutput, config_class=_CONFIG_FOR_DOC)
+    @replace_return_docstrings(
+        output_type=OpenAIGPTDoubleHeadsModelOutput, config_class=_CONFIG_FOR_DOC
+    )
     def forward(
         self,
         input_ids=None,
@@ -639,7 +690,7 @@ class OpenAIGPTDoubleHeadsModel(OpenAIGPTPreTrainedModel):
         output_attentions=None,
         output_hidden_states=None,
         return_dict=None,
-        **kwargs
+        **kwargs,
     ):
         r"""
         mc_token_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, num_choices)`, `optional`, default to index of the last token of the input):
@@ -676,7 +727,9 @@ class OpenAIGPTDoubleHeadsModel(OpenAIGPTPreTrainedModel):
             >>> lm_logits = outputs.lm_logits
             >>> mc_logits = outputs.mc_logits
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
         if "lm_labels" in kwargs:
             warnings.warn(
                 "The `lm_labels` argument is deprecated and will be removed in a future version, use `labels` instead.",
@@ -704,12 +757,16 @@ class OpenAIGPTDoubleHeadsModel(OpenAIGPTPreTrainedModel):
         lm_loss, mc_loss = None, None
         if mc_labels is not None:
             loss_fct = CrossEntropyLoss()
-            mc_loss = loss_fct(mc_logits.view(-1, mc_logits.size(-1)), mc_labels.view(-1))
+            mc_loss = loss_fct(
+                mc_logits.view(-1, mc_logits.size(-1)), mc_labels.view(-1)
+            )
         if labels is not None:
             shift_logits = lm_logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             loss_fct = CrossEntropyLoss()
-            lm_loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+            lm_loss = loss_fct(
+                shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)
+            )
 
         if not return_dict:
             output = (lm_logits, mc_logits) + transformer_outputs[1:]
@@ -774,7 +831,9 @@ class OpenAIGPTForSequenceClassification(OpenAIGPTPreTrainedModel):
             config.num_labels - 1]`. If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
             If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         transformer_outputs = self.transformer(
             input_ids,
@@ -803,7 +862,9 @@ class OpenAIGPTForSequenceClassification(OpenAIGPTPreTrainedModel):
             sequence_lengths = -1
         else:
             if input_ids is not None:
-                sequence_lengths = torch.ne(input_ids, self.config.pad_token_id).sum(-1) - 1
+                sequence_lengths = (
+                    torch.ne(input_ids, self.config.pad_token_id).sum(-1) - 1
+                )
             else:
                 sequence_lengths = -1
                 logger.warning(
@@ -821,7 +882,9 @@ class OpenAIGPTForSequenceClassification(OpenAIGPTPreTrainedModel):
                 loss = loss_fct(pooled_logits.view(-1), labels.to(self.dtype).view(-1))
             else:
                 loss_fct = CrossEntropyLoss()
-                loss = loss_fct(pooled_logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(
+                    pooled_logits.view(-1, self.num_labels), labels.view(-1)
+                )
 
         if not return_dict:
             output = (pooled_logits,) + transformer_outputs[1:]

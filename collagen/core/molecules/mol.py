@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from ..voxelization.voxelizer import VoxelParams
     import py3DMol
 
+
 class UnparsableSMILESException(Exception):
 
     """Exception raised when a SMILES string cannot be parsed."""
@@ -50,7 +51,7 @@ class TemplateGeometryMismatchException(Exception):
 
 
 class Mol(object):
-    
+
     """Wraps around rdkit and prody molecules. Also includes other
     functions to voxelize, fragment, etc. Some functions not implemented, so
     other classes (e.g., BackedMol) should inherit from this one.
@@ -112,7 +113,7 @@ class Mol(object):
             rdmol = Chem.AddHs(rdmol)
             rdmol.UpdatePropertyCache()
         if make_3d:
-            Chem.EmbedMolecule(rdmol, randomSeed=0xf00d)
+            Chem.EmbedMolecule(rdmol, randomSeed=0xF00D)
 
         return BackedMol(rdmol=rdmol)
 
@@ -656,7 +657,6 @@ class BackedMol(Mol):
             ]
         else:
             return [self.coord_connector_atom]
-
 
     @property
     def atoms(self) -> List[AnyAtom]:

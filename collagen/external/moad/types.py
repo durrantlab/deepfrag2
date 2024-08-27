@@ -25,6 +25,7 @@ import sys
 if TYPE_CHECKING:
     from collagen.core.molecules.mol import BackedMol
 
+
 @dataclass
 class MOAD_class(object):
 
@@ -40,7 +41,7 @@ class MOAD_family(object):
     """MOAD family."""
 
     rep_pdb_id: str
-    targets: List[Union[None,"MOAD_target"]]
+    targets: List[Union[None, "MOAD_target"]]
 
 
 @dataclass
@@ -345,7 +346,7 @@ class PdbSdfDir_target(MOAD_target):
 
     """Class to load a target/ligand from a directory of PDB/SDF files."""
 
-    def __getitem__(self, idx: int) -> Tuple[BackedMol, List[Mol]]:
+    def __getitem__(self, idx: int) -> Tuple[Union[BackedMol, None], List[Mol]]:
         """Load the Nth structure for this target.
 
         Args:

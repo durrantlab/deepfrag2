@@ -50,8 +50,12 @@ PRETRAINED_VOCAB_FILES_MAP = {
         "funnel-transformer/xlarge-base": "https://huggingface.co/funnel-transformer/xlarge-base/resolve/main/vocab.txt",
     }
 }
-PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {f"funnel-transformer/{name}": 512 for name in _model_names}
-PRETRAINED_INIT_CONFIGURATION = {f"funnel-transformer/{name}": {"do_lower_case": True} for name in _model_names}
+PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
+    f"funnel-transformer/{name}": 512 for name in _model_names
+}
+PRETRAINED_INIT_CONFIGURATION = {
+    f"funnel-transformer/{name}": {"do_lower_case": True} for name in _model_names
+}
 
 
 class FunnelTokenizer(BertTokenizer):
@@ -85,7 +89,7 @@ class FunnelTokenizer(BertTokenizer):
         eos_token="</s>",
         tokenize_chinese_chars=True,
         strip_accents=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             vocab_file,
@@ -132,4 +136,8 @@ class FunnelTokenizer(BertTokenizer):
         cls = [self.cls_token_id]
         if token_ids_1 is None:
             return len(cls) * [self.cls_token_type_id] + len(token_ids_0 + sep) * [0]
-        return len(cls) * [self.cls_token_type_id] + len(token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
+        return (
+            len(cls) * [self.cls_token_type_id]
+            + len(token_ids_0 + sep) * [0]
+            + len(token_ids_1 + sep) * [1]
+        )

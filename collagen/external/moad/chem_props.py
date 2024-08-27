@@ -220,4 +220,3 @@ if __name__ == "__main__":
 
     # Save to tsv.
     df.to_csv("chem_props_test.tsv", sep="\t", index=False)
-

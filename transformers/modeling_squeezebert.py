@@ -22,7 +22,11 @@ from torch.nn import CrossEntropyLoss, MSELoss
 
 from .activations import ACT2FN
 from .configuration_squeezebert import SqueezeBertConfig
-from .file_utils import add_code_sample_docstrings, add_start_docstrings, add_start_docstrings_to_model_forward
+from .file_utils import (
+    add_code_sample_docstrings,
+    add_start_docstrings,
+    add_start_docstrings_to_model_forward,
+)
 from .modeling_outputs import (
     BaseModelOutput,
     BaseModelOutputWithPooling,
@@ -50,11 +54,18 @@ SQUEEZEBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
 
 class SqueezeBertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
+
     def __init__(self, config):
         super().__init__()
-        self.word_embeddings = nn.Embedding(config.vocab_size, config.embedding_size, padding_idx=config.pad_token_id)
-        self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.embedding_size)
-        self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.embedding_size)
+        self.word_embeddings = nn.Embedding(
+            config.vocab_size, config.embedding_size, padding_idx=config.pad_token_id
+        )
+        self.position_embeddings = nn.Embedding(
+            config.max_position_embeddings, config.embedding_size
+        )
+        self.token_type_embeddings = nn.Embedding(
+            config.type_vocab_size, config.embedding_size
+        )
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
@@ -62,9 +73,13 @@ class SqueezeBertEmbeddings(nn.Module):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
         # position_ids (1, len position emb) is contiguous in memory and exported when serialized
-        self.register_buffer("position_ids", torch.arange(config.max_position_embeddings).expand((1, -1)))
+        self.register_buffer(
+            "position_ids", torch.arange(config.max_position_embeddings).expand((1, -1))
+        )
 
-    def forward(self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None):
+    def forward(
+        self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None
+    ):
         if input_ids is not None:
             input_shape = input_ids.size()
         else:
@@ -76,7 +91,9 @@ class SqueezeBertEmbeddings(nn.Module):
             position_ids = self.position_ids[:, :seq_length]
 
         if token_type_ids is None:
-            token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=self.position_ids.device)
+            token_type_ids = torch.zeros(
+                input_shape, dtype=torch.long, device=self.position_ids.device
+            )
 
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
@@ -94,6 +111,7 @@ class MatMulWrapper(torch.nn.Module):
     Wrapper for torch.matmul(). This makes flop-counting easier to implement. Note that if you directly call
     torch.matmul() in your code, the flop counter will typically ignore the flops of the matmul.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -113,8 +131,11 @@ class SqueezeBertLayerNorm(nn.LayerNorm):
 
     N = batch C = channels W = sequence length
     """
+
     def __init__(self, hidden_size, eps=1e-12):
-        nn.LayerNorm.__init__(self, normalized_shape=hidden_size, eps=eps)  # instantiates self.{weight, bias, eps}
+        nn.LayerNorm.__init__(
+            self, normalized_shape=hidden_size, eps=eps
+        )  # instantiates self.{weight, bias, eps}
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
@@ -126,10 +147,13 @@ class ConvDropoutLayerNorm(nn.Module):
     """
     ConvDropoutLayerNorm: Conv, Dropout, LayerNorm
     """
+
     def __init__(self, cin, cout, groups, dropout_prob):
         super().__init__()
 
-        self.conv1d = nn.Conv1d(in_channels=cin, out_channels=cout, kernel_size=1, groups=groups)
+        self.conv1d = nn.Conv1d(
+            in_channels=cin, out_channels=cout, kernel_size=1, groups=groups
+        )
         self.layernorm = SqueezeBertLayerNorm(cout)
         self.dropout = nn.Dropout(dropout_prob)
 
@@ -145,9 +169,12 @@ class ConvActivation(nn.Module):
     """
     ConvActivation: Conv, Activation
     """
+
     def __init__(self, cin, cout, groups, act):
         super().__init__()
-        self.conv1d = nn.Conv1d(in_channels=cin, out_channels=cout, kernel_size=1, groups=groups)
+        self.conv1d = nn.Conv1d(
+            in_channels=cin, out_channels=cout, kernel_size=1, groups=groups
+        )
         self.act = ACT2FN[act]
 
     def forward(self, x):
@@ -171,9 +198,15 @@ class SqueezeBertSelfAttention(nn.Module):
         self.attention_head_size = int(cin / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
-        self.query = nn.Conv1d(in_channels=cin, out_channels=cin, kernel_size=1, groups=q_groups)
-        self.key = nn.Conv1d(in_channels=cin, out_channels=cin, kernel_size=1, groups=k_groups)
-        self.value = nn.Conv1d(in_channels=cin, out_channels=cin, kernel_size=1, groups=v_groups)
+        self.query = nn.Conv1d(
+            in_channels=cin, out_channels=cin, kernel_size=1, groups=q_groups
+        )
+        self.key = nn.Conv1d(
+            in_channels=cin, out_channels=cin, kernel_size=1, groups=k_groups
+        )
+        self.value = nn.Conv1d(
+            in_channels=cin, out_channels=cin, kernel_size=1, groups=v_groups
+        )
 
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
         self.softmax = nn.Softmax(dim=-1)
@@ -186,7 +219,12 @@ class SqueezeBertSelfAttention(nn.Module):
         - input: [N, C, W]
         - output: [N, C1, W, C2] where C1 is the head index, and C2 is one head's contents
         """
-        new_x_shape = (x.size()[0], self.num_attention_heads, self.attention_head_size, x.size()[-1])  # [N, C1, C2, W]
+        new_x_shape = (
+            x.size()[0],
+            self.num_attention_heads,
+            self.attention_head_size,
+            x.size()[-1],
+        )  # [N, C1, C2, W]
         x = x.view(*new_x_shape)
         return x.permute(0, 1, 3, 2)  # [N, C1, C2, W] --> [N, C1, W, C2]
 
@@ -195,7 +233,12 @@ class SqueezeBertSelfAttention(nn.Module):
         - input: [N, C, W]
         - output: [N, C1, C2, W] where C1 is the head index, and C2 is one head's contents
         """
-        new_x_shape = (x.size()[0], self.num_attention_heads, self.attention_head_size, x.size()[-1])  # [N, C1, C2, W]
+        new_x_shape = (
+            x.size()[0],
+            self.num_attention_heads,
+            self.attention_head_size,
+            x.size()[-1],
+        )  # [N, C1, C2, W]
         x = x.view(*new_x_shape)
         # no `permute` needed
         return x
@@ -263,14 +306,26 @@ class SqueezeBertModule(nn.Module):
         c3 = config.hidden_size
 
         self.attention = SqueezeBertSelfAttention(
-            config=config, cin=c0, q_groups=config.q_groups, k_groups=config.k_groups, v_groups=config.v_groups
+            config=config,
+            cin=c0,
+            q_groups=config.q_groups,
+            k_groups=config.k_groups,
+            v_groups=config.v_groups,
         )
         self.post_attention = ConvDropoutLayerNorm(
-            cin=c0, cout=c1, groups=config.post_attention_groups, dropout_prob=config.hidden_dropout_prob
+            cin=c0,
+            cout=c1,
+            groups=config.post_attention_groups,
+            dropout_prob=config.hidden_dropout_prob,
         )
-        self.intermediate = ConvActivation(cin=c1, cout=c2, groups=config.intermediate_groups, act=config.hidden_act)
+        self.intermediate = ConvActivation(
+            cin=c1, cout=c2, groups=config.intermediate_groups, act=config.hidden_act
+        )
         self.output = ConvDropoutLayerNorm(
-            cin=c2, cout=c3, groups=config.output_groups, dropout_prob=config.hidden_dropout_prob
+            cin=c2,
+            cout=c3,
+            groups=config.output_groups,
+            dropout_prob=config.hidden_dropout_prob,
         )
 
     def forward(self, hidden_states, attention_mask, output_attentions):
@@ -298,7 +353,9 @@ class SqueezeBertEncoder(nn.Module):
             "before the first SqueezeBertModule."
         )
 
-        self.layers = nn.ModuleList(SqueezeBertModule(config) for _ in range(config.num_hidden_layers))
+        self.layers = nn.ModuleList(
+            SqueezeBertModule(config) for _ in range(config.num_hidden_layers)
+        )
 
     def forward(
         self,
@@ -316,7 +373,9 @@ class SqueezeBertEncoder(nn.Module):
             head_mask_is_all_none = True
         else:
             head_mask_is_all_none = False
-        assert head_mask_is_all_none is True, "head_mask is not yet supported in the SqueezeBert implementation."
+        assert (
+            head_mask_is_all_none is True
+        ), "head_mask is not yet supported in the SqueezeBert implementation."
 
         # [batch_size, sequence_length, hidden_size] --> [batch_size, hidden_size, sequence_length]
         hidden_states = hidden_states.permute(0, 2, 1)
@@ -325,7 +384,9 @@ class SqueezeBertEncoder(nn.Module):
         all_attentions = () if output_attentions else None
 
         for layer in self.layers:
-            layer_output = layer.forward(hidden_states, attention_mask, output_attentions)
+            layer_output = layer.forward(
+                hidden_states, attention_mask, output_attentions
+            )
 
             if output_attentions:
                 all_attentions += (layer_output["attention_score"],)
@@ -345,9 +406,15 @@ class SqueezeBertEncoder(nn.Module):
         hidden_states = hidden_states.permute(0, 2, 1)
 
         if not return_dict:
-            return tuple(v for v in [hidden_states, all_hidden_states, all_attentions] if v is not None)
+            return tuple(
+                v
+                for v in [hidden_states, all_hidden_states, all_attentions]
+                if v is not None
+            )
         return BaseModelOutput(
-            last_hidden_state=hidden_states, hidden_states=all_hidden_states, attentions=all_attentions
+            last_hidden_state=hidden_states,
+            hidden_states=all_hidden_states,
+            attentions=all_attentions,
         )
 
 
@@ -371,6 +438,7 @@ class SqueezeBertPreTrainedModel(PreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = SqueezeBertConfig
     base_model_prefix = "transformer"
     authorized_missing_keys = [r"position_ids"]
@@ -479,6 +547,7 @@ SQUEEZEBERT_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
+
 @add_start_docstrings(
     "The bare SqueezeBERT Model transformer outputting raw hidden-states without any specific head on top.",
     SQUEEZEBERT_START_DOCSTRING,
@@ -507,7 +576,9 @@ class SqueezeBertModel(SqueezeBertPreTrainedModel):
         for layer, heads in heads_to_prune.items():
             self.encoder.layer[layer].attention.prune_heads(heads)
 
-    @add_start_docstrings_to_model_forward(SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="squeezebert/squeezebert-mnli-headless",
@@ -526,14 +597,24 @@ class SqueezeBertModel(SqueezeBertPreTrainedModel):
         output_hidden_states=None,
         return_dict=None,
     ):
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.config.output_attentions
         )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.config.output_hidden_states
+        )
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = input_ids.size()
         elif inputs_embeds is not None:
@@ -548,7 +629,9 @@ class SqueezeBertModel(SqueezeBertPreTrainedModel):
         if token_type_ids is None:
             token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
 
-        extended_attention_mask = self.get_extended_attention_mask(attention_mask, input_shape, device)
+        extended_attention_mask = self.get_extended_attention_mask(
+            attention_mask, input_shape, device
+        )
         # Prepare head mask if needed
         # 1.0 in head_mask indicate we keep the head
         # attention_probs has shape bsz x n_heads x N x N
@@ -557,7 +640,10 @@ class SqueezeBertModel(SqueezeBertPreTrainedModel):
         head_mask = self.get_head_mask(head_mask, self.config.num_hidden_layers)
 
         embedding_output = self.embeddings(
-            input_ids=input_ids, position_ids=position_ids, token_type_ids=token_type_ids, inputs_embeds=inputs_embeds
+            input_ids=input_ids,
+            position_ids=position_ids,
+            token_type_ids=token_type_ids,
+            inputs_embeds=inputs_embeds,
         )
         encoder_outputs = self.encoder(
             hidden_states=embedding_output,
@@ -581,7 +667,10 @@ class SqueezeBertModel(SqueezeBertPreTrainedModel):
         )
 
 
-@add_start_docstrings("""SqueezeBERT Model with a `language modeling` head on top. """, SQUEEZEBERT_START_DOCSTRING)
+@add_start_docstrings(
+    """SqueezeBERT Model with a `language modeling` head on top. """,
+    SQUEEZEBERT_START_DOCSTRING,
+)
 class SqueezeBertForMaskedLM(SqueezeBertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
@@ -594,7 +683,9 @@ class SqueezeBertForMaskedLM(SqueezeBertPreTrainedModel):
     def get_output_embeddings(self):
         return self.lm_head
 
-    @add_start_docstrings_to_model_forward(SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="squeezebert/squeezebert-uncased",
@@ -620,7 +711,9 @@ class SqueezeBertForMaskedLM(SqueezeBertPreTrainedModel):
             config.vocab_size]`` (see ``input_ids`` docstring) Tokens with indices set to ``-100`` are ignored
             (masked), the loss is only computed for the tokens with labels in ``[0, ..., config.vocab_size]``
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         outputs = self.transformer(
             input_ids,
@@ -640,11 +733,15 @@ class SqueezeBertForMaskedLM(SqueezeBertPreTrainedModel):
         masked_lm_loss = None
         if labels is not None:
             loss_fct = CrossEntropyLoss()  # -100 index = padding token
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.config.vocab_size), labels.view(-1))
+            masked_lm_loss = loss_fct(
+                prediction_scores.view(-1, self.config.vocab_size), labels.view(-1)
+            )
 
         if not return_dict:
             output = (prediction_scores,) + outputs[2:]
-            return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
+            return (
+                ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
+            )
 
         return MaskedLMOutput(
             loss=masked_lm_loss,
@@ -672,7 +769,9 @@ class SqueezeBertForSequenceClassification(SqueezeBertPreTrainedModel):
 
         self.init_weights()
 
-    @add_start_docstrings_to_model_forward(SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="squeezebert/squeezebert-mnli-headless",
@@ -698,7 +797,9 @@ class SqueezeBertForSequenceClassification(SqueezeBertPreTrainedModel):
             config.num_labels - 1]`. If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
             If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         outputs = self.transformer(
             input_ids,
@@ -757,7 +858,9 @@ class SqueezeBertForMultipleChoice(SqueezeBertPreTrainedModel):
         self.init_weights()
 
     @add_start_docstrings_to_model_forward(
-        SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, num_choices, sequence_length)")
+        SQUEEZEBERT_INPUTS_DOCSTRING.format(
+            "(batch_size, num_choices, sequence_length)"
+        )
     )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
@@ -784,13 +887,31 @@ class SqueezeBertForMultipleChoice(SqueezeBertPreTrainedModel):
             num_choices-1]`` where `num_choices` is the size of the second dimension of the input tensors. (see
             `input_ids` above)
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-        num_choices = input_ids.shape[1] if input_ids is not None else inputs_embeds.shape[1]
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
+        num_choices = (
+            input_ids.shape[1] if input_ids is not None else inputs_embeds.shape[1]
+        )
 
-        input_ids = input_ids.view(-1, input_ids.size(-1)) if input_ids is not None else None
-        attention_mask = attention_mask.view(-1, attention_mask.size(-1)) if attention_mask is not None else None
-        token_type_ids = token_type_ids.view(-1, token_type_ids.size(-1)) if token_type_ids is not None else None
-        position_ids = position_ids.view(-1, position_ids.size(-1)) if position_ids is not None else None
+        input_ids = (
+            input_ids.view(-1, input_ids.size(-1)) if input_ids is not None else None
+        )
+        attention_mask = (
+            attention_mask.view(-1, attention_mask.size(-1))
+            if attention_mask is not None
+            else None
+        )
+        token_type_ids = (
+            token_type_ids.view(-1, token_type_ids.size(-1))
+            if token_type_ids is not None
+            else None
+        )
+        position_ids = (
+            position_ids.view(-1, position_ids.size(-1))
+            if position_ids is not None
+            else None
+        )
         inputs_embeds = (
             inputs_embeds.view(-1, inputs_embeds.size(-2), inputs_embeds.size(-1))
             if inputs_embeds is not None
@@ -850,7 +971,9 @@ class SqueezeBertForTokenClassification(SqueezeBertPreTrainedModel):
 
         self.init_weights()
 
-    @add_start_docstrings_to_model_forward(SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="squeezebert/squeezebert-mnli-headless",
@@ -875,7 +998,9 @@ class SqueezeBertForTokenClassification(SqueezeBertPreTrainedModel):
             Labels for computing the token classification loss. Indices should be in ``[0, ..., config.num_labels -
             1]``.
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         outputs = self.transformer(
             input_ids,
@@ -902,7 +1027,9 @@ class SqueezeBertForTokenClassification(SqueezeBertPreTrainedModel):
                 active_loss = attention_mask.view(-1) == 1
                 active_logits = logits.view(-1, self.num_labels)
                 active_labels = torch.where(
-                    active_loss, labels.view(-1), torch.tensor(loss_fct.ignore_index).type_as(labels)
+                    active_loss,
+                    labels.view(-1),
+                    torch.tensor(loss_fct.ignore_index).type_as(labels),
                 )
                 loss = loss_fct(active_logits, active_labels)
             else:
@@ -937,7 +1064,9 @@ class SqueezeBertForQuestionAnswering(SqueezeBertPreTrainedModel):
 
         self.init_weights()
 
-    @add_start_docstrings_to_model_forward(SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)"))
+    @add_start_docstrings_to_model_forward(
+        SQUEEZEBERT_INPUTS_DOCSTRING.format("(batch_size, sequence_length)")
+    )
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="squeezebert/squeezebert-mnli-headless",
@@ -968,7 +1097,9 @@ class SqueezeBertForQuestionAnswering(SqueezeBertPreTrainedModel):
             Positions are clamped to the length of the sequence (`sequence_length`). Position outside of the sequence
             are not taken into account for computing the loss.
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
         outputs = self.transformer(
             input_ids,

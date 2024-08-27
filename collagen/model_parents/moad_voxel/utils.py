@@ -10,7 +10,12 @@ import torch
 from collagen.external.moad.types import MOAD_split
 
 if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface
+    from collagen.external.moad.interface import (
+        MOADInterface,
+        PairedPdbSdfCsvInterface,
+        PdbSdfDirInterface,
+    )
+
 
 class MoadVoxelModelUtils(object):
 
@@ -30,7 +35,9 @@ class MoadVoxelModelUtils(object):
         cache_file: str,
         args: Namespace,
         # TODO: All interfaces should inherit from same parent class.
-        dataset: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"],
+        dataset: Union[
+            "MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"
+        ],
         split: MOAD_split,
         voxel_params: VoxelParams,
         device: torch.device,
@@ -130,7 +137,9 @@ class MoadVoxelModelUtils(object):
 
         return ckpt
 
-    def debug_smis_match_fps(self, smis: List[str], device: torch.device, args: Namespace):
+    def debug_smis_match_fps(
+        self, smis: List[str], device: torch.device, args: Namespace
+    ):
         """Debugging function to check that the SMILES strings match the
         fingerprints.
         
@@ -159,4 +168,3 @@ class MoadVoxelModelUtils(object):
         import pdb
 
         pdb.set_trace()
-

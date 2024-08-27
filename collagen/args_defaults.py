@@ -57,8 +57,9 @@ def get_default_args() -> dict:
         "butina_cluster_cutoff": None,
         "max_frag_repeats": None,
         "mol_props": "",
-        "max_voxels_in_memory": 512
+        "max_voxels_in_memory": 512,
     }
+
 
 # Given a namespace, add any missing values
 def add_missing_args_to_namespace(args: argparse.Namespace) -> argparse.Namespace:
@@ -76,4 +77,3 @@ def add_missing_args_to_namespace(args: argparse.Namespace) -> argparse.Namespac
         if not hasattr(args, key):
             setattr(args, key, value)
     return args
-

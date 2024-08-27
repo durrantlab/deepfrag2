@@ -186,9 +186,13 @@ class FSMTConfig(PretrainedConfig):
         self.length_penalty = length_penalty
         self.early_stopping = early_stopping
 
-        self.decoder = DecoderConfig(vocab_size=tgt_vocab_size, bos_token_id=eos_token_id)
+        self.decoder = DecoderConfig(
+            vocab_size=tgt_vocab_size, bos_token_id=eos_token_id
+        )
 
-        self.scale_embedding = scale_embedding  # scale factor will be sqrt(d_model) if True
+        self.scale_embedding = (
+            scale_embedding  # scale factor will be sqrt(d_model) if True
+        )
 
         # 3 Types of Dropout
         self.attention_dropout = attention_dropout

@@ -23,12 +23,22 @@ from .utils import logging
 
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.json", "merges_file": "merges.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.json",
+    "merges_file": "merges.txt",
+    "tokenizer_file": "tokenizer.json",
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {"openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/vocab.json"},
-    "merges_file": {"openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/merges.txt"},
-    "tokenizer_file": {"openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/tokenizer.json"},
+    "vocab_file": {
+        "openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/vocab.json"
+    },
+    "merges_file": {
+        "openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/merges.txt"
+    },
+    "tokenizer_file": {
+        "openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/tokenizer.json"
+    },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
@@ -56,19 +66,30 @@ class OpenAIGPTTokenizerFast(PreTrainedTokenizerFast):
             The unknown token. A token that is not in the vocabulary cannot be converted to an ID and is set to be this
             token instead.
     """
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
     model_input_names = ["attention_mask"]
     slow_tokenizer_class = OpenAIGPTTokenizer
 
-    def __init__(self, vocab_file, merges_file, tokenizer_file=None, unk_token="<unk>", **kwargs):
-        super().__init__(vocab_file, merges_file, tokenizer_file=tokenizer_file, unk_token=unk_token, **kwargs)
+    def __init__(
+        self, vocab_file, merges_file, tokenizer_file=None, unk_token="<unk>", **kwargs
+    ):
+        super().__init__(
+            vocab_file,
+            merges_file,
+            tokenizer_file=tokenizer_file,
+            unk_token=unk_token,
+            **kwargs
+        )
 
     @property
     def do_lower_case(self):
         return True
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(
+        self, save_directory: str, filename_prefix: Optional[str] = None
+    ) -> Tuple[str]:
         files = self._tokenizer.model.save(save_directory, name=filename_prefix)
         return tuple(files)

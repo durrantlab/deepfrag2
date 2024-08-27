@@ -26,17 +26,27 @@ logging.set_verbosity_info()
 logger = logging.get_logger(__name__)
 
 
-TOKENIZER_CLASSES = {name: getattr(transformers, name + "Fast") for name in SLOW_TO_FAST_CONVERTERS}
+TOKENIZER_CLASSES = {
+    name: getattr(transformers, name + "Fast") for name in SLOW_TO_FAST_CONVERTERS
+}
 
 
-def convert_slow_checkpoint_to_fast(tokenizer_name, checkpoint_name, dump_path, force_download):
+def convert_slow_checkpoint_to_fast(
+    tokenizer_name, checkpoint_name, dump_path, force_download
+):
     if tokenizer_name is not None and tokenizer_name not in TOKENIZER_CLASSES:
-        raise ValueError("Unrecognized tokenizer name, should be one of {}.".format(list(TOKENIZER_CLASSES.keys())))
+        raise ValueError(
+            "Unrecognized tokenizer name, should be one of {}.".format(
+                list(TOKENIZER_CLASSES.keys())
+            )
+        )
 
     if tokenizer_name is None:
         tokenizer_names = TOKENIZER_CLASSES
     else:
-        tokenizer_names = {tokenizer_name: getattr(transformers, tokenizer_name + "Fast")}
+        tokenizer_names = {
+            tokenizer_name: getattr(transformers, tokenizer_name + "Fast")
+        }
 
     logger.info(f"Loading tokenizer classes: {tokenizer_names}")
 
@@ -49,17 +59,23 @@ def convert_slow_checkpoint_to_fast(tokenizer_name, checkpoint_name, dump_path, 
         else:
             checkpoint_names = [checkpoint_name]
 
-        logger.info(f"For tokenizer {tokenizer_class.__class__.__name__} loading checkpoints: {checkpoint_names}")
+        logger.info(
+            f"For tokenizer {tokenizer_class.__class__.__name__} loading checkpoints: {checkpoint_names}"
+        )
 
         for checkpoint in checkpoint_names:
             logger.info(f"Loading {tokenizer_class.__class__.__name__} {checkpoint}")
 
             # Load tokenizer
-            tokenizer = tokenizer_class.from_pretrained(checkpoint, force_download=force_download)
+            tokenizer = tokenizer_class.from_pretrained(
+                checkpoint, force_download=force_download
+            )
 
             # Save fast tokenizer
             logger.info(
-                "Save fast tokenizer to {} with prefix {} add_prefix {}".format(dump_path, checkpoint, add_prefix)
+                "Save fast tokenizer to {} with prefix {} add_prefix {}".format(
+                    dump_path, checkpoint, add_prefix
+                )
             )
 
             # For organization names we create sub-directories
@@ -74,22 +90,32 @@ def convert_slow_checkpoint_to_fast(tokenizer_name, checkpoint_name, dump_path, 
                 dump_path_full = dump_path
 
             logger.info(
-                "=> {} with prefix {}, add_prefix {}".format(dump_path_full, checkpoint_prefix_name, add_prefix)
+                "=> {} with prefix {}, add_prefix {}".format(
+                    dump_path_full, checkpoint_prefix_name, add_prefix
+                )
             )
 
             if checkpoint in list(tokenizer.pretrained_vocab_files_map.values())[0]:
-                file_path = list(tokenizer.pretrained_vocab_files_map.values())[0][checkpoint]
+                file_path = list(tokenizer.pretrained_vocab_files_map.values())[0][
+                    checkpoint
+                ]
                 next_char = file_path.split(checkpoint)[-1][0]
                 if next_char == "/":
-                    dump_path_full = os.path.join(dump_path_full, checkpoint_prefix_name)
+                    dump_path_full = os.path.join(
+                        dump_path_full, checkpoint_prefix_name
+                    )
                     checkpoint_prefix_name = None
 
                 logger.info(
-                    "=> {} with prefix {}, add_prefix {}".format(dump_path_full, checkpoint_prefix_name, add_prefix)
+                    "=> {} with prefix {}, add_prefix {}".format(
+                        dump_path_full, checkpoint_prefix_name, add_prefix
+                    )
                 )
 
             file_names = tokenizer.save_pretrained(
-                dump_path_full, legacy_format=False, filename_prefix=checkpoint_prefix_name
+                dump_path_full,
+                legacy_format=False,
+                filename_prefix=checkpoint_prefix_name,
             )
             logger.info("=> File names {}".format(file_names))
 
@@ -103,7 +129,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Required parameters
     parser.add_argument(
-        "--dump_path", default=None, type=str, required=True, help="Path to output generated fast tokenizer files."
+        "--dump_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path to output generated fast tokenizer files.",
     )
     parser.add_argument(
         "--tokenizer_name",
@@ -120,10 +150,10 @@ if __name__ == "__main__":
         help="Optional checkpoint name. If not given, will download and convert the canonical checkpoints from AWS.",
     )
     parser.add_argument(
-        "--force_download",
-        action="store_true",
-        help="Re-download checkpoints.",
+        "--force_download", action="store_true", help="Re-download checkpoints.",
     )
     args = parser.parse_args()
 
-    convert_slow_checkpoint_to_fast(args.tokenizer_name, args.checkpoint_name, args.dump_path, args.force_download)
+    convert_slow_checkpoint_to_fast(
+        args.tokenizer_name, args.checkpoint_name, args.dump_path, args.force_download
+    )

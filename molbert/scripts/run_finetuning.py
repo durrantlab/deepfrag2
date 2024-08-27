@@ -39,7 +39,9 @@ def finetune(
         num_workers: how many workers to use
         batch_size: what batch size to use for training
     """
-    default_path = os.path.join('./logs/', datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
+    default_path = os.path.join(
+        "./logs/", datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    )
     output_dir = os.path.join(default_path, dataset)
     raw_args_str = (
         f"--max_seq_length 512 "
@@ -67,7 +69,15 @@ def finetune(
     return lightning_trainer
 
 
-def cv(dataset, summary_df, pretrained_model_path, freeze_level, learning_rate, num_workers, batch_size):
+def cv(
+    dataset,
+    summary_df,
+    pretrained_model_path,
+    freeze_level,
+    learning_rate,
+    num_workers,
+    batch_size,
+):
     """
     This function runs cross-validation for finetuning MolBERT. The splits are obtained from ChemBench.
 
@@ -81,7 +91,7 @@ def cv(dataset, summary_df, pretrained_model_path, freeze_level, learning_rate, 
         batch_size: what batch size to use
     """
     df, indices = get_data(dataset)
-    print('dataset loaded', df.shape)
+    print("dataset loaded", df.shape)
 
     for i, (train_idx, valid_idx, test_idx) in enumerate(indices):
         train_df = df.iloc[train_idx]
@@ -97,8 +107,12 @@ def cv(dataset, summary_df, pretrained_model_path, freeze_level, learning_rate, 
             valid_df.to_csv(valid_path)
             test_df.to_csv(test_path)
 
-            mode = summary_df[summary_df['task_name'] == dataset].iloc[0]['task_type'].strip()
-            print('mode =', mode)
+            mode = (
+                summary_df[summary_df["task_name"] == dataset]
+                .iloc[0]["task_type"]
+                .strip()
+            )
+            print("mode =", mode)
 
             trainer = finetune(
                 dataset=dataset,
@@ -114,23 +128,31 @@ def cv(dataset, summary_df, pretrained_model_path, freeze_level, learning_rate, 
                 num_workers=num_workers,
                 batch_size=batch_size,
             )
-            print(f'fold {i}: saving model to: ', trainer.ckpt_path)
+            print(f"fold {i}: saving model to: ", trainer.ckpt_path)
 
             trainer.test()
 
 
 @click.command()
-@click.option('--pretrained_model_path', type=str, required=True)
-@click.option('--freeze_level', type=int, required=True)
-@click.option('--learning_rate', type=float, required=True)
-@click.option('--num_workers', type=int, default=1)
-@click.option('--batch_size', type=int, default=16)
+@click.option("--pretrained_model_path", type=str, required=True)
+@click.option("--freeze_level", type=int, required=True)
+@click.option("--learning_rate", type=float, required=True)
+@click.option("--num_workers", type=int, default=1)
+@click.option("--batch_size", type=int, default=16)
 def main(pretrained_model_path, freeze_level, learning_rate, num_workers, batch_size):
     summary_df = get_summary_df()
 
-    for dataset in summary_df['task_name'].unique():
-        print(f'Running experiment for {dataset}')
-        cv(dataset, summary_df, pretrained_model_path, freeze_level, learning_rate, num_workers, batch_size)
+    for dataset in summary_df["task_name"].unique():
+        print(f"Running experiment for {dataset}")
+        cv(
+            dataset,
+            summary_df,
+            pretrained_model_path,
+            freeze_level,
+            learning_rate,
+            num_workers,
+            batch_size,
+        )
 
 
 if __name__ == "__main__":

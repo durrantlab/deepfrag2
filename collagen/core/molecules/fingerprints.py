@@ -102,21 +102,29 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     try:
         assert m is not None, "molecule as parameter is None"
         DataStructs.ConvertToNumpyArray(
-            AllChem.GetHashedMorganFingerprint(m, 3, nBits=size),
-            array,
+            AllChem.GetHashedMorganFingerprint(m, 3, nBits=size), array,
         )
     except BaseException as e:
         try:
             assert smiles is not None, "smiles as parameter is None"
             DataStructs.ConvertToNumpyArray(
-                AllChem.GetHashedMorganFingerprint(Chem.MolFromSmiles(smiles), 3, nBits=size),
+                AllChem.GetHashedMorganFingerprint(
+                    Chem.MolFromSmiles(smiles), 3, nBits=size
+                ),
                 array,
             )
         except BaseException as e:
-            print("Error calculating Morgan Fingerprints on " + smiles + " because of " + str(e), file=sys.stderr)
+            print(
+                "Error calculating Morgan Fingerprints on "
+                + smiles
+                + " because of "
+                + str(e),
+                file=sys.stderr,
+            )
             array = np.zeros((size,))
 
     return array
+
 
 def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """A vector fusing RDK and Morgan Fingerprints.
@@ -149,10 +157,10 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
         np.array: Fingerprint.
     """
     global MOLBERT_MODEL
-    
+
     # Make sure MOLBERT_MODEL is not None, using assert
     assert MOLBERT_MODEL is not None, "Molbert model is not loaded"
-    
+
     fp = MOLBERT_MODEL.transform_single(smiles)
     return np.array(fp[0][0])
 
@@ -161,6 +169,7 @@ def _molbert_shuffled(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
     molbert_fp = _molbert(m, size, smiles)
     np.random.shuffle(molbert_fp)
     return molbert_fp
+
 
 def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints with positive values. Any value less than 0 is just

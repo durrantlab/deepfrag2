@@ -130,9 +130,12 @@ class FlaubertConfig(XLMConfig):
         lang_id (:obj:`int`, `optional`, defaults to 1):
             The ID of the language used by the model. This parameter is used when generating text in a given language.
     """
+
     model_type = "flaubert"
 
-    def __init__(self, layerdrop=0.0, pre_norm=False, pad_token_id=2, bos_token_id=0, **kwargs):
+    def __init__(
+        self, layerdrop=0.0, pre_norm=False, pad_token_id=2, bos_token_id=0, **kwargs
+    ):
         """Constructs FlaubertConfig."""
         super().__init__(pad_token_id=pad_token_id, bos_token_id=bos_token_id, **kwargs)
         self.layerdrop = layerdrop

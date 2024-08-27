@@ -70,7 +70,9 @@ class VoxelParams(object):
     atom_scale: float = 1
     atom_shape: AtomShapeType = AtomShapeType.EXP
     acc_type: AccType = AccType.SUM
-    atom_featurizer: Optional["collagen.core.molecules.atom_featurizer.AtomFeaturizer"] = None
+    atom_featurizer: Optional[
+        "collagen.core.molecules.atom_featurizer.AtomFeaturizer"
+    ] = None
     calc_voxels: bool = True
     calc_fps: bool = True
 
@@ -564,7 +566,7 @@ def mol_gridify(
     atom_scale: float,
     atom_shape: int,
     acc_type: int,
-    cpu: bool=False,
+    cpu: bool = False,
 ):
     """Provide a wrapper around cpu_gridify()/gpu_gridify().
     

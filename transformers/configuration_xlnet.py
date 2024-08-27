@@ -125,6 +125,7 @@ class XLNetConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "xlnet"
 
     def __init__(
@@ -154,10 +155,15 @@ class XLNetConfig(PretrainedConfig):
         pad_token_id=5,
         bos_token_id=1,
         eos_token_id=2,
-        **kwargs
+        **kwargs,
     ):
         """Constructs XLNetConfig."""
-        super().__init__(pad_token_id=pad_token_id, bos_token_id=bos_token_id, eos_token_id=eos_token_id, **kwargs)
+        super().__init__(
+            pad_token_id=pad_token_id,
+            bos_token_id=bos_token_id,
+            eos_token_id=eos_token_id,
+            **kwargs,
+        )
         self.vocab_size = vocab_size
         self.d_model = d_model
         self.n_layer = n_layer

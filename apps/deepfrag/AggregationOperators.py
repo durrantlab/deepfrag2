@@ -42,9 +42,10 @@ class Operator(Enum):
 
     def startswith(self, prefix: str) -> bool:
         return self.value.startswith(prefix)
-    
+
     def rsplit(self, s: str) -> List[str]:
         return self.value.rsplit(s)
+
 
 class Aggregate1DTensor:
 
@@ -157,7 +158,9 @@ class Aggregate1DTensor:
             np.ndarray: the weight vector.
         """
         if dim <= 0:
-            raise ValueError("The dimension of the weight vector must be greater than 0")
+            raise ValueError(
+                "The dimension of the weight vector must be greater than 0"
+            )
         if alpha < 0 or alpha > 1:
             raise ValueError("The alpha value must be between 0 and 1")
 
@@ -186,7 +189,9 @@ class Aggregate1DTensor:
             np.ndarray: the weight vector.
         """
         if dim <= 0:
-            raise ValueError("The dimension of the weight vector must be greater than 0")
+            raise ValueError(
+                "The dimension of the weight vector must be greater than 0"
+            )
         if alpha < 0 or alpha > 1:
             raise ValueError("The alpha value must be between 0 and 1")
 
@@ -234,8 +239,7 @@ class Aggregate3x3Patches(Aggregate1DTensor, AdaptiveAvgPool3d):
             idx_channel = 0
             for channel in patch:
                 values_in_matrix3d = [
-                    value.item()
-                    for value in np.nditer(channel.cpu().detach().numpy())
+                    value.item() for value in np.nditer(channel.cpu().detach().numpy())
                 ]
                 tensor_resp[idx_patch][idx_channel] = self.aggregate_on_numpy_array(
                     np.array(values_in_matrix3d)

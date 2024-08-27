@@ -16,10 +16,12 @@ class FinetuneSmilesMolbertApp(BaseMolbertApp):
         model = FinetuneSmilesMolbertModel(args)
         pprint.pprint(model)
 
-        model = BaseMolbertApp.load_model_weights(model=model, checkpoint_file=args.pretrained_model_path)
+        model = BaseMolbertApp.load_model_weights(
+            model=model, checkpoint_file=args.pretrained_model_path
+        )
 
         if args.freeze_level != 0:
-            print('Freezing base model')
+            print("Freezing base model")
             FinetuneSmilesMolbertApp.freeze_network(model, args.freeze_level)
 
         return model
@@ -85,40 +87,56 @@ class FinetuneSmilesMolbertApp(BaseMolbertApp):
         Adds model specific options to the default parser
         """
         parser.add_argument(
-            '--train_file',
+            "--train_file",
             type=str,
             required=True,
-            help='Path to train dataset to use for finetuning. Must be csv file.',
+            help="Path to train dataset to use for finetuning. Must be csv file.",
         )
         parser.add_argument(
-            '--valid_file',
+            "--valid_file",
             type=str,
             required=True,
-            help='Path to validation dataset to use for finetuning. Must be csv file.',
+            help="Path to validation dataset to use for finetuning. Must be csv file.",
         )
         parser.add_argument(
-            '--test_file', type=str, required=True, help='Path to test dataset to use for finetuning. Must be csv file.'
-        )
-        parser.add_argument('--smiles_column', type=str, default='SMILES', help='Column in csv file containing SMILES.')
-        parser.add_argument('--label_column', type=str, required=True, help='Column in csv file containing labels.')
-        parser.add_argument(
-            '--mode',
+            "--test_file",
             type=str,
             required=True,
-            help='regression or classification',
-            choices=['regression', 'classification'],
+            help="Path to test dataset to use for finetuning. Must be csv file.",
         )
         parser.add_argument(
-            '--pretrained_model_path', type=str, required=True, help='Path to pretrained Molbert model.'
+            "--smiles_column",
+            type=str,
+            default="SMILES",
+            help="Column in csv file containing SMILES.",
         )
         parser.add_argument(
-            '--output_size',
+            "--label_column",
+            type=str,
+            required=True,
+            help="Column in csv file containing labels.",
+        )
+        parser.add_argument(
+            "--mode",
+            type=str,
+            required=True,
+            help="regression or classification",
+            choices=["regression", "classification"],
+        )
+        parser.add_argument(
+            "--pretrained_model_path",
+            type=str,
+            required=True,
+            help="Path to pretrained Molbert model.",
+        )
+        parser.add_argument(
+            "--output_size",
             type=int,
             required=True,
-            help='Number of task output dimensions. 1 for regression, n_classes for classification',
+            help="Number of task output dimensions. 1 for regression, n_classes for classification",
         )
         parser.add_argument(
-            '--freeze_level',
+            "--freeze_level",
             type=int,
             default=0,
             help=""" Freezes specific layers of the model depending on the argument:
@@ -139,18 +157,18 @@ class FinetuneSmilesMolbertApp(BaseMolbertApp):
         parsed_args = super().parse_args(args)
 
         model_dir = os.path.dirname(os.path.dirname(parsed_args.pretrained_model_path))
-        hparams_path = os.path.join(model_dir, 'hparams.yaml')
-        with open(hparams_path, 'r') as yaml_file:
+        hparams_path = os.path.join(model_dir, "hparams.yaml")
+        with open(hparams_path, "r") as yaml_file:
             config_dict = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
         # update model specific parameters
-        parsed_args.tiny = config_dict['tiny']
-        parsed_args.masked_lm = config_dict['masked_lm']
-        parsed_args.is_same_smiles = config_dict['is_same_smiles']
-        parsed_args.num_physchem_properties = config_dict['num_physchem_properties']
+        parsed_args.tiny = config_dict["tiny"]
+        parsed_args.masked_lm = config_dict["masked_lm"]
+        parsed_args.is_same_smiles = config_dict["is_same_smiles"]
+        parsed_args.num_physchem_properties = config_dict["num_physchem_properties"]
 
         return parsed_args
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     trainer = FinetuneSmilesMolbertApp().run()

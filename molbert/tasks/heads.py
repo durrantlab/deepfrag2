@@ -32,7 +32,9 @@ class PhysChemHead(nn.Module):
 class FinetuneHead(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.finetune_net = nn.Sequential(nn.Linear(config.hidden_size, config.output_size))
+        self.finetune_net = nn.Sequential(
+            nn.Linear(config.hidden_size, config.output_size)
+        )
 
     def forward(self, pooled_output):
         return self.finetune_net(pooled_output)

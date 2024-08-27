@@ -99,4 +99,5 @@ class MBartConfig(BartConfig):
         force_bos_token_to_be_generated (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to force BOS token to be generated at step 1 (after ``decoder_start_token_id``).
     """
+
     model_type = "mbart"

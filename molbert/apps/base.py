@@ -11,7 +11,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from molbert.apps.args import get_default_parser
 from molbert.models.base import MolbertModel
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -22,25 +22,29 @@ class BaseMolbertApp(ABC):
         PL `load_from_checkpoint` seems to fail to reload model weights. This function loads them manually.
         See: https://github.com/PyTorchLightning/pytorch-lightning/issues/525
         """
-        logger.info(f'Loading model weights from {checkpoint_file}')
-        checkpoint = torch.load(checkpoint_file, map_location=lambda storage, loc: storage)
+        logger.info(f"Loading model weights from {checkpoint_file}")
+        checkpoint = torch.load(
+            checkpoint_file, map_location=lambda storage, loc: storage
+        )
 
         # load weights from checkpoint, strict=False allows to ignore some weights
         # e.g. weights of a head that was used during pretraining but isn't present during finetuning
         # and also allows to missing keys in the checkpoint, e.g. heads that are used for finetuning
         # but weren't present during pretraining
-        model.load_state_dict(checkpoint['state_dict'], strict=False)
+        model.load_state_dict(checkpoint["state_dict"], strict=False)
         return model
 
     def run(self, args=None):
         args = self.parse_args(args)
         seed_everything(args.seed)
 
-        pprint.pprint('args')
+        pprint.pprint("args")
         pprint.pprint(args.__dict__)
-        pprint.pprint('*********************')
+        pprint.pprint("*********************")
 
-        checkpoint_callback = ModelCheckpoint(monitor='valid_loss', verbose=True, save_last=True)
+        checkpoint_callback = ModelCheckpoint(
+            monitor="valid_loss", verbose=True, save_last=True
+        )
 
         logger.info(args)
 
@@ -68,11 +72,11 @@ class BaseMolbertApp(ABC):
         )
 
         model = self.get_model(args)
-        logger.info(f'Start Training model {model}')
+        logger.info(f"Start Training model {model}")
 
-        logger.info('')
+        logger.info("")
         trainer.fit(model)
-        logger.info('Training loop finished.')
+        logger.info("Training loop finished.")
 
         return trainer
 

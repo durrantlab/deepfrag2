@@ -578,6 +578,7 @@ class XLMTokenizer(PreTrainedTokenizer):
         do_lowercase_and_remove_accent (:obj:`bool`, `optional`, defaults to :obj:`True`):
             Whether to lowercase and remove accents when tokenizing.
     """
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -822,7 +823,9 @@ class XLMTokenizer(PreTrainedTokenizer):
                 else:
                     jieba = sys.modules["jieba"]
             except (AttributeError, ImportError):
-                logger.error("Make sure you install Jieba (https://github.com/fxsjy/jieba) with the following steps")
+                logger.error(
+                    "Make sure you install Jieba (https://github.com/fxsjy/jieba) with the following steps"
+                )
                 logger.error("1. pip install jieba")
                 raise
             text = " ".join(jieba.cut(text))
@@ -885,7 +888,10 @@ class XLMTokenizer(PreTrainedTokenizer):
         return bos + token_ids_0 + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -949,15 +955,23 @@ class XLMTokenizer(PreTrainedTokenizer):
             return len(cls + token_ids_0 + sep) * [0]
         return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(
+        self, save_directory: str, filename_prefix: Optional[str] = None
+    ) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error(
+                "Vocabulary path ({}) should be a directory".format(save_directory)
+            )
             return
         vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "")
+            + VOCAB_FILES_NAMES["vocab_file"],
         )
         merge_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["merges_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "")
+            + VOCAB_FILES_NAMES["merges_file"],
         )
 
         with open(vocab_file, "w", encoding="utf-8") as f:
@@ -965,11 +979,15 @@ class XLMTokenizer(PreTrainedTokenizer):
 
         index = 0
         with open(merge_file, "w", encoding="utf-8") as writer:
-            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(), key=lambda kv: kv[1]):
+            for bpe_tokens, token_index in sorted(
+                self.bpe_ranks.items(), key=lambda kv: kv[1]
+            ):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: BPE merge indices are not consecutive."
-                        " Please check that the tokenizer is not corrupted!".format(merge_file)
+                        " Please check that the tokenizer is not corrupted!".format(
+                            merge_file
+                        )
                     )
                     index = token_index
                 writer.write(" ".join(bpe_tokens) + "\n")

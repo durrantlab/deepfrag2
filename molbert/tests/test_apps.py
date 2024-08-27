@@ -4,10 +4,17 @@ import tempfile
 
 from molbert.apps.finetune import FinetuneSmilesMolbertApp
 from molbert.apps.smiles import SmilesMolbertApp
-from molbert.tests.utils import data_path, finetune_data_path, smiles_model, smiles_args  # noqa: F401
+from molbert.tests.utils import (
+    data_path,
+    finetune_data_path,
+    smiles_model,
+    smiles_args,
+)  # noqa: F401
 
 
-def test_smiles_and_finetune_model(data_path, finetune_data_path, smiles_model):  # noqa: F811
+def test_smiles_and_finetune_model(
+    data_path, finetune_data_path, smiles_model
+):  # noqa: F811
     output_dir = tempfile.mkdtemp()
     raw_args_str = (
         f"--max_seq_length 512 "
@@ -27,10 +34,10 @@ def test_smiles_and_finetune_model(data_path, finetune_data_path, smiles_model):
         f"--default_root_dir {output_dir} "
         f"--tiny"
     )
-    raw_args = raw_args_str.split(' ')
+    raw_args = raw_args_str.split(" ")
     SmilesMolbertApp().run(raw_args)
 
-    ckpt = glob.glob(f'{output_dir}/**/*.ckpt', recursive=True)[0]
+    ckpt = glob.glob(f"{output_dir}/**/*.ckpt", recursive=True)[0]
 
     raw_args_str = (
         f"--max_seq_length 512 "
@@ -51,6 +58,6 @@ def test_smiles_and_finetune_model(data_path, finetune_data_path, smiles_model):
         f"--learning_rate_scheduler linear_with_warmup "
         f"--tiny"
     )
-    raw_args = raw_args_str.split(' ')
+    raw_args = raw_args_str.split(" ")
 
     FinetuneSmilesMolbertApp().run(raw_args)

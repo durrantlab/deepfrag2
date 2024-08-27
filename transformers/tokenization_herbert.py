@@ -26,8 +26,12 @@ VOCAB_FILES_NAMES = {
 }
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {"allegro/herbert-base-cased": "https://cdn.huggingface.co/allegro/herbert-base-cased/vocab.json"},
-    "merges_file": {"allegro/herbert-base-cased": "https://cdn.huggingface.co/allegro/herbert-base-cased/merges.txt"},
+    "vocab_file": {
+        "allegro/herbert-base-cased": "https://cdn.huggingface.co/allegro/herbert-base-cased/vocab.json"
+    },
+    "merges_file": {
+        "allegro/herbert-base-cased": "https://cdn.huggingface.co/allegro/herbert-base-cased/merges.txt"
+    },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {"allegro/herbert-base-cased": 514}
@@ -48,6 +52,7 @@ class HerbertTokenizer(XLMTokenizer):
     This tokenizer inherits from :class:`~transformers.XLMTokenizer` which contains most of the methods. Users should
     refer to the superclass for more information regarding methods.
     """
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -65,7 +70,10 @@ class HerbertTokenizer(XLMTokenizer):
 
         super().__init__(**kwargs)
         self.bert_pre_tokenizer = BasicTokenizer(
-            do_lower_case=False, never_split=self.all_special_tokens, tokenize_chinese_chars=False, strip_accents=False
+            do_lower_case=False,
+            never_split=self.all_special_tokens,
+            tokenize_chinese_chars=False,
+            strip_accents=False,
         )
 
     def _tokenize(self, text):

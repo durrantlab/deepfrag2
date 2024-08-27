@@ -20,7 +20,12 @@ import os
 import unicodedata
 from typing import Optional
 
-from .tokenization_bert import BasicTokenizer, BertTokenizer, WordpieceTokenizer, load_vocab
+from .tokenization_bert import (
+    BasicTokenizer,
+    BertTokenizer,
+    WordpieceTokenizer,
+    load_vocab,
+)
 from .utils import logging
 
 
@@ -70,6 +75,7 @@ PRETRAINED_INIT_CONFIGURATION = {
 
 class BertJapaneseTokenizer(BertTokenizer):
     """BERT tokenizer for Japanese text"""
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
@@ -129,10 +135,14 @@ class BertJapaneseTokenizer(BertTokenizer):
         if not os.path.isfile(vocab_file):
             raise ValueError(
                 "Can't find a vocabulary file at path '{}'. To load the vocabulary from a Google pretrained "
-                "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file)
+                "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(
+                    vocab_file
+                )
             )
         self.vocab = load_vocab(vocab_file)
-        self.ids_to_tokens = collections.OrderedDict([(ids, tok) for tok, ids in self.vocab.items()])
+        self.ids_to_tokens = collections.OrderedDict(
+            [(ids, tok) for tok, ids in self.vocab.items()]
+        )
 
         self.do_word_tokenize = do_word_tokenize
         self.word_tokenizer_type = word_tokenizer_type
@@ -142,24 +152,40 @@ class BertJapaneseTokenizer(BertTokenizer):
         if do_word_tokenize:
             if word_tokenizer_type == "basic":
                 self.word_tokenizer = BasicTokenizer(
-                    do_lower_case=do_lower_case, never_split=never_split, tokenize_chinese_chars=False
+                    do_lower_case=do_lower_case,
+                    never_split=never_split,
+                    tokenize_chinese_chars=False,
                 )
             elif word_tokenizer_type == "mecab":
                 self.word_tokenizer = MecabTokenizer(
-                    do_lower_case=do_lower_case, never_split=never_split, **(mecab_kwargs or {})
+                    do_lower_case=do_lower_case,
+                    never_split=never_split,
+                    **(mecab_kwargs or {}),
                 )
             else:
-                raise ValueError("Invalid word_tokenizer_type '{}' is specified.".format(word_tokenizer_type))
+                raise ValueError(
+                    "Invalid word_tokenizer_type '{}' is specified.".format(
+                        word_tokenizer_type
+                    )
+                )
 
         self.do_subword_tokenize = do_subword_tokenize
         self.subword_tokenizer_type = subword_tokenizer_type
         if do_subword_tokenize:
             if subword_tokenizer_type == "wordpiece":
-                self.subword_tokenizer = WordpieceTokenizer(vocab=self.vocab, unk_token=self.unk_token)
+                self.subword_tokenizer = WordpieceTokenizer(
+                    vocab=self.vocab, unk_token=self.unk_token
+                )
             elif subword_tokenizer_type == "character":
-                self.subword_tokenizer = CharacterTokenizer(vocab=self.vocab, unk_token=self.unk_token)
+                self.subword_tokenizer = CharacterTokenizer(
+                    vocab=self.vocab, unk_token=self.unk_token
+                )
             else:
-                raise ValueError("Invalid subword_tokenizer_type '{}' is specified.".format(subword_tokenizer_type))
+                raise ValueError(
+                    "Invalid subword_tokenizer_type '{}' is specified.".format(
+                        subword_tokenizer_type
+                    )
+                )
 
     @property
     def do_lower_case(self):
@@ -175,17 +201,25 @@ class BertJapaneseTokenizer(BertTokenizer):
         self.__dict__ = state
         if self.word_tokenizer_type == "mecab":
             self.word_tokenizer = MecabTokenizer(
-                do_lower_case=self.do_lower_case, never_split=self.never_split, **(self.mecab_kwargs or {})
+                do_lower_case=self.do_lower_case,
+                never_split=self.never_split,
+                **(self.mecab_kwargs or {}),
             )
 
     def _tokenize(self, text):
         if self.do_word_tokenize:
-            tokens = self.word_tokenizer.tokenize(text, never_split=self.all_special_tokens)
+            tokens = self.word_tokenizer.tokenize(
+                text, never_split=self.all_special_tokens
+            )
         else:
             tokens = [text]
 
         if self.do_subword_tokenize:
-            split_tokens = [sub_token for token in tokens for sub_token in self.subword_tokenizer.tokenize(token)]
+            split_tokens = [
+                sub_token
+                for token in tokens
+                for sub_token in self.subword_tokenizer.tokenize(token)
+            ]
         else:
             split_tokens = tokens
 
@@ -194,6 +228,7 @@ class BertJapaneseTokenizer(BertTokenizer):
 
 class MecabTokenizer:
     """Runs basic tokenization with MeCab morphological parser."""
+
     def __init__(
         self,
         do_lower_case=False,
@@ -285,7 +320,9 @@ class MecabTokenizer:
         if self.normalize_text:
             text = unicodedata.normalize("NFKC", text)
 
-        never_split = self.never_split + (never_split if never_split is not None else [])
+        never_split = self.never_split + (
+            never_split if never_split is not None else []
+        )
         tokens = []
 
         for word in self.mecab(text):
@@ -301,6 +338,7 @@ class MecabTokenizer:
 
 class CharacterTokenizer:
     """Runs Character tokenziation."""
+
     def __init__(self, vocab, unk_token, normalize_text=True):
         """
         Constructs a CharacterTokenizer.

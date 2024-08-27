@@ -31,7 +31,10 @@ class RepoObj:
     """
     HuggingFace git-based system, data structure that represents a file belonging to the current user.
     """
-    def __init__(self, filename: str, lastModified: str, commit: str, size: int, **kwargs):
+
+    def __init__(
+        self, filename: str, lastModified: str, commit: str, size: int, **kwargs
+    ):
         self.filename = filename
         self.lastModified = lastModified
         self.commit = commit
@@ -42,7 +45,10 @@ class S3Obj:
     """
     HuggingFace S3-based system, data structure that represents a file belonging to the current user.
     """
-    def __init__(self, filename: str, LastModified: str, ETag: str, Size: int, **kwargs):
+
+    def __init__(
+        self, filename: str, LastModified: str, ETag: str, Size: int, **kwargs
+    ):
         self.filename = filename
         self.LastModified = LastModified
         self.ETag = ETag
@@ -60,6 +66,7 @@ class ModelSibling:
     """
     Data structure that represents a public file inside a model, accessible from huggingface.co
     """
+
     def __init__(self, rfilename: str, **kwargs):
         self.rfilename = rfilename  # filename relative to the model root
         for k, v in kwargs.items():
@@ -70,6 +77,7 @@ class ModelInfo:
     """
     Info about a public model accessible from huggingface.co
     """
+
     def __init__(
         self,
         modelId: Optional[str] = None,  # id of model
@@ -77,7 +85,9 @@ class ModelInfo:
         downloads: Optional[int] = None,
         tags: List[str] = [],
         pipeline_tag: Optional[str] = None,
-        siblings: Optional[List[Dict]] = None,  # list of files that constitute the model
+        siblings: Optional[
+            List[Dict]
+        ] = None,  # list of files that constitute the model
         **kwargs
     ):
         self.modelId = modelId
@@ -85,7 +95,9 @@ class ModelInfo:
         self.downloads = downloads
         self.tags = tags
         self.pipeline_tag = pipeline_tag
-        self.siblings = [ModelSibling(**x) for x in siblings] if siblings is not None else None
+        self.siblings = (
+            [ModelSibling(**x) for x in siblings] if siblings is not None else None
+        )
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -126,7 +138,9 @@ class HfApi:
         r = requests.post(path, headers={"authorization": "Bearer {}".format(token)})
         r.raise_for_status()
 
-    def presign(self, token: str, filename: str, organization: Optional[str] = None) -> PresignedUrl:
+    def presign(
+        self, token: str, filename: str, organization: Optional[str] = None
+    ) -> PresignedUrl:
         """
         HuggingFace S3-based system, used for datasets and metrics.
 
@@ -142,7 +156,13 @@ class HfApi:
         d = r.json()
         return PresignedUrl(**d)
 
-    def presign_and_upload(self, token: str, filename: str, filepath: str, organization: Optional[str] = None) -> str:
+    def presign_and_upload(
+        self,
+        token: str,
+        filename: str,
+        filepath: str,
+        organization: Optional[str] = None,
+    ) -> str:
         """
         HuggingFace S3-based system, used for datasets and metrics.
 
@@ -173,7 +193,9 @@ class HfApi:
         """
         path = "{}/api/datasets/listObjs".format(self.endpoint)
         params = {"organization": organization} if organization is not None else None
-        r = requests.get(path, params=params, headers={"authorization": "Bearer {}".format(token)})
+        r = requests.get(
+            path, params=params, headers={"authorization": "Bearer {}".format(token)}
+        )
         r.raise_for_status()
         d = r.json()
         return [S3Obj(**x) for x in d]
@@ -202,7 +224,9 @@ class HfApi:
         d = r.json()
         return [ModelInfo(**x) for x in d]
 
-    def list_repos_objs(self, token: str, organization: Optional[str] = None) -> List[S3Obj]:
+    def list_repos_objs(
+        self, token: str, organization: Optional[str] = None
+    ) -> List[S3Obj]:
         """
         HuggingFace git-based system, used for models.
 
@@ -210,12 +234,16 @@ class HfApi:
         """
         path = "{}/api/repos/ls".format(self.endpoint)
         params = {"organization": organization} if organization is not None else None
-        r = requests.get(path, params=params, headers={"authorization": "Bearer {}".format(token)})
+        r = requests.get(
+            path, params=params, headers={"authorization": "Bearer {}".format(token)}
+        )
         r.raise_for_status()
         d = r.json()
         return [RepoObj(**x) for x in d]
 
-    def create_repo(self, token: str, name: str, organization: Optional[str] = None) -> str:
+    def create_repo(
+        self, token: str, name: str, organization: Optional[str] = None
+    ) -> str:
         """
         HuggingFace git-based system, used for models.
 
@@ -255,6 +283,7 @@ class TqdmProgressFileReader:
 
     see github.com/huggingface/transformers/pull/2078#discussion_r354739608 for implementation details.
     """
+
     def __init__(self, f: io.BufferedReader):
         self.f = f
         self.total_size = os.fstat(f.fileno()).st_size

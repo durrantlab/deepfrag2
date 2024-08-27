@@ -23,7 +23,16 @@ from .modeling_tf_utils import shape_list
 
 
 class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
-    def __init__(self, vocab_size, d_embed, d_proj, cutoffs, div_val=1, keep_order=False, **kwargs):
+    def __init__(
+        self,
+        vocab_size,
+        d_embed,
+        d_proj,
+        cutoffs,
+        div_val=1,
+        keep_order=False,
+        **kwargs
+    ):
         super().__init__(**kwargs)
 
         self.vocab_size = vocab_size
@@ -45,10 +54,16 @@ class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
     def build(self, input_shape):
         if self.n_clusters > 0:
             self.cluster_weight = self.add_weight(
-                shape=(self.n_clusters, self.d_embed), initializer="zeros", trainable=True, name="cluster_weight"
+                shape=(self.n_clusters, self.d_embed),
+                initializer="zeros",
+                trainable=True,
+                name="cluster_weight",
             )
             self.cluster_bias = self.add_weight(
-                shape=(self.n_clusters,), initializer="zeros", trainable=True, name="cluster_bias"
+                shape=(self.n_clusters,),
+                initializer="zeros",
+                trainable=True,
+                name="cluster_bias",
             )
 
         if self.div_val == 1:
@@ -64,10 +79,7 @@ class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
                 else:
                     self.out_projs.append(None)
                 weight = self.add_weight(
-                    shape=(
-                        self.vocab_size,
-                        self.d_embed,
-                    ),
+                    shape=(self.vocab_size, self.d_embed,),
                     initializer="zeros",
                     trainable=True,
                     name="out_layers_._{}_._weight".format(i),
@@ -85,14 +97,14 @@ class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
                 d_emb_i = self.d_embed // (self.div_val ** i)
 
                 weight = self.add_weight(
-                    shape=(d_emb_i, self.d_proj), initializer="zeros", trainable=True, name="out_projs_._{}".format(i)
+                    shape=(d_emb_i, self.d_proj),
+                    initializer="zeros",
+                    trainable=True,
+                    name="out_projs_._{}".format(i),
                 )
                 self.out_projs.append(weight)
                 weight = self.add_weight(
-                    shape=(
-                        r_idx - l_idx,
-                        d_emb_i,
-                    ),
+                    shape=(r_idx - l_idx, d_emb_i,),
                     initializer="zeros",
                     trainable=True,
                     name="out_layers_._{}_._weight".format(i),
@@ -123,9 +135,13 @@ class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
     def call(self, hidden, target, return_mean=True, training=False):
         head_logprob = 0
         if self.n_clusters == 0:
-            output = self._logit(hidden, self.out_layers[0][0], self.out_layers[0][1], self.out_projs[0])
+            output = self._logit(
+                hidden, self.out_layers[0][0], self.out_layers[0][1], self.out_projs[0]
+            )
             if target is not None:
-                loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=target, logits=output)
+                loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    labels=target, logits=output
+                )
             out = tf.nn.log_softmax(output, axis=-1)
         else:
             hidden_sizes = shape_list(hidden)
@@ -158,7 +174,9 @@ class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
                 else:
                     tail_logit = self._logit(hidden, cur_W, cur_b, self.out_projs[i])
                     tail_logprob = tf.nn.log_softmax(tail_logit)
-                    cluster_prob_idx = self.cutoffs[0] + i - 1  # No probability for the head cluster
+                    cluster_prob_idx = (
+                        self.cutoffs[0] + i - 1
+                    )  # No probability for the head cluster
                     logprob_i = head_logprob[..., cluster_prob_idx, None] + tail_logprob
                     out.append(logprob_i)
                     if target is not None:
@@ -167,7 +185,11 @@ class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
                         cur_logprob = self._gather_logprob(cur_tail_logprob, cur_target)
                         cur_logprob += cur_head_logprob[:, self.cutoff_ends[1] + i - 1]
                 if target is not None:
-                    loss += tf.scatter_nd(mask_idx, -cur_logprob, tf.cast(shape_list(loss), dtype=tf.int64))
+                    loss += tf.scatter_nd(
+                        mask_idx,
+                        -cur_logprob,
+                        tf.cast(shape_list(loss), dtype=tf.int64),
+                    )
             out = tf.concat(out, axis=-1)
 
         if target is not None:
@@ -178,6 +200,8 @@ class TFAdaptiveSoftmaxMask(tf.keras.layers.Layer):
 
             # Log the loss as a metric (we could log arbitrary metrics,
             # including different metrics for training and inference.
-            self.add_metric(loss, name=self.name, aggregation="mean" if return_mean else "")
+            self.add_metric(
+                loss, name=self.name, aggregation="mean" if return_mean else ""
+            )
 
         return out

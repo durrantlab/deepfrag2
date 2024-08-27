@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import pytorch_lightning as pl
 
+
 class AveragedEnsembled(ParentEnsembled):
 
     """AveragedEnsembled is a class that can be used to average multiple
@@ -107,7 +108,7 @@ class AveragedEnsembled(ParentEnsembled):
         """Divide the predictions tensor by the number of rotations to get the
         average.
         """
-        # TODO: Are we usig the alternate aggregation schemes?
+        # TODO: Are we using the alternate aggregation schemes?
 
         if self.num_rotations == 1 or self.aggregation is None:
             # If there is only one rotation, or if we are using the mean
@@ -170,5 +171,17 @@ class AveragedEnsembled(ParentEnsembled):
                 if entry.fragment_smiles not in frag_fps.keys():
                     frag_fps[entry.fragment_smiles] = self.model.prediction_targets[idx]
 
-            torch.save(recep_parent_fps, os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_pred_fingerprints.pt")
-            torch.save(frag_fps, os.path.realpath(os.getcwd()) + os.sep + self.frag_representation + "_calc_fingerprints.pt")
+            torch.save(
+                recep_parent_fps,
+                os.path.realpath(os.getcwd())
+                + os.sep
+                + self.frag_representation
+                + "_pred_fingerprints.pt",
+            )
+            torch.save(
+                frag_fps,
+                os.path.realpath(os.getcwd())
+                + os.sep
+                + self.frag_representation
+                + "_calc_fingerprints.pt",
+            )

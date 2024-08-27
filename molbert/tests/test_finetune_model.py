@@ -12,7 +12,9 @@ from molbert.tests.utils import (  # noqa: F401
 )
 
 
-def test_finetune_model_tasks(finetune_args, finetune_model, dummy_model_inputs, dummy_labels):  # noqa: F811
+def test_finetune_model_tasks(
+    finetune_args, finetune_model, dummy_model_inputs, dummy_labels
+):  # noqa: F811
     model = FinetuneSmilesMolbertModel(finetune_args)
 
     config = model.get_config()
@@ -23,7 +25,7 @@ def test_finetune_model_tasks(finetune_args, finetune_model, dummy_model_inputs,
     # test that forward returns outputs for all tasks
     output = model(dummy_model_inputs)
 
-    assert 'finetune' in output.keys()
+    assert "finetune" in output.keys()
 
 
 def test_load_datasets(finetune_args):  # noqa: F811
@@ -31,6 +33,6 @@ def test_load_datasets(finetune_args):  # noqa: F811
 
     datasets = model.load_datasets()
 
-    for key in ['train', 'valid', 'test']:
+    for key in ["train", "valid", "test"]:
         assert key in datasets.keys()
         assert isinstance(datasets[key], BertFinetuneSmilesDataset)

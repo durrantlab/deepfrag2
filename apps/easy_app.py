@@ -41,7 +41,7 @@ def get_args():
 
     args = parser.parse_args()
     args.name = args.app_name.replace("/", "")
-    args.app_name = f'{SCRIPT_DIR}/{args.app_name}'
+    args.app_name = f"{SCRIPT_DIR}/{args.app_name}"
     args.working_dir = os.path.realpath(args.working_dir)
 
     return args
@@ -53,11 +53,11 @@ def validate(args):
         print(f"No app found at {args.app_name}")
         sys.exit(0)
 
-    if not os.path.exists(f'{args.app_name}/run.py'):
+    if not os.path.exists(f"{args.app_name}/run.py"):
         print(f"Required file missing: {args.app_name}/run.py")
         sys.exit(0)
 
-    if not os.path.exists(f'{args.app_name}/defaults.json'):
+    if not os.path.exists(f"{args.app_name}/defaults.json"):
         print(f"Required file missing: {args.app_name}/defaults.json")
         sys.exit(0)
 
@@ -67,7 +67,7 @@ def validate(args):
 
 def compile_parameters(args):
     # Get defaults
-    params = json.load(open(f'{SCRIPT_DIR}/{args.name}/defaults.json'))
+    params = json.load(open(f"{SCRIPT_DIR}/{args.name}/defaults.json"))
 
     # Merge in user specified
     if args.params_json is not None:
@@ -101,21 +101,22 @@ def compile_parameters(args):
 
     return params
 
+
 args = get_args()
 validate(args)
 
 params = compile_parameters(args)
 
 # Save parameters to working directory.
-with open(f'{args.working_dir}/params.json', "w") as f:
+with open(f"{args.working_dir}/params.json", "w") as f:
     json.dump(params, f, indent=4)
 
 # Save record of the .cur_app_* dirname being used
-with open(f'{args.working_dir}/app_name.txt', "w") as f:
+with open(f"{args.working_dir}/app_name.txt", "w") as f:
     f.write(args.name)
 
 # Write the file to run in docker container.
-with open(f'{args.working_dir}/run.sh', "w") as f:
+with open(f"{args.working_dir}/run.sh", "w") as f:
     f.write("cd deepfrag\n")
     parts = [
         "--gpus 1",
@@ -124,12 +125,14 @@ with open(f'{args.working_dir}/run.sh', "w") as f:
         "--data_dir " + params["data"],
         "--max_voxels_in_memory " + str(params["max_voxels_in_memory"]),
         "--save_params /mnt/extra/params.json",  # So overwrites input
-        "--save_splits /mnt/extra/splits.json"
+        "--save_splits /mnt/extra/splits.json",
     ]
 
     if "load_checkpoint" not in params:
         parts.append(
-            "--load_newest_checkpoint" if glob.glob(args.working_dir + "/checkpoints/last.ckpt") else "",
+            "--load_newest_checkpoint"
+            if glob.glob(args.working_dir + "/checkpoints/last.ckpt")
+            else "",
         )
 
     profiler = "-m cProfile -o cProfile.log"

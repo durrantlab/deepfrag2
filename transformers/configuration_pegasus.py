@@ -47,20 +47,72 @@ DEFAULTS = dict(
 # Config values that vary between checkpoints: for testing and conversion
 task_specific_params = {
     # These are task specific params for pegasus-large and normal params for finetuned checkpoints
-    "summarization_xsum": {"length_penalty": 0.6, "max_length": 64, "max_position_embeddings": 512},
-    "summarization_cnn_dailymail": {"length_penalty": 0.8, "max_length": 128, "max_position_embeddings": 1024},
-    "summarization_newsroom": {"length_penalty": 0.8, "max_length": 128, "max_position_embeddings": 512},
-    "summarization_wikihow": {"length_penalty": 0.6, "max_length": 256, "max_position_embeddings": 512},
-    "summarization_multi_news": {"length_penalty": 0.8, "max_length": 256, "max_position_embeddings": 1024},
-    "summarization_reddit_tifu": {"length_penalty": 0.6, "max_length": 128, "max_position_embeddings": 512},
-    "summarization_big_patent": {"length_penalty": 0.7, "max_length": 256, "max_position_embeddings": 1024},
-    "summarization_arxiv": {"length_penalty": 0.8, "max_length": 256, "max_position_embeddings": 1024},
-    "summarization_pubmed": {"length_penalty": 0.8, "max_length": 256, "max_position_embeddings": 1024},
-    "summarization_gigaword": {"length_penalty": 0.6, "max_length": 32, "max_position_embeddings": 128},
-    "summarization_aeslc": {"length_penalty": 0.6, "max_length": 32, "max_position_embeddings": 512},
-    "summarization_billsum": {"length_penalty": 0.6, "max_length": 256, "max_position_embeddings": 1024},
+    "summarization_xsum": {
+        "length_penalty": 0.6,
+        "max_length": 64,
+        "max_position_embeddings": 512,
+    },
+    "summarization_cnn_dailymail": {
+        "length_penalty": 0.8,
+        "max_length": 128,
+        "max_position_embeddings": 1024,
+    },
+    "summarization_newsroom": {
+        "length_penalty": 0.8,
+        "max_length": 128,
+        "max_position_embeddings": 512,
+    },
+    "summarization_wikihow": {
+        "length_penalty": 0.6,
+        "max_length": 256,
+        "max_position_embeddings": 512,
+    },
+    "summarization_multi_news": {
+        "length_penalty": 0.8,
+        "max_length": 256,
+        "max_position_embeddings": 1024,
+    },
+    "summarization_reddit_tifu": {
+        "length_penalty": 0.6,
+        "max_length": 128,
+        "max_position_embeddings": 512,
+    },
+    "summarization_big_patent": {
+        "length_penalty": 0.7,
+        "max_length": 256,
+        "max_position_embeddings": 1024,
+    },
+    "summarization_arxiv": {
+        "length_penalty": 0.8,
+        "max_length": 256,
+        "max_position_embeddings": 1024,
+    },
+    "summarization_pubmed": {
+        "length_penalty": 0.8,
+        "max_length": 256,
+        "max_position_embeddings": 1024,
+    },
+    "summarization_gigaword": {
+        "length_penalty": 0.6,
+        "max_length": 32,
+        "max_position_embeddings": 128,
+    },
+    "summarization_aeslc": {
+        "length_penalty": 0.6,
+        "max_length": 32,
+        "max_position_embeddings": 512,
+    },
+    "summarization_billsum": {
+        "length_penalty": 0.6,
+        "max_length": 256,
+        "max_position_embeddings": 1024,
+    },
     # this last entry is useless -- just for consistency
-    "summarization_large": {"length_penalty": 0.8, "max_length": 256, "max_position_embeddings": 1024},
+    "summarization_large": {
+        "length_penalty": 0.8,
+        "max_length": 256,
+        "max_position_embeddings": 1024,
+    },
 }
 
 
@@ -138,5 +190,6 @@ class PegasusConfig(BartConfig):
         force_bos_token_to_be_generated (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to force BOS token to be generated at step 1 (after ``decoder_start_token_id``).
     """
+
     model_type = "pegasus"
     # The implementation of the config object is in BartConfig

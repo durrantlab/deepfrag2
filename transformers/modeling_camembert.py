@@ -55,6 +55,7 @@ CAMEMBERT_START_DOCSTRING = r"""
             weights.
 """
 
+
 @add_start_docstrings(
     "The bare CamemBERT Model transformer outputting raw hidden-states without any specific head on top.",
     CAMEMBERT_START_DOCSTRING,
@@ -64,6 +65,7 @@ class CamembertModel(RobertaModel):
     This class overrides :class:`~transformers.RobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -76,6 +78,7 @@ class CamembertForMaskedLM(RobertaForMaskedLM):
     This class overrides :class:`~transformers.RobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -91,6 +94,7 @@ class CamembertForSequenceClassification(RobertaForSequenceClassification):
     This class overrides :class:`~transformers.RobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -106,6 +110,7 @@ class CamembertForMultipleChoice(RobertaForMultipleChoice):
     This class overrides :class:`~transformers.RobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -121,6 +126,7 @@ class CamembertForTokenClassification(RobertaForTokenClassification):
     This class overrides :class:`~transformers.RobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
@@ -136,15 +142,18 @@ class CamembertForQuestionAnswering(RobertaForQuestionAnswering):
     This class overrides :class:`~transformers.RobertaForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = CamembertConfig
 
 
 @add_start_docstrings(
-    """CamemBERT Model with a `language modeling` head on top for CLM fine-tuning. """, CAMEMBERT_START_DOCSTRING
+    """CamemBERT Model with a `language modeling` head on top for CLM fine-tuning. """,
+    CAMEMBERT_START_DOCSTRING,
 )
 class CamembertForCausalLM(RobertaForCausalLM):
     """
     This class overrides :class:`~transformers.RobertaForCausalLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = CamembertConfig

@@ -13,7 +13,11 @@ import threading
 import platform
 
 if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface
+    from collagen.external.moad.interface import (
+        MOADInterface,
+        PairedPdbSdfCsvInterface,
+        PdbSdfDirInterface,
+    )
 
 DATA = None
 COLLATE: Union[None, Callable] = None
@@ -43,7 +47,8 @@ def _process2(batch_of_batches: List[List[Any]], return_list: List[Any], id: str
     for batch in batch_of_batches:
         try:
             assert COLLATE is not None, "COLLATE is None"
-            
+            assert DATA is not None, "DATA is None"
+
             return_list.append(COLLATE([DATA[x] for x in batch]))
         except Exception as e:
             if os.path.exists("/mnt/extra/"):
@@ -385,7 +390,7 @@ class DataLambda(MultiLoader):
 
 
 class DataBatch(MultiLoader):
-    
+
     """Batch the data."""
 
     def __init__(self, data: Any, batch: int):

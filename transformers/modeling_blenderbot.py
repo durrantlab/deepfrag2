@@ -32,21 +32,28 @@ BLENDER_START_DOCSTRING = r"""
     general usage and behavior.
 
 """
-BLENDERBOT_PRETRAINED_MODEL_ARCHIVE_LIST = ["facebook/blenderbot-3B", "facebook/blenderbot-90M"]
+BLENDERBOT_PRETRAINED_MODEL_ARCHIVE_LIST = [
+    "facebook/blenderbot-3B",
+    "facebook/blenderbot-90M",
+]
 
 
 @add_start_docstrings(
-    "The BART Model with a language modeling head. Can be used for summarization.", BLENDER_START_DOCSTRING
+    "The BART Model with a language modeling head. Can be used for summarization.",
+    BLENDER_START_DOCSTRING,
 )
 class BlenderbotForConditionalGeneration(BartForConditionalGeneration):
     """
     This class overrides :class:`~transformers.BartForConditionalGeneration`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = BlenderbotConfig
 
     def adjust_logits_during_generation(self, logits, cur_len, max_length):
-        logits[:, self.config.bos_token_id] = -torch.finfo(torch.float16).max  # near infinity fp16
+        logits[:, self.config.bos_token_id] = -torch.finfo(
+            torch.float16
+        ).max  # near infinity fp16
         if cur_len == max_length - 1 and self.config.eos_token_id is not None:
             self._force_token_id_to_be_generated(logits, self.config.eos_token_id)
         return logits

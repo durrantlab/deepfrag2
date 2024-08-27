@@ -43,13 +43,7 @@ def _add_generic_params(
         "-m",
         "--mode",
         type=str,
-        choices=[
-            "train",
-            "warm_starting",
-            "test",
-            "inference",
-            "inference_custom_set"
-        ],
+        choices=["train", "warm_starting", "test", "inference", "inference_custom_set"],
         help="Can be train, warm_starting, test, inference, or inference_custom_set.\n"
         + "\tIf train, trains the model.\n"
         + "\tIf warm_starting, runs an incremental learning on a new dataset. It is suitable for fine tuning.\n"
@@ -64,7 +58,7 @@ def _add_generic_params(
         "--test_predictions_file",
         type=str,
         help="If specified, the numpy file where the full test-set predictions will be saved. Requires that the mode is set to test.",
-        default=None
+        default=None,
     )
 
     parser.add_argument(

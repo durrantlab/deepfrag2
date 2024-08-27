@@ -4,16 +4,26 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple, Union
 
 import torch
-from molbert.utils.lm_utils import InputExample, convert_example_to_features, unmask_lm_labels
+from molbert.utils.lm_utils import (
+    InputExample,
+    convert_example_to_features,
+    unmask_lm_labels,
+)
 from torch.utils.data import Dataset
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class BaseBertDataset(Dataset, ABC):
     def __init__(
-        self, input_path, featurizer, single_seq_len, total_seq_len, is_same: bool = False, inference_mode: bool = False
+        self,
+        input_path,
+        featurizer,
+        single_seq_len,
+        total_seq_len,
+        is_same: bool = False,
+        inference_mode: bool = False,
     ):
 
         self.sequence_file = input_path
@@ -30,7 +40,7 @@ class BaseBertDataset(Dataset, ABC):
 
     @staticmethod
     def load_sequences(sequence_file):
-        with open(sequence_file, 'rt') as f:
+        with open(sequence_file, "rt") as f:
             return [line.strip() for line in f.readlines()]
 
     def __len__(self):
@@ -55,15 +65,19 @@ class BaseBertDataset(Dataset, ABC):
 
         labels = dict(
             lm_label_ids=torch.tensor([-1] * self.total_seq_len, dtype=torch.long),
-            unmasked_lm_label_ids=torch.tensor([-1] * self.total_seq_len, dtype=torch.long),
+            unmasked_lm_label_ids=torch.tensor(
+                [-1] * self.total_seq_len, dtype=torch.long
+            ),
         )
 
         if self.is_same:
-            labels['is_same'] = torch.tensor(0, dtype=torch.long)
+            labels["is_same"] = torch.tensor(0, dtype=torch.long)
 
         return inputs, labels
 
-    def get_sample(self, index: int) -> Tuple[Optional[List[str]], Optional[List[str]], bool, bool]:
+    def get_sample(
+        self, index: int
+    ) -> Tuple[Optional[List[str]], Optional[List[str]], bool, bool]:
         """
         Get one sample from the data consisting of one or two sequences.
 
@@ -116,7 +130,9 @@ class BaseBertDataset(Dataset, ABC):
     ):
 
         # combine to one sample
-        cur_example = InputExample(guid=cur_id, tokens_a=t1, tokens_b=t2, is_next=is_same)
+        cur_example = InputExample(
+            guid=cur_id, tokens_a=t1, tokens_b=t2, is_next=is_same
+        )
 
         # transform sample to original_features
         cur_features = convert_example_to_features(
@@ -124,7 +140,9 @@ class BaseBertDataset(Dataset, ABC):
         )
 
         # get the unmasked label id's - useful for calculating accuracy
-        unmasked_lm_label_ids = unmask_lm_labels(cur_features.input_ids, cur_features.lm_label_ids)
+        unmasked_lm_label_ids = unmask_lm_labels(
+            cur_features.input_ids, cur_features.lm_label_ids
+        )
 
         # create final tensor
         inputs = dict(
@@ -139,7 +157,7 @@ class BaseBertDataset(Dataset, ABC):
         )
 
         if self.is_same:
-            labels['is_same'] = torch.tensor(cur_features.is_next, dtype=torch.long)
+            labels["is_same"] = torch.tensor(cur_features.is_next, dtype=torch.long)
 
         return inputs, labels
 
@@ -148,9 +166,13 @@ class BaseBertDataset(Dataset, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_related_seq(self, index: int, max_retries: int = 10) -> Tuple[Optional[List[str]], bool]:
+    def get_related_seq(
+        self, index: int, max_retries: int = 10
+    ) -> Tuple[Optional[List[str]], bool]:
         raise NotImplementedError
 
     @abstractmethod
-    def get_unrelated_seq(self, avoid_idx, max_retries: int = 10) -> Tuple[Optional[List[str]], bool]:
+    def get_unrelated_seq(
+        self, avoid_idx, max_retries: int = 10
+    ) -> Tuple[Optional[List[str]], bool]:
         raise NotImplementedError

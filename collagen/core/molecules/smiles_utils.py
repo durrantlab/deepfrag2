@@ -1,5 +1,6 @@
 """SMILES utilities."""
 
+from typing import Union
 from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import rdmolops
@@ -28,7 +29,8 @@ def neutralize_atoms(mol: Chem.Mol) -> Chem.Mol:
             atom.UpdatePropertyCache()
     return mol
 
-def standardize_smiles(smiles: str, none_if_fails: bool = False) -> str:
+
+def standardize_smiles(smiles: str, none_if_fails: bool = False) -> Union[str, None]:
     """Standardize SMILES string.
 
     Args:
@@ -36,7 +38,8 @@ def standardize_smiles(smiles: str, none_if_fails: bool = False) -> str:
         none_if_fails (bool): If True, will return None.
 
     Returns:
-        str: Standardized SMILES string.
+        str: Standardized SMILES string. Returns None if `none_if_fails` is
+            True and the standardization fails.
     """
     # Catch all errors
     try:
@@ -65,4 +68,3 @@ def standardize_smiles(smiles: str, none_if_fails: bool = False) -> str:
         else:
             print(f"CAUGHT EXCEPTION: Could not standardize SMILES: {smiles} >> ", e)
             return smiles
-

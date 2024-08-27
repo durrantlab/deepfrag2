@@ -6,6 +6,7 @@ from collagen.core import Mol, VoxelParams
 # development. Probably not a function you need to look at for now. TODO: not
 # used.
 
+
 class Voxelize(object):
 
     """Voxelize a molecule."""

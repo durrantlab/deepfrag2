@@ -12,7 +12,11 @@ import os
 from apps.deepfrag.model_additional_data import DeepFragModelPairedDataFinetune
 
 if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface, PairedPdbSdfCsvInterface, PdbSdfDirInterface
+    from collagen.external.moad.interface import (
+        MOADInterface,
+        PairedPdbSdfCsvInterface,
+        PdbSdfDirInterface,
+    )
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
 class MoadVoxelModelInits(object):
@@ -82,7 +86,12 @@ class MoadVoxelModelInits(object):
         return pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
 
     def init_model(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str], fragment_set: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"]=None,
+        self: "MoadVoxelModelParent",
+        args: Namespace,
+        ckpt_filename: Optional[str],
+        fragment_set: Union[
+            "MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"
+        ] = None,
     ) -> pl.LightningModule:
         """Initialize the model.
 
@@ -132,7 +141,11 @@ class MoadVoxelModelInits(object):
         """
         return torch.device("cpu") if args.cpu else torch.device("cuda")
 
-    def init_warm_model(self, args: Namespace, moad: Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface]) -> pl.LightningModule:
+    def init_warm_model(
+        self,
+        args: Namespace,
+        moad: Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface],
+    ) -> pl.LightningModule:
         """Initialize the model for warm starting (finetuning).
 
         Args:

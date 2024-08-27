@@ -22,7 +22,11 @@ from .utils import logging
 
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.json", "merges_file": "merges.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.json",
+    "merges_file": "merges.txt",
+    "tokenizer_file": "tokenizer.json",
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
@@ -132,6 +136,7 @@ class RobertaTokenizerFast(GPT2TokenizerFast):
         trim_offsets (:obj:`bool`, `optional`, defaults to :obj:`True`):
             Whether the post processing step should trim offsets to avoid including whitespaces.
     """
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

@@ -135,7 +135,11 @@ from .modeling_funnel import (
     FunnelModel,
 )
 from .modeling_gpt2 import GPT2ForSequenceClassification, GPT2LMHeadModel, GPT2Model
-from .modeling_layoutlm import LayoutLMForMaskedLM, LayoutLMForTokenClassification, LayoutLMModel
+from .modeling_layoutlm import (
+    LayoutLMForMaskedLM,
+    LayoutLMForTokenClassification,
+    LayoutLMModel,
+)
 from .modeling_longformer import (
     LongformerForMaskedLM,
     LongformerForMultipleChoice,
@@ -144,7 +148,11 @@ from .modeling_longformer import (
     LongformerForTokenClassification,
     LongformerModel,
 )
-from .modeling_lxmert import LxmertForPreTraining, LxmertForQuestionAnswering, LxmertModel
+from .modeling_lxmert import (
+    LxmertForPreTraining,
+    LxmertForQuestionAnswering,
+    LxmertModel,
+)
 from .modeling_marian import MarianMTModel
 from .modeling_mbart import MBartForConditionalGeneration
 from .modeling_mobilebert import (
@@ -157,9 +165,17 @@ from .modeling_mobilebert import (
     MobileBertForTokenClassification,
     MobileBertModel,
 )
-from .modeling_openai import OpenAIGPTForSequenceClassification, OpenAIGPTLMHeadModel, OpenAIGPTModel
+from .modeling_openai import (
+    OpenAIGPTForSequenceClassification,
+    OpenAIGPTLMHeadModel,
+    OpenAIGPTModel,
+)
 from .modeling_pegasus import PegasusForConditionalGeneration
-from .modeling_prophetnet import ProphetNetForCausalLM, ProphetNetForConditionalGeneration, ProphetNetModel
+from .modeling_prophetnet import (
+    ProphetNetForCausalLM,
+    ProphetNetForConditionalGeneration,
+    ProphetNetModel,
+)
 from .modeling_rag import (  # noqa: F401 - need to import all RagModels to be in globals() function
     RagModel,
     RagSequenceForGeneration,
@@ -554,6 +570,7 @@ AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
                       attribute will be passed to the underlying model's ``__init__`` function.
 """
 
+
 class AutoModel:
     r"""
     This is a generic model class that will be instantiated as one of the base model classes of the library when
@@ -562,6 +579,7 @@ class AutoModel:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModel is designed to be instantiated "
@@ -597,7 +615,9 @@ class AutoModel:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_MAPPING.keys()),
             )
         )
 
@@ -638,7 +658,9 @@ class AutoModel:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_MAPPING.keys()),
             )
         )
 
@@ -652,6 +674,7 @@ class AutoModelForPreTraining:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForPreTraining is designed to be instantiated "
@@ -660,7 +683,9 @@ class AutoModelForPreTraining:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_PRETRAINING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_PRETRAINING_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with the architecture used for pretraining this
@@ -689,7 +714,9 @@ class AutoModelForPreTraining:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_PRETRAINING_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_FOR_PRETRAINING_MAPPING.keys()),
             )
         )
 
@@ -731,7 +758,9 @@ class AutoModelForPreTraining:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_PRETRAINING_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_FOR_PRETRAINING_MAPPING.keys()),
             )
         )
 
@@ -752,6 +781,7 @@ class AutoModelWithLMHead:
         :class:`~transformers.AutoModelForMaskedLM` for masked language models and
         :class:`~transformers.AutoModelForSeq2SeqLM` for encoder-decoder models.
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelWithLMHead is designed to be instantiated "
@@ -760,7 +790,9 @@ class AutoModelWithLMHead:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_WITH_LM_HEAD_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_WITH_LM_HEAD_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a language modeling head---from a configuration.
@@ -794,7 +826,9 @@ class AutoModelWithLMHead:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_WITH_LM_HEAD_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_WITH_LM_HEAD_MAPPING.keys()),
             )
         )
 
@@ -842,7 +876,9 @@ class AutoModelWithLMHead:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_WITH_LM_HEAD_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_WITH_LM_HEAD_MAPPING.keys()),
             )
         )
 
@@ -856,6 +892,7 @@ class AutoModelForCausalLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForCausalLM is designed to be instantiated "
@@ -864,7 +901,9 @@ class AutoModelForCausalLM:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_CAUSAL_LM_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a causal language modeling head---from a
@@ -893,7 +932,9 @@ class AutoModelForCausalLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
             )
         )
 
@@ -935,7 +976,9 @@ class AutoModelForCausalLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
             )
         )
 
@@ -949,6 +992,7 @@ class AutoModelForMaskedLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForMaskedLM is designed to be instantiated "
@@ -957,7 +1001,9 @@ class AutoModelForMaskedLM:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_MASKED_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_MASKED_LM_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a masked language modeling head---from a
@@ -986,7 +1032,9 @@ class AutoModelForMaskedLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_MASKED_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_FOR_MASKED_LM_MAPPING.keys()),
             )
         )
 
@@ -1028,7 +1076,9 @@ class AutoModelForMaskedLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_MASKED_LM_MAPPING.keys())
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_FOR_MASKED_LM_MAPPING.keys()),
             )
         )
 
@@ -1042,6 +1092,7 @@ class AutoModelForSeq2SeqLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForSeq2SeqLM is designed to be instantiated "
@@ -1050,7 +1101,9 @@ class AutoModelForSeq2SeqLM:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence-to-sequence language modeling
@@ -1081,7 +1134,9 @@ class AutoModelForSeq2SeqLM:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()
+                ),
             )
         )
 
@@ -1125,7 +1180,9 @@ class AutoModelForSeq2SeqLM:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()
+                ),
             )
         )
 
@@ -1139,6 +1196,7 @@ class AutoModelForSequenceClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForSequenceClassification is designed to be instantiated "
@@ -1147,7 +1205,9 @@ class AutoModelForSequenceClassification:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence classification head---from a
@@ -1178,7 +1238,9 @@ class AutoModelForSequenceClassification:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1214,7 +1276,9 @@ class AutoModelForSequenceClassification:
             )
 
         if type(config) in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys():
-            return MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)].from_pretrained(
+            return MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[
+                type(config)
+            ].from_pretrained(
                 pretrained_model_name_or_path, *model_args, config=config, **kwargs
             )
         raise ValueError(
@@ -1222,7 +1286,9 @@ class AutoModelForSequenceClassification:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1236,6 +1302,7 @@ class AutoModelForQuestionAnswering:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForQuestionAnswering is designed to be instantiated "
@@ -1244,7 +1311,9 @@ class AutoModelForQuestionAnswering:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_QUESTION_ANSWERING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_QUESTION_ANSWERING_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a question answering head---from a configuration.
@@ -1275,7 +1344,9 @@ class AutoModelForQuestionAnswering:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()
+                ),
             )
         )
 
@@ -1320,7 +1391,9 @@ class AutoModelForQuestionAnswering:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()
+                ),
             )
         )
 
@@ -1334,6 +1407,7 @@ class AutoModelForTokenClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForTokenClassification is designed to be instantiated "
@@ -1342,7 +1416,9 @@ class AutoModelForTokenClassification:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a token classification head---from a configuration.
@@ -1373,7 +1449,9 @@ class AutoModelForTokenClassification:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1418,7 +1496,9 @@ class AutoModelForTokenClassification:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__ for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1432,6 +1512,7 @@ class AutoModelForMultipleChoice:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForMultipleChoice is designed to be instantiated "
@@ -1440,7 +1521,9 @@ class AutoModelForMultipleChoice:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_MULTIPLE_CHOICE_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_MULTIPLE_CHOICE_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a multiple choice classification head---from a
@@ -1531,6 +1614,7 @@ class AutoModelForNextSentencePrediction:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForNextSentencePrediction is designed to be instantiated "
@@ -1539,7 +1623,9 @@ class AutoModelForNextSentencePrediction:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING, use_model_types=False
+    )
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a multiple choice classification head---from a
@@ -1571,7 +1657,10 @@ class AutoModelForNextSentencePrediction:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()
+                ),
             )
         )
 
@@ -1607,7 +1696,9 @@ class AutoModelForNextSentencePrediction:
             )
 
         if type(config) in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys():
-            return MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(config)].from_pretrained(
+            return MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[
+                type(config)
+            ].from_pretrained(
                 pretrained_model_name_or_path, *model_args, config=config, **kwargs
             )
 
@@ -1616,6 +1707,9 @@ class AutoModelForNextSentencePrediction:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()
+                ),
             )
         )

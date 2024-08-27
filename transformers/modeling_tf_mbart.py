@@ -30,7 +30,9 @@ START_DOCSTRING = BART_START_DOCSTRING.replace(
 logger = logging.get_logger(__name__)
 
 
-@add_start_docstrings("mBART (multilingual BART) model for machine translation", START_DOCSTRING)
+@add_start_docstrings(
+    "mBART (multilingual BART) model for machine translation", START_DOCSTRING
+)
 class TFMBartForConditionalGeneration(TFBartForConditionalGeneration):
     config_class = MBartConfig
     # All the code is in src/transformers/modeling_tf_bart.py

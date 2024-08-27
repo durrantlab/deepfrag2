@@ -387,6 +387,7 @@ class CaptureStd:
             # but best use the stream-specific subclasses
 
     """
+
     def __init__(self, out=True, err=True):
         if out:
             self.out_buf = StringIO()
@@ -439,12 +440,14 @@ class CaptureStd:
 
 class CaptureStdout(CaptureStd):
     """ Same as CaptureStd but captures only stdout """
+
     def __init__(self):
         super().__init__(err=False)
 
 
 class CaptureStderr(CaptureStd):
     """ Same as CaptureStd but captures only stderr """
+
     def __init__(self):
         super().__init__(out=False)
 
@@ -471,6 +474,7 @@ class CaptureLogger:
         ...     logger.info(msg)
         >>> assert cl.out, msg+"\n"
     """
+
     def __init__(self, logger):
         self.logger = logger
         self.io = StringIO()
@@ -566,6 +570,7 @@ class TestCasePlus(unittest.TestCase):
             env = self.get_env()
 
     """
+
     def setUp(self):
         self.teardown_tmp_dirs = []
 
@@ -580,7 +585,9 @@ class TestCasePlus(unittest.TestCase):
         if tmp_dir:
             self._repo_root_dir = tmp_dir
         else:
-            raise ValueError(f"can't figure out the root of the repo from {self._test_file_path}")
+            raise ValueError(
+                f"can't figure out the root of the repo from {self._test_file_path}"
+            )
         self._tests_dir = self._repo_root_dir / "tests"
         self._examples_dir = self._repo_root_dir / "examples"
         self._src_dir = self._repo_root_dir / "src"
@@ -798,7 +805,9 @@ def pytest_terminal_summary_main(tr, id):
             f.write("slowest durations\n")
             for i, rep in enumerate(dlist):
                 if rep.duration < durations_min:
-                    f.write(f"{len(dlist)-i} durations < {durations_min} secs were omitted")
+                    f.write(
+                        f"{len(dlist)-i} durations < {durations_min} secs were omitted"
+                    )
                     break
                 f.write(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}\n")
 
@@ -812,7 +821,9 @@ def pytest_terminal_summary_main(tr, id):
             msg = tr._getfailureheadline(rep)
             tr.write_sep("_", msg, red=True, bold=True)
             # chop off the optional leading extra frames, leaving only the last one
-            longrepr = re.sub(r".*_ _ _ (_ ){10,}_ _ ", "", rep.longreprtext, 0, re.M | re.S)
+            longrepr = re.sub(
+                r".*_ _ _ (_ ){10,}_ _ ", "", rep.longreprtext, 0, re.M | re.S
+            )
             tr._tw.line(longrepr)
             # note: not printing out any rep.sections to keep the report short
 
@@ -846,7 +857,9 @@ def pytest_terminal_summary_main(tr, id):
         tr.summary_warnings()  # normal warnings
         tr.summary_warnings()  # final warnings
 
-    tr.reportchars = "wPpsxXEf"  # emulate -rA (used in summary_passes() and short_test_summary())
+    tr.reportchars = (
+        "wPpsxXEf"  # emulate -rA (used in summary_passes() and short_test_summary())
+    )
     with open(report_files["passes"], "w") as f:
         tr._tw = create_terminal_writer(config, f)
         tr.summary_passes()
@@ -887,7 +900,9 @@ async def _read_stream(stream, callback):
             break
 
 
-async def _stream_subprocess(cmd, env=None, stdin=None, timeout=None, quiet=False, echo=False) -> _RunOutput:
+async def _stream_subprocess(
+    cmd, env=None, stdin=None, timeout=None, quiet=False, echo=False
+) -> _RunOutput:
     if echo:
         print("\nRunning: ", " ".join(cmd))
 
@@ -928,11 +943,15 @@ async def _stream_subprocess(cmd, env=None, stdin=None, timeout=None, quiet=Fals
     return _RunOutput(await p.wait(), out, err)
 
 
-def execute_subprocess_async(cmd, env=None, stdin=None, timeout=180, quiet=False, echo=True) -> _RunOutput:
+def execute_subprocess_async(
+    cmd, env=None, stdin=None, timeout=180, quiet=False, echo=True
+) -> _RunOutput:
 
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(
-        _stream_subprocess(cmd, env=env, stdin=stdin, timeout=timeout, quiet=quiet, echo=echo)
+        _stream_subprocess(
+            cmd, env=env, stdin=stdin, timeout=timeout, quiet=quiet, echo=echo
+        )
     )
 
     cmd_str = " ".join(cmd)

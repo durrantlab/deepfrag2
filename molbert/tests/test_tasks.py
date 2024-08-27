@@ -11,7 +11,7 @@ class FakeConfig:
     hidden_dropout_prob: float = 0.25
     num_physchem_properties: int = 200
     vocab_size: int = 2
-    hidden_act: str = 'relu'
+    hidden_act: str = "relu"
     layer_norm_eps: float = 1e-6
 
 
@@ -38,11 +38,11 @@ def test_tasks():
     )
 
     tasks = [
-        FinetuneTask('finetune_reg', FakeConfig(mode='regression')),
-        FinetuneTask('finetune_cls', FakeConfig(mode='classification', output_size=2)),
-        PhyschemTask('physchem', FakeConfig(mode='regression')),
-        MaskedLMTask('masked_lm', FakeConfig(mode='regression')),
-        IsSameTask('is_same', FakeConfig(mode='regression')),
+        FinetuneTask("finetune_reg", FakeConfig(mode="regression")),
+        FinetuneTask("finetune_cls", FakeConfig(mode="classification", output_size=2)),
+        PhyschemTask("physchem", FakeConfig(mode="regression")),
+        MaskedLMTask("masked_lm", FakeConfig(mode="regression")),
+        IsSameTask("is_same", FakeConfig(mode="regression")),
     ]
 
     seq_len = 10

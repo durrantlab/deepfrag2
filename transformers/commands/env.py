@@ -43,16 +43,22 @@ class EnvironmentCommand(BaseTransformersCLICommand):
             "Platform": platform.platform(),
             "Python version": platform.python_version(),
             "PyTorch version (GPU?)": "{} ({})".format(pt_version, pt_cuda_available),
-            "Tensorflow version (GPU?)": "{} ({})".format(tf_version, tf_cuda_available),
+            "Tensorflow version (GPU?)": "{} ({})".format(
+                tf_version, tf_cuda_available
+            ),
             "Using GPU in script?": "<fill in>",
             "Using distributed or parallel set-up in script?": "<fill in>",
         }
 
-        print("\nCopy-and-paste the text below in your GitHub issue and FILL OUT the two last points.\n")
+        print(
+            "\nCopy-and-paste the text below in your GitHub issue and FILL OUT the two last points.\n"
+        )
         print(self.format_dict(info))
 
         return info
 
     @staticmethod
     def format_dict(d):
-        return "\n".join(["- {}: {}".format(prop, val) for prop, val in d.items()]) + "\n"
+        return (
+            "\n".join(["- {}: {}".format(prop, val) for prop, val in d.items()]) + "\n"
+        )

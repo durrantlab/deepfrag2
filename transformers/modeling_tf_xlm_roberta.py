@@ -69,6 +69,7 @@ XLM_ROBERTA_START_DOCSTRING = r"""
             weights.
 """
 
+
 @add_start_docstrings(
     "The bare XLM-RoBERTa Model transformer outputting raw hidden-states without any specific head on top.",
     XLM_ROBERTA_START_DOCSTRING,
@@ -78,6 +79,7 @@ class TFXLMRobertaModel(TFRobertaModel):
     This class overrides :class:`~transformers.TFRobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -90,6 +92,7 @@ class TFXLMRobertaForMaskedLM(TFRobertaForMaskedLM):
     This class overrides :class:`~transformers.TFRobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -105,6 +108,7 @@ class TFXLMRobertaForSequenceClassification(TFRobertaForSequenceClassification):
     This class overrides :class:`~transformers.TFRobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -120,6 +124,7 @@ class TFXLMRobertaForTokenClassification(TFRobertaForTokenClassification):
     This class overrides :class:`~transformers.TFRobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -135,6 +140,7 @@ class TFXLMRobertaForQuestionAnswering(TFRobertaForQuestionAnswering):
     This class overrides :class:`~transformers.TFRobertaForQuestionAnsweringSimple`. Please check the superclass for
     the appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -150,4 +156,5 @@ class TFXLMRobertaForMultipleChoice(TFRobertaForMultipleChoice):
     This class overrides :class:`~transformers.TFRobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig

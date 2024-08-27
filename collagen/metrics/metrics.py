@@ -61,6 +61,7 @@ def cos_loss(yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
 
     return 1 - _cos(yp, yt)
 
+
 def mse_loss(yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
     """
     Args:
@@ -73,6 +74,7 @@ def mse_loss(yp: torch.Tensor, yt: torch.Tensor) -> torch.Tensor:
     # Closer to 0 means more similar.
 
     return _mse(yp, yt)
+
 
 def bin_acc(pred, target):
     """Binary accuracy. TODO: Not currently used."""

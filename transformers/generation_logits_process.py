@@ -42,10 +42,14 @@ LOGITS_PROCESSOR_INPUTS_DOCSTRING = r"""
 
 """
 
+
 class LogitsProcessor(ABC):
     """Abstract base class for all logit processors that can be applied during generation."""
+
     @add_start_docstrings(LOGITS_PROCESSOR_INPUTS_DOCSTRING)
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         """Torch method for processing logits."""
         raise NotImplementedError(
             f"{self.__class__} is an abstract class. Only classes inheriting this class can be called."
@@ -54,8 +58,11 @@ class LogitsProcessor(ABC):
 
 class LogitsWarper(ABC):
     """Abstract base class for all logit warpers that can be applied during generation with multinomial sampling."""
+
     @add_start_docstrings(LOGITS_PROCESSOR_INPUTS_DOCSTRING)
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         """Torch method for warping logits."""
         raise NotImplementedError(
             f"{self.__class__} is an abstract class. Only classes inheriting this class can be called."
@@ -69,8 +76,11 @@ class LogitsProcessorList(list):
     list and adds a specific `__call__` method to apply each :class:`~transformers.LogitsProcessor` or
     :class:`~transformers.LogitsProcessor` to the inputs.
     """
+
     @add_start_docstrings(LOGITS_PROCESSOR_INPUTS_DOCSTRING)
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         for processor in self:
             scores = processor(input_ids, scores)
         return scores
@@ -86,17 +96,24 @@ class MinLengthLogitsProcessor(LogitsProcessor):
         eos_token_id (:obj:`int`):
             The id of the `end-of-sequence` token.
     """
+
     def __init__(self, min_length: int, eos_token_id: int):
         if not isinstance(min_length, int) or min_length < 0:
-            raise ValueError(f"`min_length` has to be a positive integer, but is {min_length}")
+            raise ValueError(
+                f"`min_length` has to be a positive integer, but is {min_length}"
+            )
 
         if not isinstance(eos_token_id, int) or eos_token_id < 0:
-            raise ValueError(f"`eos_token_id` has to be a positive integer, but is {eos_token_id}")
+            raise ValueError(
+                f"`eos_token_id` has to be a positive integer, but is {eos_token_id}"
+            )
 
         self.min_length = min_length
         self.eos_token_id = eos_token_id
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         cur_len = input_ids.shape[-1]
         if cur_len < self.min_length:
             scores[:, self.eos_token_id] = -float("inf")
@@ -111,9 +128,12 @@ class TemperatureLogitsWarper(LogitsWarper):
         temperature (:obj:`float`):
             The value used to module the logits distribution.
     """
+
     def __init__(self, temperature: float):
         if not isinstance(temperature, float) or not (temperature > 0):
-            raise ValueError(f"`temperature` has to be a strictly positive float, but is {temperature}")
+            raise ValueError(
+                f"`temperature` has to be a strictly positive float, but is {temperature}"
+            )
 
         self.temperature = temperature
 
@@ -131,13 +151,18 @@ class RepetitionPenaltyLogitsProcessor(LogitsProcessor):
             The parameter for repetition penalty. 1.0 means no penalty. See `this paper
             <https://arxiv.org/pdf/1909.05858.pdf>`__ for more details.
     """
+
     def __init__(self, penalty: float):
         if not isinstance(penalty, float) or not (penalty > 0):
-            raise ValueError(f"`penalty` has to be a strictly positive float, but is {penalty}")
+            raise ValueError(
+                f"`penalty` has to be a strictly positive float, but is {penalty}"
+            )
 
         self.penalty = penalty
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         for i in range(scores.shape[0]):
             for previous_token in set(input_ids[i].tolist()):
                 # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
@@ -162,7 +187,13 @@ class TopPLogitsWarper(LogitsWarper):
         min_tokens_to_keep (:obj:`int`, `optional`, defaults to 1):
             Minimum number of tokens that cannot be filtered.
     """
-    def __init__(self, top_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+
+    def __init__(
+        self,
+        top_p: float,
+        filter_value: float = -float("Inf"),
+        min_tokens_to_keep: int = 1,
+    ):
         if not isinstance(top_p, float) or (top_p < 0 or top_p > 1.0):
             raise ValueError(f"`top_p` has to be a float > 0 and < 1, but is {top_p}")
 
@@ -170,7 +201,9 @@ class TopPLogitsWarper(LogitsWarper):
         self.filter_value = filter_value
         self.min_tokens_to_keep = min_tokens_to_keep
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         sorted_logits, sorted_indices = torch.sort(scores, descending=True)
         cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
 
@@ -184,7 +217,9 @@ class TopPLogitsWarper(LogitsWarper):
         sorted_indices_to_remove[..., 0] = 0
 
         # scatter sorted tensors to original indexing
-        indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+        indices_to_remove = sorted_indices_to_remove.scatter(
+            1, sorted_indices, sorted_indices_to_remove
+        )
         scores[indices_to_remove] = self.filter_value
         return scores
 
@@ -201,16 +236,28 @@ class TopKLogitsWarper(LogitsWarper):
         min_tokens_to_keep (:obj:`int`, `optional`, defaults to 1):
             Minimum number of tokens that cannot be filtered.
     """
-    def __init__(self, top_k: int, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+
+    def __init__(
+        self,
+        top_k: int,
+        filter_value: float = -float("Inf"),
+        min_tokens_to_keep: int = 1,
+    ):
         if not isinstance(top_k, int) or top_k <= 0:
-            raise ValueError(f"`top_k` has to be a strictly positive integer, but is {top_k}")
+            raise ValueError(
+                f"`top_k` has to be a strictly positive integer, but is {top_k}"
+            )
 
         self.top_k = top_k
         self.filter_value = filter_value
         self.min_tokens_to_keep = min_tokens_to_keep
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        top_k = min(max(self.top_k, self.min_tokens_to_keep), scores.size(-1))  # Safety check
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
+        top_k = min(
+            max(self.top_k, self.min_tokens_to_keep), scores.size(-1)
+        )  # Safety check
         # Remove all tokens with a probability less than the last token of the top-k
         indices_to_remove = scores < torch.topk(scores, top_k)[0][..., -1, None]
         scores[indices_to_remove] = self.filter_value
@@ -226,15 +273,22 @@ class NoRepeatNGramLogitsProcessor(LogitsProcessor):
         ngram_size (:obj:`int`):
             All ngrams of size :obj:`ngram_size` can only occur once.
     """
+
     def __init__(self, ngram_size: int):
         if not isinstance(ngram_size, int) or ngram_size <= 0:
-            raise ValueError(f"`ngram_size` has to be a strictly positive integer, but is {ngram_size}")
+            raise ValueError(
+                f"`ngram_size` has to be a strictly positive integer, but is {ngram_size}"
+            )
         self.ngram_size = ngram_size
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         num_batch_hypotheses = scores.shape[0]
         cur_len = input_ids.shape[-1]
-        banned_batch_tokens = self._calc_banned_ngram_tokens(input_ids, num_batch_hypotheses, cur_len)
+        banned_batch_tokens = self._calc_banned_ngram_tokens(
+            input_ids, num_batch_hypotheses, cur_len
+        )
 
         for i, banned_tokens in enumerate(banned_batch_tokens):
             scores[i, banned_tokens] = -float("inf")
@@ -254,7 +308,9 @@ class NoRepeatNGramLogitsProcessor(LogitsProcessor):
             generated_ngram = generated_ngrams[idx]
             for ngram in zip(*[gen_tokens[i:] for i in range(self.ngram_size)]):
                 prev_ngram_tuple = tuple(ngram[:-1])
-                generated_ngram[prev_ngram_tuple] = generated_ngram.get(prev_ngram_tuple, []) + [ngram[-1]]
+                generated_ngram[prev_ngram_tuple] = generated_ngram.get(
+                    prev_ngram_tuple, []
+                ) + [ngram[-1]]
 
         def _get_generated_ngrams(hypo_idx):
             # Before decoding the next token, prevent decoding of ngrams that have already appeared
@@ -262,7 +318,9 @@ class NoRepeatNGramLogitsProcessor(LogitsProcessor):
             ngram_idx = tuple(prev_input_ids[hypo_idx, start_idx:cur_len].tolist())
             return generated_ngrams[hypo_idx].get(ngram_idx, [])
 
-        banned_tokens = [_get_generated_ngrams(hypo_idx) for hypo_idx in range(num_hypos)]
+        banned_tokens = [
+            _get_generated_ngrams(hypo_idx) for hypo_idx in range(num_hypos)
+        ]
         return banned_tokens
 
 
@@ -278,28 +336,42 @@ class NoBadWordsLogitsProcessor(LogitsProcessor):
         eos_token_id (:obj:`int`):
             The id of the `end-of-sequence` token.
     """
+
     def __init__(self, bad_words_ids: Iterable[Iterable[int]], eos_token_id: int):
 
         if not isinstance(bad_words_ids, List) or len(bad_words_ids) == 0:
-            raise ValueError(f"`bad_words_ids` has to be a non-emtpy list, but is {bad_words_ids}.")
+            raise ValueError(
+                f"`bad_words_ids` has to be a non-emtpy list, but is {bad_words_ids}."
+            )
         if any(not isinstance(bad_word_ids, list) for bad_word_ids in bad_words_ids):
-            raise ValueError(f"`bad_words_ids` has to be a list of lists, but is {bad_words_ids}.")
+            raise ValueError(
+                f"`bad_words_ids` has to be a list of lists, but is {bad_words_ids}."
+            )
         if any(
-            any((not isinstance(token_id, (int, np.integer)) or token_id < 0) for token_id in bad_word_ids)
+            any(
+                (not isinstance(token_id, (int, np.integer)) or token_id < 0)
+                for token_id in bad_word_ids
+            )
             for bad_word_ids in bad_words_ids
         ):
             raise ValueError(
                 f"Each list in `bad_words_ids` has to be a list of positive integers, but is {bad_words_ids}."
             )
 
-        self.bad_words_ids = list(filter(lambda bad_token_seq: bad_token_seq != [eos_token_id], bad_words_ids))
+        self.bad_words_ids = list(
+            filter(lambda bad_token_seq: bad_token_seq != [eos_token_id], bad_words_ids)
+        )
 
         for banned_token_seq in self.bad_words_ids:
-            assert len(banned_token_seq) > 0, "Banned words token sequences {} cannot have an empty list".format(
+            assert (
+                len(banned_token_seq) > 0
+            ), "Banned words token sequences {} cannot have an empty list".format(
                 bad_words_ids
             )
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+    def __call__(
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor
+    ) -> torch.FloatTensor:
         banned_tokens = self._calc_banned_bad_words_ids(input_ids)
         scores = self._set_scores_to_inf_for_banned_tokens(scores, banned_tokens)
 
@@ -318,12 +390,17 @@ class NoBadWordsLogitsProcessor(LogitsProcessor):
         else:
             return False
 
-    def _calc_banned_bad_words_ids(self, prev_input_ids: Iterable[int]) -> Iterable[int]:
+    def _calc_banned_bad_words_ids(
+        self, prev_input_ids: Iterable[int]
+    ) -> Iterable[int]:
         banned_tokens = []
         for prev_input_ids_slice in prev_input_ids:
             banned_tokens_slice = []
             for banned_token_seq in self.bad_words_ids:
-                if self._tokens_match(prev_input_ids_slice, banned_token_seq[:-1]) is False:
+                if (
+                    self._tokens_match(prev_input_ids_slice, banned_token_seq[:-1])
+                    is False
+                ):
                     # if tokens do not match continue
                     continue
 
@@ -333,7 +410,9 @@ class NoBadWordsLogitsProcessor(LogitsProcessor):
 
         return banned_tokens
 
-    def _set_scores_to_inf_for_banned_tokens(self, scores: torch.Tensor, banned_tokens: List[List[int]]) -> None:
+    def _set_scores_to_inf_for_banned_tokens(
+        self, scores: torch.Tensor, banned_tokens: List[List[int]]
+    ) -> None:
         """
         Modifies the scores in place by setting the banned token positions to `-inf`. Banned token is expected to be a
         list of list of banned tokens to ban in the format [[batch index, vocabulary position],...
@@ -357,7 +436,10 @@ class NoBadWordsLogitsProcessor(LogitsProcessor):
         # [ 1  0  0 ]
 
         banned_mask = (
-            torch.sparse.LongTensor(banned_mask.t(), indices, scores.size()).to(scores.device).to_dense().bool()
+            torch.sparse.LongTensor(banned_mask.t(), indices, scores.size())
+            .to(scores.device)
+            .to_dense()
+            .bool()
         )
         scores = scores.masked_fill(banned_mask, -float("inf"))
         return scores

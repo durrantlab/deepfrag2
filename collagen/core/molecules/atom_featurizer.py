@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from collagen.core.molecules.mol import Mol
     from collagen.core.molecules.abstract_mol import AbstractAtom
 
+
 class AtomFeaturizer(object):
 
     """Abstract AtomFeaturizer class. Other classes inherit this one. Invokes
@@ -79,7 +80,9 @@ class AtomicNumFeaturizer(AtomFeaturizer):
             # Radii not provided, so assign radius 1 to all atoms.
             self.radii = [1] * len(self.layers)
 
-    def featurize(self, atom: Union["rdkit.Chem.rdchem.Atom", "AbstractAtom"]) -> Tuple[int, float]:
+    def featurize(
+        self, atom: Union["rdkit.Chem.rdchem.Atom", "AbstractAtom"]
+    ) -> Tuple[int, float]:
         """Feature an atom.
 
         Args:
@@ -91,7 +94,7 @@ class AtomicNumFeaturizer(AtomFeaturizer):
         num: Union[int, None] = None
 
         if type(atom) is rdkit.Chem.rdchem.Atom:
-            num = cast(int, atom.GetAtomicNum()) # type: ignore
+            num = cast(int, atom.GetAtomicNum())  # type: ignore
         elif type(atom).__name__ == "AbstractAtom":
             num = cast(int, atom.num)
         else:

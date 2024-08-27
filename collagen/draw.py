@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from collagen.core.molecules.mol import Mol
     import torch
 
+
 class VoxelView(object):
 
     """Useful for visualizing voxels."""

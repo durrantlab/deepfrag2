@@ -30,7 +30,12 @@ from .file_utils import (
     add_start_docstrings_to_model_forward,
     replace_return_docstrings,
 )
-from .modeling_tf_utils import TFPreTrainedModel, get_initializer, keras_serializable, shape_list
+from .modeling_tf_utils import (
+    TFPreTrainedModel,
+    get_initializer,
+    keras_serializable,
+    shape_list,
+)
 from .tokenization_utils_base import BatchEncoding
 from .utils import logging
 
@@ -81,6 +86,7 @@ class TFLxmertModelOutput(ModelOutput):
             sequence_length)`. Attentions weights after the attention softmax, used to compute the weighted average in
             the self-attention heads.
     """
+
     language_output: Optional[tf.Tensor] = None
     vision_output: Optional[tf.Tensor] = None
     pooled_output: Optional[tf.Tensor] = None
@@ -127,6 +133,7 @@ class TFLxmertForPreTrainingOutput(ModelOutput):
             the self-attention heads.
 
     """
+
     loss: [tf.Tensor] = None
     prediction_logits: Optional[tf.Tensor] = None
     cross_relationship_score: Optional[tf.Tensor] = None
@@ -158,7 +165,9 @@ class TFLxmertVisualFeatureEncoder(tf.keras.layers.Layer):
             kernel_initializer=get_initializer(config.initializer_range),
             name="box_fc",
         )
-        self.box_layer_norm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="box_layer_norm")
+        self.box_layer_norm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="box_layer_norm"
+        )
 
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
 
@@ -177,6 +186,7 @@ class TFLxmertVisualFeatureEncoder(tf.keras.layers.Layer):
 
 class TFLxmertEmbeddings(tf.keras.layers.Layer):
     """Construct the embeddings from word, position and token_type embeddings."""
+
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = config.vocab_size
@@ -198,7 +208,9 @@ class TFLxmertEmbeddings(tf.keras.layers.Layer):
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
-        self.LayerNorm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="LayerNorm"
+        )
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
 
     def build(self, input_shape):
@@ -315,10 +327,14 @@ class TFLxmertAttention(tf.keras.layers.Layer):
         self.dropout = tf.keras.layers.Dropout(config.attention_probs_dropout_prob)
 
     def transpose_for_scores(self, x, batch_size):
-        x = tf.reshape(x, (batch_size, -1, self.num_attention_heads, self.attention_head_size))
+        x = tf.reshape(
+            x, (batch_size, -1, self.num_attention_heads, self.attention_head_size)
+        )
         return tf.transpose(x, perm=[0, 2, 1, 3])
 
-    def call(self, hidden_states, context, attention_mask, output_attentions, training=False):
+    def call(
+        self, hidden_states, context, attention_mask, output_attentions, training=False
+    ):
         batch_size = shape_list(hidden_states)[0]
         mixed_query_layer = self.query(hidden_states)
         mixed_key_layer = self.key(context)
@@ -352,7 +368,9 @@ class TFLxmertAttention(tf.keras.layers.Layer):
             context_layer, (batch_size, -1, self.all_head_size)
         )  # (batch_size, seq_len_q, all_head_size)
 
-        outputs = (context_layer, attention_probs) if output_attentions else (context_layer,)
+        outputs = (
+            (context_layer, attention_probs) if output_attentions else (context_layer,)
+        )
         return outputs
 
 
@@ -384,7 +402,9 @@ class TFLxmertOutput(tf.keras.layers.Layer):
             name="dense",
         )
 
-        self.LayerNorm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="LayerNorm"
+        )
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
 
     def call(self, hidden_states, input_tensor, training=False):
@@ -402,7 +422,9 @@ class TFLxmertAttentionOutput(tf.keras.layers.Layer):
             kernel_initializer=get_initializer(config.initializer_range),
             name="dense",
         )
-        self.LayerNorm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="LayerNorm"
+        )
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
 
     def call(self, hidden_states, input_tensor, training=False):
@@ -420,11 +442,17 @@ class TFLxmertSelfAttentionLayer(tf.keras.layers.Layer):
 
     def call(self, input_tensor, attention_mask, output_attentions, training=False):
         # Self attention attends to itself, thus keys and queries are the same (input_tensor).
-        self_output = self.self(input_tensor, input_tensor, attention_mask, output_attentions)
+        self_output = self.self(
+            input_tensor, input_tensor, attention_mask, output_attentions
+        )
         if output_attentions:
             attention_probs = self_output[1]
         attention_output = self.attention_output(self_output[0], input_tensor)
-        return (attention_output, attention_probs) if output_attentions else (attention_output,)
+        return (
+            (attention_output, attention_probs)
+            if output_attentions
+            else (attention_output,)
+        )
 
 
 class TFLxmertCrossAttentionLayer(tf.keras.layers.Layer):
@@ -441,11 +469,19 @@ class TFLxmertCrossAttentionLayer(tf.keras.layers.Layer):
         output_attentions=False,
         training=False,
     ):
-        output = self.att(input_tensor, ctx_tensor, ctx_att_mask, output_attentions, training=training)
+        output = self.att(
+            input_tensor, ctx_tensor, ctx_att_mask, output_attentions, training=training
+        )
         if output_attentions:
             attention_probs = output[1]
-        attention_output = self.attention_output(output[0], input_tensor, training=training)
-        outputs = (attention_output, attention_probs) if output_attentions else (attention_output,)
+        attention_output = self.attention_output(
+            output[0], input_tensor, training=training
+        )
+        outputs = (
+            (attention_output, attention_probs)
+            if output_attentions
+            else (attention_output,)
+        )
         return outputs
 
 
@@ -457,18 +493,26 @@ class TFLxmertLayer(tf.keras.layers.Layer):
         self.transformer_output = TFLxmertOutput(config, name="output")
 
     def call(self, hidden_states, attention_mask, output_attentions, training=False):
-        attention_outputs = self.attention(hidden_states, attention_mask, output_attentions, training=training)
+        attention_outputs = self.attention(
+            hidden_states, attention_mask, output_attentions, training=training
+        )
         attention_output = attention_outputs[0]
         intermediate_output = self.intermediate(attention_output)
-        layer_output = self.transformer_output(intermediate_output, attention_output, training=training)
-        outputs = (layer_output,) + attention_outputs[1:]  # add attentions if we output them
+        layer_output = self.transformer_output(
+            intermediate_output, attention_output, training=training
+        )
+        outputs = (layer_output,) + attention_outputs[
+            1:
+        ]  # add attentions if we output them
         return outputs
 
 
 class TFLxmertXLayer(tf.keras.layers.Layer):
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
-        self.visual_attention = TFLxmertCrossAttentionLayer(config, name="visual_attention")
+        self.visual_attention = TFLxmertCrossAttentionLayer(
+            config, name="visual_attention"
+        )
 
         # Self-attention Layers
         self.lang_self_att = TFLxmertSelfAttentionLayer(config, name="lang_self_att")
@@ -523,8 +567,12 @@ class TFLxmertXLayer(tf.keras.layers.Layer):
     ):
         # Self Attention
         output_attentions = False
-        lang_att_output = self.lang_self_att(lang_input, lang_attention_mask, output_attentions, training=training)
-        visn_att_output = self.visn_self_att(visn_input, visn_attention_mask, output_attentions, training=training)
+        lang_att_output = self.lang_self_att(
+            lang_input, lang_attention_mask, output_attentions, training=training
+        )
+        visn_att_output = self.visn_self_att(
+            visn_input, visn_attention_mask, output_attentions, training=training
+        )
         return lang_att_output[0], visn_att_output[0]
 
     def output_fc(self, lang_input, visn_input, training=False):
@@ -565,9 +613,15 @@ class TFLxmertXLayer(tf.keras.layers.Layer):
             visn_attention_mask,
             training=training,
         )
-        lang_output, visn_output = self.output_fc(lang_att_output, visn_att_output, training=training)
+        lang_output, visn_output = self.output_fc(
+            lang_att_output, visn_att_output, training=training
+        )
 
-        return (lang_output, visn_output, attention_probs[0]) if output_attentions else (lang_output, visn_output)
+        return (
+            (lang_output, visn_output, attention_probs[0])
+            if output_attentions
+            else (lang_output, visn_output)
+        )
 
 
 class TFLxmertEncoder(tf.keras.layers.Layer):
@@ -583,9 +637,18 @@ class TFLxmertEncoder(tf.keras.layers.Layer):
 
         # Layers
         # Using self.layer instead of self.l_layer to support loading BERT weights.
-        self.layer = [TFLxmertLayer(config, name="layer_._{}".format(i)) for i in range(self.num_l_layers)]
-        self.x_layers = [TFLxmertXLayer(config, name="x_layers_._{}".format(i)) for i in range(self.num_x_layers)]
-        self.r_layers = [TFLxmertLayer(config, name="r_layers_._{}".format(i)) for i in range(self.num_r_layers)]
+        self.layer = [
+            TFLxmertLayer(config, name="layer_._{}".format(i))
+            for i in range(self.num_l_layers)
+        ]
+        self.x_layers = [
+            TFLxmertXLayer(config, name="x_layers_._{}".format(i))
+            for i in range(self.num_x_layers)
+        ]
+        self.r_layers = [
+            TFLxmertLayer(config, name="r_layers_._{}".format(i))
+            for i in range(self.num_r_layers)
+        ]
         self.config = config
 
     def call(
@@ -600,15 +663,23 @@ class TFLxmertEncoder(tf.keras.layers.Layer):
     ):
         vision_hidden_states = ()
         language_hidden_states = ()
-        vision_attentions = () if output_attentions or self.config.output_attentions else None
-        language_attentions = () if output_attentions or self.config.output_attentions else None
-        cross_encoder_attentions = () if output_attentions or self.config.output_attentions else None
+        vision_attentions = (
+            () if output_attentions or self.config.output_attentions else None
+        )
+        language_attentions = (
+            () if output_attentions or self.config.output_attentions else None
+        )
+        cross_encoder_attentions = (
+            () if output_attentions or self.config.output_attentions else None
+        )
 
         visual_feats = self.visn_fc([visual_feats, visual_pos], training=training)
 
         # Run language layers
         for layer_module in self.layer:
-            l_outputs = layer_module(lang_feats, lang_attention_mask, output_attentions, training=training)
+            l_outputs = layer_module(
+                lang_feats, lang_attention_mask, output_attentions, training=training
+            )
             lang_feats = l_outputs[0]
             language_hidden_states = language_hidden_states + (lang_feats,)
             if language_attentions is not None:
@@ -674,7 +745,9 @@ class TFLxmertMainLayer(tf.keras.layers.Layer):
         batch_size = 2
         num_visual_features = 10
         input_ids = tf.constant([[3, 5, 6], [2, 3, 4]])
-        visual_feats = tf.random.uniform((batch_size, num_visual_features, self.config.visual_feat_dim))
+        visual_feats = tf.random.uniform(
+            (batch_size, num_visual_features, self.config.visual_feat_dim)
+        )
         visual_pos = tf.random.uniform((batch_size, num_visual_features, 4))
 
         return {
@@ -729,11 +802,15 @@ class TFLxmertMainLayer(tf.keras.layers.Layer):
             visual_feats = inputs[1] if len(inputs) > 1 else visual_feats
             visual_pos = inputs[2] if len(inputs) > 2 else visual_pos
             attention_mask = inputs[3] if len(inputs) > 3 else attention_mask
-            visual_attention_mask = inputs[4] if len(inputs) > 4 else visual_attention_mask
+            visual_attention_mask = (
+                inputs[4] if len(inputs) > 4 else visual_attention_mask
+            )
             token_type_ids = inputs[5] if len(inputs) > 5 else token_type_ids
             inputs_embeds = inputs[6] if len(inputs) > 6 else inputs_embeds
             output_attentions = inputs[7] if len(inputs) > 7 else output_attentions
-            output_hidden_states = inputs[8] if len(inputs) > 8 else output_hidden_states
+            output_hidden_states = (
+                inputs[8] if len(inputs) > 8 else output_hidden_states
+            )
             return_dict = inputs[9] if len(inputs) > 9 else return_dict
             assert len(inputs) <= 10, "Too many inputs."
         elif isinstance(inputs, dict):
@@ -741,22 +818,36 @@ class TFLxmertMainLayer(tf.keras.layers.Layer):
             visual_feats = inputs.get("visual_feats", visual_feats)
             visual_pos = inputs.get("visual_pos", visual_pos)
             attention_mask = inputs.get("attention_mask", attention_mask)
-            visual_attention_mask = inputs.get("visual_attention_mask", visual_attention_mask)
+            visual_attention_mask = inputs.get(
+                "visual_attention_mask", visual_attention_mask
+            )
             token_type_ids = inputs.get("token_type_ids", token_type_ids)
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             assert len(inputs) <= 10, "Too many inputs."
         else:
             input_ids = inputs
 
-        output_attentions = output_attentions if output_attentions is not None else self.output_attentions
-        output_hidden_states = output_hidden_states if output_hidden_states is not None else self.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.output_attentions
+        )
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.output_hidden_states
+        )
         return_dict = return_dict if return_dict is not None else self.return_dict
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = shape_list(input_ids)
         elif inputs_embeds is not None:
@@ -764,7 +855,9 @@ class TFLxmertMainLayer(tf.keras.layers.Layer):
         else:
             raise ValueError("You have to specify either input_ids or inputs_embeds")
         if visual_pos is None or visual_feats is None:
-            raise ValueError("visual_feats and visual_pos cannot be `None` in LXMERT's `call` method.")
+            raise ValueError(
+                "visual_feats and visual_pos cannot be `None` in LXMERT's `call` method."
+            )
 
         if attention_mask is None:
             attention_mask = tf.fill(input_shape, 1)
@@ -788,15 +881,23 @@ class TFLxmertMainLayer(tf.keras.layers.Layer):
         extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
 
         if visual_attention_mask is not None:
-            extended_visual_attention_mask = visual_attention_mask[:, tf.newaxis, tf.newaxis, :]
+            extended_visual_attention_mask = visual_attention_mask[
+                :, tf.newaxis, tf.newaxis, :
+            ]
 
-            extended_visual_attention_mask = tf.cast(extended_visual_attention_mask, tf.float32)
-            extended_visual_attention_mask = (1.0 - extended_visual_attention_mask) * -10000.0
+            extended_visual_attention_mask = tf.cast(
+                extended_visual_attention_mask, tf.float32
+            )
+            extended_visual_attention_mask = (
+                1.0 - extended_visual_attention_mask
+            ) * -10000.0
         else:
             extended_visual_attention_mask = None
 
         # Positional Word Embeddings
-        embedding_output = self.embeddings([input_ids, token_type_ids, inputs_embeds], training=training)
+        embedding_output = self.embeddings(
+            [input_ids, token_type_ids, inputs_embeds], training=training
+        )
 
         # Run Lxmert encoder
         encoder_outputs = self.encoder(
@@ -823,24 +924,36 @@ class TFLxmertMainLayer(tf.keras.layers.Layer):
                 cross_encoder_attentions,
             )
 
-        hidden_states = (language_hidden_states, vision_hidden_states) if output_hidden_states else ()
+        hidden_states = (
+            (language_hidden_states, vision_hidden_states)
+            if output_hidden_states
+            else ()
+        )
 
         visual_output = vision_hidden_states[-1]
         lang_output = language_hidden_states[-1]
         pooled_output = self.pooler(lang_output)
 
         if not return_dict:
-            return (lang_output, visual_output, pooled_output) + hidden_states + all_attentions
+            return (
+                (lang_output, visual_output, pooled_output)
+                + hidden_states
+                + all_attentions
+            )
 
         return TFLxmertModelOutput(
             pooled_output=pooled_output,
             language_output=lang_output,
             vision_output=visual_output,
-            language_hidden_states=language_hidden_states if output_hidden_states else None,
+            language_hidden_states=language_hidden_states
+            if output_hidden_states
+            else None,
             vision_hidden_states=vision_hidden_states if output_hidden_states else None,
             language_attentions=language_attentions if output_attentions else None,
             vision_attentions=vision_attentions if output_attentions else None,
-            cross_encoder_attentions=cross_encoder_attentions if output_attentions else None,
+            cross_encoder_attentions=cross_encoder_attentions
+            if output_attentions
+            else None,
         )
 
 
@@ -849,6 +962,7 @@ class TFLxmertPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = LxmertConfig
     base_model_prefix = "lxmert"
 
@@ -953,6 +1067,7 @@ LXMERT_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
+
 @add_start_docstrings(
     "The bare Lxmert Model transformer outputting raw hidden-states without any specific head on top.",
     LXMERT_START_DOCSTRING,
@@ -1004,7 +1119,9 @@ class TFLxmertPredictionHeadTransform(tf.keras.layers.Layer):
             self.transform_act_fn = get_tf_activation(config.hidden_act)
         else:
             self.transform_act_fn = config.hidden_act
-        self.LayerNorm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="LayerNorm"
+        )
 
     def call(self, hidden_states):
         hidden_states = self.dense(hidden_states)
@@ -1024,7 +1141,9 @@ class TFLxmertLMPredictionHead(tf.keras.layers.Layer):
         self.input_embeddings = input_embeddings
 
     def build(self, input_shape):
-        self.bias = self.add_weight(shape=(self.vocab_size,), initializer="zeros", trainable=True, name="bias")
+        self.bias = self.add_weight(
+            shape=(self.vocab_size,), initializer="zeros", trainable=True, name="bias"
+        )
         super().build(input_shape)
 
     def call(self, hidden_states):
@@ -1038,7 +1157,9 @@ class TFLxmertMLMHead(tf.keras.layers.Layer):
     def __init__(self, config, input_embeddings, **kwargs):
         super().__init__(**kwargs)
 
-        self.predictions = TFLxmertLMPredictionHead(config, input_embeddings, name="predictions")
+        self.predictions = TFLxmertLMPredictionHead(
+            config, input_embeddings, name="predictions"
+        )
 
     def call(self, sequence_output):
         prediction_scores = self.predictions(sequence_output)
@@ -1048,7 +1169,9 @@ class TFLxmertMLMHead(tf.keras.layers.Layer):
 class TFLxmertPreTrainingHeads(tf.keras.layers.Layer):
     def __init__(self, config, input_embeddings, **kwargs):
         super().__init__(**kwargs)
-        self.predictions = TFLxmertLMPredictionHead(config, input_embeddings, name="predictions")
+        self.predictions = TFLxmertLMPredictionHead(
+            config, input_embeddings, name="predictions"
+        )
 
         self.seq_relationship = tf.keras.layers.Dense(
             2,
@@ -1072,7 +1195,9 @@ class TFLxmertVisualAnswerHead(tf.keras.layers.Layer):
             name="logit_fc_._0",
         )
         self.activation = get_tf_activation("gelu")
-        self.layer_norm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="logit_fc_._2")
+        self.layer_norm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="logit_fc_._2"
+        )
         self.dense_1 = tf.keras.layers.Dense(
             num_labels,
             kernel_initializer=get_initializer(config.initializer_range),
@@ -1122,7 +1247,9 @@ class TFLxmertVisualObjHead(tf.keras.layers.Layer):
         return output
 
 
-@add_start_docstrings("""Lxmert Model with a `language modeling` head on top. """, LXMERT_START_DOCSTRING)
+@add_start_docstrings(
+    """Lxmert Model with a `language modeling` head on top. """, LXMERT_START_DOCSTRING
+)
 class TFLxmertForPreTraining(TFLxmertPreTrainedModel):
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
@@ -1143,9 +1270,13 @@ class TFLxmertForPreTraining(TFLxmertPreTrainedModel):
         # Pre-training heads
         self.cls = TFLxmertPreTrainingHeads(config, self.lxmert.embeddings, name="cls")
         if self.task_obj_predict:
-            self.obj_predict_head = TFLxmertVisualObjHead(config, name="obj_predict_head")
+            self.obj_predict_head = TFLxmertVisualObjHead(
+                config, name="obj_predict_head"
+            )
         if self.task_qa:
-            self.answer_head = TFLxmertVisualAnswerHead(config, self.num_qa_labels, name="answer_head")
+            self.answer_head = TFLxmertVisualAnswerHead(
+                config, self.num_qa_labels, name="answer_head"
+            )
 
         # Loss functions
         self.loss_fcts = {
@@ -1186,7 +1317,9 @@ class TFLxmertForPreTraining(TFLxmertPreTrainedModel):
         batch_size = 2
         num_visual_features = 10
         input_ids = tf.constant([[3, 5, 6], [2, 3, 4]])
-        visual_feats = tf.random.uniform((batch_size, num_visual_features, self.config.visual_feat_dim))
+        visual_feats = tf.random.uniform(
+            (batch_size, num_visual_features, self.config.visual_feat_dim)
+        )
         visual_pos = tf.random.uniform((batch_size, num_visual_features, 4))
 
         if self.config.task_obj_predict:
@@ -1217,7 +1350,9 @@ class TFLxmertForPreTraining(TFLxmertPreTrainedModel):
         }
 
     @add_start_docstrings_to_model_forward(LXMERT_INPUTS_DOCSTRING)
-    @replace_return_docstrings(output_type=TFLxmertForPreTrainingOutput, config_class=_CONFIG_FOR_DOC)
+    @replace_return_docstrings(
+        output_type=TFLxmertForPreTrainingOutput, config_class=_CONFIG_FOR_DOC
+    )
     def call(
         self,
         inputs=None,
@@ -1286,7 +1421,9 @@ class TFLxmertForPreTraining(TFLxmertPreTrainedModel):
             lxmert_output[1],
             lxmert_output[2],
         )
-        lang_prediction_scores, cross_relationship_score = self.cls(lang_output, pooled_output)
+        lang_prediction_scores, cross_relationship_score = self.cls(
+            lang_output, pooled_output
+        )
         if self.task_qa:
             answer_score = self.answer_head(pooled_output)
         else:
@@ -1294,7 +1431,12 @@ class TFLxmertForPreTraining(TFLxmertPreTrainedModel):
 
         total_loss = (
             None
-            if (masked_lm_labels is None and matched_label is None and obj_labels is None and ans is None)
+            if (
+                masked_lm_labels is None
+                and matched_label is None
+                and obj_labels is None
+                and ans is None
+            )
             else tf.constant(0.0)
         )
         losses = ()
@@ -1330,13 +1472,20 @@ class TFLxmertForPreTraining(TFLxmertPreTrainedModel):
 
                 if visn_loss.ndim > 1:  # Regression Losses
                     visn_loss = tf.reduce_mean(visn_loss)
-                visn_loss = tf.reduce_mean(visn_loss * tf.cast(tf.reshape(mask_conf, [-1]), visn_loss.dtype)) * weight
+                visn_loss = (
+                    tf.reduce_mean(
+                        visn_loss
+                        * tf.cast(tf.reshape(mask_conf, [-1]), visn_loss.dtype)
+                    )
+                    * weight
+                )
                 total_visn_loss += visn_loss
                 losses += (visn_loss,)
             total_loss += total_visn_loss
         if ans is not None and self.task_qa:
             answer_loss = self.loss_fcts["ce"](
-                tf.reshape(ans, [-1]), tf.reshape(answer_score, [-1, self.num_qa_labels])
+                tf.reshape(ans, [-1]),
+                tf.reshape(answer_score, [-1, self.num_qa_labels]),
             )
             # exclude "*2" here to match the effect of QA losses.
             # Previous: (loss *0) for 6 epochs, (loss *2) for 6 epochs.   (Used 10 instead of 6 in EMNLP paper)

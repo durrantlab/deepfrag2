@@ -226,6 +226,7 @@ class AutoTokenizer:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
+
     def __init__(self):
         raise EnvironmentError(
             "AutoTokenizer is designed to be instantiated "
@@ -304,7 +305,9 @@ class AutoTokenizer:
             config = AutoConfig.from_pretrained(pretrained_model_name_or_path, **kwargs)
 
         if "bert-base-japanese" in str(pretrained_model_name_or_path):
-            return BertJapaneseTokenizer.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+            return BertJapaneseTokenizer.from_pretrained(
+                pretrained_model_name_or_path, *inputs, **kwargs
+            )
 
         use_fast = kwargs.pop("use_fast", False)
 
@@ -316,9 +319,13 @@ class AutoTokenizer:
             tokenizer_class = globals().get(tokenizer_class_candidate)
             if tokenizer_class is None:
                 raise ValueError(
-                    "Tokenizer class {} does not exist or is not currently imported.".format(tokenizer_class_candidate)
+                    "Tokenizer class {} does not exist or is not currently imported.".format(
+                        tokenizer_class_candidate
+                    )
                 )
-            return tokenizer_class.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+            return tokenizer_class.from_pretrained(
+                pretrained_model_name_or_path, *inputs, **kwargs
+            )
 
         # if model is an encoder decoder, the encoder tokenizer class is used by default
         if isinstance(config, EncoderDecoderConfig):
@@ -334,13 +341,18 @@ class AutoTokenizer:
         if type(config) in TOKENIZER_MAPPING.keys():
             tokenizer_class_py, tokenizer_class_fast = TOKENIZER_MAPPING[type(config)]
             if tokenizer_class_fast and (use_fast or tokenizer_class_py is None):
-                return tokenizer_class_fast.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+                return tokenizer_class_fast.from_pretrained(
+                    pretrained_model_name_or_path, *inputs, **kwargs
+                )
             else:
-                return tokenizer_class_py.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+                return tokenizer_class_py.from_pretrained(
+                    pretrained_model_name_or_path, *inputs, **kwargs
+                )
 
         raise ValueError(
             "Unrecognized configuration class {} to build an AutoTokenizer.\n"
             "Model type should be one of {}.".format(
-                config.__class__, ", ".join(c.__name__ for c in TOKENIZER_MAPPING.keys())
+                config.__class__,
+                ", ".join(c.__name__ for c in TOKENIZER_MAPPING.keys()),
             )
         )

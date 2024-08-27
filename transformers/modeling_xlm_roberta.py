@@ -57,6 +57,7 @@ XLM_ROBERTA_START_DOCSTRING = r"""
             weights.
 """
 
+
 @add_start_docstrings(
     "The bare XLM-RoBERTa Model transformer outputting raw hidden-states without any specific head on top.",
     XLM_ROBERTA_START_DOCSTRING,
@@ -66,6 +67,7 @@ class XLMRobertaModel(RobertaModel):
     This class overrides :class:`~transformers.RobertaModel`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -78,6 +80,7 @@ class XLMRobertaForCausalLM(RobertaForCausalLM):
     This class overrides :class:`~transformers.RobertaForCausalLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -90,6 +93,7 @@ class XLMRobertaForMaskedLM(RobertaForMaskedLM):
     This class overrides :class:`~transformers.RobertaForMaskedLM`. Please check the superclass for the appropriate
     documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -105,6 +109,7 @@ class XLMRobertaForSequenceClassification(RobertaForSequenceClassification):
     This class overrides :class:`~transformers.RobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -120,6 +125,7 @@ class XLMRobertaForMultipleChoice(RobertaForMultipleChoice):
     This class overrides :class:`~transformers.RobertaForMultipleChoice`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -135,6 +141,7 @@ class XLMRobertaForTokenClassification(RobertaForTokenClassification):
     This class overrides :class:`~transformers.RobertaForTokenClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig
 
 
@@ -150,4 +157,5 @@ class XLMRobertaForQuestionAnswering(RobertaForQuestionAnswering):
     This class overrides :class:`~transformers.RobertaForQuestionAnswering`. Please check the superclass for the
     appropriate documentation alongside usage examples.
     """
+
     config_class = XLMRobertaConfig

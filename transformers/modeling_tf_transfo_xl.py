@@ -30,7 +30,12 @@ from .file_utils import (
     add_start_docstrings_to_model_forward,
 )
 from .modeling_tf_transfo_xl_utilities import TFAdaptiveSoftmaxMask
-from .modeling_tf_utils import TFPreTrainedModel, get_initializer, keras_serializable, shape_list
+from .modeling_tf_utils import (
+    TFPreTrainedModel,
+    get_initializer,
+    keras_serializable,
+    shape_list,
+)
 from .tokenization_utils import BatchEncoding
 from .utils import logging
 
@@ -63,7 +68,16 @@ class TFPositionalEmbedding(tf.keras.layers.Layer):
 
 
 class TFPositionwiseFF(tf.keras.layers.Layer):
-    def __init__(self, d_model, d_inner, dropout, pre_lnorm=False, layer_norm_epsilon=1e-5, init_std=0.02, **kwargs):
+    def __init__(
+        self,
+        d_model,
+        d_inner,
+        dropout,
+        pre_lnorm=False,
+        layer_norm_epsilon=1e-5,
+        init_std=0.02,
+        **kwargs
+    ):
         super().__init__(**kwargs)
 
         self.d_model = d_model
@@ -71,13 +85,20 @@ class TFPositionwiseFF(tf.keras.layers.Layer):
         self.dropout = dropout
 
         self.layer_1 = tf.keras.layers.Dense(
-            d_inner, kernel_initializer=get_initializer(init_std), activation=tf.nn.relu, name="CoreNet_._0"
+            d_inner,
+            kernel_initializer=get_initializer(init_std),
+            activation=tf.nn.relu,
+            name="CoreNet_._0",
         )
         self.drop_1 = tf.keras.layers.Dropout(dropout)
-        self.layer_2 = tf.keras.layers.Dense(d_model, kernel_initializer=get_initializer(init_std), name="CoreNet_._3")
+        self.layer_2 = tf.keras.layers.Dense(
+            d_model, kernel_initializer=get_initializer(init_std), name="CoreNet_._3"
+        )
         self.drop_2 = tf.keras.layers.Dropout(dropout)
 
-        self.layer_norm = tf.keras.layers.LayerNormalization(epsilon=layer_norm_epsilon, name="layer_norm")
+        self.layer_norm = tf.keras.layers.LayerNormalization(
+            epsilon=layer_norm_epsilon, name="layer_norm"
+        )
 
         self.pre_lnorm = pre_lnorm
 
@@ -130,16 +151,24 @@ class TFRelPartialLearnableMultiHeadAttn(tf.keras.layers.Layer):
         self.output_attentions = output_attentions
 
         self.qkv_net = tf.keras.layers.Dense(
-            3 * n_head * d_head, kernel_initializer=get_initializer(init_std), use_bias=False, name="qkv_net"
+            3 * n_head * d_head,
+            kernel_initializer=get_initializer(init_std),
+            use_bias=False,
+            name="qkv_net",
         )
 
         self.drop = tf.keras.layers.Dropout(dropout)
         self.dropatt = tf.keras.layers.Dropout(dropatt)
         self.o_net = tf.keras.layers.Dense(
-            d_model, kernel_initializer=get_initializer(init_std), use_bias=False, name="o_net"
+            d_model,
+            kernel_initializer=get_initializer(init_std),
+            use_bias=False,
+            name="o_net",
         )
 
-        self.layer_norm = tf.keras.layers.LayerNormalization(epsilon=layer_norm_epsilon, name="layer_norm")
+        self.layer_norm = tf.keras.layers.LayerNormalization(
+            epsilon=layer_norm_epsilon, name="layer_norm"
+        )
 
         self.scale = 1 / (d_head ** 0.5)
 
@@ -153,16 +182,25 @@ class TFRelPartialLearnableMultiHeadAttn(tf.keras.layers.Layer):
             self.r_w_bias = None
 
         self.r_net = tf.keras.layers.Dense(
-            self.n_head * self.d_head, kernel_initializer=get_initializer(init_std), use_bias=False, name="r_net"
+            self.n_head * self.d_head,
+            kernel_initializer=get_initializer(init_std),
+            use_bias=False,
+            name="r_net",
         )
 
     def build(self, input_shape):
         if self.r_r_bias is None or self.r_w_bias is None:  # Biases are not shared
             self.r_r_bias = self.add_weight(
-                shape=(self.n_head, self.d_head), initializer="zeros", trainable=True, name="r_r_bias"
+                shape=(self.n_head, self.d_head),
+                initializer="zeros",
+                trainable=True,
+                name="r_r_bias",
             )
             self.r_w_bias = self.add_weight(
-                shape=(self.n_head, self.d_head), initializer="zeros", trainable=True, name="r_w_bias"
+                shape=(self.n_head, self.d_head),
+                initializer="zeros",
+                trainable=True,
+                name="r_w_bias",
             )
         super().build(input_shape)
 
@@ -200,18 +238,30 @@ class TFRelPartialLearnableMultiHeadAttn(tf.keras.layers.Layer):
 
         klen = shape_list(w_head_k)[0]
 
-        w_head_q = tf.reshape(w_head_q, (qlen, bsz, self.n_head, self.d_head))  # qlen x bsz x n_head x d_head
-        w_head_k = tf.reshape(w_head_k, (klen, bsz, self.n_head, self.d_head))  # qlen x bsz x n_head x d_head
-        w_head_v = tf.reshape(w_head_v, (klen, bsz, self.n_head, self.d_head))  # qlen x bsz x n_head x d_head
+        w_head_q = tf.reshape(
+            w_head_q, (qlen, bsz, self.n_head, self.d_head)
+        )  # qlen x bsz x n_head x d_head
+        w_head_k = tf.reshape(
+            w_head_k, (klen, bsz, self.n_head, self.d_head)
+        )  # qlen x bsz x n_head x d_head
+        w_head_v = tf.reshape(
+            w_head_v, (klen, bsz, self.n_head, self.d_head)
+        )  # qlen x bsz x n_head x d_head
 
-        r_head_k = tf.reshape(r_head_k, (rlen, self.n_head, self.d_head))  # qlen x n_head x d_head
+        r_head_k = tf.reshape(
+            r_head_k, (rlen, self.n_head, self.d_head)
+        )  # qlen x n_head x d_head
 
         # compute attention score
         rw_head_q = w_head_q + self.r_w_bias  # qlen x bsz x n_head x d_head
-        AC = tf.einsum("ibnd,jbnd->ijbn", rw_head_q, w_head_k)  # qlen x klen x bsz x n_head
+        AC = tf.einsum(
+            "ibnd,jbnd->ijbn", rw_head_q, w_head_k
+        )  # qlen x klen x bsz x n_head
 
         rr_head_q = w_head_q + self.r_r_bias
-        BD = tf.einsum("ibnd,jnd->ijbn", rr_head_q, r_head_k)  # qlen x klen x bsz x n_head
+        BD = tf.einsum(
+            "ibnd,jnd->ijbn", rr_head_q, r_head_k
+        )  # qlen x klen x bsz x n_head
         BD = self._rel_shift(BD)
 
         # [qlen x klen x bsz x n_head]
@@ -236,7 +286,9 @@ class TFRelPartialLearnableMultiHeadAttn(tf.keras.layers.Layer):
 
         # [qlen x bsz x n_head x d_head]
         attn_vec_sizes = shape_list(attn_vec)
-        attn_vec = tf.reshape(attn_vec, (attn_vec_sizes[0], attn_vec_sizes[1], self.n_head * self.d_head))
+        attn_vec = tf.reshape(
+            attn_vec, (attn_vec_sizes[0], attn_vec_sizes[1], self.n_head * self.d_head)
+        )
 
         # linear projection
         attn_out = self.o_net(attn_vec)
@@ -298,8 +350,25 @@ class TFRelPartialLearnableDecoderLayer(tf.keras.layers.Layer):
             name="pos_ff",
         )
 
-    def call(self, dec_inp, r, dec_attn_mask, mems, head_mask, output_attentions, training=False):
-        attn_outputs = self.dec_attn(dec_inp, r, dec_attn_mask, mems, head_mask, output_attentions, training=training)
+    def call(
+        self,
+        dec_inp,
+        r,
+        dec_attn_mask,
+        mems,
+        head_mask,
+        output_attentions,
+        training=False,
+    ):
+        attn_outputs = self.dec_attn(
+            dec_inp,
+            r,
+            dec_attn_mask,
+            mems,
+            head_mask,
+            output_attentions,
+            training=training,
+        )
         ff_output = self.pos_ff(attn_outputs[0], training=training)
 
         outputs = [ff_output] + attn_outputs[1:]
@@ -308,7 +377,17 @@ class TFRelPartialLearnableDecoderLayer(tf.keras.layers.Layer):
 
 
 class TFAdaptiveEmbedding(tf.keras.layers.Layer):
-    def __init__(self, n_token, d_embed, d_proj, cutoffs, div_val=1, init_std=0.02, sample_softmax=False, **kwargs):
+    def __init__(
+        self,
+        n_token,
+        d_embed,
+        d_proj,
+        cutoffs,
+        div_val=1,
+        init_std=0.02,
+        sample_softmax=False,
+        **kwargs
+    ):
         super().__init__(**kwargs)
 
         self.n_token = n_token
@@ -369,7 +448,9 @@ class TFAdaptiveEmbedding(tf.keras.layers.Layer):
                 emb_i = tf.einsum("id,de->ie", emb_i, self.emb_projs[i])
 
                 mask_idx = tf.cast(tf.where(mask_i), dtype=tf.int64)
-                emb_flat += tf.scatter_nd(mask_idx, emb_i, tf.cast(shape_list(emb_flat), dtype=tf.int64))
+                emb_flat += tf.scatter_nd(
+                    mask_idx, emb_i, tf.cast(shape_list(emb_flat), dtype=tf.int64)
+                )
 
             embed_shape = shape_list(inp) + [self.d_proj]
             embed = tf.reshape(emb_flat, embed_shape)
@@ -447,10 +528,16 @@ class TFTransfoXLMainLayer(tf.keras.layers.Layer):
     def build(self, input_shape):
         if not self.untie_r:
             self.r_w_bias = self.add_weight(
-                shape=(self.n_head, self.d_head), initializer="zeros", trainable=True, name="r_w_bias"
+                shape=(self.n_head, self.d_head),
+                initializer="zeros",
+                trainable=True,
+                name="r_w_bias",
             )
             self.r_r_bias = self.add_weight(
-                shape=(self.n_head, self.d_head), initializer="zeros", trainable=True, name="r_r_bias"
+                shape=(self.n_head, self.d_head),
+                initializer="zeros",
+                trainable=True,
+                name="r_r_bias",
             )
         super().build(input_shape)
 
@@ -520,7 +607,9 @@ class TFTransfoXLMainLayer(tf.keras.layers.Layer):
             head_mask = inputs[2] if len(inputs) > 2 else head_mask
             inputs_embeds = inputs[3] if len(inputs) > 3 else inputs_embeds
             output_attentions = inputs[4] if len(inputs) > 4 else output_attentions
-            output_hidden_states = inputs[5] if len(inputs) > 5 else output_hidden_states
+            output_hidden_states = (
+                inputs[5] if len(inputs) > 5 else output_hidden_states
+            )
             return_dict = inputs[6] if len(inputs) > 6 else return_dict
             assert len(inputs) <= 7, "Too many inputs."
         elif isinstance(inputs, (dict, BatchEncoding)):
@@ -529,20 +618,32 @@ class TFTransfoXLMainLayer(tf.keras.layers.Layer):
             head_mask = inputs.get("head_mask", head_mask)
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             assert len(inputs) <= 7, "Too many inputs."
         else:
             input_ids = inputs
 
-        output_attentions = output_attentions if output_attentions is not None else self.output_attentions
-        output_hidden_states = output_hidden_states if output_hidden_states is not None else self.output_hidden_states
+        output_attentions = (
+            output_attentions
+            if output_attentions is not None
+            else self.output_attentions
+        )
+        output_hidden_states = (
+            output_hidden_states
+            if output_hidden_states is not None
+            else self.output_hidden_states
+        )
         return_dict = return_dict if return_dict is not None else self.return_dict
 
         # the original code for Transformer-XL used shapes [len, bsz] but we want a unified interface in the library
         # so we transpose here from shape [bsz, len] to shape [len, bsz]
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_ids = tf.transpose(input_ids, perm=(1, 0))
             qlen, bsz = shape_list(input_ids)
@@ -580,7 +681,10 @@ class TFTransfoXLMainLayer(tf.keras.layers.Layer):
         dec_attn_mask = tf.concat([attn_mask_pad, mask_u - mask_dia], 1)
         if self.same_length:
             mask_l = tf.linalg.band_part(attn_mask, -1, 0)
-            dec_attn_mask = tf.concat([dec_attn_mask[:, :qlen] + mask_l - mask_dia, dec_attn_mask[:, qlen:]], 1)
+            dec_attn_mask = tf.concat(
+                [dec_attn_mask[:, :qlen] + mask_l - mask_dia, dec_attn_mask[:, qlen:]],
+                1,
+            )
         # ::: PyTorch masking code for reference :::
         # if self.same_length:
         #     all_ones = word_emb.new_ones((qlen, klen), dtype=torch.uint8)
@@ -642,7 +746,9 @@ class TFTransfoXLMainLayer(tf.keras.layers.Layer):
             attentions = tuple(tf.transpose(t, perm=(2, 3, 0, 1)) for t in attentions)
 
         if not return_dict:
-            return tuple(v for v in [core_out, new_mems, hids, attentions] if v is not None)
+            return tuple(
+                v for v in [core_out, new_mems, hids, attentions] if v is not None
+            )
 
         return TFTransfoXLModelOutput(
             last_hidden_state=core_out,
@@ -657,6 +763,7 @@ class TFTransfoXLPreTrainedModel(TFPreTrainedModel):
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
+
     config_class = TransfoXLConfig
     base_model_prefix = "transformer"
 
@@ -685,6 +792,7 @@ class TFTransfoXLModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
+
     last_hidden_state: tf.Tensor = None
     mems: List[tf.Tensor] = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -717,6 +825,7 @@ class TFTransfoXLLMHeadModelOutput(ModelOutput):
             Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
             heads.
     """
+
     prediction_scores: tf.Tensor = None
     mems: List[tf.Tensor] = None
     hidden_states: Optional[Tuple[tf.Tensor]] = None
@@ -793,6 +902,7 @@ TRANSFO_XL_INPUTS_DOCSTRING = r"""
             behaviors between training and evaluation).
 """
 
+
 @add_start_docstrings(
     "The bare Bert Model transformer outputting raw hidden-states without any specific head on top.",
     TRANSFO_XL_START_DOCSTRING,
@@ -824,7 +934,9 @@ class TFTransfoXLMHead(tf.keras.layers.Layer):
         self.input_embeddings = input_embeddings
 
     def build(self, input_shape):
-        self.bias = self.add_weight(shape=(self.vocab_size,), initializer="zeros", trainable=True, name="bias")
+        self.bias = self.add_weight(
+            shape=(self.vocab_size,), initializer="zeros", trainable=True, name="bias"
+        )
         super().build(input_shape)
 
     def call(self, hidden_states):
@@ -850,7 +962,12 @@ class TFTransfoXLLMHeadModel(TFTransfoXLPreTrainedModel):
         ), "Sampling from the softmax is not implemented yet. Please look at issue: #3310: https://github.com/huggingface/transformers/issues/3310"
 
         self.crit = TFAdaptiveSoftmaxMask(
-            config.vocab_size, config.d_embed, config.d_model, config.cutoffs, div_val=config.div_val, name="crit"
+            config.vocab_size,
+            config.d_embed,
+            config.d_model,
+            config.cutoffs,
+            div_val=config.div_val,
+            name="crit",
         )
 
     def get_output_embeddings(self):
@@ -897,7 +1014,9 @@ class TFTransfoXLLMHeadModel(TFTransfoXLPreTrainedModel):
             head_mask = inputs[2] if len(inputs) > 2 else head_mask
             inputs_embeds = inputs[3] if len(inputs) > 3 else inputs_embeds
             output_attentions = inputs[4] if len(inputs) > 4 else output_attentions
-            output_hidden_states = inputs[5] if len(inputs) > 5 else output_hidden_states
+            output_hidden_states = (
+                inputs[5] if len(inputs) > 5 else output_hidden_states
+            )
             return_dict = inputs[6] if len(inputs) > 6 else return_dict
             labels = inputs[7] if len(inputs) > 7 else labels
             assert len(inputs) <= 8, "Too many inputs."
@@ -907,13 +1026,17 @@ class TFTransfoXLLMHeadModel(TFTransfoXLPreTrainedModel):
             head_mask = inputs.get("head_mask", head_mask)
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             output_attentions = inputs.get("output_attentions", output_attentions)
-            output_hidden_states = inputs.get("output_hidden_states", output_hidden_states)
+            output_hidden_states = inputs.get(
+                "output_hidden_states", output_hidden_states
+            )
             return_dict = inputs.get("return_dict", return_dict)
             labels = inputs.get("labels", labels)
             assert len(inputs) <= 8, "Too many inputs."
         else:
             input_ids = inputs
-        return_dict = return_dict if return_dict is not None else self.transformer.return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.transformer.return_dict
+        )
 
         if input_ids is not None:
             bsz, tgt_len = shape_list(input_ids)[:2]

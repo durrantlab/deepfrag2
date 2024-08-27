@@ -65,7 +65,9 @@ class FlaxPreTrainedModel(ABC):
     base_model_prefix = ""
     model_class = None
 
-    def __init__(self, config: PretrainedConfig, module: nn.Module, params: Dict, seed: int = 0):
+    def __init__(
+        self, config: PretrainedConfig, module: nn.Module, params: Dict, seed: int = 0
+    ):
         if config is None:
             raise ValueError("config cannot be None")
 
@@ -111,7 +113,9 @@ class FlaxPreTrainedModel(ABC):
 
         # Load config if we don't provide a configuration
         if not isinstance(config, PretrainedConfig):
-            config_path = config if config is not None else pretrained_model_name_or_path
+            config_path = (
+                config if config is not None else pretrained_model_name_or_path
+            )
             config, model_kwargs = cls.config_class.from_pretrained(
                 config_path,
                 *model_args,
@@ -129,10 +133,16 @@ class FlaxPreTrainedModel(ABC):
 
         # Load model
         if pretrained_model_name_or_path is not None:
-            if os.path.isfile(pretrained_model_name_or_path) or is_remote_url(pretrained_model_name_or_path):
+            if os.path.isfile(pretrained_model_name_or_path) or is_remote_url(
+                pretrained_model_name_or_path
+            ):
                 archive_file = pretrained_model_name_or_path
             else:
-                archive_file = hf_bucket_url(pretrained_model_name_or_path, filename=WEIGHTS_NAME, revision=revision)
+                archive_file = hf_bucket_url(
+                    pretrained_model_name_or_path,
+                    filename=WEIGHTS_NAME,
+                    revision=revision,
+                )
 
             # redirect to the cache, if necessary
             try:
@@ -156,7 +166,9 @@ class FlaxPreTrainedModel(ABC):
             if resolved_archive_file == archive_file:
                 logger.info(f"loading weights file {archive_file}")
             else:
-                logger.info(f"loading weights file {archive_file} from cache at {resolved_archive_file}")
+                logger.info(
+                    f"loading weights file {archive_file} from cache at {resolved_archive_file}"
+                )
         else:
             resolved_archive_file = None
 
@@ -173,7 +185,9 @@ class FlaxPreTrainedModel(ABC):
                     state = torch.load(state_f)
                     state = {k: v.numpy() for k, v in state.items()}
                     state = cls.convert_from_pytorch(state, config)
-                    state = unflatten_dict({tuple(k.split(".")[1:]): v for k, v in state.items()})
+                    state = unflatten_dict(
+                        {tuple(k.split(".")[1:]): v for k, v in state.items()}
+                    )
                 except UnpicklingError:
                     raise EnvironmentError(
                         f"Unable to convert model {archive_file} to Flax deserializable object. "
@@ -188,6 +202,8 @@ class FlaxPreTrainedModel(ABC):
         if not os.path.exists(folder_abs):
             os.mkdir(folder_abs)
 
-        with open(os.path.join(folder_abs, f"{self._config.model_type}.flax", "wb")) as f:
+        with open(
+            os.path.join(folder_abs, f"{self._config.model_type}.flax", "wb")
+        ) as f:
             model_bytes = to_bytes(self.params)
             f.write(model_bytes)

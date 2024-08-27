@@ -17,13 +17,13 @@ from molbert.tasks.tasks import BaseTask, FinetuneTask
 from molbert.utils.featurizer.molfeaturizer import SmilesIndexFeaturizer
 from molbert.utils.lm_utils import BertConfigExtras
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class FinetuneSmilesMolbertModel(MolbertModel):
     def get_config(self):
-        if not hasattr(self.hparams, 'vocab_size') or not self.hparams.vocab_size:
+        if not hasattr(self.hparams, "vocab_size") or not self.hparams.vocab_size:
             self.hparams.vocab_size = 42
 
         if self.hparams.tiny:
@@ -55,12 +55,14 @@ class FinetuneSmilesMolbertModel(MolbertModel):
 
     def get_tasks(self, config):
         """ Task list should be converted to nn.ModuleList before, not done here to hide params from torch """
-        tasks: List[BaseTask] = [FinetuneTask(name='finetune', config=config)]
+        tasks: List[BaseTask] = [FinetuneTask(name="finetune", config=config)]
 
         return tasks
 
     def load_datasets(self):
-        featurizer = SmilesIndexFeaturizer.bert_smiles_index_featurizer(self.hparams.max_seq_length)
+        featurizer = SmilesIndexFeaturizer.bert_smiles_index_featurizer(
+            self.hparams.max_seq_length
+        )
 
         train_dataset = BertFinetuneSmilesDataset(
             input_path=self.hparams.train_file,
@@ -90,11 +92,17 @@ class FinetuneSmilesMolbertModel(MolbertModel):
             inference_mode=True,
         )
 
-        return {'train': train_dataset, 'valid': validation_dataset, 'test': test_dataset}
+        return {
+            "train": train_dataset,
+            "valid": validation_dataset,
+            "test": test_dataset,
+        }
 
-    def evaluate_metrics(self, batch_labels, batch_predictions) -> Dict[str, torch.Tensor]:
+    def evaluate_metrics(
+        self, batch_labels, batch_predictions
+    ) -> Dict[str, torch.Tensor]:
 
-        if self.hparams.mode == 'classification':
+        if self.hparams.mode == "classification":
             # transformers convention is to output classification as two neurons.
             # In order to convert this to a class label we take the argmax.
             probs = nn.Softmax(dim=1)(batch_predictions)
@@ -104,19 +112,21 @@ class FinetuneSmilesMolbertModel(MolbertModel):
         else:
             preds = batch_predictions
 
-        if self.hparams.mode == 'classification':
+        if self.hparams.mode == "classification":
             metrics = {
-                'AUROC': lambda: AUROC()(probs_of_positive_class, batch_labels),
-                'AveragePrecision': lambda: AveragePrecision()(probs_of_positive_class, batch_labels),
-                'Accuracy': lambda: Accuracy()(preds, batch_labels),
+                "AUROC": lambda: AUROC()(probs_of_positive_class, batch_labels),
+                "AveragePrecision": lambda: AveragePrecision()(
+                    probs_of_positive_class, batch_labels
+                ),
+                "Accuracy": lambda: Accuracy()(preds, batch_labels),
             }
         else:
             metrics = {
-                'MAE': lambda: MAE()(preds, batch_labels),
-                'RMSE': lambda: RMSE()(preds, batch_labels),
-                'MSE': lambda: MSE()(preds, batch_labels),
+                "MAE": lambda: MAE()(preds, batch_labels),
+                "RMSE": lambda: RMSE()(preds, batch_labels),
+                "MSE": lambda: MSE()(preds, batch_labels),
                 # sklearn metrics work the other way round metric_fn(y_true, y_pred)
-                'R2': lambda: r2_score(batch_labels.cpu(), preds.cpu()),
+                "R2": lambda: r2_score(batch_labels.cpu(), preds.cpu()),
             }
 
         out = {}
@@ -124,7 +134,7 @@ class FinetuneSmilesMolbertModel(MolbertModel):
             try:
                 out[name] = callable_metric().item()
             except Exception as e:
-                logger.info(f'unable to calculate {name} metric')
+                logger.info(f"unable to calculate {name} metric")
                 logger.info(e)
                 out[name] = np.nan
 
@@ -148,26 +158,32 @@ class FinetuneSmilesMolbertModel(MolbertModel):
     def test_epoch_end(
         self, outputs: List[Dict[str, Dict[str, torch.Tensor]]]
     ) -> Dict[str, Dict[str, torch.Tensor]]:  # type: ignore
-        all_predictions = torch.cat([out['predictions']['finetune'] for out in outputs])
+        all_predictions = torch.cat([out["predictions"]["finetune"] for out in outputs])
         all_predictions_dict = dict(finetune=all_predictions)
-        all_labels = torch.cat([out['labels']['finetune'] for out in outputs])
+        all_labels = torch.cat([out["labels"]["finetune"] for out in outputs])
         all_labels_dict = dict(finetune=all_labels)
 
         losses = self.evaluate_losses(all_labels_dict, all_predictions_dict)
         loss = torch.sum(torch.stack(list(losses.values())))
 
         # add metrics to the test set evaluation
-        metrics = self.evaluate_metrics(all_labels_dict['finetune'], all_predictions_dict['finetune'])
+        metrics = self.evaluate_metrics(
+            all_labels_dict["finetune"], all_predictions_dict["finetune"]
+        )
 
-        tensorboard_logs = {'test_loss': loss, **losses}
-        metrics_path = os.path.join(os.path.dirname(self.trainer.ckpt_path), 'metrics.json')
-        logger.info('writing test set metrics to', metrics_path)
+        tensorboard_logs = {"test_loss": loss, **losses}
+        metrics_path = os.path.join(
+            os.path.dirname(self.trainer.ckpt_path), "metrics.json"
+        )
+        logger.info("writing test set metrics to", metrics_path)
         logger.info(metrics)
-        with open(metrics_path, 'w') as f:
+        with open(metrics_path, "w") as f:
             json.dump(metrics, f, indent=4)
-        return {'loss': loss, 'metrics': metrics, 'test_loss': loss, 'log': tensorboard_logs}  # type: ignore
+        return {"loss": loss, "metrics": metrics, "test_loss": loss, "log": tensorboard_logs}  # type: ignore
 
     def test_dataloader(self) -> DataLoader:
         """ load the test set in one large batch """
-        dataset = self.datasets['test']
-        return MolbertDataLoader(dataset, batch_size=1024, num_workers=self.hparams.num_workers)
+        dataset = self.datasets["test"]
+        return MolbertDataLoader(
+            dataset, batch_size=1024, num_workers=self.hparams.num_workers
+        )

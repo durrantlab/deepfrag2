@@ -18,7 +18,11 @@ from typing import Optional
 
 from .configuration_encoder_decoder import EncoderDecoderConfig
 from .configuration_utils import PretrainedConfig
-from .file_utils import add_start_docstrings, add_start_docstrings_to_model_forward, replace_return_docstrings
+from .file_utils import (
+    add_start_docstrings,
+    add_start_docstrings_to_model_forward,
+    replace_return_docstrings,
+)
 from .modeling_outputs import Seq2SeqLMOutput
 from .modeling_utils import PreTrainedModel
 from .utils import logging
@@ -122,6 +126,7 @@ ENCODER_DECODER_INPUTS_DOCSTRING = r"""
             - With a `decoder_` prefix which will be input as ``**decoder_kwargs`` for the decoder forward function.
 """
 
+
 @add_start_docstrings(ENCODER_DECODER_START_DOCSTRING)
 class EncoderDecoderModel(PreTrainedModel):
     r"""
@@ -143,11 +148,13 @@ class EncoderDecoderModel(PreTrainedModel):
             encoder is not None and decoder is not None
         ), "Either a configuration or an Encoder and a decoder has to be provided"
         if config is None:
-            config = EncoderDecoderConfig.from_encoder_decoder_configs(encoder.config, decoder.config)
-        else:
-            assert isinstance(config, self.config_class), "config: {} has to be of type {}".format(
-                config, self.config_class
+            config = EncoderDecoderConfig.from_encoder_decoder_configs(
+                encoder.config, decoder.config
             )
+        else:
+            assert isinstance(
+                config, self.config_class
+            ), "config: {} has to be of type {}".format(config, self.config_class)
         # initialize with config
         super().__init__(config)
 
@@ -176,7 +183,9 @@ class EncoderDecoderModel(PreTrainedModel):
             # tie encoder and decoder base model
             decoder_base_model_prefix = self.decoder.base_model_prefix
             self._tie_encoder_decoder_weights(
-                self.encoder, self.decoder._modules[decoder_base_model_prefix], self.decoder.base_model_prefix
+                self.encoder,
+                self.decoder._modules[decoder_base_model_prefix],
+                self.decoder.base_model_prefix,
             )
 
     def get_encoder(self):
@@ -197,7 +206,7 @@ class EncoderDecoderModel(PreTrainedModel):
         encoder_pretrained_model_name_or_path: str = None,
         decoder_pretrained_model_name_or_path: str = None,
         *model_args,
-        **kwargs
+        **kwargs,
     ) -> PreTrainedModel:
         r"""
         Instantiate an encoder and a decoder from one or two base classes of the library from pretrained model
@@ -261,11 +270,15 @@ class EncoderDecoderModel(PreTrainedModel):
 
         """
         kwargs_encoder = {
-            argument[len("encoder_") :]: value for argument, value in kwargs.items() if argument.startswith("encoder_")
+            argument[len("encoder_") :]: value
+            for argument, value in kwargs.items()
+            if argument.startswith("encoder_")
         }
 
         kwargs_decoder = {
-            argument[len("decoder_") :]: value for argument, value in kwargs.items() if argument.startswith("decoder_")
+            argument[len("decoder_") :]: value
+            for argument, value in kwargs.items()
+            if argument.startswith("decoder_")
         }
 
         # remove encoder, decoder kwargs from kwargs
@@ -287,8 +300,13 @@ class EncoderDecoderModel(PreTrainedModel):
             if "config" not in kwargs_encoder:
                 from .configuration_auto import AutoConfig
 
-                encoder_config = AutoConfig.from_pretrained(encoder_pretrained_model_name_or_path)
-                if encoder_config.is_decoder is True or encoder_config.add_cross_attention is True:
+                encoder_config = AutoConfig.from_pretrained(
+                    encoder_pretrained_model_name_or_path
+                )
+                if (
+                    encoder_config.is_decoder is True
+                    or encoder_config.add_cross_attention is True
+                ):
 
                     logger.info(
                         f"Initializing {encoder_pretrained_model_name_or_path} as a encoder model from a decoder model. Cross-attention and casual mask are disabled."
@@ -298,7 +316,9 @@ class EncoderDecoderModel(PreTrainedModel):
 
                 kwargs_encoder["config"] = encoder_config
 
-            encoder = AutoModel.from_pretrained(encoder_pretrained_model_name_or_path, *model_args, **kwargs_encoder)
+            encoder = AutoModel.from_pretrained(
+                encoder_pretrained_model_name_or_path, *model_args, **kwargs_encoder
+            )
 
         decoder = kwargs_decoder.pop("model", None)
         if decoder is None:
@@ -310,8 +330,13 @@ class EncoderDecoderModel(PreTrainedModel):
             if "config" not in kwargs_decoder:
                 from .configuration_auto import AutoConfig
 
-                decoder_config = AutoConfig.from_pretrained(decoder_pretrained_model_name_or_path)
-                if decoder_config.is_decoder is False or decoder_config.add_cross_attention is False:
+                decoder_config = AutoConfig.from_pretrained(
+                    decoder_pretrained_model_name_or_path
+                )
+                if (
+                    decoder_config.is_decoder is False
+                    or decoder_config.add_cross_attention is False
+                ):
                     logger.info(
                         f"Initializing {decoder_pretrained_model_name_or_path} as a decoder model. Cross attention layers are added to {decoder_pretrained_model_name_or_path} and randomly initialized if {decoder_pretrained_model_name_or_path}'s architecture allows for cross attention layers."
                     )
@@ -320,19 +345,28 @@ class EncoderDecoderModel(PreTrainedModel):
 
                 kwargs_decoder["config"] = decoder_config
 
-            if kwargs_decoder["config"].is_decoder is False or kwargs_decoder["config"].add_cross_attention is False:
+            if (
+                kwargs_decoder["config"].is_decoder is False
+                or kwargs_decoder["config"].add_cross_attention is False
+            ):
                 logger.warning(
                     f"Decoder model {decoder_pretrained_model_name_or_path} is not initialized as a decoder. In order to initialize {decoder_pretrained_model_name_or_path} as a decoder, make sure that the attributes `is_decoder` and `add_cross_attention` of `decoder_config` passed to `.from_encoder_decoder_pretrained(...)` are set to `True` or do not pass a `decoder_config` to `.from_encoder_decoder_pretrained(...)`"
                 )
 
-            decoder = AutoModelForCausalLM.from_pretrained(decoder_pretrained_model_name_or_path, **kwargs_decoder)
+            decoder = AutoModelForCausalLM.from_pretrained(
+                decoder_pretrained_model_name_or_path, **kwargs_decoder
+            )
 
         # instantiate config with corresponding kwargs
-        config = EncoderDecoderConfig.from_encoder_decoder_configs(encoder.config, decoder.config, **kwargs)
+        config = EncoderDecoderConfig.from_encoder_decoder_configs(
+            encoder.config, decoder.config, **kwargs
+        )
         return cls(encoder=encoder, decoder=decoder, config=config)
 
     @add_start_docstrings_to_model_forward(ENCODER_DECODER_INPUTS_DOCSTRING)
-    @replace_return_docstrings(output_type=Seq2SeqLMOutput, config_class=_CONFIG_FOR_DOC)
+    @replace_return_docstrings(
+        output_type=Seq2SeqLMOutput, config_class=_CONFIG_FOR_DOC
+    )
     def forward(
         self,
         input_ids=None,
@@ -377,12 +411,20 @@ class EncoderDecoderModel(PreTrainedModel):
             >>> generated = model.generate(input_ids, decoder_start_token_id=model.config.decoder.pad_token_id)
 
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (
+            return_dict if return_dict is not None else self.config.use_return_dict
+        )
 
-        kwargs_encoder = {argument: value for argument, value in kwargs.items() if not argument.startswith("decoder_")}
+        kwargs_encoder = {
+            argument: value
+            for argument, value in kwargs.items()
+            if not argument.startswith("decoder_")
+        }
 
         kwargs_decoder = {
-            argument[len("decoder_") :]: value for argument, value in kwargs.items() if argument.startswith("decoder_")
+            argument[len("decoder_") :]: value
+            for argument, value in kwargs.items()
+            if argument.startswith("decoder_")
         }
 
         if encoder_outputs is None:
@@ -428,9 +470,15 @@ class EncoderDecoderModel(PreTrainedModel):
             encoder_attentions=encoder_outputs.attentions,
         )
 
-    def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=None, encoder_outputs=None, **kwargs):
+    def prepare_inputs_for_generation(
+        self, input_ids, past=None, attention_mask=None, encoder_outputs=None, **kwargs
+    ):
         decoder_inputs = self.decoder.prepare_inputs_for_generation(input_ids)
-        decoder_attention_mask = decoder_inputs["attention_mask"] if "attention_mask" in decoder_inputs else None
+        decoder_attention_mask = (
+            decoder_inputs["attention_mask"]
+            if "attention_mask" in decoder_inputs
+            else None
+        )
         input_dict = {
             "attention_mask": attention_mask,
             "decoder_attention_mask": decoder_attention_mask,

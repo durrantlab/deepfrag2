@@ -30,8 +30,12 @@ SPIECE_UNDERLINE = "▁"
 VOCAB_FILES_NAMES = {"vocab_file": "spiece.model", "tokenizer_file": "tokenizer.json"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {"google/pegasus-xsum": "https://cdn.huggingface.co/google/pegasus-xsum/spiece.model"},
-    "tokenizer_file": {"google/pegasus-xsum": "https://cdn.huggingface.co/google/pegasus-xsum/tokenizer.json"},
+    "vocab_file": {
+        "google/pegasus-xsum": "https://cdn.huggingface.co/google/pegasus-xsum/spiece.model"
+    },
+    "tokenizer_file": {
+        "google/pegasus-xsum": "https://cdn.huggingface.co/google/pegasus-xsum/tokenizer.json"
+    },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
@@ -51,13 +55,18 @@ class PegasusTokenizerFast(ReformerTokenizerFast):
     #     return 1
 
     def _special_token_mask(self, seq):
-        all_special_ids = set(self.all_special_ids)  # call it once instead of inside list comp
+        all_special_ids = set(
+            self.all_special_ids
+        )  # call it once instead of inside list comp
         all_special_ids.remove(self.unk_token_id)  # <unk> is only sometimes special
         assert all_special_ids == set([0, 1])
         return [1 if x in all_special_ids else 0 for x in seq]
 
     def get_special_tokens_mask(
-        self, token_ids_0: List, token_ids_1: Optional[List] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List,
+        token_ids_1: Optional[List] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """Get list where entries are [1] if a token is [eos] or [pad] else 0."""
         if already_has_special_tokens:
@@ -67,7 +76,9 @@ class PegasusTokenizerFast(ReformerTokenizerFast):
         else:
             return self._special_token_mask(token_ids_0 + token_ids_1) + [1]
 
-    def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None) -> List[int]:
+    def build_inputs_with_special_tokens(
+        self, token_ids_0, token_ids_1=None
+    ) -> List[int]:
         """
         Build model inputs from a sequence by adding eos to the end. no bos token is added to the front.
 

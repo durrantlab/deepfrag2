@@ -65,7 +65,9 @@ def pearson_and_spearman(preds, labels):
 def glue_compute_metrics(task_name, preds, labels):
     warnings.warn(DEPRECATION_WARNING, FutureWarning)
     requires_sklearn(glue_compute_metrics)
-    assert len(preds) == len(labels), f"Predictions and labels have mismatched lengths {len(preds)} and {len(labels)}"
+    assert len(preds) == len(
+        labels
+    ), f"Predictions and labels have mismatched lengths {len(preds)} and {len(labels)}"
     if task_name == "cola":
         return {"mcc": matthews_corrcoef(labels, preds)}
     elif task_name == "sst-2":
@@ -95,7 +97,9 @@ def glue_compute_metrics(task_name, preds, labels):
 def xnli_compute_metrics(task_name, preds, labels):
     warnings.warn(DEPRECATION_WARNING, FutureWarning)
     requires_sklearn(xnli_compute_metrics)
-    assert len(preds) == len(labels), f"Predictions and labels have mismatched lengths {len(preds)} and {len(labels)}"
+    assert len(preds) == len(
+        labels
+    ), f"Predictions and labels have mismatched lengths {len(preds)} and {len(labels)}"
     if task_name == "xnli":
         return {"acc": simple_accuracy(preds, labels)}
     else:

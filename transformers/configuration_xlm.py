@@ -143,6 +143,7 @@ class XLMConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "xlm"
 
     def __init__(

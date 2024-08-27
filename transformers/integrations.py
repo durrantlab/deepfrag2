@@ -30,7 +30,9 @@ try:
     if wandb.api.api_key is None:
         _has_wandb = False
         if os.getenv("WANDB_DISABLED"):
-            logger.warning("W&B installed but not logged in. Run `wandb login` or set the WANDB_API_KEY env variable.")
+            logger.warning(
+                "W&B installed but not logged in. Run `wandb login` or set the WANDB_API_KEY env variable."
+            )
     else:
         _has_wandb = False if os.getenv("WANDB_DISABLED") else True
 except (ImportError, AttributeError):
@@ -197,7 +199,12 @@ def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestR
                 "consider setting `keep_checkpoints_num=1`."
             )
     if "scheduler" in kwargs:
-        from ray.tune.schedulers import ASHAScheduler, HyperBandForBOHB, MedianStoppingRule, PopulationBasedTraining
+        from ray.tune.schedulers import (
+            ASHAScheduler,
+            HyperBandForBOHB,
+            MedianStoppingRule,
+            PopulationBasedTraining,
+        )
 
         # Check if checkpointing is enabled for PopulationBasedTraining
         if isinstance(kwargs["scheduler"], PopulationBasedTraining):
@@ -211,7 +218,13 @@ def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestR
 
         # Check for `do_eval` and `eval_during_training` for schedulers that require intermediate reporting.
         if isinstance(
-            kwargs["scheduler"], (ASHAScheduler, MedianStoppingRule, HyperBandForBOHB, PopulationBasedTraining)
+            kwargs["scheduler"],
+            (
+                ASHAScheduler,
+                MedianStoppingRule,
+                HyperBandForBOHB,
+                PopulationBasedTraining,
+            ),
         ) and (not trainer.args.do_eval or not trainer.args.evaluate_during_training):
             raise RuntimeError(
                 "You are using {cls} as a scheduler but you haven't enabled evaluation during training. "
@@ -222,9 +235,13 @@ def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestR
                 "Trainer `args`.".format(cls=type(kwargs["scheduler"]).__name__)
             )
 
-    analysis = ray.tune.run(_objective, config=trainer.hp_space(None), num_samples=n_trials, **kwargs)
+    analysis = ray.tune.run(
+        _objective, config=trainer.hp_space(None), num_samples=n_trials, **kwargs
+    )
     best_trial = analysis.get_best_trial(metric="objective", mode=direction[:3])
-    best_run = BestRun(best_trial.trial_id, best_trial.last_result["objective"], best_trial.config)
+    best_run = BestRun(
+        best_trial.trial_id, best_trial.last_result["objective"], best_trial.config
+    )
     if _tb_writer is not None:
         trainer.add_callback(_tb_writer)
     return best_run
@@ -251,6 +268,7 @@ class TensorBoardCallback(TrainerCallback):
         tb_writer (:obj:`SummaryWriter`, `optional`):
             The writer to use. Will instantiate one if not set.
     """
+
     def __init__(self, tb_writer=None):
         assert (
             _has_tensorboard
@@ -316,8 +334,11 @@ class WandbCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `Weight and Biases <https://www.wandb.com/>`__.
     """
+
     def __init__(self):
-        assert _has_wandb, "WandbCallback requires wandb to be installed. Run `pip install wandb`."
+        assert (
+            _has_wandb
+        ), "WandbCallback requires wandb to be installed. Run `pip install wandb`."
         self._initialized = False
 
     def setup(self, args, state, model, reinit, **kwargs):
@@ -364,7 +385,11 @@ class WandbCallback(TrainerCallback):
 
             # keep track of model topology and gradients, unsupported on TPU
             if not is_torch_tpu_available() and os.getenv("WANDB_WATCH") != "false":
-                wandb.watch(model, log=os.getenv("WANDB_WATCH", "gradients"), log_freq=max(100, args.logging_steps))
+                wandb.watch(
+                    model,
+                    log=os.getenv("WANDB_WATCH", "gradients"),
+                    log_freq=max(100, args.logging_steps),
+                )
 
     def on_train_begin(self, args, state, control, model=None, **kwargs):
         hp_search = state.is_hyper_param_search
@@ -384,8 +409,11 @@ class CometCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `Comet ML <https://www.comet.ml/site/>`__.
     """
+
     def __init__(self):
-        assert _has_comet, "CometCallback requires comet-ml to be installed. Run `pip install comet-ml`."
+        assert (
+            _has_comet
+        ), "CometCallback requires comet-ml to be installed. Run `pip install comet-ml`."
         self._initialized = False
 
     def setup(self, args, state, model):
@@ -414,12 +442,18 @@ class CometCallback(TrainerCallback):
             elif comet_mode == "OFFLINE":
                 args["offline_directory"] = os.getenv("COMET_OFFLINE_DIRECTORY", "./")
                 experiment = comet_ml.OfflineExperiment(**args)
-                logger.info("Automatic Comet.ml offline logging enabled; use `comet upload` when finished")
+                logger.info(
+                    "Automatic Comet.ml offline logging enabled; use `comet upload` when finished"
+                )
             if experiment is not None:
                 experiment._set_model_graph(model, framework="transformers")
-                experiment._log_parameters(args, prefix="args/", framework="transformers")
+                experiment._log_parameters(
+                    args, prefix="args/", framework="transformers"
+                )
                 if hasattr(model, "config"):
-                    experiment._log_parameters(model.config, prefix="config/", framework="transformers")
+                    experiment._log_parameters(
+                        model.config, prefix="config/", framework="transformers"
+                    )
 
     def on_train_begin(self, args, state, control, model=None, **kwargs):
         if not self._initialized:
@@ -431,7 +465,12 @@ class CometCallback(TrainerCallback):
         if state.is_world_process_zero:
             experiment = comet_ml.config.get_global_experiment()
             if experiment is not None:
-                experiment._log_metrics(logs, step=state.global_step, epoch=state.epoch, framework="transformers")
+                experiment._log_metrics(
+                    logs,
+                    step=state.global_step,
+                    epoch=state.epoch,
+                    framework="transformers",
+                )
 
 
 class AzureMLCallback(TrainerCallback):
@@ -439,8 +478,11 @@ class AzureMLCallback(TrainerCallback):
     A :class:`~transformers.TrainerCallback` that sends the logs to `AzureML
     <https://pypi.org/project/azureml-sdk/>`__.
     """
+
     def __init__(self, azureml_run=None):
-        assert _has_azureml, "AzureMLCallback requires azureml to be installed. Run `pip install azureml-sdk`."
+        assert (
+            _has_azureml
+        ), "AzureMLCallback requires azureml to be installed. Run `pip install azureml-sdk`."
         self.azureml_run = azureml_run
 
     def on_init_end(self, args, state, control, **kwargs):
@@ -458,10 +500,13 @@ class MLflowCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `MLflow <https://www.mlflow.org/>`__.
     """
+
     MAX_LOG_SIZE = 100
 
     def __init__(self):
-        assert _has_mlflow, "MLflowCallback requires mlflow to be installed. Run `pip install mlflow`."
+        assert (
+            _has_mlflow
+        ), "MLflowCallback requires mlflow to be installed. Run `pip install mlflow`."
         self._initialized = False
         self._log_artifacts = False
 
@@ -489,7 +534,9 @@ class MLflowCallback(TrainerCallback):
             # MLflow cannot log more than 100 values in one go, so we have to split it
             combined_dict_items = list(combined_dict.items())
             for i in range(0, len(combined_dict_items), MLflowCallback.MAX_LOG_SIZE):
-                mlflow.log_params(dict(combined_dict_items[i : i + MLflowCallback.MAX_LOG_SIZE]))
+                mlflow.log_params(
+                    dict(combined_dict_items[i : i + MLflowCallback.MAX_LOG_SIZE])
+                )
         self._initialized = True
 
     def on_train_begin(self, args, state, control, model=None, **kwargs):

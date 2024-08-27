@@ -28,6 +28,7 @@ class TextDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
+
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
@@ -50,9 +51,7 @@ class TextDataset(Dataset):
         cached_features_file = os.path.join(
             cache_dir if cache_dir is not None else directory,
             "cached_lm_{}_{}_{}".format(
-                tokenizer.__class__.__name__,
-                str(block_size),
-                filename,
+                tokenizer.__class__.__name__, str(block_size), filename,
             ),
         )
 
@@ -66,7 +65,8 @@ class TextDataset(Dataset):
                 with open(cached_features_file, "rb") as handle:
                     self.examples = pickle.load(handle)
                 logger.info(
-                    f"Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
+                    f"Loading features from cached file {cached_features_file} [took %.3f s]",
+                    time.time() - start,
                 )
 
             else:
@@ -76,11 +76,17 @@ class TextDataset(Dataset):
                 with open(file_path, encoding="utf-8") as f:
                     text = f.read()
 
-                tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
+                tokenized_text = tokenizer.convert_tokens_to_ids(
+                    tokenizer.tokenize(text)
+                )
 
-                for i in range(0, len(tokenized_text) - block_size + 1, block_size):  # Truncate in block of block_size
+                for i in range(
+                    0, len(tokenized_text) - block_size + 1, block_size
+                ):  # Truncate in block of block_size
                     self.examples.append(
-                        tokenizer.build_inputs_with_special_tokens(tokenized_text[i : i + block_size])
+                        tokenizer.build_inputs_with_special_tokens(
+                            tokenized_text[i : i + block_size]
+                        )
                     )
                 # Note that we are losing the last truncated example here for the sake of simplicity (no padding)
                 # If your dataset is small, first you should look for a bigger one :-) and second you
@@ -90,7 +96,9 @@ class TextDataset(Dataset):
                 with open(cached_features_file, "wb") as handle:
                     pickle.dump(self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 logger.info(
-                    "Saving features into cached file %s [took %.3f s]", cached_features_file, time.time() - start
+                    "Saving features into cached file %s [took %.3f s]",
+                    cached_features_file,
+                    time.time() - start,
                 )
 
     def __len__(self):
@@ -104,6 +112,7 @@ class LineByLineTextDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
+
     def __init__(self, tokenizer: PreTrainedTokenizer, file_path: str, block_size: int):
         warnings.warn(
             DEPRECATION_WARNING.format(
@@ -118,11 +127,19 @@ class LineByLineTextDataset(Dataset):
         logger.info("Creating features from dataset file at %s", file_path)
 
         with open(file_path, encoding="utf-8") as f:
-            lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
+            lines = [
+                line
+                for line in f.read().splitlines()
+                if (len(line) > 0 and not line.isspace())
+            ]
 
-        batch_encoding = tokenizer(lines, add_special_tokens=True, truncation=True, max_length=block_size)
+        batch_encoding = tokenizer(
+            lines, add_special_tokens=True, truncation=True, max_length=block_size
+        )
         self.examples = batch_encoding["input_ids"]
-        self.examples = [{"input_ids": torch.tensor(e, dtype=torch.long)} for e in self.examples]
+        self.examples = [
+            {"input_ids": torch.tensor(e, dtype=torch.long)} for e in self.examples
+        ]
 
     def __len__(self):
         return len(self.examples)
@@ -135,7 +152,14 @@ class LineByLineWithRefDataset(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
-    def __init__(self, tokenizer: PreTrainedTokenizer, file_path: str, block_size: int, ref_path: str):
+
+    def __init__(
+        self,
+        tokenizer: PreTrainedTokenizer,
+        file_path: str,
+        block_size: int,
+        ref_path: str,
+    ):
         warnings.warn(
             DEPRECATION_WARNING.format(
                 "https://github.com/huggingface/transformers/blob/master/examples/language-modeling/run_mlm_wwm.py"
@@ -150,16 +174,26 @@ class LineByLineWithRefDataset(Dataset):
         logger.info("Creating features from dataset file at %s", file_path)
         logger.info("Use ref segment results at %s", ref_path)
         with open(file_path, encoding="utf-8") as f:
-            data = f.readlines()  # use this method to avoid delimiter '\u2029' to split a line
+            data = (
+                f.readlines()
+            )  # use this method to avoid delimiter '\u2029' to split a line
         data = [line.strip() for line in data if len(line) > 0 and not line.isspace()]
         # Get ref inf from file
         with open(ref_path, encoding="utf-8") as f:
-            ref = [json.loads(line) for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
+            ref = [
+                json.loads(line)
+                for line in f.read().splitlines()
+                if (len(line) > 0 and not line.isspace())
+            ]
         assert len(data) == len(ref)
 
-        batch_encoding = tokenizer(data, add_special_tokens=True, truncation=True, max_length=block_size)
+        batch_encoding = tokenizer(
+            data, add_special_tokens=True, truncation=True, max_length=block_size
+        )
         self.examples = batch_encoding["input_ids"]
-        self.examples = [{"input_ids": torch.tensor(e, dtype=torch.long)} for e in self.examples]
+        self.examples = [
+            {"input_ids": torch.tensor(e, dtype=torch.long)} for e in self.examples
+        ]
 
         n = len(self.examples)
         for i in range(n):
@@ -176,6 +210,7 @@ class LineByLineWithSOPTextDataset(Dataset):
     """
     Dataset for sentence order prediction task, prepare sentence pairs for SOP task
     """
+
     def __init__(self, tokenizer: PreTrainedTokenizer, file_dir: str, block_size: int):
         warnings.warn(
             DEPRECATION_WARNING.format(
@@ -206,7 +241,9 @@ class LineByLineWithSOPTextDataset(Dataset):
                             if (len(line) > 0 and not line.isspace())
                         ]
 
-                        examples = self.create_examples_from_document(document, block_size, tokenizer)
+                        examples = self.create_examples_from_document(
+                            document, block_size, tokenizer
+                        )
                         self.examples.extend(examples)
                         article_lines = []
                     else:
@@ -215,7 +252,9 @@ class LineByLineWithSOPTextDataset(Dataset):
 
         logger.info("Dataset parse finished.")
 
-    def create_examples_from_document(self, document, block_size, tokenizer, short_seq_prob=0.1):
+    def create_examples_from_document(
+        self, document, block_size, tokenizer, short_seq_prob=0.1
+    ):
         """Creates examples for a single document."""
         # Account for special tokens
         max_num_tokens = block_size - tokenizer.num_special_tokens_to_add(pair=True)
@@ -281,7 +320,9 @@ class LineByLineWithSOPTextDataset(Dataset):
                             total_length = len(tokens_a) + len(tokens_b)
                             if total_length <= max_num_tokens:
                                 break
-                            trunc_tokens = tokens_a if len(tokens_a) > len(tokens_b) else tokens_b
+                            trunc_tokens = (
+                                tokens_a if len(tokens_a) > len(tokens_b) else tokens_b
+                            )
                             assert len(trunc_tokens) >= 1
                             # We want to sometimes truncate from the front and sometimes from the
                             # back to add more randomness and avoid biases.
@@ -295,14 +336,22 @@ class LineByLineWithSOPTextDataset(Dataset):
                     assert len(tokens_b) >= 1
 
                     # add special tokens
-                    input_ids = tokenizer.build_inputs_with_special_tokens(tokens_a, tokens_b)
+                    input_ids = tokenizer.build_inputs_with_special_tokens(
+                        tokens_a, tokens_b
+                    )
                     # add token type ids, 0 for sentence a, 1 for sentence b
-                    token_type_ids = tokenizer.create_token_type_ids_from_sequences(tokens_a, tokens_b)
+                    token_type_ids = tokenizer.create_token_type_ids_from_sequences(
+                        tokens_a, tokens_b
+                    )
 
                     example = {
                         "input_ids": torch.tensor(input_ids, dtype=torch.long),
-                        "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
-                        "sentence_order_label": torch.tensor(0 if is_next else 1, dtype=torch.long),
+                        "token_type_ids": torch.tensor(
+                            token_type_ids, dtype=torch.long
+                        ),
+                        "sentence_order_label": torch.tensor(
+                            0 if is_next else 1, dtype=torch.long
+                        ),
                     }
                     examples.append(example)
                 current_chunk = []  # clear current chunk
@@ -321,6 +370,7 @@ class TextDatasetForNextSentencePrediction(Dataset):
     """
     This will be superseded by a framework-agnostic approach soon.
     """
+
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
@@ -346,9 +396,7 @@ class TextDatasetForNextSentencePrediction(Dataset):
         cached_features_file = os.path.join(
             directory,
             "cached_nsp_{}_{}_{}".format(
-                tokenizer.__class__.__name__,
-                str(block_size),
-                filename,
+                tokenizer.__class__.__name__, str(block_size), filename,
             ),
         )
 
@@ -377,7 +425,8 @@ class TextDatasetForNextSentencePrediction(Dataset):
                 with open(cached_features_file, "rb") as handle:
                     self.examples = pickle.load(handle)
                 logger.info(
-                    f"Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
+                    f"Loading features from cached file {cached_features_file} [took %.3f s]",
+                    time.time() - start,
                 )
             else:
                 logger.info(f"Creating features from dataset file at {directory}")
@@ -407,12 +456,16 @@ class TextDatasetForNextSentencePrediction(Dataset):
                 with open(cached_features_file, "wb") as handle:
                     pickle.dump(self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 logger.info(
-                    "Saving features into cached file %s [took %.3f s]", cached_features_file, time.time() - start
+                    "Saving features into cached file %s [took %.3f s]",
+                    cached_features_file,
+                    time.time() - start,
                 )
 
     def create_examples_from_document(self, document: List[List[int]], doc_index: int):
         """Creates examples for a single document."""
-        max_num_tokens = self.block_size - self.tokenizer.num_special_tokens_to_add(pair=True)
+        max_num_tokens = self.block_size - self.tokenizer.num_special_tokens_to_add(
+            pair=True
+        )
 
         # We *usually* want to fill up the entire sequence since we are padding
         # to `block_size` anyways, so short sequences are generally wasted
@@ -447,7 +500,10 @@ class TextDatasetForNextSentencePrediction(Dataset):
 
                     tokens_b = []
 
-                    if len(current_chunk) == 1 or random.random() < self.nsp_probability:
+                    if (
+                        len(current_chunk) == 1
+                        or random.random() < self.nsp_probability
+                    ):
                         is_random_next = True
                         target_b_length = target_seq_length - len(tokens_a)
 
@@ -456,7 +512,9 @@ class TextDatasetForNextSentencePrediction(Dataset):
                         # the random document is not the same as the document
                         # we're processing.
                         for _ in range(10):
-                            random_document_index = random.randint(0, len(self.documents) - 1)
+                            random_document_index = random.randint(
+                                0, len(self.documents) - 1
+                            )
                             if random_document_index != doc_index:
                                 break
 
@@ -480,14 +538,22 @@ class TextDatasetForNextSentencePrediction(Dataset):
                     assert len(tokens_b) >= 1
 
                     # add special tokens
-                    input_ids = self.tokenizer.build_inputs_with_special_tokens(tokens_a, tokens_b)
+                    input_ids = self.tokenizer.build_inputs_with_special_tokens(
+                        tokens_a, tokens_b
+                    )
                     # add token type ids, 0 for sentence a, 1 for sentence b
-                    token_type_ids = self.tokenizer.create_token_type_ids_from_sequences(tokens_a, tokens_b)
+                    token_type_ids = self.tokenizer.create_token_type_ids_from_sequences(
+                        tokens_a, tokens_b
+                    )
 
                     example = {
                         "input_ids": torch.tensor(input_ids, dtype=torch.long),
-                        "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
-                        "next_sentence_label": torch.tensor(1 if is_random_next else 0, dtype=torch.long),
+                        "token_type_ids": torch.tensor(
+                            token_type_ids, dtype=torch.long
+                        ),
+                        "next_sentence_label": torch.tensor(
+                            1 if is_random_next else 0, dtype=torch.long
+                        ),
                     }
 
                     self.examples.append(example)

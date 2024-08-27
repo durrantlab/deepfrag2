@@ -6,7 +6,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from .file_utils import cached_property, is_torch_available, is_torch_tpu_available, torch_required
+from .file_utils import (
+    cached_property,
+    is_torch_available,
+    is_torch_tpu_available,
+    torch_required,
+)
 from .trainer_utils import EvaluationStrategy
 from .utils import logging
 
@@ -181,8 +186,11 @@ class TrainingArguments:
               :obj:`"eval_loss"`.
             - :obj:`False` if :obj:`metric_for_best_model` is not set, or set to :obj:`"loss"` or :obj:`"eval_loss"`.
     """
+
     output_dir: str = field(
-        metadata={"help": "The output directory where the model predictions and checkpoints will be written."}
+        metadata={
+            "help": "The output directory where the model predictions and checkpoints will be written."
+        }
     )
     overwrite_output_dir: bool = field(
         default=False,
@@ -195,8 +203,12 @@ class TrainingArguments:
     )
 
     do_train: bool = field(default=False, metadata={"help": "Whether to run training."})
-    do_eval: bool = field(default=None, metadata={"help": "Whether to run eval on the dev set."})
-    do_predict: bool = field(default=False, metadata={"help": "Whether to run predictions on the test set."})
+    do_eval: bool = field(
+        default=None, metadata={"help": "Whether to run eval on the dev set."}
+    )
+    do_predict: bool = field(
+        default=False, metadata={"help": "Whether to run predictions on the test set."}
+    )
     evaluate_during_training: bool = field(
         default=False,
         metadata={"help": "Run evaluation during training at each logging step."},
@@ -207,7 +219,9 @@ class TrainingArguments:
     )
     prediction_loss_only: bool = field(
         default=False,
-        metadata={"help": "When performing evaluation and predictions, only returns the loss."},
+        metadata={
+            "help": "When performing evaluation and predictions, only returns the loss."
+        },
     )
 
     per_device_train_batch_size: int = field(
@@ -234,31 +248,59 @@ class TrainingArguments:
 
     gradient_accumulation_steps: int = field(
         default=1,
-        metadata={"help": "Number of updates steps to accumulate before performing a backward/update pass."},
+        metadata={
+            "help": "Number of updates steps to accumulate before performing a backward/update pass."
+        },
     )
     eval_accumulation_steps: Optional[int] = field(
         default=None,
-        metadata={"help": "Number of predictions steps to accumulate before moving the tensors to the CPU."},
+        metadata={
+            "help": "Number of predictions steps to accumulate before moving the tensors to the CPU."
+        },
     )
 
-    learning_rate: float = field(default=5e-5, metadata={"help": "The initial learning rate for Adam."})
-    weight_decay: float = field(default=0.0, metadata={"help": "Weight decay if we apply some."})
-    adam_beta1: float = field(default=0.9, metadata={"help": "Beta1 for Adam optimizer"})
-    adam_beta2: float = field(default=0.999, metadata={"help": "Beta2 for Adam optimizer"})
-    adam_epsilon: float = field(default=1e-8, metadata={"help": "Epsilon for Adam optimizer."})
+    learning_rate: float = field(
+        default=5e-5, metadata={"help": "The initial learning rate for Adam."}
+    )
+    weight_decay: float = field(
+        default=0.0, metadata={"help": "Weight decay if we apply some."}
+    )
+    adam_beta1: float = field(
+        default=0.9, metadata={"help": "Beta1 for Adam optimizer"}
+    )
+    adam_beta2: float = field(
+        default=0.999, metadata={"help": "Beta2 for Adam optimizer"}
+    )
+    adam_epsilon: float = field(
+        default=1e-8, metadata={"help": "Epsilon for Adam optimizer."}
+    )
     max_grad_norm: float = field(default=1.0, metadata={"help": "Max gradient norm."})
 
-    num_train_epochs: float = field(default=3.0, metadata={"help": "Total number of training epochs to perform."})
+    num_train_epochs: float = field(
+        default=3.0, metadata={"help": "Total number of training epochs to perform."}
+    )
     max_steps: int = field(
         default=-1,
-        metadata={"help": "If > 0: set total number of training steps to perform. Override num_train_epochs."},
+        metadata={
+            "help": "If > 0: set total number of training steps to perform. Override num_train_epochs."
+        },
     )
-    warmup_steps: int = field(default=0, metadata={"help": "Linear warmup over warmup_steps."})
+    warmup_steps: int = field(
+        default=0, metadata={"help": "Linear warmup over warmup_steps."}
+    )
 
-    logging_dir: Optional[str] = field(default_factory=default_logdir, metadata={"help": "Tensorboard log dir."})
-    logging_first_step: bool = field(default=False, metadata={"help": "Log the first global_step"})
-    logging_steps: int = field(default=500, metadata={"help": "Log every X updates steps."})
-    save_steps: int = field(default=500, metadata={"help": "Save checkpoint every X updates steps."})
+    logging_dir: Optional[str] = field(
+        default_factory=default_logdir, metadata={"help": "Tensorboard log dir."}
+    )
+    logging_first_step: bool = field(
+        default=False, metadata={"help": "Log the first global_step"}
+    )
+    logging_steps: int = field(
+        default=500, metadata={"help": "Log every X updates steps."}
+    )
+    save_steps: int = field(
+        default=500, metadata={"help": "Save checkpoint every X updates steps."}
+    )
     save_total_limit: Optional[int] = field(
         default=None,
         metadata={
@@ -268,12 +310,16 @@ class TrainingArguments:
             )
         },
     )
-    no_cuda: bool = field(default=False, metadata={"help": "Do not use CUDA even when it is available"})
+    no_cuda: bool = field(
+        default=False, metadata={"help": "Do not use CUDA even when it is available"}
+    )
     seed: int = field(default=42, metadata={"help": "random seed for initialization"})
 
     fp16: bool = field(
         default=False,
-        metadata={"help": "Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit"},
+        metadata={
+            "help": "Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit"
+        },
     )
     fp16_opt_level: str = field(
         default="O1",
@@ -284,21 +330,35 @@ class TrainingArguments:
             )
         },
     )
-    local_rank: int = field(default=-1, metadata={"help": "For distributed training: local_rank"})
+    local_rank: int = field(
+        default=-1, metadata={"help": "For distributed training: local_rank"}
+    )
 
     tpu_num_cores: Optional[int] = field(
-        default=None, metadata={"help": "TPU: Number of TPU cores (automatically passed by launcher script)"}
+        default=None,
+        metadata={
+            "help": "TPU: Number of TPU cores (automatically passed by launcher script)"
+        },
     )
     tpu_metrics_debug: bool = field(
         default=False,
-        metadata={"help": "Deprecated, the use of `--debug` is preferred. TPU: Whether to print debug metrics"},
+        metadata={
+            "help": "Deprecated, the use of `--debug` is preferred. TPU: Whether to print debug metrics"
+        },
     )
-    debug: bool = field(default=False, metadata={"help": "Whether to print debug metrics on TPU"})
+    debug: bool = field(
+        default=False, metadata={"help": "Whether to print debug metrics on TPU"}
+    )
 
     dataloader_drop_last: bool = field(
-        default=False, metadata={"help": "Drop the last incomplete batch if it is not divisible by the batch size."}
+        default=False,
+        metadata={
+            "help": "Drop the last incomplete batch if it is not divisible by the batch size."
+        },
     )
-    eval_steps: int = field(default=None, metadata={"help": "Run an evaluation every X steps."})
+    eval_steps: int = field(
+        default=None, metadata={"help": "Run an evaluation every X steps."}
+    )
     dataloader_num_workers: int = field(
         default=0,
         metadata={
@@ -308,32 +368,50 @@ class TrainingArguments:
 
     past_index: int = field(
         default=-1,
-        metadata={"help": "If >=0, uses the corresponding part of the output as the past state for next step."},
+        metadata={
+            "help": "If >=0, uses the corresponding part of the output as the past state for next step."
+        },
     )
 
     run_name: Optional[str] = field(
-        default=None, metadata={"help": "An optional descriptor for the run. Notably used for wandb logging."}
+        default=None,
+        metadata={
+            "help": "An optional descriptor for the run. Notably used for wandb logging."
+        },
     )
     disable_tqdm: Optional[bool] = field(
-        default=None, metadata={"help": "Whether or not to disable the tqdm progress bars."}
+        default=None,
+        metadata={"help": "Whether or not to disable the tqdm progress bars."},
     )
 
     remove_unused_columns: Optional[bool] = field(
-        default=True, metadata={"help": "Remove columns not required by the model when using an nlp.Dataset."}
+        default=True,
+        metadata={
+            "help": "Remove columns not required by the model when using an nlp.Dataset."
+        },
     )
     label_names: Optional[List[str]] = field(
-        default=None, metadata={"help": "The list of keys in your dictionary of inputs that correspond to the labels."}
+        default=None,
+        metadata={
+            "help": "The list of keys in your dictionary of inputs that correspond to the labels."
+        },
     )
 
     load_best_model_at_end: Optional[bool] = field(
         default=False,
-        metadata={"help": "Whether or not to load the best model found during training at the end of training."},
+        metadata={
+            "help": "Whether or not to load the best model found during training at the end of training."
+        },
     )
     metric_for_best_model: Optional[str] = field(
-        default=None, metadata={"help": "The metric to use to compare two different models."}
+        default=None,
+        metadata={"help": "The metric to use to compare two different models."},
     )
     greater_is_better: Optional[bool] = field(
-        default=None, metadata={"help": "Whether the `metric_for_best_model` should be maximized or not."}
+        default=None,
+        metadata={
+            "help": "Whether the `metric_for_best_model` should be maximized or not."
+        },
     )
 
     def __post_init__(self):
@@ -354,7 +432,10 @@ class TrainingArguments:
         if self.load_best_model_at_end and self.metric_for_best_model is None:
             self.metric_for_best_model = "loss"
         if self.greater_is_better is None and self.metric_for_best_model is not None:
-            self.greater_is_better = self.metric_for_best_model not in ["loss", "eval_loss"]
+            self.greater_is_better = self.metric_for_best_model not in [
+                "loss",
+                "eval_loss",
+            ]
         if self.run_name is None:
             self.run_name = self.output_dir
 
@@ -371,7 +452,9 @@ class TrainingArguments:
                 "Using deprecated `--per_gpu_train_batch_size` argument which will be removed in a future "
                 "version. Using `--per_device_train_batch_size` is preferred."
             )
-        per_device_batch_size = self.per_gpu_train_batch_size or self.per_device_train_batch_size
+        per_device_batch_size = (
+            self.per_gpu_train_batch_size or self.per_device_train_batch_size
+        )
         return per_device_batch_size * max(1, self.n_gpu)
 
     @property
@@ -384,7 +467,9 @@ class TrainingArguments:
                 "Using deprecated `--per_gpu_eval_batch_size` argument which will be removed in a future "
                 "version. Using `--per_device_eval_batch_size` is preferred."
             )
-        per_device_batch_size = self.per_gpu_eval_batch_size or self.per_device_eval_batch_size
+        per_device_batch_size = (
+            self.per_gpu_eval_batch_size or self.per_device_eval_batch_size
+        )
         return per_device_batch_size * max(1, self.n_gpu)
 
     @cached_property
@@ -459,7 +544,13 @@ class TrainingArguments:
         Sanitized serialization to use with TensorBoard’s hparams
         """
         d = self.to_dict()
-        d = {**d, **{"train_batch_size": self.train_batch_size, "eval_batch_size": self.eval_batch_size}}
+        d = {
+            **d,
+            **{
+                "train_batch_size": self.train_batch_size,
+                "eval_batch_size": self.eval_batch_size,
+            },
+        }
 
         valid_types = [bool, int, float, str]
         if is_torch_available():

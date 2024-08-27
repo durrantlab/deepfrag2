@@ -986,4 +986,3 @@ def gpu_gridify_sphere_max(
 
         # add value to layers
         add_max_value_to_layers(mask, batch_idx, layer_offset, grid, val, x, y, z)
-

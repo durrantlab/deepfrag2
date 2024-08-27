@@ -17,6 +17,7 @@ from ..models.dense_graph_autoencoder import DenseGraphAutoencoder
 
 # TODO: Not used anywhere.
 
+
 def generate_samples(zinc_path: str, gcn_model: str, num: int, cpu_only: bool):
     print("[*] Loading data...")
     zinc = ZINCMolGraphProviderH5(zinc_path, make_3D=False)
@@ -98,7 +99,16 @@ def save_csv(csv_path: str, z_out: np.array, info: list):
     csv = [["x", "y", "z", "smiles", "idx", "zinc_id"]]
     for i in range(len(z_out)):
         x, y, z = z_out[i]
-        csv.append([str(float(x)), str(float(y)), str(float(z)), info[i][0], info[i][1], info[i][2]])
+        csv.append(
+            [
+                str(float(x)),
+                str(float(y)),
+                str(float(z)),
+                info[i][0],
+                info[i][1],
+                info[i][2],
+            ]
+        )
 
     with open(csv_path, "w") as f:
         f.write(to_csv(csv))

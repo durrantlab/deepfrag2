@@ -6,7 +6,6 @@ from apps.deepfrag.model_density_predictions import VoxelAutoencoder
 
 
 class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
-
     def __init__(self, **kwargs):
         """Initialize the DeepFrag model.
         
@@ -42,15 +41,24 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
             float: loss value
         """
         # TODO: Is batch_size really needed? Redefined immediately below.
+
+        assert (
+            self.database is not None
+        ), "Database must be set before calling loss function."
+
         # Closer to 1 means more dissimilar, closer to 0 means more similar.
         if self.is_continuous_fingerprint:
             return super().loss(pred, fps, entry_infos, batch_size)
 
         cos_loss_vector = cos_loss(pred, fps)
         for idx, entry in enumerate(entry_infos):
-            entry_data = self.database.frag_and_act_x_parent_x_sdf_x_pdb[entry.ligand_id][entry.fragment_idx]
+            entry_data = self.database.frag_and_act_x_parent_x_sdf_x_pdb[
+                entry.ligand_id
+            ][entry.fragment_idx]
             act_value = float(entry_data[1])
-            prv_value = float(entry_data[3]) * -1 if self.use_prevalence else 0  # considering neg prevalence
+            prv_value = (
+                float(entry_data[3]) * -1 if self.use_prevalence else 0
+            )  # considering neg prevalence
 
             # the lower the prevalence, the lower the result to raise euler to the prevalence.
             exp_value = e ** prv_value
@@ -61,4 +69,3 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
             cos_loss_vector[idx] = cos_loss_vector[idx] * act_euler
 
         return self.aggregation.aggregate_on_pytorch_tensor(cos_loss_vector)
-
