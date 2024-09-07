@@ -1,11 +1,19 @@
 """DeepFrag model that uses additional SDF data for training."""
 
+from typing import List, Optional, TYPE_CHECKING
+from apps.deepfrag.model import DeepFragModel
+from collagen.external.common.types import StructureEntry
+from collagen.external.paired_csv.interface import PairedCsvInterface
 from collagen.metrics import cos_loss
 from math import e
-from apps.deepfrag.model_density_predictions import VoxelAutoencoder
 
+if TYPE_CHECKING:
+    import torch  # type: ignore
 
-class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
+class DeepFragModelPairedDataFinetune(DeepFragModel):
+    
+    """DeepFrag model that uses additional paired data for finetuning."""
+
     def __init__(self, **kwargs):
         """Initialize the DeepFrag model.
         
@@ -19,28 +27,26 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
         self.database = None
         self.use_prevalence = kwargs["use_prevalence"]
 
-    def set_database(self, database):
-        # TODO: All interfaces should inherit from a common parent.
-        """Method to specify the paired database.
+    def set_database(self, database: PairedCsvInterface):
+        """Specify the paired database.
 
         Args:
-            database: The paired database.
+            database (PairedCsvInterface): The paired database.
         """
         self.database = database
 
-    def loss(self, pred, fps, entry_infos, batch_size):
+    def loss(self, pred: "torch.Tensor", fps: "torch.Tensor", entry_infos: Optional[List[StructureEntry]], batch_size: Optional[int]):
         """Loss function.
 
         Args:
             pred: tensor with the fingerprint values obtained from voxels.
             fps: tensor with the fingerprint values obtained from a given fragment representation.
-            entry_infos: list with each entry information.
+            entry_infos (List[StructureEntry]): list with each entry information.
             batch_size: size of the tensors and list aforementioned.
 
         Returns:
             float: loss value
         """
-        # TODO: Is batch_size really needed? Redefined immediately below.
 
         assert (
             self.database is not None
@@ -51,10 +57,11 @@ class DeepFragModelPairedDataFinetune(VoxelAutoencoder):
             return super().loss(pred, fps, entry_infos, batch_size)
 
         cos_loss_vector = cos_loss(pred, fps)
-        for idx, entry in enumerate(entry_infos):
+        assert entry_infos is not None, "Entry infos must be provided."
+        for idx, entry_info in enumerate(entry_infos):
             entry_data = self.database.frag_and_act_x_parent_x_sdf_x_pdb[
-                entry.ligand_id
-            ][entry.fragment_idx]
+                entry_info.ligand_id
+            ][entry_info.fragment_idx]
             act_value = float(entry_data[1])
             prv_value = (
                 float(entry_data[3]) * -1 if self.use_prevalence else 0

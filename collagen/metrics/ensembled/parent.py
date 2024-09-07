@@ -4,14 +4,14 @@
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Tuple
-import numpy as np
-import torch
+from collagen.external.common.types import StructureEntry
+import numpy as np  # type: ignore
+import torch  # type: ignore
 from collagen.core.loader import DataLambda
-from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import PCAProject
 
 if TYPE_CHECKING:
-    import pytorch_lightning as pl
+    import pytorch_lightning as pl  # type: ignore
 
 # TODO: Only averaged.py uses this. Is the inheritance really necessary?
 
@@ -59,7 +59,7 @@ class ParentEnsembled(ABC):
     def finish(self, pca_space: PCAProject):
         """Finish the ensembling process. Pick up here once you've defined the
         pca_space and label set.
-        
+
         Args:
             pca_space (PCAProject): The PCA space.
         """
@@ -85,7 +85,7 @@ class ParentEnsembled(ABC):
 
     def unpack(self) -> Tuple[Any, torch.Tensor]:
         """Unpack the model and predictions_ensembled.
-        
+
         Returns:
             Tuple[Any, torch.Tensor]: The model and predictions_ensembled.
         """
@@ -105,7 +105,7 @@ class ParentEnsembled(ABC):
                 self.model.prediction_targets
             )
 
-        entry_inf: Entry_info = self.model.prediction_targets_entry_infos[entry_idx]
+        entry_inf: StructureEntry = self.model.prediction_targets_entry_infos[entry_idx]
 
         # Check if entry_inf is a List
         connectionPoint = None

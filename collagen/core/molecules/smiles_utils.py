@@ -1,9 +1,8 @@
 """SMILES utilities."""
 
 from typing import Union
-from rdkit import Chem
-from rdkit.Chem.MolStandardize import rdMolStandardize
-from rdkit.Chem import rdmolops
+from rdkit import Chem  # type: ignore
+from rdkit.Chem import rdmolops  # type: ignore
 
 
 # From https://www.rdkit.org/docs/Cookbook.html

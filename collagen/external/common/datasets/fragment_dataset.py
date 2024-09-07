@@ -6,28 +6,27 @@ import argparse
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Dict, Union, Tuple, Set, Optional, Any, Callable
 from pathlib import Path
-from torch.utils.data import Dataset
+from collagen.external.common.parent_targets_ligands import Parent_ligand
+from collagen.external.common.types import StructuresSplit
+from collagen.external.common.cache_filter import CacheItemsToUpdate, load_cache_and_filter
+from collagen.external.paired_csv.interface import PairedCsvInterface
+from torch.utils.data import Dataset  # type: ignore
 from collagen.core import args as user_args
-from collagen.external.moad.split import full_moad_split
-from ..cache_filter import CacheItemsToUpdate, load_cache_and_filter
+from collagen.external.common.split import create_full_dataset_as_single_split
 from .... import Mol
 import sys
-from collagen.external.moad.interface import PairedPdbSdfCsvInterface
 from collagen.core.molecules.mol import BackedMol
 
 
 if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface
-    from collagen.external.moad.split import MOAD_split
+    from collagen.external.common.parent_interface import ParentInterface
     from collagen.core.molecules.mol import Mol
-    from collagen.external.moad.interface import PairedPdbSdfCsvInterface
-    from collagen.external.moad.types import MOAD_ligand
 
 
 @dataclass
-class MOADFragmentDataset_entry(object):
+class FragmentDataset_entry(object):
 
-    """An entry in the MOADFragmentDataset."""
+    """An entry in the FragmentDataset."""
 
     pdb_id: str
     lig_to_frag_masses_chunk_idx: int
@@ -35,73 +34,66 @@ class MOADFragmentDataset_entry(object):
     frag_idx: int
 
 
-class MOADFragmentDataset(Dataset):
+class FragmentDataset(Dataset):
 
     """A Dataset that provides (receptor, parent, fragment) tuples by splitting
     ligands on single bonds. Used in DeepFrag, for example.
 
     Args:
-        moad (MOADInterface): An initialized MOADInterface object.
+        data_interface (ParentInterface): An initialized ParentInterface object.
         cache_file (str, optional): Path to a cache file to store or load
             fragment metadata.
         cache_cores (int, optional): If a cache file is not found, use this
             many cores to compute a new cache.
-        split (MOAD_split, optional): An optional split to constrain the space
+        split (StructuresSplit, optional): An optional split to constrain the space
             of examples.
         transform (Callable[[Mol, Mol, Mol], Any], optional): An optional
             transformation function to invoke before returning samples. Takes
             the arguments (receptor, parent, fragment) as Mol objects.
     """
 
-    moad: "MOADInterface"
-    split: "MOAD_split"
+    data_interface: "ParentInterface"
+    split: "StructuresSplit"
 
     # function that performs voxelization and fingerprinting
-    transform: Optional[Callable[[Mol, Mol, Mol], Any]]
-
-    # A cache-able index listing every fragment size for every ligand/target in
-    # the dataset.
-    #
-    # See MOADFragmentDataset._build_index for structure. This index only needs
-    # to be updated for new structure files. TODO: Is _fragment_index_cached
-    # even used?
-    # _fragment_index_cached: Optional[dict]
+    transform: Optional[Callable[[Mol, Mol, Mol, str, int], Any]]
 
     # The internal listing of every valid fragment example. This index is
     # generated on each run based on the runtime filters: (targets, smiles,
     # fragment_size).
-    _internal_index_valids_filtered: List[MOADFragmentDataset_entry]
+    _internal_index_valids_filtered: List[FragmentDataset_entry]
 
     def __init__(
         self,
-        moad: "MOADInterface",
+        data_interface: "ParentInterface",
         cache_file: Optional[Union[str, Path]] = None,
         cache_cores: int = 1,
-        split: Optional["MOAD_split"] = None,
-        transform: Optional[Callable[[Mol, Mol, Mol], Any]] = None,
+        split: Optional["StructuresSplit"] = None,
+        transform: Optional[Callable[[Mol, Mol, Mol, str, int], Any]] = None,
         args: Optional[argparse.Namespace] = None,
     ):
-        """Initialize a MOADFragmentDataset.
-        
+        """Initialize a FragmentDataset.
+
         Args:
-            moad (MOADInterface): An initialized MOADInterface object.
+            data_interface (ParentInterface): An initialized ParentInterface object.
             cache_file (str, optional): Path to a cache file to store or load
                 fragment metadata.
             cache_cores (int, optional): If a cache file is not found, use this
                 many cores to compute a new cache.
-            split (MOAD_split, optional): An optional split to constrain the space
+            split (StructuresSplit, optional): An optional split to constrain the space
                 of examples.
-            transform (Callable[[Mol, Mol, Mol], Any], optional): An optional
-                transformation function to invoke before returning samples. Takes
-                the arguments (receptor, parent, fragment) as Mol objects.
+            transform (Callable[[Mol, Mol, Mol, str, int], Any], optional): An
+                optional transformation function to invoke before returning
+                samples. Takes the arguments (receptor, parent, fragment) as
+                Mol objects.
             args (argparse.Namespace, optional): An optional set of arguments
                 to control how the dataset is generated.
 
         Raises:
             ValueError: If the MOADInterface object is not initialized.
         """
-        self.moad = moad
-        self.split = split if split is not None else full_moad_split(moad)
+        self.data_interface = data_interface
+        self.split = split if split is not None else create_full_dataset_as_single_split(data_interface)
         self.transform = transform
         self.args = args
         self.mol_props_param_validated = False
@@ -180,16 +172,16 @@ class MOADFragmentDataset(Dataset):
         return parent_parser
 
     def _lig_filter(
-        self, args: argparse.Namespace, lig: "MOAD_ligand", lig_inf: Dict
+        self, args: argparse.Namespace, lig: "Parent_ligand", lig_inf: Dict
     ) -> bool:
         """In the case of the fragment dataset, there is a filter applied to
         fragments, but not whole ligands. So everything passes. This is what is
         passed to cache_filter.load_cache_and_filter as the lig_filter_func
         parameter.
-        
+
         Args:
             args (argparse.Namespace): The user arguments.
-            lig (MOAD_ligand): The ligand to filter.
+            lig (Parent_ligand): The ligand to filter.
             lig_inf (Dict): The ligand's metadata.
 
         Returns:
@@ -208,7 +200,7 @@ class MOADFragmentDataset(Dataset):
             ValueError: If the mol_props parameter is invalid.
 
         Returns:
-            List[str]: The mol_props parameter as a list of strings. E.g., 
+            List[str]: The mol_props parameter as a list of strings. E.g.,
                 separates out string-list like "aromatic,acid" into
                 `["aromatic", "acid"]`.
         """
@@ -346,7 +338,7 @@ class MOADFragmentDataset(Dataset):
 
     def _make_dataset_entries_func(
         self, args: argparse.Namespace, pdb_id: str, lig_name: str, lig_inf: Dict
-    ) -> List[MOADFragmentDataset_entry]:
+    ) -> List[FragmentDataset_entry]:
         """Filter is passed to cache_filter.load_cache_and_filter as the
         make_dataset_entries_func parameter.
 
@@ -355,7 +347,7 @@ class MOADFragmentDataset(Dataset):
             pdb_id (str): The PDB ID of the ligand.
             lig_name (str): The name of the ligand.
             lig_inf (Dict): The ligand's information from the cache.
-            
+
         Returns:
             List[MOADFragmentDataset_entry]: The list of entries to add to the
                 dataset.
@@ -398,7 +390,7 @@ class MOADFragmentDataset(Dataset):
                 frag_smi,
             ):
                 entries_to_return.append(
-                    MOADFragmentDataset_entry(
+                    FragmentDataset_entry(
                         pdb_id=pdb_id,
                         lig_to_frag_masses_chunk_idx=lig_inf["lig_chunk_idx"],
                         ligand_id=lig_name,
@@ -420,7 +412,7 @@ class MOADFragmentDataset(Dataset):
 
         cache, filtered_cache = load_cache_and_filter(
             self._lig_filter,
-            self.moad,
+            self.data_interface,
             self.split,
             self.args,
             self._make_dataset_entries_func,
@@ -446,24 +438,25 @@ class MOADFragmentDataset(Dataset):
 
     def __len__(self) -> int:
         """Return the number of entries in the dataset.
-        
+
         Returns:
             int: The number of entries in the dataset.
         """
         return len(self._internal_index_valids_filtered)
 
-    def __getitem__(self, idx: int) -> Union[None, Tuple[Mol, Mol, Mol]]:
+    def __getitem__(self, idx: int) -> Union[None, Tuple[Mol, Mol, Mol, str, int], Any]:
         """Return (receptor, parent, fragment)
-        
+
         Args:
             idx (int): The index of the entry to return.
-            
+
         Returns:
-            Tuple[Mol, Mol, Mol]: (receptor, parent, fragment)
+            Union[None, Tuple[Mol, Mol, Mol, str, int], Any]: (receptor,
+            parent, fragment, ligand_id, frag_idx)
         """
         assert 0 <= idx < len(self), "Index out of bounds"
 
-        entry: Union[MOADFragmentDataset_entry, None] = None
+        entry: Union[FragmentDataset_entry, None] = None
         counter = 1
         max_counter = 3
         # For some reason, id we repeat this code more than 1 times, then we
@@ -476,12 +469,7 @@ class MOADFragmentDataset(Dataset):
         while counter <= max_counter:
             try:
                 entry = self._internal_index_valids_filtered[idx]
-
-                # TODO: self.moad needs to be a parent class that all other
-                # interfaces inherit (e.g., MOADInterface,
-                # PairedPdbSdfCsvInterface)
-
-                receptor, ligands = self.moad[entry.pdb_id][
+                receptor, ligands = self.data_interface[entry.pdb_id][
                     entry.lig_to_frag_masses_chunk_idx
                 ]
 
@@ -496,10 +484,12 @@ class MOADFragmentDataset(Dataset):
                 # Once you find it, actually do the fragmenting.
                 for ligand in ligands:
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
-                        if isinstance(self.moad, PairedPdbSdfCsvInterface):
-                            list_frag_and_act = self.moad.frag_and_act_x_parent_x_sdf_x_pdb[
-                                entry.ligand_id
-                            ]
+                        if isinstance(self.data_interface, PairedCsvInterface):
+                            list_frag_and_act = (
+                                self.data_interface.frag_and_act_x_parent_x_sdf_x_pdb[
+                                    entry.ligand_id
+                                ]
+                            )
                             assert (
                                 0 <= entry.frag_idx < len(list_frag_and_act)
                             ), "Fragment index out of bounds"
@@ -522,16 +512,10 @@ class MOADFragmentDataset(Dataset):
                 assert isinstance(parent, BackedMol), "Parent not found"
                 assert isinstance(fragment, BackedMol), "Fragment not found"
                 sample = (receptor, parent, fragment, entry.ligand_id, entry.frag_idx)
-                assert len(sample) == 5, "Sample size is different to 5"
+                assert len(sample) == 5, "Sample size is not 5"
 
                 # Actually performs voxelization and fingerprinting.
-                return self.transform(sample) if self.transform else sample
-
-                # TODO: NOTE: LLM suggested improvement to above:
-                # if self.transform:
-                #     return self.transform(*sample[:3])  # Only pass receptor, parent, fragment
-                # else:
-                #     return sample[:3]  # Only return receptor, parent, fragment
+                return self.transform(*sample) if self.transform else sample
 
             except AssertionError as e:
                 print(

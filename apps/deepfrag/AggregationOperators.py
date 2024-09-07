@@ -1,13 +1,13 @@
 """Module for aggregation operators."""
 
 from typing import Any, List, Union
-import torch
-from torch import Tensor
-from torch.nn.modules.pooling import AdaptiveAvgPool3d
-from Fancy_aggregations import owas
-from Fancy_aggregations import integrals
+import torch  # type: ignore
+from torch import Tensor  # type: ignore
+from torch.nn.modules.pooling import AdaptiveAvgPool3d  # type: ignore
+from Fancy_aggregations import owas  # type: ignore
+from Fancy_aggregations import integrals  # type: ignore
 from enum import Enum
-import numpy as np
+import numpy as np  # type: ignore
 
 
 class Operator(Enum):
@@ -41,9 +41,27 @@ class Operator(Enum):
     SUGENO = "sugeno_fuzzy_integral"
 
     def startswith(self, prefix: str) -> bool:
+        """
+        Check if the value of the enum starts with a given prefix.
+        
+        Args:
+            prefix (str): the prefix to check.
+            
+        Returns:
+            bool: whether the value starts with the prefix.
+        """
         return self.value.startswith(prefix)
 
     def rsplit(self, s: str) -> List[str]:
+        """
+        Split the value of the enum by a given separator.
+
+        Args:
+            s (str): the separator.
+
+        Returns:
+            List[str]: the split value.
+        """
         return self.value.rsplit(s)
 
 

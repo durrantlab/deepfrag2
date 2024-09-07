@@ -6,22 +6,25 @@ quick look-up later.
 import argparse
 from dataclasses import dataclass
 import json
-from torch import multiprocessing
+from collagen.external.common.chem_props import (
+    is_acid,
+    is_aromatic,
+    is_base,
+    is_neutral,
+)
+from collagen.external.common.parent_interface import ParentInterface
+from collagen.external.common.parent_targets_ligands import Parent_target
+from collagen.external.common.types import StructuresSplit
+from collagen.external.paired_csv.targets_ligands import PairedCsv_ligand
+from torch import multiprocessing  # type: ignore
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, Tuple, Union, Any, Optional, List
-from tqdm.std import tqdm
-from collagen.external.moad.chem_props import is_aromatic, is_acid, is_base, is_neutral
-import numpy as np
-from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles
+from tqdm.std import tqdm  # type: ignore
+import numpy as np  # type: ignore
+from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles  # type: ignore
 from scipy.spatial.distance import cdist
-from .moad_utils import fix_moad_smiles
-from collagen.external.moad.types import PairedPdbSdfCsv_ligand
-
-if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface
-    from collagen.external.moad.types import MOAD_split
-
+from .utils import fix_smiles
 
 @dataclass
 class CacheItemsToUpdate(object):
@@ -45,7 +48,7 @@ class CacheItemsToUpdate(object):
 
     def updatable(self) -> bool:
         """Return True if any of the properties are updatable.
-        
+
         Returns:
             bool: True if any of the properties are updatable.
         """
@@ -95,15 +98,16 @@ def _set_molecular_prop(func: Callable, func_input: Any, default_if_error: Any) 
         return default_if_error
 
 
-def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
+def get_info_given_pdb_id(payload: Tuple[str, Parent_target, CacheItemsToUpdate]) -> Tuple[str, dict]:
     """Given a PDB ID, looks up the PDB in BindingMOAD, and calculates the
     molecular properties specified in CACHE_ITEMS_TO_UPDATE. Returns a tuple
     with the pdb id and a dictionary with the associated information.
-    
+
     Args:
-        payload (List[Any]): A list containing the PDB ID, the MOADInterface
-            object, and the CacheItemsToUpdate object.
-            
+        payload (Tuple[str, Parent_target, CacheItemsToUpdate]): A tuple
+            containing the PDB ID, the ParentInterface object, and the
+            CacheItemsToUpdate object.
+
     Returns:
         Tuple[str, dict]: A tuple containing the PDB ID and a dictionary with
             the associated information.
@@ -113,15 +117,15 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
 
     # moad_entry_info = moad[pdb_id]
     pdb_id = payload[0]
-    moad_entry_info = payload[1]
+    target = payload[1]
     cache_items_to_update = payload[2]
 
     # Maps string to dict
     lig_infs = {}
-    for lig_chunk_idx in range(len(moad_entry_info)):
+    for lig_chunk_idx in range(len(target)):
         try:
             # Unpack info to get ligands
-            receptor, ligands = moad_entry_info[lig_chunk_idx]
+            receptor, ligands = target[lig_chunk_idx]
         except Exception:
             # Note that prody can't parse some PDBs for some reason. Examples:
             # 1vif
@@ -147,7 +151,9 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
 
             if cache_items_to_update.murcko_scaffold:
                 try:
-                    smi_fixed = fix_moad_smiles(lig.smiles(True))
+                    smi = lig.smiles(True)
+                    assert smi is not None, "SMILES is None"
+                    smi_fixed = fix_smiles(smi)
                     scaffold_smi = MurckoScaffoldSmilesFromSmiles(
                         smi_fixed, includeChirality=True
                     )
@@ -176,7 +182,7 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
                 or cache_items_to_update.frag_neutral
             ):
                 moad_ligand_ = lig.meta["moad_ligand"]
-                if isinstance(moad_ligand_, PairedPdbSdfCsv_ligand):
+                if isinstance(moad_ligand_, PairedCsv_ligand):
                     # Get all the fragments from an additional csv file
                     frags = []
                     for _, _, backed_frag, _, _ in moad_ligand_.fragment_and_act:
@@ -205,7 +211,9 @@ def get_info_given_pdb_id(payload: List[Any]) -> Tuple[str, dict]:
             if cache_items_to_update.frag_smiles:
                 # Helpful for debugging, mostly.
                 lig_infs[lig_name]["frag_smiles"] = _set_molecular_prop(
-                    lambda f: [x[1].smiles(True) for x in f], frags, [],
+                    lambda f: [x[1].smiles(True) for x in f],
+                    frags,
+                    [],
                 )
 
             if cache_items_to_update.frag_aromatic:
@@ -284,9 +292,9 @@ def _set_cache_params_to_update(cache: Dict[str, Dict[str, Dict[str, Any]]]):
         CACHE_ITEMS_TO_UPDATE.frag_neutral = False
 
 
-def _build_moad_cache_file(
+def _build_cache_file(
     filename: Optional[str],
-    moad: "MOADInterface",
+    data_interface: "ParentInterface",
     cache_items_to_update: CacheItemsToUpdate,
     cores: Optional[int] = None,
 ) -> dict:
@@ -294,7 +302,7 @@ def _build_moad_cache_file(
 
     Args:
         filename (str): The filename to save the cache to.
-        moad (MOADInterface): The MOADInterface object to use.
+        data_interface (ParentInterface): The ParentInterface object to use.
         cache_items_to_update (CacheItemsToUpdate): The cache items to update.
         cores (int, optional): The number of cores to use. Defaults to None.
 
@@ -322,9 +330,9 @@ def _build_moad_cache_file(
     # global MOAD_REF
     # MOAD_REF = moad
 
-    pdb_ids_queue = moad.targets
-    list_ids_moad = [
-        [pdb_id, moad[pdb_id], CACHE_ITEMS_TO_UPDATE] for pdb_id in moad.targets
+    pdb_ids_queue = data_interface.targets
+    list_ids_moad: List[Tuple[str, Parent_target, CacheItemsToUpdate]] = [
+        (pdb_id, data_interface[pdb_id], CACHE_ITEMS_TO_UPDATE) for pdb_id in data_interface.targets
     ]
     # NOTE: Filename specified via --cache parameter
 
@@ -359,8 +367,8 @@ def _build_moad_cache_file(
 
 def load_cache_and_filter(
     lig_filter_func: Callable,  # The function used to filter the ligands
-    moad: "MOADInterface",
-    split: "MOAD_split",
+    data_interface: "ParentInterface",
+    split: "StructuresSplit",
     args: argparse.Namespace,
     make_dataset_entries_func: Callable,
     cache_items_to_update: CacheItemsToUpdate,
@@ -370,11 +378,11 @@ def load_cache_and_filter(
     """Not only builds/gets the cache, but also filters the properties to
     retain only those BindingMOAD entries for training. For example, could
     filter by ligand mass.
-    
+
     Args:
         lig_filter_func (function): The function used to filter the ligands.
-        moad (MOADInterface): The MOADInterface object to use.
-        split (MOAD_split): The MOAD_split object to use.
+        data_interface (ParentInterface): The ParentInterface object to use.
+        split (StructuresSplit): The StructuresSplit object to use.
         args (argparse.Namespace): The arguments.
         make_dataset_entries_func (function): The function to make the dataset
             entries.
@@ -392,9 +400,9 @@ def load_cache_and_filter(
     # Returns tuple, cache and filtered_cache.
 
     cache_file = Path(cache_file) if cache_file is not None else None
-    cache = _build_moad_cache_file(
+    cache = _build_cache_file(
         str(cache_file) if cache_file else None,
-        moad,
+        data_interface,
         cache_items_to_update,
         cores=cores,
     )
@@ -425,7 +433,7 @@ def load_cache_and_filter(
             # Enforce whole-ligand filters and not-in-same-split filters.
             fails_filter = False
             # Search for ligand_name.
-            for lig in moad[pdb_id].ligands:
+            for lig in data_interface[pdb_id].ligands:
                 if lig.name != lig_name:
                     # Not the ligand you're looking for. Continue searching.
                     continue
@@ -472,7 +480,7 @@ def load_cache_and_filter(
 
     if not filtered_cache:
         raise Exception(
-            "No ligands passed the moad filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Consider using `--verbose True` to debug."
+            "No ligands passed the filters. Could be that filters are too strict, or perhaps there is a problem with your CSV file. Consider using `--verbose True` to debug."
         )
 
     print(f"\nSPLIT SUMMARY AFTER FRAGMENTING/FILTERING: {split.name}")

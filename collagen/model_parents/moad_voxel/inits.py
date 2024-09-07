@@ -2,36 +2,42 @@
 
 from typing import TYPE_CHECKING, Optional, Union
 from argparse import Namespace
+from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
-import pytorch_lightning as pl
-from pytorch_lightning.loggers.wandb import WandbLogger
-from pytorch_lightning.loggers import TensorBoardLogger
+from collagen.external.paired_csv.interface import PairedCsvInterface
+from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
+import pytorch_lightning as pl  # type: ignore
+from pytorch_lightning.loggers.wandb import WandbLogger  # type: ignore
+from pytorch_lightning.loggers import TensorBoardLogger  # type: ignore
 from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
-import torch
+import torch  # type: ignore
 import os
-from apps.deepfrag.model_additional_data import DeepFragModelPairedDataFinetune
 
 if TYPE_CHECKING:
-    from collagen.external.moad.interface import (
-        MOADInterface,
-        PairedPdbSdfCsvInterface,
-        PdbSdfDirInterface,
-    )
+    from collagen.external.common.parent_interface import ParentInterface
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
-class MoadVoxelModelInits(object):
+class VoxelModelInits(object):
 
     """A few function to initialize the trainer, model, voxel parameters, and
     device.
     """
 
+    def __init__(self, parent: "VoxelModelParent"):
+        """Initialize the class.
+
+        Args:
+            parent (VoxelModelParent): The parent class.
+        """
+        self.parent = parent
+
     @staticmethod
     def init_trainer(args: Namespace) -> pl.Trainer:
         """Initialize the trainer.
-        
+
         Args:
             args: The arguments parsed by argparse.
-                
+
         Returns:
             pl.Trainer: The trainer.
         """
@@ -86,12 +92,10 @@ class MoadVoxelModelInits(object):
         return pl.Trainer.from_argparse_args(args, logger=logger, callbacks=callbacks)
 
     def init_model(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
         ckpt_filename: Optional[str],
-        fragment_set: Union[
-            "MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface", None
-        ] = None,
+        fragment_set: Optional["ParentInterface"] = None,
     ) -> pl.LightningModule:
         """Initialize the model.
 
@@ -105,14 +109,18 @@ class MoadVoxelModelInits(object):
             pl.LightningModule: The model.
         """
         if not ckpt_filename:
-            return self.model_cls(**vars(args))
+            return self.parent.model_cls(**vars(args))
 
         print(f"\nLoading model from checkpoint {ckpt_filename}\n")
-        model = self.model_cls.load_from_checkpoint(ckpt_filename)
+        model = self.parent.model_cls.load_from_checkpoint(ckpt_filename)
 
         # NOTE: This is how you load the dataset only when using paired data for
         # finetuning.
-        if fragment_set and isinstance(model, DeepFragModelPairedDataFinetune):
+        if (
+            fragment_set
+            and isinstance(fragment_set, PairedCsvInterface)
+            and isinstance(model, DeepFragModelPairedDataFinetune)
+        ):
             model.set_database(fragment_set)
         return model
 
@@ -122,7 +130,7 @@ class MoadVoxelModelInits(object):
         configurable via argparse. Currently hard coded.
 
         Args:
-            args: The arguments parsed by argparse. 
+            args: The arguments parsed by argparse.
 
         Returns:
             VoxelParams: The voxel parameters.
@@ -144,19 +152,21 @@ class MoadVoxelModelInits(object):
     def init_warm_model(
         self,
         args: Namespace,
-        moad: Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface],
+        data_interface: ParentInterface,
     ) -> pl.LightningModule:
         """Initialize the model for warm starting (finetuning).
 
         Args:
             args: The arguments parsed by argparse.
+            data_interface: The database (e.g., MOAD) interface.
+
 
         Returns:
             pl.LightningModule: The model.
         """
-        model = self.model_cls(**vars(args))
+        model = self.parent.model_cls(**vars(args))
         state_dict = torch.load(args.model_for_warm_starting)
         model.load_state_dict(state_dict)
-        if isinstance(model, DeepFragModelPairedDataFinetune):
-            model.set_database(moad)
+        if isinstance(data_interface, PairedCsvInterface) and isinstance(model, DeepFragModelPairedDataFinetune):
+            model.set_database(data_interface)
         return model

@@ -3,16 +3,16 @@ the "meat" is in ParentEnsembled.
 """
 
 from collagen.core.loader import DataLambda
-import torch
+import torch  # type: ignore
 from collagen.metrics.ensembled.parent import ParentEnsembled
-import numpy as np
+import numpy as np  # type: ignore
 from apps.deepfrag.AggregationOperators import Operator
 from apps.deepfrag.AggregationOperators import Aggregate1DTensor
 import os.path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import pytorch_lightning as pl
+    import pytorch_lightning as pl  # type: ignore
 
 
 class AveragedEnsembled(ParentEnsembled):
@@ -68,7 +68,7 @@ class AveragedEnsembled(ParentEnsembled):
         """Create the initial prediction tensor. This is the tensor that will
         hold the predictions from all the rotations. At this point, model is
         after inference on the first rotation. So it has a prediciton.
-        
+
         Returns:
             torch.Tensor: The initial prediction tensor.
         """
@@ -85,7 +85,7 @@ class AveragedEnsembled(ParentEnsembled):
     def _udpate_prediction_tensor(self, predicitons_to_add: torch.Tensor, idx: int):
         """Add the predictions from the current rotation to the predictions
         tensor (in place).
-        
+
         Args:
             predicitons_to_add (torch.Tensor): The predictions from the current
                 rotation.

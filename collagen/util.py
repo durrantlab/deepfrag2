@@ -1,13 +1,13 @@
 """Utility functions for collagen."""
 
-import numpy as np
+import numpy as np  # type: ignore
 import time
 from typing import List, Set, Union
 
 
 def rand_rot() -> np.ndarray:
     """Return a random uniform quaternion rotation.
-    
+
     Returns:
         np.ndarray: A random uniform quaternion rotation.
     """
@@ -23,7 +23,7 @@ def rand_rot() -> np.ndarray:
     # For debugging, if you want a consistent (non-random) rotation.
     # q = np.array([0.5, 0.234, 0.9234, 0.21])
 
-    q = q / np.sqrt(np.sum(q ** 2))  # normalize
+    q = q / np.sqrt(np.sum(q**2))  # normalize
 
     return q
 
@@ -137,10 +137,10 @@ VDW_RADIUS_BY_NUM = {
 
 def get_vdw_radius(num: int) -> float:
     """Return the Van-der Waals radius for a given atomic number or 0.
-    
+
     Args:
         num (int): Atomic number.
-        
+
     Returns:
         float: Van-der Waals radius for a given atomic number or 0.
     """
@@ -149,12 +149,11 @@ def get_vdw_radius(num: int) -> float:
 
 def sorted_list(st: Union[Set[str], List[str]]) -> List[str]:
     """Return a sorted list from a set.
-    
+
     Args:
         st (Union[Set[str], List[str]]): Set to be sorted.
-    
+
     Returns:
         List[str]: Sorted list from a set.
     """
-
     return sorted(st)

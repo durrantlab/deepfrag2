@@ -3,21 +3,15 @@ training and testing.
 """
 
 from typing import TYPE_CHECKING, Any, Callable, List, Union
-import numpy as np
-from torch import multiprocessing
+from collagen.external.common.datasets.fragment_dataset import FragmentDataset
+import numpy as np  # type: ignore
+from torch import multiprocessing  # type: ignore
 import time
 import os
 import traceback
 from datetime import datetime
 import threading
 import platform
-
-if TYPE_CHECKING:
-    from collagen.external.moad.interface import (
-        MOADInterface,
-        PairedPdbSdfCsvInterface,
-        PdbSdfDirInterface,
-    )
 
 DATA = None
 COLLATE: Union[None, Callable] = None
@@ -28,7 +22,7 @@ TIMEOUT = 60.0 * 5
 
 def log(txt: str):
     """Log a message to the log file and print it to the console.
-    
+
     Args:
         txt (str): The message to log.
     """
@@ -68,7 +62,7 @@ def _process2(batch_of_batches: List[List[Any]], return_list: List[Any], id: str
 
 def _collate_none(x: List[Any]) -> Any:
     """Collate function that does nothing.
-    
+
     Args:
         x (List[Any]): The data to collate.
     """
@@ -81,9 +75,7 @@ class MultiLoader(object):
 
     def __init__(
         self,
-        # TODO: Below suggests need for parent class
-        # data: Union["MOADInterface", "PdbSdfDirInterface", "PairedPdbSdfCsvInterface"],
-        data: Any,
+        data: "FragmentDataset",
         fragment_representation: str,
         num_dataloader_workers: int = 1,
         batch_size: int = 1,
@@ -94,14 +86,14 @@ class MultiLoader(object):
         """Initialize the MultiLoader.
 
         Args:
-            data (Any): The data to load.
+            data (MOADFragmentDataset): The data to load.
             fragment_representation (str): The fragment representation to use.
             num_dataloader_workers (int, optional): The number of dataloader
                 workers to use. Defaults to 1.
             batch_size (int, optional): The batch size. Defaults to 1.
             shuffle (bool, optional): Whether to shuffle the data. Defaults to
                 False.
-            collate_fn (callable, optional): The collate function to use. 
+            collate_fn (callable, optional): The collate function to use.
                 Defaults to _collate_none.
             max_voxels_in_memory (int, optional): The maximum number of voxels
                 to keep in memory. Defaults to 80.
@@ -122,7 +114,7 @@ class MultiLoader(object):
 
     def __len__(self) -> int:
         """Return number of batches.
-        
+
         Returns:
             int: The number of batches.
         """
@@ -134,7 +126,7 @@ class MultiLoader(object):
     def _add_procs(self, id: str):
         """Add processors to the pool used to serve up the data. Kill any stale
         ones.
-        
+
         Args:
             id (str): The id of the process.
         """
@@ -197,7 +189,7 @@ class MultiLoader(object):
 
     def __iter__(self):
         """Return an iterator over the batches.
-        
+
         Yields:
             Any: The next batch.
         """
@@ -363,7 +355,7 @@ class DataLambda(MultiLoader):
 
     def __init__(self, data: Any, fn: Callable):
         """Initialize a DataLambda object.
-        
+
         Args:
             data (Any): The data.
             fn (callable): The function to apply to each item in the data.
@@ -373,7 +365,7 @@ class DataLambda(MultiLoader):
 
     def __len__(self) -> int:
         """Get the length of the data.
-        
+
         Returns:
             int: The length of the data.
         """
@@ -381,7 +373,7 @@ class DataLambda(MultiLoader):
 
     def __iter__(self):
         """Iterate over the data.
-        
+
         Yields:
             Any: The data.
         """
@@ -393,15 +385,15 @@ class DataBatch(MultiLoader):
 
     """Batch the data."""
 
-    def __init__(self, data: Any, batch: int):
+    def __init__(self, data: Any, batch_size: int):
         """Initialize a DataBatch object.
 
         Args:
             data (Any): The data.
-            batch (int): The batch size.
+            batch_size (int): The batch size.
         """
         self.data = data
-        self.batch = batch
+        self.batch_size = batch_size
 
     def __len__(self) -> int:
         """Get the length of the data.
@@ -409,14 +401,14 @@ class DataBatch(MultiLoader):
         Returns:
             int: The length of the data.
         """
-        if len(self.data) % self.batch == 0:
-            return len(self.data) // self.batch
+        if len(self.data) % self.batch_size == 0:
+            return len(self.data) // self.batch_size
         else:
-            return (len(self.data) // self.batch) + 1
+            return (len(self.data) // self.batch_size) + 1
 
     def __iter__(self):
         """Iterate over the data.
-        
+
         Yields:
             Any: The batch of data.
         """

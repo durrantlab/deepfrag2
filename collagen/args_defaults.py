@@ -18,7 +18,7 @@ from apps.deepfrag.AggregationOperators import Operator
 
 def get_default_args() -> dict:
     """Return a dictionary of default arguments for the deepfrag app.
-    
+
     Returns:
         dict: A dictionary of default arguments.
     """

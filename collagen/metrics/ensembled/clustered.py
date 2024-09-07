@@ -1,10 +1,10 @@
 from typing import Any
-import torch
-from sklearn.cluster import DBSCAN
-from sklearn.preprocessing import StandardScaler
-import numpy as np
-from sklearn.covariance import EmpiricalCovariance, MinCovDet
-from sklearn.covariance import EllipticEnvelope
+import torch  # type: ignore
+from sklearn.cluster import DBSCAN  # type: ignore
+from sklearn.preprocessing import StandardScaler  # type: ignore
+import numpy as np  # type: ignore
+from sklearn.covariance import EmpiricalCovariance, MinCovDet  # type: ignore
+from sklearn.covariance import EllipticEnvelope  # type: ignore
 from scipy import stats
 from scipy.spatial.distance import cdist
 import math
@@ -19,7 +19,8 @@ def create_initial_prediction_tensor(
     num_entries = model_after_first_rotation.predictions.shape[0]
     fp_size = model_after_first_rotation.predictions.shape[1]
     initial_tnsr = torch.zeros(
-        size=(num_rotations, num_entries, fp_size), device=device,
+        size=(num_rotations, num_entries, fp_size),
+        device=device,
     )
 
     initial_tnsr[0] = model_after_first_rotation.predictions
@@ -40,7 +41,10 @@ def finalize_prediction_tensor(
     num_entries = final_tensor.shape[1]
     final_arr = final_tensor.cpu().numpy()
 
-    final_tnsr = torch.zeros(size=final_tensor.shape[1:], device=device,)
+    final_tnsr = torch.zeros(
+        size=final_tensor.shape[1:],
+        device=device,
+    )
 
     for i in range(num_entries):
         # Get the fingerprints for each of the rotations corresponding to this

@@ -10,10 +10,10 @@ from enum import Enum
 import math
 from typing import TYPE_CHECKING, List, Any, Optional, Tuple
 
-import torch
-import numba
-import numba.cuda
-import numpy as np
+import torch  # type: ignore
+import numba  # type: ignore
+import numba.cuda  # type: ignore
+import numpy as np  # type: ignore
 from collagen.core.voxelization import gen_grid_gpu
 
 from ..molecules.atom_featurizer import AtomicNumFeaturizer
@@ -350,7 +350,7 @@ def cpu_gridify(
     acc_type: int,
 ):
     """Add atoms to the grid on the CPU. See gpu_gridify() for argument details.
-    
+
     Args:
         grid (np.ndarray): The grid to write to.
         atom_num (int): The atom number.
@@ -569,7 +569,7 @@ def mol_gridify(
     cpu: bool = False,
 ):
     """Provide a wrapper around cpu_gridify()/gpu_gridify().
-    
+
     Args:
         grid (np.ndarray): The grid to write to.
         atom_coords (List[Tuple[float, float, float]]): Array containing

@@ -1,10 +1,10 @@
-import torch
-from torch import Tensor
+import torch  # type: ignore
+from torch import Tensor  # type: ignore
 
-from torch_geometric.data import Data
-from torch_geometric.utils import to_dense_adj
+from torch_geometric.data import Data  # type: ignore
+from torch_geometric.utils import to_dense_adj  # type: ignore
 
-import numpy as np
+import numpy as np  # type: ignore
 
 
 class GraphMol(Data):

@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 
-import h5py
+import h5py  # type: ignore
 from tqdm import tqdm
 
 # TODO: I don't think this is ever used.

@@ -1,14 +1,14 @@
-from typing import TYPE_CHECKING, List, Optional, Callable, Any, Tuple, Union
+# from typing import TYPE_CHECKING, List, Optional, Callable, Any, Tuple, Union
 
-from torch.utils.data import Dataset
-import numpy as np
-from collagen.external.moad.split import full_moad_split
+# from torch.utils.data import Dataset
+# import numpy as np
+# from collagen.external.moad.split import full_moad_split
 
-if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface
-    from collagen.core.molecules.mol import Mol
-    from collagen.external.moad.types import MOAD_split
-    from collagen.external.moad.types import MOAD_target
+# if TYPE_CHECKING:
+#     from collagen.external.moad.interface import MOADInterface
+#     from collagen.core.molecules.mol import Mol
+#     from collagen.external.moad.targets_ligands import StructuresSplit
+#     from collagen.external.moad.targets_ligands import MOAD_target
 
 # TODO: NOT CURRENTLY USED. Will comment out.
 
@@ -61,7 +61,7 @@ if TYPE_CHECKING:
 #         moad (MOADInterface): An initialized MOADInterface object.
 #         thresh (float, optional): Threshold to ligand atoms to consider a "binding pocket."
 #         padding (float, optional): Padding added to receptor bounding box to sample negative examples.
-#         split (MOAD_split, optional): An optional split to constrain the space of examples.
+#         split (StructuresSplit, optional): An optional split to constrain the space of examples.
 #         transform (Callable[[Mol, np.ndarray, np.ndarray], Any], optional): An optional transformation function to invoke before returning samples.
 #             Takes the arguments (receptor, pos, neg).
 #     """
@@ -71,7 +71,7 @@ if TYPE_CHECKING:
 #         moad: "MOADInterface",
 #         thresh: float = 3,
 #         padding: float = 5,
-#         split: Optional["MOAD_split"] = None,
+#         split: Optional["StructuresSplit"] = None,
 #         transform: Optional[Callable[["Mol", "np.ndarray", "np.ndarray"], Any]] = None,
 #         **kwargs
 #     ):
@@ -98,10 +98,6 @@ if TYPE_CHECKING:
 #         target, n = self._index[idx]
 
 #         try:
-#             moad_target: "MOAD_target" = self.moad[target]
-#             # TODO: jacob version
-#             # rec, ligs = moad_target[n]
-#             # TODO: cesar version. Why the change?
 #             rec, ligs = self.moad[target][n]
 #         except:
 #             return None

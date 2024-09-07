@@ -7,9 +7,9 @@ from .moad import *
 # import collagen.external.moad
 # __all__ += collagen.external.moad.__all__
 
-__all__ += [
-    "ZINCDataset",
-    "ZINCDatasetH5",
-]
+# __all__ += [
+#     "ZINCDataset",
+#     "ZINCDatasetH5",
+# ]
 
-from .zinc import ZINCDataset, ZINCDatasetH5
+# from .zinc import ZINCDataset, ZINCDatasetH5

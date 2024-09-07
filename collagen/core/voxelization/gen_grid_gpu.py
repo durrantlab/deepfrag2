@@ -1,13 +1,13 @@
 """Add atoms to the grid in a GPU kernel."""
 
-import numba
-import numba.cuda
+import numba  # type: ignore
+import numba.cuda  # type: ignore
 import math
 from typing import TYPE_CHECKING, List, Tuple
 
 if TYPE_CHECKING:
-    import cuda
-    import numpy as np
+    import cuda  # type: ignore
+    import numpy as np  # type: ignore
 
 
 """Add atoms to the grid in a GPU kernel.
@@ -127,7 +127,7 @@ def get_atom(
     tz: float,
 ) -> Tuple[float, float, float, float, float, int, bool]:
     """Get an atom from the list of atoms.
-    
+
     Args:
         atom_coords: Array containing (x,y,z) atom coordinates.
         atom_mask: A uint32 array of size atom_num containing a destination
@@ -139,7 +139,7 @@ def get_atom(
         tx: Translated x coordinate of grid point.
         ty: Translated y coordinate of grid point.
         tz: Translated z coordinate of grid point.
-        
+
     Returns:
         Tuple[float, float, float, float, float, int, bool]: (fx, fy, fz, r2, r, mask, visible)
     """
@@ -249,7 +249,7 @@ def gpu_gridify_cube_sum(
     atom_scale: float,
 ):
     """Gridify a cube with sum.
-    
+
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.
         atom_num (int): The atom number.
@@ -367,7 +367,7 @@ def gpu_gridify_exp_sum(
     atom_scale: float,
 ):
     """Gridify a single atom using exponential summation.
-    
+
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.
         atom_num (int): The atom number.
@@ -430,7 +430,7 @@ def gpu_gridify_gaussian_sum(
     atom_scale: float,
 ):
     """Gridify a single atom using gaussian summation.
-    
+
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.
         atom_num (int): The atom number.
@@ -564,7 +564,7 @@ def gpu_gridify_sphere_sum(
     atom_scale: float,
 ):
     """Gridify a single atom using sphere summation.
-    
+
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.
         atom_num (int): The atom number.
@@ -681,7 +681,7 @@ def gpu_gridify_discrete_max(
     atom_scale: float,
 ):
     """Gridify a single atom using discrete max.
-    
+
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.
         atom_num (int): The atom number.
@@ -744,7 +744,7 @@ def gpu_gridify_exp_max(
     atom_scale: float,
 ):
     """Gridify a single atom using exponential max.
-    
+
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.
         atom_num (int): The atom number.
@@ -875,7 +875,7 @@ def gpu_gridify_lj_max(
     atom_scale: float,
 ):
     """Gridify a single atom using lj max.
-    
+
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.
         atom_num (int): The atom number.
@@ -941,7 +941,7 @@ def gpu_gridify_sphere_max(
     atom_scale: float,
 ):
     """Gridify a single atom using sphere max.
-    
+
 
     Args:
         grid (cuda.devicearray.DeviceNDArray): The grid to write to.

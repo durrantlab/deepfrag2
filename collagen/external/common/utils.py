@@ -1,12 +1,12 @@
 """MOAD utilities."""
 
 
-def fix_moad_smiles(smi: str) -> str:
+def fix_smiles(smi: str) -> str:
     """Fix some of the MOAD smiles that are not valid.
-    
+
     Args:
         smi (str): SMILES string.
-        
+
     Returns:
         str: Fixed SMILES string.
     """

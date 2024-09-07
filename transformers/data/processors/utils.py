@@ -29,6 +29,7 @@ logger = logging.get_logger(__name__)
 
 @dataclass
 class InputExample:
+
     """
     A single training/test example for simple sequence classification.
 

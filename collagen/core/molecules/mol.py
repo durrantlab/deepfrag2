@@ -9,6 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Generator,
     List,
+    Literal,
     Tuple,
     Iterator,
     Any,
@@ -18,23 +19,21 @@ from typing import (
 )
 import warnings
 
-import numpy as np
+import numpy as np  # type: ignore
 from collagen.core.molecules.smiles_utils import standardize_smiles
-import prody
-import rdkit.Chem.AllChem as Chem
-from rdkit.Chem.Descriptors import ExactMolWt
-import torch
-from torch.utils.data import Dataset
-
+import prody  # type: ignore
+import rdkit.Chem.AllChem as Chem  # type: ignore
+from rdkit.Chem.Descriptors import ExactMolWt  # type: ignore
+import torch  # type: ignore
 from .fingerprints import fingerprint_for
 from ..voxelization.voxelizer import numba_ptr, mol_gridify
 from ..types import AnyAtom
 from ...draw import MolView
 
 if TYPE_CHECKING:
-    import rdkit
+    import rdkit  # type: ignore
     from ..voxelization.voxelizer import VoxelParams
-    import py3DMol
+    import py3DMol  # type: ignore
 
 
 class UnparsableSMILESException(Exception):
@@ -81,7 +80,7 @@ class Mol(object):
 
     def __repr__(self) -> str:
         """Return a string representation of the molecule.
-        
+
         Returns:
             str: A string representation of the molecule.
         """
@@ -229,7 +228,7 @@ class Mol(object):
 
     def sdf(self) -> str:
         """Compute an SDF string for this Mol.
-        
+
         Returns:
             str: An SDF string.
         """
@@ -237,7 +236,7 @@ class Mol(object):
 
     def pdb(self) -> str:
         """Compute a PDB string for this Mol.
-        
+
         Returns:
             str: A PDB string.
         """
@@ -267,7 +266,7 @@ class Mol(object):
     @property
     def center(self) -> "np.ndarray":
         """Average atomic coordinate of this Mol.
-        
+
         Returns:
             numpy.ndarray: The average atomic coordinate of this Mol.
         """
@@ -276,7 +275,7 @@ class Mol(object):
     @property
     def atoms(self) -> List[AnyAtom]:
         """Atoms in this Mol.
-        
+
         Returns:
             List[AnyAtom]: A list of atoms.
         """
@@ -287,7 +286,7 @@ class Mol(object):
     @property
     def num_atoms(self) -> int:
         """Get number of atoms in this Mol.
-        
+
         Returns:
             int: Number of atoms in this Mol.
         """
@@ -296,7 +295,7 @@ class Mol(object):
     @property
     def num_heavy_atoms(self) -> int:
         """Get number of heavy atoms in this Mol.
-        
+
         Returns:
             int: Number of heavy atoms in this Mol.
         """
@@ -305,7 +304,7 @@ class Mol(object):
     @property
     def connectors(self) -> List["np.ndarray"]:
         """Return a list of connector atom coordinates.
-        
+
         Returns:
             List[numpy.ndarray]: A list of connector atom coordinates.
         """
@@ -314,7 +313,7 @@ class Mol(object):
     @property
     def mass(self) -> float:
         """Get mass of this Mol in daltons.
-        
+
         Returns:
             float: Mass of this Mol in daltons.
         """
@@ -431,7 +430,7 @@ class Mol(object):
             center (numpy.ndarray): A size 3 array containing the (x,y,z)
                 coordinate of the grid center. If not specified, will use the
                 center of the molecule.
-            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w) 
+            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w)
                 describing a grid rotation.
         """
         grid = numba_ptr(tensor, cpu=cpu)
@@ -469,7 +468,7 @@ class Mol(object):
             center (numpy.ndarray): A size 3 array containing the (x,y,z)
                 coordinate of the grid center. If not specified, will use the
                 center of the molecule.
-            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w) 
+            rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w)
                 describing a grid rotation.
 
         Returns:
@@ -517,13 +516,49 @@ class DelayedMolVoxel(object):
     voxelation arguments.
     """
 
-    def __init__(self, **kwargs: dict):
+    def __init__(
+        self,
+        atom_coords: List[Tuple[float, float, float]],
+        atom_mask: List[int],
+        atom_radii: List[float],
+        width: int,
+        res: float,
+        center: np.ndarray,
+        rot: np.ndarray,
+        atom_scale: float,
+        atom_shape: Literal[0, 1, 2, 3, 4, 5],  # AtomShapeType
+        acc_type: Literal[0, 1],  # AccType
+    ):
         """Initialize a new DelayedMolVoxel.
-        
+
         Args:
-            **kwargs: A dictionary of voxelation arguments.
+            atom_coords (List[Tuple[float, float, float]]): Array containing
+                (x,y,z) atom coordinates.
+            atom_mask (List[int]): A uint32 array of size atom_num containing a
+                destination layer bitmask (i.e. if bit k is set, write atom to
+                index k).
+            atom_radii (List[float]): A float32 array of size atom_num containing individual
+                atomic radius values.
+            width (int): Number of grid points in each dimension.
+            res (float): Distance between neighboring grid points in angstroms.
+                (1 == gridpoint every angstrom)
+                (0.5 == gridpoint every half angstrom, e.g. tighter grid)
+            center (List[float]): (x,y,z) coordinate of grid center.
+            rot (List[float]): (x,y,z,y) rotation quaternion.
+            atom_scale (float): A float32 value specifying the scale of the atoms.
+            atom_shape (int): An AtomShapeType specifying the shape of the atoms.
+            acc_type (int): An AccType specifying the accumulation type.
         """
-        self.kwargs = kwargs
+        self.atom_coords = atom_coords
+        self.atom_mask = atom_mask
+        self.atom_radii = atom_radii
+        self.width = width
+        self.res = res
+        self.center = center
+        self.rot = rot
+        self.atom_scale = atom_scale
+        self.atom_shape = atom_shape
+        self.acc_type = acc_type
 
     def voxelize_into(
         self,
@@ -533,7 +568,7 @@ class DelayedMolVoxel(object):
         cpu: bool = False,
     ):
         """Voxelate a molecule into a pre-allocated tensor.
-        
+
         Args:
             tensor (torch.Tensor): A 5-D PyTorch Tensor that will receive
                 atomic density information. The tensor must have shape
@@ -553,7 +588,16 @@ class DelayedMolVoxel(object):
             batch_idx=batch_idx,
             layer_offset=layer_offset,
             cpu=cpu,
-            **self.kwargs,
+            atom_coords=self.atom_coords,
+            atom_mask=self.atom_mask,
+            atom_radii=self.atom_radii,
+            width=self.width,
+            res=self.res,
+            center=self.center,
+            rot=self.rot,
+            atom_scale=self.atom_scale,
+            atom_shape=self.atom_shape,
+            acc_type=self.acc_type,
         )
 
 
@@ -569,12 +613,14 @@ class BackedMol(Mol):
         coord_connector_atom=np.empty([]),
     ):
         """Initialize a new BackedMol with an existing RDMol.
-        
+
         Args:
             rdmol (rdkit.Chem.rdchem.Mol): An RDKit molecule.
             meta (dict): An optional dictionary of metadata.
             warn_no_confs (bool): If True, will warn if the RDMol has no
                 conformers.
+            coord_connector_atom (numpy.ndarray): An optional numpy array
+                containing the coordinates of a single connector atom.
         """
         super(BackedMol, self).__init__(meta=meta)
         self.rdmol = rdmol
@@ -585,7 +631,7 @@ class BackedMol(Mol):
 
     def __repr__(self) -> str:
         """Return a string representation of the molecule.
-        
+
         Returns:
             str: A string representation of the molecule.
         """
@@ -603,7 +649,7 @@ class BackedMol(Mol):
 
     def sdf(self) -> str:
         """Convert to SDF format.
-        
+
         Returns:
             str: A string containing the SDF representation of the molecule.
         """
@@ -644,7 +690,7 @@ class BackedMol(Mol):
     @property
     def coords(self) -> "np.ndarray":
         """Return atomic coordinates as a numpy array.
-        
+
         Returns:
             numpy.ndarray: A numpy array of shape (N, 3) containing atomic
                 coordinates.
@@ -781,34 +827,34 @@ class BackedMol(Mol):
         return fingerprint_for(self.rdmol, fp_type, size, smi)
 
 
-class MolDataset(Dataset):
+# class MolDataset(Dataset):
 
-    """Abstract interface for a MolDataset object. Other classes should inherit
-    this, TODO: BUT I DON'T BELIEVE CURRENTLY USED ANYWHERE.
+#     """Abstract interface for a MolDataset object. Other classes should inherit
+#     this, TODO: BUT I DON'T BELIEVE CURRENTLY USED ANYWHERE.
 
-    Subclasses should implement __len__ and __getitem__ to support enumeration
-    over the data.
-    """
+#     Subclasses should implement __len__ and __getitem__ to support enumeration
+#     over the data.
+#     """
 
-    def __len__(self) -> int:
-        """Return the number of molecules in the dataset."""
-        raise NotImplementedError()
+#     def __len__(self) -> int:
+#         """Return the number of molecules in the dataset."""
+#         raise NotImplementedError()
 
-    def __getitem__(self, idx: int) -> "Mol":
-        """Return the molecule at the given index.
-        
-        Args:
-            idx (int): The index of the molecule to return.
-            
-        Returns:
-            Mol: The molecule at the given index.
-        """
-        raise NotImplementedError()
+#     def __getitem__(self, idx: int) -> "Mol":
+#         """Return the molecule at the given index.
+
+#         Args:
+#             idx (int): The index of the molecule to return.
+
+#         Returns:
+#             Mol: The molecule at the given index.
+#         """
+#         raise NotImplementedError()
 
 
 def mols_from_smi_file(filename: str) -> Generator[Tuple[str, "BackedMol"], None, None]:
     """Serve up mols from a file with smiles.
-    
+
     Args:
         filename (str): The name of the file to read from.
 

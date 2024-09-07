@@ -1,8 +1,7 @@
-"""Code to roughly identify aromatic/aliphatic and acid/base/neutral groups.
-"""
+"""Code to roughly identify aromatic/aliphatic and acid/base/neutral groups."""
 
-from typing import Literal, Tuple, Union
-from rdkit import Chem
+from typing import Literal, Optional, Tuple, Union
+from rdkit import Chem  # type: ignore
 
 acid_substructs_smi = [
     # Carboxylates
@@ -71,26 +70,14 @@ base_substructs_smi = [
 acid_substructs = [Chem.MolFromSmarts(smi) for smi in acid_substructs_smi]
 base_substructs = [Chem.MolFromSmarts(smi) for smi in base_substructs_smi]
 
-# TODO: Neutral can just be not acid, not base.
-
-# TODO: What percentage are acids and bases? If small, maybe just use general
-# model for neutral.
-
-# TODO: Make sure lookup-table also matches properties of training/testing.
-
-# TODO: Send all domain-specific models to Shayne when ready.
-
-# TODO: Look at actually used. Lots of repeated, you ask for acids but not
-# always acids. Not sure what to make of it. Need code review.
-
 
 def is_aromatic(mol: Chem.Mol) -> bool:
     """Determine if a molecule is aromatic. Below is overkill. Could probably
     just keep the first one.
-    
+
     Args:
         mol: RDKit molecule object.
-        
+
     Returns:
         True if aromatic, False if not.
     """
@@ -101,64 +88,80 @@ def is_aromatic(mol: Chem.Mol) -> bool:
     )
 
 
-def is_acid(mol: Chem.Mol, testing=False) -> bool:
+def is_acid_testing(mol: Chem.Mol) -> Tuple[bool, Optional[str]]:
     """Determine if a molecule is an acid.
 
     Args:
         mol: RDKit molecule object.
-        testing: If True, return tuple of (True/False, substructure matched). If
-            False, return only True/False.
+
+    Returns:
+        Tuple of (True/False, substructure matched). If no substructure matched,
+        return (False, None).
+    """
+    # Make copy of mol, so substitution doesn't change original
+    mol = Chem.Mol(mol)
+
+    return next(
+        (
+            (True, acid_substructs_smi[i])
+            for i, acid_substruct in enumerate(acid_substructs)
+            if mol.HasSubstructMatch(acid_substruct)
+        ),
+        (False, None),
+    )
+
+
+def is_acid(mol: Chem.Mol) -> bool:
+    """Determine if a molecule is an acid.
+
+    Args:
+        mol: RDKit molecule object.
 
     Returns:
         True if an acid, False if not.
     """
-
     # Make copy of mol, so substitution doesn't change original
     mol = Chem.Mol(mol)
-
-    if testing:
-        # NOTE: If testing, return is more complex. Don't worry about type
-        # incompatibility here.
-        return next(
-            (
-                (True, acid_substructs_smi[i])
-                for i, acid_substruct in enumerate(acid_substructs)
-                if mol.HasSubstructMatch(acid_substruct)
-            ),
-            (False, None),
-        )
 
     return any(
         mol.HasSubstructMatch(acid_substruct) for acid_substruct in acid_substructs
     )
 
 
-def is_base(mol: Chem.Mol, testing=False) -> bool:
+def is_base_testing(mol: Chem.Mol) -> Tuple[bool, Optional[str]]:
     """Determine if a molecule is a base.
 
     Args:
         mol: RDKit molecule object.
-        testing: If True, return tuple of (True/False, substructure matched). If
-            False, return only True/False.
+
+    Returns:
+        Tuple of (True/False, substructure matched). If no substructure matched,
+        return (False, None).
+    """
+    # Make copy of mol, so substitution doesn't change original
+    mol = Chem.Mol(mol)
+
+    return next(
+        (
+            (True, base_substructs_smi[i])
+            for i, base_substruct in enumerate(base_substructs)
+            if mol.HasSubstructMatch(base_substruct)
+        ),
+        (False, None),
+    )
+
+
+def is_base(mol: Chem.Mol) -> bool:
+    """Determine if a molecule is a base.
+
+    Args:
+        mol: RDKit molecule object.
 
     Returns:
         True if a base, False if not.
     """
-
     # Make copy of mol, so substitution doesn't change original
     mol = Chem.Mol(mol)
-
-    if testing:
-        # NOTE: If testing, return is more complex. Don't worry about type
-        # incompatibility here.
-        return next(
-            (
-                (True, base_substructs_smi[i])
-                for i, base_substruct in enumerate(base_substructs)
-                if mol.HasSubstructMatch(base_substruct)
-            ),
-            (False, None),
-        )
 
     return any(
         mol.HasSubstructMatch(base_substruct) for base_substruct in base_substructs
@@ -175,7 +178,6 @@ def is_neutral(mol: Chem.Mol) -> bool:
     Returns:
         True if a neutral, False if not.
     """
-
     return not is_acid(mol) and not is_base(mol)
 
 
@@ -207,8 +209,8 @@ if __name__ == "__main__":
     df["name"] = names
     df["correct_type"] = types
 
-    acid_cats = [is_acid(mol, True) for mol in mols]
-    base_cats = [is_base(mol, True) for mol in mols]
+    acid_cats = [is_acid_testing(mol) for mol in mols]
+    base_cats = [is_base_testing(mol) for mol in mols]
 
     df["predict_acid"] = [e[0] for e in acid_cats]
     df["acid_match"] = [e[1] for e in acid_cats]

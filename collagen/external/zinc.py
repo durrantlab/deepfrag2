@@ -1,7 +1,7 @@
 import pathlib
 from typing import List, Dict
 
-import h5py
+import h5py  # type: ignore
 from tqdm import tqdm
 
 from ..core.molecules.mol import Mol

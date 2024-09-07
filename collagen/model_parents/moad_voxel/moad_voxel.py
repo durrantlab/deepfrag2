@@ -2,20 +2,23 @@
 
 from argparse import ArgumentParser, Namespace
 import json
-from typing import Optional, Sequence, Type, TypeVar, List, Union
-from collagen.model_parents.moad_voxel.inference import MoadVoxelModelInference
+from typing import Optional, Sequence, Tuple, Type, TypeVar, List, Union
+from collagen.core.molecules.mol import BackedMol, DelayedMolVoxel, Mol
+from collagen.external.common.datasets.fragment_dataset import FragmentDataset
+from collagen.external.common.types import StructureEntry
+from collagen.model_parents.moad_voxel.inference import VoxelModelInference
 from collagen.model_parents.moad_voxel.inference_custom_dataset import (
-    MoadVoxelModelInferenceCustomSet,
+    VoxelModelInferenceCustomSet,
 )
-from collagen.model_parents.moad_voxel.inits import MoadVoxelModelInits
-from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
-from collagen.model_parents.moad_voxel.train import MoadVoxelModelTrain
+from collagen.model_parents.moad_voxel.inits import VoxelModelInits
+from collagen.model_parents.moad_voxel.test import VoxelModelTest
+from collagen.model_parents.moad_voxel.train import VoxelModelTrain
 from collagen.model_parents.moad_voxel import arguments
 import os
-from collagen.model_parents.moad_voxel.utils import MoadVoxelModelUtils
+from collagen.model_parents.moad_voxel.utils import VoxelModelUtils
 from collagen.core.molecules.fingerprints import download_molbert_ckpt
-import pytorch_lightning as pl
-import torch
+import pytorch_lightning as pl  # type: ignore
+import torch  # type: ignore
 
 from ... import VoxelParams
 
@@ -23,46 +26,45 @@ ENTRY_T = TypeVar("ENTRY_T")
 TMP_T = TypeVar("TMP_T")
 OUT_T = TypeVar("OUT_T")
 
-# TODO: This is so problematic... What was I thinking?
+# ENTRY_T = Tuple[Mol, Mol, BackedMol, str, int]
+# TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, StructureEntry]
+# OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 
 
-class MoadVoxelModelParent(
-    MoadVoxelModelInits,
-    MoadVoxelModelTrain,
-    MoadVoxelModelInference,
-    MoadVoxelModelUtils,
-):
-
+class VoxelModelParent:
     """Parent class for all MOAD voxel models."""
-
-    # TODO: I should not have done this multiple-inheritance thing. Need to
-    # refactor. Very confusing.
 
     def __init__(
         self,
         model_cls: Type[pl.LightningModule],
-        dataset_cls: Type[torch.utils.data.Dataset],
+        dataset_cls: FragmentDataset,
     ):
         """Initialize the model parent.
-        
+
         Args:
-            model_cls (Type[pl.LightningModule]): The model class. Soemthing 
+            model_cls (Type[pl.LightningModule]): The model class. Soemthing
                 like DeepFragModelSDFData or DeepFragModel.
-            dataset_cls (Type[torch.utils.data.Dataset]): The dataset class.
-                Something like MOADFragmentDataset.
+            dataset_cls (FragmentDataset): The dataset class.
+                Something like FragmentDataset.
         """
+        self.inits = VoxelModelInits(self)
+        self.train = VoxelModelTrain(self)
+        self.test = VoxelModelTest(self)
+        self.inference = VoxelModelInference(self)
+        self.utils = VoxelModelUtils(self)
+
         self.model_cls = model_cls
         self.dataset_cls = dataset_cls
 
-        self.disable_warnings()
+        self.utils.disable_warnings()
 
     @staticmethod
     def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         """Add the MOAD arguments to the parser.
-        
+
         Args:
             parent_parser (ArgumentParser): The parser to add the arguments to.
-            
+
         Returns:
             ArgumentParser: The parser with the arguments added.
         """
@@ -72,7 +74,7 @@ class MoadVoxelModelParent(
     def fix_moad_args(args: Namespace) -> Namespace:
         """Only works after arguments have been parsed, so in a separate
         definition.
-        
+
         Args:
             args (Namespace): The arguments parsed by argparse.
 
@@ -87,12 +89,12 @@ class MoadVoxelModelParent(
     ) -> TMP_T:
         """Preprocess the entry before voxelization. Should be overwritten by
         child class.
-        
+
         Args:
             args (Namespace): The arguments parsed by argparse.
             voxel_params (VoxelParams): The voxelization parameters.
             entry (ENTRY_T): The entry to preprocess.
-            
+
         Returns:
             TMP_T: The preprocessed entry.
         """
@@ -106,13 +108,13 @@ class MoadVoxelModelParent(
         batch: Sequence[TMP_T],
     ) -> OUT_T:
         """Voxelize the batch. Should be overwritten by child class.
-        
+
         Args:
             args (Namespace): The arguments parsed by argparse.
             voxel_params (VoxelParams): The voxelization parameters.
             device (torch.device): The device to use.
             batch (List[TMP_T]): The batch to voxelize.
-            
+
         Returns:
             OUT_T: The voxelized batch.
         """
@@ -141,7 +143,7 @@ class MoadVoxelModelParent(
     @staticmethod
     def setup_fingerprint_scheme(args: Namespace):
         """Set up the fingerprint scheme.
-        
+
         Args:
             args (Namespace): The arguments parsed by argparse.
         """
@@ -172,7 +174,7 @@ class MoadVoxelModelParent(
         Returns:
             Union[str, None]: The checkpoint filename to load.
         """
-        ckpt_filename = self.get_checkpoint_filename(args, validate_args)
+        ckpt_filename = self.utils.get_checkpoint_filename(args, validate_args)
         if ckpt_filename is not None:
             print(f"Restoring from checkpoint: {ckpt_filename}")
 
@@ -184,32 +186,32 @@ class MoadVoxelModelParent(
         Args:
             args (Namespace): The arguments parsed by argparse.
         """
-        self.disable_warnings()
+        self.utils.disable_warnings()
         self.setup_fingerprint_scheme(args)
         ckpt_filename = self.load_checkpoint(args)
 
         if args.mode == "train":
             print("Starting 'training' process")
-            self.run_train(args, ckpt_filename)
+            self.train.run_train(args, ckpt_filename)
         elif args.mode == "warm_starting":
             print("Starting 'warm_starting' process")
-            self.run_warm_starting(args)
+            self.train.run_warm_starting(args)
         elif args.mode == "test":
             print("Starting 'test' process")
             assert ckpt_filename is not None, "Must specify a checkpoint to test"
-            MoadVoxelModelTest(self).run_test(args, ckpt_filename)
+            self.test.run_test(args, ckpt_filename)
         elif args.mode == "inference":
             print("Starting 'inference' process")
             assert (
                 ckpt_filename is not None
             ), "Must specify a checkpoint to run inference"
-            self.run_inference(args, ckpt_filename)
+            self.inference.run_inference(args, ckpt_filename)
         elif args.mode == "inference_custom_set":
             print("Starting 'inference_custom_set' process")
             assert (
                 ckpt_filename is not None
             ), "Must specify a checkpoint to run inference"
-            MoadVoxelModelInferenceCustomSet(self).run_test(args, ckpt_filename)
+            VoxelModelInferenceCustomSet(self).run_test(args, ckpt_filename)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 
@@ -240,7 +242,7 @@ class MoadVoxelModelParent(
 
     def save_examples_used(self, model: pl.LightningModule, args: Namespace):
         """Save the examples used.
-        
+
         Args:
             model (pl.LightningModule): The model.
             args (Namespace): The arguments parsed by argparse.

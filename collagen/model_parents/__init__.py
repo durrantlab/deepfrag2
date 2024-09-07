@@ -1,5 +1,5 @@
 """__init__.py"""
 
-__all__ = ["MoadVoxelModelParent"]
+__all__ = ["VoxelModelParent"]
 
-from .moad_voxel.moad_voxel import MoadVoxelModelParent
+from .moad_voxel.moad_voxel import VoxelModelParent

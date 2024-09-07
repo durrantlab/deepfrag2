@@ -1,13 +1,13 @@
 """Classes for drawing molecules and voxels."""
 
 from typing import TYPE_CHECKING, Optional, Tuple
-import k3d
-import numpy as np
-import py3Dmol
+import k3d  # type: ignore
+import numpy as np  # type: ignore
+import py3Dmol  # type: ignore
 
 if TYPE_CHECKING:
     from collagen.core.molecules.mol import Mol
-    import torch
+    import torch  # type: ignore
 
 
 class VoxelView(object):
@@ -62,7 +62,7 @@ class MolView(object):
 
     def add_cartoon(self, mol: "Mol", style: Optional[dict] = None):
         """Add a cartoon representation of a molecule to the viewer.
-        
+
         Args:
             mol (Mol): the molecule to draw.
             style (dict, optional): the style to use for the cartoon. Defaults to None.

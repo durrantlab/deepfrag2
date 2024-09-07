@@ -2,11 +2,11 @@
 
 import argparse
 from typing import List, Optional, Tuple
-from collagen.external.moad.types import Entry_info
 
+from collagen.external.common.types import StructureEntry
 from collagen.metrics.metrics import mse_loss
-from torch import nn
-import pytorch_lightning as pl
+from torch import nn  # type: ignore
+import pytorch_lightning as pl  # type: ignore
 from apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
 
@@ -34,6 +34,7 @@ class DeepFragModel(pl.LightningModule):
             "molbert",
             "molbert_shuffled",
         ]
+
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
         self.learning_rate = kwargs["learning_rate"]
@@ -272,7 +273,7 @@ class DeepFragModel(pl.LightningModule):
         self,
         pred: torch.Tensor,
         fps: torch.Tensor,
-        entry_infos: Optional[List[Entry_info]],
+        entry_infos: Optional[List[StructureEntry]],
         batch_size: Optional[int],
     ) -> torch.Tensor:
         """Calculate the loss.
@@ -280,7 +281,7 @@ class DeepFragModel(pl.LightningModule):
         Args:
             pred (torch.Tensor): The predicted fragment fingerprint.
             fps (torch.Tensor): The ground truth fragment fingerprint.
-            entry_infos (List[Entry_info]): The entry information.
+            entry_infos (List[StructureEntry]): The entry information.
             batch_size (int): The batch size.
 
         Returns:
@@ -293,12 +294,12 @@ class DeepFragModel(pl.LightningModule):
         )
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
+        self, batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]], batch_idx: int
     ) -> torch.Tensor:
         """Training step.
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]): The
+            batch (Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]): The
                 batch to train on.
             batch_idx (int): The batch index.
 
@@ -349,12 +350,12 @@ class DeepFragModel(pl.LightningModule):
     #     self.first_epoch = False
 
     def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
+        self, batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]], batch_idx: int
     ):
         """Run validation step.
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]): The
+            batch (Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]): The
                 batch to validate on.
             batch_idx (int): The batch index.
         """
@@ -375,17 +376,17 @@ class DeepFragModel(pl.LightningModule):
         self.log("val_loss", loss, batch_size=batch_size)
 
     def test_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor, List[Entry_info]], batch_idx: int
-    ) -> Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]:
+        self, batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]], batch_idx: int
+    ) -> Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]:
         """Run inferance on a given batch.
 
         Args:
-            batch (Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]): The
+            batch (Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]): The
                 batch to run inference on.
             batch_idx (int): The batch index.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]: The predicted
+            Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]: The predicted
                 and target fingerprints, and the entry infos.
         """
         voxels, fps, entry_infos = batch
@@ -435,7 +436,6 @@ class DeepFragModel(pl.LightningModule):
                 validation_step(), or if there are multiple dataloaders, a
                 list containing a list of outputs for each dataloader.
         """
-
         self._examples_used_stop_recording.add("val")
 
         # See https://github.com/Lightning-AI/lightning/issues/2110
@@ -453,15 +453,14 @@ class DeepFragModel(pl.LightningModule):
             )
 
     def test_epoch_end(
-        self, results: List[Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]]
+        self, results: List[Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]]
     ):
         """Run after inference has been run on all batches.
 
         Args:
-            results (List[Tuple[torch.Tensor, torch.Tensor, List[Entry_info]]]): The
+            results (List[Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]]): The
                 results from all batches.
         """
-
         self._examples_used_stop_recording.add("test")
 
         predictions = torch.cat([x[0] for x in results])
@@ -498,14 +497,13 @@ class DeepFragModel(pl.LightningModule):
         self.prediction_targets = prediction_targets
         self.prediction_targets_entry_infos = prediction_targets_entry_infos
 
-    def _mark_example_as_used(self, lbl: str, entry_infos: List[Entry_info]):
+    def _mark_example_as_used(self, lbl: str, entry_infos: List[StructureEntry]):
         """Mark the example as used.
 
         Args:
             lbl (str): The label of the split.
-            entry_infos (List[Entry_info]): The entry infos.
+            entry_infos (List[StructureEntry]): The entry infos.
         """
-
         if lbl in self._examples_used_stop_recording:
             # No longer recording for this label.
             return

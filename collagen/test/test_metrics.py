@@ -1,5 +1,5 @@
 import unittest
-import torch
+import torch  # type: ignore
 from collagen import metrics
 
 

@@ -1,17 +1,17 @@
 """__init__.py"""
 
 __all__ = [
-    "MOADInterface",
-    "MOADPocketDataset",
-    "MOADFragmentDataset",
+    "ParentInterface",
+    # "MOADPocketDataset",
+    "FragmentDataset",
     # "MOADWholeLigDataset",
     # "MOADMurckoLigDataset",
 ]
 
-from .interface import MOADInterface
+from .interface import ParentInterface
 
-from .datasets.pocket_dataset import MOADPocketDataset
-from .datasets.fragment_dataset import MOADFragmentDataset
+# from .datasets.pocket_dataset import MOADPocketDataset
+# from .datasets.fragment_dataset import FragmentDataset
 
 # from .whole_lig_dataset import MOADWholeLigDataset
 # from .murcko_lig_dataset import MOADMurckoLigDataset

@@ -3,21 +3,20 @@
 import argparse
 from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.molecules.mol import BackedMol
-import torch
-import pytorch_lightning as pl
+from collagen.external.common.datasets.fragment_dataset import FragmentDataset
+from collagen.external.common.types import StructureEntry
+import torch  # type: ignore
+import pytorch_lightning as pl  # type: ignore
 
 from typing import List, Sequence, Tuple, Union
-from collagen.external.moad.types import Entry_info
 from collagen import Mol, DelayedMolVoxel, VoxelParams
-from collagen.external.moad import MOADFragmentDataset
 from collagen.util import rand_rot
-from collagen.model_parents import MoadVoxelModelParent
+from collagen.model_parents import VoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
-from apps.deepfrag.model_density_predictions import VoxelAutoencoder
 
-ENTRY_T = Tuple[Mol, Mol, Mol, str, int]
-TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, str]
+ENTRY_T = Tuple[Mol, Mol, BackedMol, str, int]
+TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, StructureEntry]
 OUT_T = Tuple[torch.Tensor, torch.Tensor, List[str]]
 
 
@@ -25,7 +24,7 @@ def _fingerprint_fn(args: argparse.Namespace, mol: BackedMol):
     return torch.tensor(mol.fingerprint(args.fragment_representation, args.fp_size))
 
 
-class DeepFrag(MoadVoxelModelParent):
+class DeepFrag(VoxelModelParent):
 
     """DeepFrag model."""
 
@@ -36,12 +35,10 @@ class DeepFrag(MoadVoxelModelParent):
             args (argparse.Namespace): The arguments.
         """
         super().__init__(
-            model_cls=DeepFragModelPairedDataFinetune
-            if args.paired_data_csv
-            else VoxelAutoencoder
-            if args.use_density_net
-            else DeepFragModel,
-            dataset_cls=MOADFragmentDataset,
+            # TODO: Cesar: Why DeepFragModelPairedDataFinetune?
+            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else VoxelAutoencoder
+            if args.use_density_net else DeepFragModel,
+            dataset_cls=FragmentDataset,
         )
 
     @staticmethod
@@ -62,9 +59,16 @@ class DeepFrag(MoadVoxelModelParent):
         rot = rand_rot()
         center = frag.connectors[0]
 
-        payload = Entry_info(
-            fragment_smiles=frag.smiles(True),
-            parent_smiles=parent.smiles(True),
+        frag_smiles = frag.smiles(True)
+        parent_smiles = parent.smiles(True)
+
+        assert (
+            frag_smiles is not None and parent_smiles is not None
+        ), f"Fragment ({frag_smiles}) or parent ({parent_smiles}) SMILES is None"
+
+        payload = StructureEntry(
+            fragment_smiles=frag_smiles,
+            parent_smiles=parent_smiles,
             receptor_name=rec.meta["name"],
             connection_pt=center,
             ligand_id=ligand_id,
@@ -153,11 +157,11 @@ def function_to_run_deepfrag():
 
     args = get_args(
         parser_funcs=[
-            MoadVoxelModelParent.add_moad_args,
+            VoxelModelParent.add_moad_args,
             DeepFragModel.add_model_args,
-            MOADFragmentDataset.add_fragment_args,
+            FragmentDataset.add_fragment_args,
         ],
-        post_parse_args_funcs=[MoadVoxelModelParent.fix_moad_args],
+        post_parse_args_funcs=[VoxelModelParent.fix_moad_args],
         is_pytorch_lightning=True,
     )
 

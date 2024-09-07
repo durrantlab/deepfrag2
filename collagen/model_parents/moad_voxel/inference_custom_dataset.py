@@ -1,23 +1,21 @@
 """A model for inference on a custom dataset."""
 
-from collagen.model_parents.moad_voxel.test import MoadVoxelModelTest
+from collagen.external.common.parent_interface import ParentInterface
+from collagen.external.common.types import StructureEntry, StructuresSplit
+from collagen.external.pdb_sdf_dir.interface import PdbSdfDirInterface
+from collagen.model_parents.moad_voxel.test import VoxelModelTest
 from argparse import ArgumentParser, Namespace
 import os
 from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
-import torch
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+import torch  # type: ignore
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 from collagen.core.voxelization.voxelizer import VoxelParams
-from collagen.external.moad.types import Entry_info, MOAD_split
-from collagen.external.moad.interface import MOADInterface, PdbSdfDirInterface
 import pickle
 
-if TYPE_CHECKING:
-    from collagen.model_parents.moad_voxel.moad_voxel import MoadVoxelModelParent
 
-
-class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
+class VoxelModelInferenceCustomSet(VoxelModelTest):
 
     """A model for inference on a custom set."""
 
@@ -27,50 +25,51 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
         Args:
             model_parent (Any): The parent model.
         """
-        MoadVoxelModelTest.__init__(self, model_parent)
+        VoxelModelTest.__init__(self, model_parent)
 
     def _create_label_set(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
         device: torch.device,
+        data_interface: ParentInterface,
+        voxel_params: VoxelParams,
         existing_label_set_fps: torch.Tensor = None,
-        existing_label_set_entry_infos: Optional[List[Entry_info]] = None,
+        existing_label_set_entry_infos: Optional[List[StructureEntry]] = None,
         skip_test_set=False,
-        train: Optional[MOAD_split] = None,
-        val: Optional[MOAD_split] = None,
-        test: Optional[MOAD_split] = None,
-        moad: Optional[MOADInterface] = None,
-        voxel_params: Optional[VoxelParams] = None,
+        train_split: Optional[StructuresSplit] = None,
+        val_split: Optional[StructuresSplit] = None,
+        test_split: Optional[StructuresSplit] = None,
         lbl_set_codes: Optional[List[str]] = None,
-    ) -> Tuple[torch.Tensor, List[Entry_info]]:
+    ) -> Tuple[torch.Tensor, List[str]]:
         """Create a label set (look-up) tensor and smiles list for inference
         on custom label set. It can be comprised of the fingerprints in the
         BindingMOAD database, as well as SMILES strings from a file.
 
         Args:
-            self (MoadVoxelModelParent): This object
+            self: This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
+            data_interface (ParentInterface, optional): The dataset interface.
+                Defaults to None.
+            voxel_params (VoxelParams): Parameters for voxelization. Defaults
+                to None.
             existing_label_set_fps (torch.Tensor, optional): The existing tensor
                 of fingerprints to which these new ones should be added.
                 Defaults to None.
-            existing_label_set_entry_infos (List[Entry_info], optional): Infos
-                about any existing label set entries to which these new ones
-                should be added. Defaults to None.
+            existing_label_set_entry_infos (List[StructureEntry], optional):
+                Infos about any existing label set entries to which these new
+                ones should be added. Defaults to None.
             skip_test_set (bool, optional): Do not add test-set fingerprints,
                 presumably because they are already present in
                 existing_label_set_entry_infos. Defaults to False.
-            train (MOAD_split, optional): The train split. Defaults to None.
-            val (MOAD_split, optional): The val split. Defaults to None.
-            test (MOAD_split, optional): The test split. Defaults to None.
-            moad (MOADInterface, optional): The MOAD dataset. Defaults to None.
-            voxel_params (VoxelParams): Parameters for voxelization. Defaults
-                to None.
+            train (StructuresSplit, optional): The train split. Defaults to None.
+            val (StructuresSplit, optional): The val split. Defaults to None.
+            test (StructuresSplit, optional): The test split. Defaults to None.
             lbl_set_codes (List[str], optional): The list of label set codes.
                 Comes from inference_label_sets. Defaults to None.
 
         Returns:
-            Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
+            Tuple[torch.Tensor, List[str]]: The updated fingerprint
                 tensor and smiles list.
         """
         if (
@@ -100,9 +99,11 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
         # --inference_label_sets="all", all these fragments wil be placed in a
         # single cache (.bin) file for quickly loading later.
         if "all" in lbl_set_codes:
+            # Get the location of the every_csv file
             parent_every_csv = os.path.join(args.every_csv, os.pardir)
             parent_every_csv = os.path.relpath(parent_every_csv)
 
+            # Get the locations of (possibly) cached label set files
             label_set_fps_bin = (
                 parent_every_csv
                 + os.sep
@@ -119,10 +120,10 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
             if os.path.exists(label_set_fps_bin) and os.path.exists(label_set_smis_bin):
                 # Cache file exists, so load from that.
                 with open(label_set_fps_bin, "rb") as file:
-                    label_set_fps = pickle.load(file)
+                    label_set_fps: torch.Tensor = pickle.load(file)
                     file.close()
                 with open(label_set_smis_bin, "rb") as file:
-                    label_set_smis = pickle.load(file)
+                    label_set_smis: List[str] = pickle.load(file)
                     file.close()
             else:
                 # Cache file does not exist, so generate.
@@ -138,12 +139,12 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
 
                 label_set_fps, label_set_smis = self._add_to_label_set(
                     args,
-                    moad,
-                    None,
+                    data_interface,
                     voxel_params,
                     device,
                     label_set_fps,
                     label_set_smis,
+                    None,
                 )
 
                 # Save to cache file.
@@ -153,6 +154,9 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
                 with open(label_set_smis_bin, "wb") as file:
                     pickle.dump(label_set_smis, file)
                     file.close()
+
+        # TODO: Cesar: label_set_fps and label_set_smis can be unbound. Good to check
+        # with Cesar.
 
         # Add to that fingerprints from an SMI file.
         label_set_fps, label_set_smis = self._add_fingerprints_from_smis(
@@ -165,22 +169,20 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
 
         return label_set_fps, label_set_smis
 
-    def _validate_run_test(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
-    ):
+    def _validate_run_test(self, args: Namespace, ckpt_filename: Optional[str]):
         """Validate the arguments required to run inference.
 
         Args:
             args (Namespace): The arguments.
-            ckpt (Optional[str]): The checkpoint.
+            ckpt_filename (Optional[str]): The checkpoint.
 
         Raises:
             ValueError: If the arguments are invalid.
         """
-        if not ckpt:
+        if not ckpt_filename:
             raise ValueError("Must specify a checkpoint in test mode")
         elif args.load_splits:
-            # TODO: DISCUSS WITH CESAR. See run_tests.sh. Why not?
+            # TODO: Cesar: See run_tests.sh. Why not?
             raise Exception(
                 "To run the inference mode on a custom set is not required loading a previously saved test dataset"
             )
@@ -208,7 +210,7 @@ class MoadVoxelModelInferenceCustomSet(MoadVoxelModelTest):
 
     def _read_datasets_to_run_test(
         self, args: Namespace, voxel_params: VoxelParams
-    ) -> Tuple[PdbSdfDirInterface, MOADInterface]:
+    ) -> Tuple[PdbSdfDirInterface, ParentInterface]:
         """Read the datasets required to run inference.
 
         Args:

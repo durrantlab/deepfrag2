@@ -1,19 +1,18 @@
 """Split MOAD data using clustering."""
 
 from typing import TYPE_CHECKING, Any, List, Tuple
-from rdkit.Chem import AllChem
-from rdkit import DataStructs
-from rdkit.ML.Cluster import Butina
+from collagen.external.paired_csv.targets_ligands import PairedCsv_ligand
+from collagen.external.pdb_sdf_dir.targets_ligands import PdbSdfDir_ligand
+from rdkit.Chem import AllChem  # type: ignore
+from rdkit import DataStructs  # type: ignore
+from rdkit.ML.Cluster import Butina  # type: ignore
 
 if TYPE_CHECKING:
-    from collagen.external.moad.interface import MOADInterface
-
-# TODO: Name of this file isn't obvious. Good to rename.
-
+    from collagen.external.common.parent_interface import ParentInterface
 
 def _cluster_fps(fps: List[List[float]], cutoff: float = 0.2) -> Any:
     """Cluster fingerprints using the Butina algorithm.
-    
+
     Args:
         fps (List[List[float]]): List of fingerprints.
         cutoff (float, optional): Cutoff for clustering. Defaults to 0.2.
@@ -32,7 +31,7 @@ def _cluster_fps(fps: List[List[float]], cutoff: float = 0.2) -> Any:
 
 
 def generate_splits_using_butina_clustering(
-    moad: "MOADInterface",
+    data_interface: "ParentInterface",
     split_rand_num_gen: Any,
     fraction_train: float = 0.6,
     fraction_val: float = 0.5,
@@ -41,7 +40,7 @@ def generate_splits_using_butina_clustering(
     """Generate test/train/val splits given clustering.
 
     Args:
-        moad (MOADInterface): MOADInterface object.
+        data_interface (ParentInterface): ParentInterface object.
         split_rand_num_gen: Random number generator.
         fraction_train (float, optional): Fraction of training data. Defaults to 0.6.
         fraction_val (float, optional): Fraction of validation data. Defaults to 0.5.
@@ -52,12 +51,20 @@ def generate_splits_using_butina_clustering(
     """
     ligands = []
     targets = []
-    for c in moad.classes:
+    for c in data_interface.classes:
         for f in c.families:
             for x in f.targets:
                 if x is None:
                     continue
-                # TODO: PdbSdfDir_ligand has .rdmol, but others don't (e.g., MOAD_ligand doesn't).
+
+                # Butina only available for PdbSdfDir_ligand or PairedCsv_ligand
+                if not isinstance(x.ligands[0], PdbSdfDir_ligand) and not isinstance(
+                    x.ligands[0], PairedCsv_ligand
+                ):
+                    assert (
+                        False
+                    ), "Butina clustering only available for PdbSdfDir_ligand or PairedCsv_ligand"
+
                 ligands.append(x.ligands[0].rdmol)
                 targets.append([x.pdb_id])
 

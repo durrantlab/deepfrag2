@@ -7,30 +7,36 @@ import pstats
 from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
-import torch
+import torch  # type: ignore
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from collagen.core.molecules.mol import Mol, mols_from_smi_file
-from collagen.external.moad.types import Entry_info
 from collagen.metrics.metrics import most_similar_matches
-import prody
-import numpy as np
+import prody  # type: ignore
+import numpy as np  # type: ignore
 from collagen.util import rand_rot
-import rdkit
-from rdkit import Chem
-import pytorch_lightning as pl
+import rdkit  # type: ignore
+from rdkit import Chem  # type: ignore
+import pytorch_lightning as pl  # type: ignore
 import os
 import json
 
 if TYPE_CHECKING:
-    from collagen.model_parents.moad_voxel.moad_voxel import MoadVoxelModelParent
+    from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
 
-class MoadVoxelModelInference(object):
-
+class VoxelModelInference(object):
     """A model for inference."""
 
+    def __init__(self, parent: "VoxelModelParent"):
+        """Initialize the class.
+
+        Args:
+            parent (VoxelModelParent): The parent class.
+        """
+        self.parent = parent
+
     def create_inference_label_set(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
         device: torch.device,
         smi_files: List[str],
@@ -40,7 +46,7 @@ class MoadVoxelModelInference(object):
         val sets, as well as SMILES strings from a file.
 
         Args:
-            self (MoadVoxelModelParent): This object
+            self: This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
             smi_files (List[str]): The file(s) containing SMILES strings.
@@ -81,16 +87,14 @@ class MoadVoxelModelInference(object):
 
         return label_set_fps, label_set_smis
 
-    def _validate_run_inference(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt: Optional[str]
-    ):
+    def _validate_run_inference(self, args: Namespace, ckpt: Optional[str]):
         """Validate the arguments for inference mode.
-        
+
         Args:
-            self (MoadVoxelModelParent): This object
+            self: This object
             args (Namespace): The user arguments.
             ckpt (Optional[str]): The checkpoint to load.
-            
+
         Raises:
             ValueError: If the arguments are invalid.
         """
@@ -123,7 +127,7 @@ class MoadVoxelModelInference(object):
             )
 
     def run_inference(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
         ckpt_filename: str,
         save_results_to_disk=True,
@@ -131,7 +135,7 @@ class MoadVoxelModelInference(object):
         """Run a model on the test and evaluates the output.
 
         Args:
-            self (MoadVoxelModelParent): This object
+            self: This object
             args (Namespace): The user arguments.
             ckpt_filename (Optional[str]): The checkpoint to load.
             save_results_to_disk (bool): Whether to save the results to disk.
@@ -150,8 +154,8 @@ class MoadVoxelModelInference(object):
         pr = cProfile.Profile()
         pr.enable()
 
-        voxel_params = self.init_voxel_params(args)
-        device = self.init_device(args)
+        voxel_params = self.parent.inits.init_voxel_params(args)
+        device = self.parent.inits.init_device(args)
 
         # Load the receptor
         with open(args.receptor, "r") as f:
@@ -175,9 +179,7 @@ class MoadVoxelModelInference(object):
         fps = []
         for ckpt_filename in ckpts:
             print(f"Using checkpoint {ckpt_filename}")
-            model = self.init_model(args, ckpt_filename)
-
-            # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
+            model = self.parent.inits.init_model(args, ckpt_filename)
 
             model.eval()
 
@@ -209,7 +211,9 @@ class MoadVoxelModelInference(object):
 
         # Now get the label sets to use.
         (label_set_fingerprints, label_set_smis,) = self.create_inference_label_set(
-            args, device, [l.strip() for l in args.inference_label_sets.split(",")],
+            args,
+            device,
+            [l.strip() for l in args.inference_label_sets.split(",")],
         )
 
         most_similar = most_similar_matches(
@@ -236,7 +240,7 @@ class MoadVoxelModelInference(object):
         # If you get here, you are saving the results to disk (default).
         with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
             f.write("SMILES\tScore (Cosine Similarity)\n")
-            for smiles, score_cos_similarity in most_similar[0]:
+            for smiles, score_cos_similarity, _ in most_similar[0]:
                 # [0] because only one prediction
 
                 line = f"{smiles}\t{score_cos_similarity:.3f}"
@@ -256,7 +260,7 @@ class MoadVoxelModelInference(object):
 
             # json.dump(output, f)
 
-        # TODO: Need to check on some known answers as a "sanity check".
+        # TODO: Cesar: Need to check on some known answers as a "sanity check".
 
-        # TODO: DISCUSS WITH CESAR. Can we add the fragments in most_similar[0] to the parent
+        # TODO: Cesar:  Can we add the fragments in most_similar[0] to the parent
         # molecule, to make a composite ligand ready for docking?

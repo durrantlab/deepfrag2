@@ -359,7 +359,7 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
 
 
 def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """A vector fusing RDK and Morgan Fingerprints.
+    """Creates a vector fusing RDK and Morgan Fingerprints.
 
     Args:
         m (rdkit.Chem.rdchem.Mol): RDKit molecule.

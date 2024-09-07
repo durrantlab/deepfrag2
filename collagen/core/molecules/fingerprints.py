@@ -1,25 +1,26 @@
 """Fingerprinting functions for molecules."""
 
-import numpy as np
-import rdkit.Chem.AllChem as Chem
-from rdkit.Chem import DataStructs
-from rdkit.Chem import AllChem
-from rdkit.Chem import Descriptors
-from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
+import numpy as np  # type: ignore
+import rdkit.Chem.AllChem as Chem  # type: ignore
+from rdkit.Chem import DataStructs  # type: ignore
+from rdkit.Chem import AllChem  # type: ignore
+from rdkit.Chem import Descriptors  # type: ignore
+from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator  # type: ignore
 from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 import os
-import wget
+import wget  # type: ignore
 import sys
 from zipfile import ZipFile
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import rdkit
+    import rdkit  # type: ignore
 
 PATH_MOLBERT_MODEL = os.path.join(os.getcwd(), "molbert_model")
 PATH_MOLBERT_CKPT = os.path.join(
-    PATH_MOLBERT_MODEL, f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",
+    PATH_MOLBERT_MODEL,
+    f"molbert_100epochs{os.sep}checkpoints{os.sep}last.ckpt",
 )
 
 MOLBERT_MODEL = None
@@ -88,13 +89,13 @@ def _rdk10(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
 
 
 def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Morgan fingerprints. TODO: Candidate for removal.
-    
+    """Morgan fingerprints.
+
     Args:
         m (rdkit.Chem.rdchem.Mol): RDKit molecule (not used).
         size (int): Size of the fingerprint.
         smiles (str): SMILES string.
-        
+
     Returns:
         np.array: Fingerprint.
     """
@@ -102,7 +103,8 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     try:
         assert m is not None, "molecule as parameter is None"
         DataStructs.ConvertToNumpyArray(
-            AllChem.GetHashedMorganFingerprint(m, 3, nBits=size), array,
+            AllChem.GetHashedMorganFingerprint(m, 3, nBits=size),
+            array,
         )
     except BaseException as e:
         try:
@@ -127,7 +129,7 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
 
 
 def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """A vector fusing RDK and Morgan Fingerprints.
+    """Creates a vector fusing RDK and Morgan Fingerprints.
 
     Args:
         m (rdkit.Chem.rdchem.Mol): RDKit molecule.
@@ -226,13 +228,13 @@ def fingerprint_for(
 ) -> "np.ndarray":
     """Compute a fingerprint for an rdkit mol. Raises an exception if the
     fingerprint is not found.
-    
+
     Args:
         mol (rdkit.Chem.rdchem.Mol): RDKit molecule.
         fp_type (str): Fingerprint type.
         size (int): Size of the fingerprint.
         smiles (str): SMILES string.
-        
+
     Returns:
         np.array: Fingerprint.
     """

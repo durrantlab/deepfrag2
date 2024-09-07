@@ -1,9 +1,9 @@
 """Contains classes and functions for saving and loading checkpoints."""
 
-import pytorch_lightning as pl
+import pytorch_lightning as pl  # type: ignore
 import glob
 import os
-import torch
+import torch  # type: ignore
 import argparse
 
 # see  https://github.com/PyTorchLightning/pytorch-lightning/issues/4911 Saves

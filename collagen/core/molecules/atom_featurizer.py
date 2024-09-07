@@ -3,8 +3,8 @@
 from typing import TYPE_CHECKING, List, Any, Tuple, Optional, Union, cast
 import warnings
 
-import numpy as np
-import rdkit
+import numpy as np  # type: ignore
+import rdkit  # type: ignore
 
 from ..types import AnyAtom
 
@@ -21,10 +21,10 @@ class AtomFeaturizer(object):
 
     def featurize_mol(self, mol: "Mol") -> Tuple["np.ndarray", "np.ndarray"]:
         """Featurize a Mol, returns (atom_mask, atom_radii).
-        
+
         Args:
             mol (Mol): A molecule.
-            
+
         Returns:
             Tuple[numpy.ndarray, numpy.ndarray]: (atom_mask, atom_radii)
         """
@@ -46,7 +46,7 @@ class AtomFeaturizer(object):
 
     def size(self) -> int:
         """Return the total number of layers.
-        
+
         Returns:
             int: The total number of layers.
         """
@@ -62,7 +62,7 @@ class AtomicNumFeaturizer(AtomFeaturizer):
 
     def __init__(self, layers: List[int], radii: Optional[List[float]] = None):
         """Initialize an AtomicNumFeaturizer.
-        
+
         Args:
             layers (List[int]): A list of atomic numbers. (?)
             radii (Optional[List[float]], optional): A list of radii. Defaults

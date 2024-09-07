@@ -9,10 +9,16 @@ import pstats
 import os
 import re
 from collagen.core.loader import DataLambda
+from collagen.external.common.parent_interface import ParentInterface
+from collagen.external.common.types import StructureEntry, StructuresSplit
+from collagen.external.moad.interface import MOADInterface
+from collagen.external.paired_csv.interface import PairedCsvInterface
+from collagen.external.pdb_sdf_dir.interface import PdbSdfDirInterface
+from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
-import torch
+import torch  # type: ignore
 from tqdm.std import tqdm
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
@@ -20,14 +26,8 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 # from torch import multiprocessing
 from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
-from collagen.external.moad.types import Entry_info, MOAD_split
 from collagen.metrics.ensembled import averaged as ensemble_helper
-from collagen.external.moad.interface import (
-    MOADInterface,
-    PdbSdfDirInterface,
-    PairedPdbSdfCsvInterface,
-)
-from collagen.external.moad.split import compute_dataset_split
+from collagen.external.common.split import create_train_val_test_splits
 from collagen.metrics.metrics import (
     most_similar_matches,
     pca_space_from_label_set_fingerprints,
@@ -35,7 +35,7 @@ from collagen.metrics.metrics import (
 )
 
 if TYPE_CHECKING:
-    import pytorch_lightning as pl
+    import pytorch_lightning as pl  # type: ignore
     from collagen.metrics.metrics import PCAProject
 
 # See https://github.com/pytorch/pytorch/issues/3492
@@ -58,58 +58,60 @@ def _return_paramter(object):
     return object
 
 
-class MoadVoxelModelTest(object):
+class VoxelModelTest(object):
 
     """A model for testing."""
 
-    def __init__(self, model_parent: Any):
-        """Initialize the MoadVoxelModelTest object.
-        
+    def __init__(self, parent: "VoxelModelParent"):
+        """Initialize the VoxelModelTest object.
+
         Args:
-            model_parent (Any): The model parent.
+            parent (VoxelModelParent): The model parent.
         """
-        self.model_parent = model_parent
+        self.parent = parent
 
     def _add_to_label_set(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
-        moad: MOADInterface,
-        split: MOAD_split,
+        data_interface: ParentInterface,
         voxel_params: VoxelParams,
         device: torch.device,
         existing_label_set_fps: torch.Tensor,
         existing_label_set_smis: List[str],
+        # NOTE: `split` needs to be optional because no split when running
+        # inference. See inference_custom_dataset.py.
+        split: Optional[StructuresSplit] = None,
     ) -> Tuple[torch.Tensor, List[str]]:
         """Add fingerprints to a label set (lookup table). This function allows
         you to include additional fingerprints (e.g., from the training and
         validation sets) in the label set for testing. Takes the fingerprints
         right from the split. A helper script.
-        
+
         Args:
-            self (MoadVoxelModelParent): This object
+            self: This object
             args (Namespace): The user arguments.
-            moad (MOADInterface): The MOAD dataset.
-            split (MOAD_split): The splits of the MOAD dataset.
+            data_interface (ParentInterface): The dataset interface.
             voxel_params (VoxelParams): Parameters for voxelization.
             device (torch.device): The device to use.
-            existing_label_set_fps (torch.Tensor): The existing tensor of 
+            existing_label_set_fps (torch.Tensor): The existing tensor of
                 fingerprints to which these new ones should be added.
             existing_label_set_smis (List[str]): The existing list of SMILES
                 strings to which the new ones should be added.
+            split (Optional[StructuresSplit]): The splits of the MOAD dataset.
 
         Returns:
-            Tuple[torch.Tensor, List[str]]: The updated fingerprint
-                tensor and smiles list.
+            Tuple[torch.Tensor, List[Union[str, StructureEntry]]]: The updated
+                fingerprint tensor and smiles list.
         """
         # global multiprocessing_ctx
 
         # TODO: Harrison: How hard would it be to make it so data below doesn't
         # voxelize the receptor? Is that adding a lot of time to the
         # calculation? Just a thought. See other TODO: note about this.
-        data = self.model_parent.get_data_from_split(
+        data = self.parent.utils.get_data_from_split(
             cache_file=args.cache,
             args=args,
-            dataset=moad,
+            data_interface=data_interface,
             split=split,
             voxel_params=voxel_params,
             device=device,
@@ -157,44 +159,49 @@ class MoadVoxelModelTest(object):
         return fps_tnsr, all_smis
 
     def _create_label_set(
-        self: "MoadVoxelModelParent",
+        self,
         args: Namespace,
         device: torch.device,
+        data_interface: ParentInterface,
+        voxel_params: VoxelParams,
         existing_label_set_fps: torch.Tensor = None,
-        existing_label_set_entry_infos: Optional[List[Entry_info]] = None,
+        existing_label_set_entry_infos: Optional[List[StructureEntry]] = None,
         skip_test_set=False,
-        train: Optional[MOAD_split] = None,
-        val: Optional[MOAD_split] = None,
-        test: Optional[MOAD_split] = None,
-        moad: Optional[MOADInterface] = None,
-        voxel_params: Optional[VoxelParams] = None,
+        train_split: Optional[StructuresSplit] = None,
+        val_split: Optional[StructuresSplit] = None,
+        test_split: Optional[StructuresSplit] = None,
         lbl_set_codes: Optional[List[str]] = None,
-    ) -> Tuple[torch.Tensor, List[Entry_info]]:
-        """Create a label set (look-up) tensor and smiles list for testing. 
+    ) -> Tuple[torch.Tensor, List[str]]:
+        """Create a label set (look-up) tensor and smiles list for testing.
         Can be comprised of the fingerprints in the train and/or test and/or
         val sets, as well as SMILES strings from a file.
 
         Args:
-            self (MoadVoxelModelParent): This object
+            self: This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
-            existing_label_set_fps (torch.Tensor, optional): The existing tensor of 
-                fingerprints to which these new ones should be added. Defaults
+            data_interface (ParentInterface): The data interface. Defaults to
+                None.
+            voxel_params (VoxelParams): Parameters for voxelization. Defaults
                 to None.
-            existing_label_set_entry_infos (List[Entry_info], optional): _description_. Defaults to None.
+            existing_label_set_fps (torch.Tensor, optional): The existing
+                tensor of fingerprints to which these new ones should be added.
+                Defaults to None.
+            existing_label_set_entry_infos (List[StructureEntry], optional):
+                _description_. Defaults to None.
             skip_test_set (bool, optional): Do not add test-set fingerprints,
                 presumably because they are already present in
                 existing_label_set_entry_infos. Defaults to False.
-            train (MOAD_split, optional): The train split. Defaults to None.
-            val (MOAD_split, optional): The val split. Defaults to None.
-            test (MOAD_split, optional): The test split. Defaults to None.
-            moad (MOADInterface, optional): The MOAD dataset. Defaults to None.
-            voxel_params (VoxelParams): Parameters for voxelization. Defaults to None.
-            lbl_set_codes (List[str], optional): _description_. Defaults to None.
+            train (StructuresSplit, optional): The train split. Defaults to
+                None.
+            val (StructuresSplit, optional): The val split. Defaults to None.
+            test (StructuresSplit, optional): The test split. Defaults to None.
+            lbl_set_codes (List[str], optional): _description_. Defaults to
+                None.
 
         Returns:
-            Tuple[torch.Tensor, List[Entry_info]]: The updated fingerprint
-                tensor and smiles list.
+            Tuple[torch.Tensor, List[Union[str, StructureEntry]]]: The updated
+                fingerprint tensor and smiles list.
         """
         if "all" in args.inference_label_sets:  # type: ignore
             raise Exception(
@@ -226,24 +233,50 @@ class MoadVoxelModelTest(object):
                 existing_label_set_fps, existing_label_set_entry_infos, device=device
             )
 
-        if "train" in lbl_set_codes and train is not None and len(train.targets) > 0:
+        if (
+            "train" in lbl_set_codes
+            and train_split is not None
+            and len(train_split.targets) > 0
+        ):
             label_set_fps, label_set_smis = self._add_to_label_set(
-                args, moad, train, voxel_params, device, label_set_fps, label_set_smis
+                args,
+                data_interface,
+                voxel_params,
+                device,
+                label_set_fps,
+                label_set_smis,
+                train_split,
             )
 
-        if "val" in lbl_set_codes and val is not None and len(val.targets) > 0:
+        if (
+            "val" in lbl_set_codes
+            and val_split is not None
+            and len(val_split.targets) > 0
+        ):
             label_set_fps, label_set_smis = self._add_to_label_set(
-                args, moad, val, voxel_params, device, label_set_fps, label_set_smis
+                args,
+                data_interface,
+                voxel_params,
+                device,
+                label_set_fps,
+                label_set_smis,
+                val_split,
             )
 
         if (
             "test" in lbl_set_codes
             and not skip_test_set
-            and test is not None
-            and len(test.targets) > 0
+            and test_split is not None
+            and len(test_split.targets) > 0
         ):
             label_set_fps, label_set_smis = self._add_to_label_set(
-                args, moad, test, voxel_params, device, label_set_fps, label_set_smis
+                args,
+                data_interface,
+                voxel_params,
+                device,
+                label_set_fps,
+                label_set_smis,
+                test_split,
             )
 
         # Add to that fingerprints from an SMI file.
@@ -251,7 +284,7 @@ class MoadVoxelModelTest(object):
             args, lbl_set_codes, label_set_fps, label_set_smis, device
         )
 
-        # self.model_parent.debug_smis_match_fps(label_set_fps, label_set_smis, device, args)
+        # self.parent.debug_smis_match_fps(label_set_fps, label_set_smis, device, args)
 
         print(f"Label set size: {len(label_set_fps)}")
 
@@ -261,15 +294,16 @@ class MoadVoxelModelTest(object):
         self,
         args: Namespace,
         lbl_set_codes: List[str],
-        label_set_fps: torch.Tensor,
-        label_set_smis: List[str],
+        label_set_fps: Optional[torch.Tensor],
+        label_set_smis: Optional[List[str]],
         device: torch.device,
     ) -> Tuple[torch.Tensor, List[str]]:
         """Add fingerprints from an SMI file to the label set.
 
         Args:
             args (Namespace): The user arguments.
-            lbl_set_codes (List[str]): The label set codes.
+            lbl_set_codes (List[str]): The label set codes. train, val, test,
+                all.
             label_set_fps (torch.Tensor): The label set fingerprints.
             label_set_smis (List[str]): The label set SMILES strings.
             device (torch.device): The device to use.
@@ -278,6 +312,9 @@ class MoadVoxelModelTest(object):
             Tuple[torch.Tensor, List[str]]: The updated label set fingerprints
                 and SMILES strings.
         """
+        if label_set_smis is None:
+            label_set_smis = []
+
         smi_files = [
             f for f in lbl_set_codes if f not in ["train", "val", "test", "all"]
         ]
@@ -304,40 +341,40 @@ class MoadVoxelModelTest(object):
         return label_set_fps, label_set_smis
 
     def _on_first_checkpoint(
-        self: "MoadVoxelModelParent",
+        self,
         all_test_data: Any,
         args: Namespace,
         model: "pl.LightningModule",
-        train: MOAD_split,
-        val: MOAD_split,
-        moad: MOADInterface,
+        train: StructuresSplit,
+        val: StructuresSplit,
+        data_interface: ParentInterface,
         lbl_set_codes: Optional[List[str]],
         device: torch.device,
         predictions_per_rot: ensemble_helper.AveragedEnsembled,
-    ) -> Tuple["PCAProject", torch.Tensor, torch.Tensor, List[Entry_info]]:
+    ) -> Tuple["PCAProject", torch.Tensor, torch.Tensor, List[StructureEntry]]:
         """Certain variables can only be defined when processing the first
         checkpoint. Moving this out of the loop so it's not distracting. Note
         that all_test_data is modified in place and so does not need to be
         returned.
-        
+
         Args:
             all_test_data (Any): The test data.
             args (Namespace): The user arguments.
             model (pl.LightningModule): The model.
-            train (MOAD_split): The training data.
-            val (MOAD_split): The validation data.
-            moad (MOADInterface): The MOAD interface.
+            train (StructuresSplit): The training data.
+            val (StructuresSplit): The validation data.
+            data_interface (ParentInterface): The data interface.
             lbl_set_codes (List[str]): The label set codes.
             device (torch.device): The device to use.
             predictions_per_rot (ensemble_helper.AveragedEnsembled): The
                 averaged ensemble predictions.
-                
+
         Returns:
-            Tuple[PCAProject, torch.Tensor, torch.Tensor, List[Entry_info]]:
+            Tuple[PCAProject, torch.Tensor, torch.Tensor, List[StructureEntry]]:
                 The PCA space, the predictions (all zeros), the label set
                 fingerprints, and the label set entry infos.
         """
-        voxel_params = self.model_parent.init_voxel_params(args)
+        voxel_params = self.parent.inits.init_voxel_params(args)
 
         # Get the label set to use. Note that it only does this once (for the
         # first-checkpoint model), but I need model so I'm leaving it in the
@@ -345,13 +382,13 @@ class MoadVoxelModelTest(object):
         label_set_fingerprints, label_set_entry_infos = self._create_label_set(
             args,
             device,
+            data_interface,
+            voxel_params,
             existing_label_set_fps=predictions_per_rot.model.prediction_targets,
             existing_label_set_entry_infos=predictions_per_rot.model.prediction_targets_entry_infos,
             skip_test_set=True,
-            train=train,
-            val=val,
-            moad=moad,
-            voxel_params=voxel_params,
+            train_split=train,
+            val_split=val,
             lbl_set_codes=lbl_set_codes,
         )
 
@@ -361,6 +398,11 @@ class MoadVoxelModelTest(object):
         all_test_data["pcaPercentVarExplainedByEachComponent"] = [
             100 * r for r in pca_space.pca.explained_variance_ratio_.tolist()
         ]
+
+        # Must be a list of StructureEntry
+        assert isinstance(label_set_entry_infos, list) and isinstance(
+            label_set_entry_infos[0], StructureEntry
+        ), "label_set_entry_infos must be a list of StructureEntry"
 
         return (
             pca_space,
@@ -376,11 +418,11 @@ class MoadVoxelModelTest(object):
                 device=device,
                 requires_grad=False,
             ),
-            label_set_entry_infos,
+            label_set_entry_infos,  # type: ignore
         )
 
     def _run_test_on_single_checkpoint(
-        self: "MoadVoxelModelParent",
+        self,
         all_test_data: Any,
         args: Namespace,
         model: "pl.LightningModule",
@@ -388,12 +430,17 @@ class MoadVoxelModelTest(object):
         ckpt: str,
         trainer: Any,
         test_data: DataLambda,
-        train: MOAD_split,
-        val: MOAD_split,
-        moad: MOADInterface,
+        train: StructuresSplit,
+        val: StructuresSplit,
+        data_interface: ParentInterface,
         lbl_set_codes: Optional[List[str]],
         avg_over_ckpts_of_avgs: Any,
-    ) -> Union[Tuple["PCAProject", torch.Tensor, torch.Tensor, List[Entry_info]], None]:
+        pca_space: Optional["PCAProject"] = None,
+        label_set_fingerprints: Optional[torch.Tensor] = None,
+        label_set_entry_infos: Optional[List[StructureEntry]] = None,
+    ) -> Union[
+        Tuple["PCAProject", torch.Tensor, torch.Tensor, List[StructureEntry]], None
+    ]:
         """Test run on a single checkpoint. You're iterating through
         multiple checkpoints. This allows output from multiple trained models to
         be averaged.
@@ -406,14 +453,20 @@ class MoadVoxelModelTest(object):
             ckpt (str): The checkpoint.
             trainer (Any): The trainer.
             test_data (DataLambda): The test data.
-            train (MOAD_split): The training data.
-            val (MOAD_split): The validation data.
-            moad (MOADInterface): The MOAD interface.
+            train (StructuresSplit): The training data.
+            val (StructuresSplit): The validation data.
+            data_interface (ParentInterface): The data interface.
             lbl_set_codes (List[str]): The label set codes.
             avg_over_ckpts_of_avgs (Any): The averaged ensemble predictions.
+            pca_space (Optional[PCAProject], optional): The PCA space. Defaults
+                to None (None on first checkpoint).
+            label_set_fingerprints (Optional[torch.Tensor], optional): The label
+                set fingerprints. Defaults to None (None on first checkpoint).
+            label_set_entry_infos (Optional[List[StructureEntry]], optional): The
+                label set entry infos. Defaults to None (None on first checkpoint).
 
         Returns:
-            Union[Tuple["PCAProject", torch.Tensor, torch.Tensor, List[Entry_info]], None]:
+            Union[Tuple["PCAProject", torch.Tensor, torch.Tensor, List[StructureEntry]], None]:
                 The PCA space, the predictions (averaged over multiple
                 checkpoints), the label set fingerprints, and the label set
                 entry infos.
@@ -423,7 +476,7 @@ class MoadVoxelModelTest(object):
 
         # Could pass these as parameters, but let's keep things simple and just
         # reinitialize.
-        device = self.model_parent.init_device(args)
+        device = self.parent.inits.init_device(args)
 
         predictions_per_rot = ensemble_helper.AveragedEnsembled(
             trainer,
@@ -452,16 +505,28 @@ class MoadVoxelModelTest(object):
                 model,
                 train,
                 val,
-                moad,
+                data_interface,
                 lbl_set_codes,
                 device,
                 predictions_per_rot,
             )
 
+        # This assertion should always be satisfied. pca_space only none if
+        # ckpt_idx was 0, but in that case it is defined above.
+        assert pca_space is not None, "PCA space must be defined"
+        assert (
+            label_set_fingerprints is not None
+        ), "Label set fingerprints must be defined"
+        assert (
+            label_set_entry_infos is not None
+        ), "Label set entry infos must be defined"
+
         predictions_per_rot.finish(pca_space)
         model, predictions_ensembled = predictions_per_rot.unpack()
         torch.add(
-            avg_over_ckpts_of_avgs, predictions_ensembled, out=avg_over_ckpts_of_avgs,
+            avg_over_ckpts_of_avgs,
+            predictions_ensembled,
+            out=avg_over_ckpts_of_avgs,
         )
 
         if ckpt_idx == 0:
@@ -505,6 +570,9 @@ class MoadVoxelModelTest(object):
         for entry_idx in range(len(predictions_ensembled)):
             # Add closest compounds from label set.
             for predicted_entry_info, cos_similarity, pca in most_similar[entry_idx]:
+                if pca is None:
+                    pca = [None]
+
                 all_test_data["entries"][entry_idx]["perCheckpoint"][-1][
                     "averagedPrediction"
                 ]["closestFromLabelSet"].append(
@@ -522,14 +590,18 @@ class MoadVoxelModelTest(object):
                 label_set_fingerprints,
                 label_set_entry_infos,
             )
-        else:
-            return None
+
+        return None
 
     def _save_test_results_to_json(
-        self, all_test_data: dict, s: StringIO, args: Namespace, pth: str = None
+        self,
+        all_test_data: dict,
+        s: StringIO,
+        args: Namespace,
+        pth: Optional[str] = None,
     ):
         """Save the test results to a carefully formatted JSON file.
-        
+
         Args:
             all_test_data (dict): The test data.
             s (StringIO): The string buffer to write to.
@@ -550,6 +622,7 @@ class MoadVoxelModelTest(object):
 
         if pth is None:
             pth = os.getcwd()
+
         pth = (
             pth
             + os.sep
@@ -558,6 +631,9 @@ class MoadVoxelModelTest(object):
             + args.aggregation_rotations
             + os.sep
         )
+
+        assert pth is not None, "Path must be specified"
+
         os.makedirs(pth, exist_ok=True)
         num = len(glob.glob(f"{pth}*.json", recursive=False))
 
@@ -589,9 +665,7 @@ class MoadVoxelModelTest(object):
         # with open('/mnt/extra/cProfile.txt', 'w+') as f:
         #    f.write(s.getvalue())
 
-    def _validate_run_test(
-        self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: Optional[str]
-    ):
+    def _validate_run_test(self, args: Namespace, ckpt_filename: Optional[str]):
         """Validate the arguments for the test mode.
 
         Args:
@@ -644,14 +718,13 @@ class MoadVoxelModelTest(object):
                 "You cannot specify --test_predictions_file unless you are in test mode."
             )
 
-    def run_test(self: "MoadVoxelModelParent", args: Namespace, ckpt_filename: str):
+    def run_test(self, args: Namespace, ckpt_filename: str):
         """Run a model on the test and evaluates the output.
 
         Args:
             args (Namespace): The user arguments.
             ckpt_filename (str): The checkpoint to use.
         """
-
         pr = cProfile.Profile()
         pr.enable()
 
@@ -661,15 +734,15 @@ class MoadVoxelModelTest(object):
             f"Using the operator {args.aggregation_rotations} to aggregate the inferences."
         )
 
-        voxel_params = self.model_parent.init_voxel_params(args)
-        device = self.model_parent.init_device(args)
+        voxel_params = self.parent.inits.init_voxel_params(args)
+        device = self.parent.inits.init_device(args)
 
-        dataset, set2run_test_on_single_checkpoint = self._read_datasets_to_run_test(
+        data_interface, set2run_test_on_single_checkpoint = self._read_datasets_to_run_test(
             args, voxel_params
         )
 
-        train, val, test = compute_dataset_split(
-            dataset=dataset,
+        train_split, val_split, test_split = create_train_val_test_splits(
+            dataset=data_interface,
             seed=None,
             fraction_train=0.0,
             fraction_val=0.0,
@@ -682,24 +755,24 @@ class MoadVoxelModelTest(object):
             max_pdbs_train=args.max_pdbs_train,
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
-            split_method=args.split_method,  # TODO: In cesar branch, this is None. Why?
+            split_method=args.split_method,  # NOTE: I don't think it matters what split is for testing.
             butina_cluster_cutoff=0.0,  # Hardcoded because no need to split test set.
         )
 
         # You'll always need the test data. Note that ligands are not fragmented
         # by calling the get_data_from_split function.
-        test_data: "DataLambda" = self.model_parent.get_data_from_split(
+        test_data: "DataLambda" = self.parent.utils.get_data_from_split(
             cache_file=self._get_cache(args),
             args=args,
-            dataset=dataset,
-            split=test,
+            data_interface=data_interface,
+            split=test_split,
             voxel_params=voxel_params,
             device=device,
             shuffle=False,
         )
         print(f"Number of batches for the test data: {len(test_data)}")
 
-        trainer = self.model_parent.init_trainer(args)
+        trainer = self.parent.inits.init_trainer(args)
 
         ckpts = [c.strip() for c in ckpt_filename.split(",")]
         all_test_data = {
@@ -722,12 +795,10 @@ class MoadVoxelModelTest(object):
             # change cesar made, but not sure.
             all_fingerprints = []
 
-            model = self.model_parent.init_model(
+            model = self.parent.inits.init_model(
                 args, ckpt_filename, fragment_set=set2run_test_on_single_checkpoint
             )
             model.eval()
-
-            # TODO: model.device is "cpu". Is that right? Shouldn't it be "cuda"?
 
             payload = self._run_test_on_single_checkpoint(
                 all_test_data,
@@ -737,11 +808,13 @@ class MoadVoxelModelTest(object):
                 ckpt_filename,
                 trainer,
                 test_data,
-                train,
-                val,
+                train_split,
+                val_split,
                 set2run_test_on_single_checkpoint,
                 None,  # lbl_set_codes
                 avg_over_ckpts_of_avgs,
+                pca_space,
+                label_set_fingerprints,
             )
 
             if ckpt_idx == 0:
@@ -813,6 +886,9 @@ class MoadVoxelModelTest(object):
                 "closestFromLabelSet": [],
             }
             for predicted_entry_info, cos_similarity, pca in most_similar[entry_idx]:
+                if pca is None:
+                    pca = [None]
+
                 all_test_data["entries"][entry_idx]["avgOfCheckpoints"][
                     "closestFromLabelSet"
                 ].append(
@@ -833,21 +909,19 @@ class MoadVoxelModelTest(object):
 
     def _read_datasets_to_run_test(
         self, args: Namespace, voxel_params: VoxelParams
-    ) -> Tuple[
-        Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface],
-        Union[MOADInterface, PdbSdfDirInterface, PairedPdbSdfCsvInterface],
-    ]:
-        # TODO: All Interfaces should inferit from same parent.
+    ) -> Tuple[ParentInterface, ParentInterface]:
         """Read the dataset to run test on.
-        
+
         Args:
             args: The arguments passed to the program.
             voxel_params: The voxel parameters.
 
         Returns:
-            A tuple of (dataset, dataset). The first coefficient contains the dataset to run test on,
-                whereas the second coefficient contains the fragments to be used in the prediction.
-                In test mode, both coefficients are the same ones, but in inference mode they are different.
+            A tuple of (ParentInterface, ParentInterface). The first
+            coefficient contains the dataset to run test on, whereas the second
+            coefficient contains the fragments to be used in the prediction. In
+            test mode, both coefficients are the same ones, but in inference
+            mode they are different.
         """
         if args.every_csv and args.data_dir:  # test mode on MOAD database
             print("Loading MOAD database.")
@@ -865,7 +939,7 @@ class MoadVoxelModelTest(object):
                 discard_distant_atoms=args.discard_distant_atoms,
             )
         else:  # test mode on a paired database other than MOAD database
-            dataset = PairedPdbSdfCsvInterface(
+            dataset = PairedCsvInterface(
                 structures=args.paired_data_csv,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                 grid_width=voxel_params.width,
@@ -901,10 +975,10 @@ class MoadVoxelModelTest(object):
 
     def _get_load_splits(self, args: Namespace) -> Any:
         """Get the splits to load.
-        
+
         Args:
             args: The arguments passed to the program.
-            
+
         Returns:
             The splits to load.
         """
@@ -943,4 +1017,4 @@ class MoadVoxelModelTest(object):
             model: The model.
             args: The arguments passed to the program.
         """
-        self.model_parent.save_examples_used(model, args)
+        self.parent.save_examples_used(model, args)

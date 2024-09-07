@@ -7,11 +7,11 @@ from multiprocessing import cpu_count
 def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     """Add user-defined command-line parameters to control how the MOAD data is
     processed.
-    
+
     Args:
         parent_parser (ArgumentParser): The parent parser to add the MOAD
             arguments to.
-            
+
     Returns:
         ArgumentParser: The parser with the MOAD arguments added.
     """
@@ -201,10 +201,10 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 def fix_moad_args(args: Namespace) -> Namespace:
     """Fix MOAD-specific arguments. Only works after arguments have been
     parsed, so in a separate definition.
-    
+
     Args:
         args (Namespace): The arguments to fix.
-        
+
     Returns:
         Namespace: The fixed arguments.
     """

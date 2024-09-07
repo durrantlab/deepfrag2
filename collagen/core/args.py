@@ -145,7 +145,7 @@ def _get_arg_parser(
     """Construct an arg parser.
 
     Args:
-        parser_funcs (list): A list of functions that add arguments to a 
+        parser_funcs (list): A list of functions that add arguments to a
             parser. They each accept a parser and return a parser.
         is_pytorch_lightning (bool, optional): Whether the app uses pytorch
             lightning. Defaults to False.
@@ -165,7 +165,7 @@ def _get_arg_parser(
 
     # Add pytorch lighting parameters if appropriate.
     if is_pytorch_lightning:
-        import pytorch_lightning as pl
+        import pytorch_lightning as pl  # type: ignore
 
         pl.Trainer.add_argparse_args(parent_parser)
 
