@@ -182,7 +182,7 @@ def is_neutral(mol: Chem.Mol) -> bool:
 
 
 if __name__ == "__main__":
-    import pandas as pd
+    import pandas as pd  # type: ignore
     import sys
 
     # If no arguments, use filename "chem_props_test.smi"

@@ -6,6 +6,7 @@ from collagen.core.loader import DataLambda
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.paired_csv.interface import PairedCsvInterface
 from collagen.external.pdb_sdf_dir.interface import PdbSdfDirInterface
+from collagen.model_parents.moad_voxel.inits import VoxelModelInits
 from torchinfo import summary  # type: ignore
 from collagen.external.moad.interface import MOADInterface
 from collagen.external.common.split import create_train_val_test_splits
@@ -33,7 +34,7 @@ class VoxelModelTrain(object):
             ckpt_filename (Optional[str]): The checkpoint filename to use.
         """
         # Runs training.
-        trainer = self.parent.inits.init_trainer(args)
+        trainer = VoxelModelInits.init_trainer(args)
         data_interface, train_data, val_data = self.get_train_val_sets(args, False)
 
         # Below is helpful for debugging

@@ -1,10 +1,9 @@
 """Atom type definition."""
 
-from typing import TYPE_CHECKING, Type, Union
-import rdkit
+from typing import TYPE_CHECKING, Type
 
-# if TYPE_CHECKING:
-#    import rdkit  # type: ignore
+if TYPE_CHECKING:
+   import rdkit  # type: ignore
 #    import collagen.core.molecules.abstract_mol
 
 AnyAtom = Type[rdkit.Chem.rdchem.Atom]

@@ -214,7 +214,7 @@ def fix_moad_args(args: Namespace) -> Namespace:
         import os
 
         args.cache = f"{args.default_root_dir + os.sep}cache.json"
-    elif args.cache == "none":
+    elif args.cache == "temp":
         # Recreate cache every time. Note that this is now the default.
         # Essentially, to recreate cache every time (no cache from run to run,
         # just within a run).

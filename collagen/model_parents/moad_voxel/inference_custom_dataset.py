@@ -92,6 +92,9 @@ class VoxelModelInferenceCustomSet(VoxelModelTest):
         # However, for convenience, you can also simply use all fragments from
         # BindingMOAD, in addition to those from a .smi file.
 
+        label_set_fps = None
+        label_set_smis = []
+
         # If using a custom dataset, it's useful to generate a large fragment
         # library derived from the BindingMOAD dataset (all ligands), plus any
         # additional fragments that result from fragmenting the ligands in the

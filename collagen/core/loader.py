@@ -2,7 +2,7 @@
 training and testing.
 """
 
-from typing import Any, List
+from typing import Any, Callable, List, Optional, Union
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 import numpy as np  # type: ignore
 from torch import multiprocessing  # type: ignore
@@ -14,7 +14,7 @@ import threading
 import platform
 
 DATA = None
-COLLATE = None
+COLLATE: Optional[Callable] = None
 
 # If any thread takes longer than this, terminate it.
 TIMEOUT = 60.0 * 5
@@ -80,7 +80,7 @@ class MultiLoader(object):
         num_dataloader_workers: int = 1,
         batch_size: int = 1,
         shuffle: bool = False,
-        collate_fn: callable = _collate_none,
+        collate_fn: Callable = _collate_none,
         max_voxels_in_memory: int = 80,
     ):
         """Initialize the MultiLoader.
@@ -93,7 +93,7 @@ class MultiLoader(object):
             batch_size (int, optional): The batch size. Defaults to 1.
             shuffle (bool, optional): Whether to shuffle the data. Defaults to
                 False.
-            collate_fn (callable, optional): The collate function to use.
+            collate_fn (Callable, optional): The collate function to use.
                 Defaults to _collate_none.
             max_voxels_in_memory (int, optional): The maximum number of voxels
                 to keep in memory. Defaults to 80.
@@ -337,11 +337,11 @@ class MultiLoader(object):
         """
         return DataBatch(self, batch_size)
 
-    def map(self, fn: callable) -> "DataLambda":
+    def map(self, fn: Callable) -> "DataLambda":
         """Apply a function to each item in the data.
 
         Args:
-            fn (callable): The function to apply.
+            fn (Callable): The function to apply.
 
         Returns:
             DataLambda: A DataLambda object.
@@ -353,12 +353,12 @@ class DataLambda(MultiLoader):
 
     """Apply a function to each item in the data."""
 
-    def __init__(self, data: Any, fn: callable):
+    def __init__(self, data: Any, fn: Callable):
         """Initialize a DataLambda object.
 
         Args:
             data (Any): The data.
-            fn (callable): The function to apply to each item in the data.
+            fn (Callable): The function to apply to each item in the data.
         """
         self.data = data
         self.fn = fn
@@ -385,15 +385,15 @@ class DataBatch(MultiLoader):
 
     """Batch the data."""
 
-    def __init__(self, data: Any, batch: int):
+    def __init__(self, data: Any, batch_size: int):
         """Initialize a DataBatch object.
 
         Args:
             data (Any): The data.
-            batch (int): The batch size.
+            batch_size (int): The batch size.
         """
         self.data = data
-        self.batch = batch
+        self.batch_size = batch_size
 
     def __len__(self) -> int:
         """Get the length of the data.
@@ -401,10 +401,10 @@ class DataBatch(MultiLoader):
         Returns:
             int: The length of the data.
         """
-        if len(self.data) % self.batch == 0:
-            return len(self.data) // self.batch
+        if len(self.data) % self.batch_size == 0:
+            return len(self.data) // self.batch_size
         else:
-            return (len(self.data) // self.batch) + 1
+            return (len(self.data) // self.batch_size) + 1
 
     def __iter__(self):
         """Iterate over the data.

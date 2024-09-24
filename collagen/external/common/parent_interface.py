@@ -1,17 +1,20 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Union
-from collagen.external.common.parent_targets_ligands import Parent_target
+from typing import Dict, List, Union, TYPE_CHECKING
 from dataclasses import field
+
+if TYPE_CHECKING:
+    from collagen.external.common.types import StructuresClass
+    from collagen.external.common.parent_targets_ligands import Parent_target
 
 
 class ParentInterface(ABC):
 
-    classes: List["MOAD_class"]
-    _all_targets: List["str"] = field(default_factory=list)
+    classes: List["StructuresClass"]
+    _all_targets: List[str] = field(default_factory=list)
 
     # Maps PDB ID to target. No classes or families (BindingMOAD heirarchy)
-    _lookup: Dict["str", "MOAD_target"] = field(default_factory=dict)
+    _lookup: Dict[str, "Parent_target"] = field(default_factory=dict)
 
     def __init__(
         self,
@@ -23,7 +26,6 @@ class ParentInterface(ABC):
         noh: bool,
         discard_distant_atoms: bool,
     ):
-        self._creating_logger_files()
         self._load_targets_ligands_hierarchically(
             metadata,
             cache_pdbs_to_disk,
@@ -37,9 +39,6 @@ class ParentInterface(ABC):
 
         self._init_lookup()
         self._resolve_target_paths(structures_path)
-
-    def _creating_logger_files(self):
-        pass
 
     @abstractmethod
     def _load_targets_ligands_hierarchically(self, *args, **kwargs):

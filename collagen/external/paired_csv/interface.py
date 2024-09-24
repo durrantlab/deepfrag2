@@ -53,27 +53,6 @@ class PairedCsvInterface(ParentInterface):
             discard_distant_atoms,
         )
 
-    def _creating_logger_files(self):
-        self.__setup_logger(
-            "log_one", os.getcwd() + os.sep + "01_error_loading_parents.log"
-        )
-        self.__setup_logger(
-            "log_two", os.getcwd() + os.sep + "02_error_loading_first_fragments.log"
-        )
-        self.__setup_logger(
-            "log_three", os.getcwd() + os.sep + "03_error_loading_second_fragments.log"
-        )
-        self.__setup_logger("log_four", os.getcwd() + os.sep + "04_finally_used.log")
-
-        self.error_loading_parents = logging.getLogger("log_one")
-        self.error_loading_parents.propagate = False
-        self.error_loading_first_fragments = logging.getLogger("log_two")
-        self.error_loading_first_fragments.propagate = False
-        self.error_loading_second_fragments = logging.getLogger("log_three")
-        self.error_loading_second_fragments.propagate = False
-        self.finally_used = logging.getLogger("log_four")
-        self.finally_used.propagate = False
-
     def _load_targets_ligands_hierarchically(
         self,
         metadata,

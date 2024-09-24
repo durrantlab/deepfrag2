@@ -36,6 +36,7 @@ from collagen.metrics.metrics import (
 if TYPE_CHECKING:
     import pytorch_lightning as pl  # type: ignore
     from collagen.metrics.metrics import PCAProject
+    from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
 # See https://github.com/pytorch/pytorch/issues/3492
 # try:
