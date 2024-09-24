@@ -3,11 +3,10 @@ MOAD_target has some complexity to it (to load/save PDB files, including
 caching), but let's leave it here.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from collagen.core import args as user_args
-from typing import TYPE_CHECKING, Dict, List, Set, Tuple, Any, Union
-from collections import OrderedDict
-from pathlib import Path
+from typing import List, Tuple, Any
+
 import textwrap
 from collagen.core.molecules.mol import (
     BackedMol,
@@ -15,15 +14,12 @@ from collagen.core.molecules.mol import (
     UnparsableGeometryException,
     UnparsableSMILESException,
 )
-import os
-import pickle
-from io import StringIO
+
 from collagen.external.common.parent_targets_ligands import Parent_ligand, Parent_target
 import prody  # type: ignore
-from ... import Mol
-from ..common.utils import fix_smiles
+from collagen.core.molecules.mol import Mol
+from collagen.external.common.utils import fix_smiles
 import sys
-from abc import ABC, abstractmethod
 
 
 @dataclass

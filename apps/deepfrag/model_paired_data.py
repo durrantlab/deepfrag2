@@ -10,6 +10,7 @@ from math import e
 if TYPE_CHECKING:
     import torch  # type: ignore
 
+
 class DeepFragModelPairedDataFinetune(DeepFragModel):
     
     """DeepFrag model that uses additional paired data for finetuning."""

@@ -2,7 +2,7 @@
 training and testing.
 """
 
-from typing import TYPE_CHECKING, Any, Callable, List, Union
+from typing import Any, List
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 import numpy as np  # type: ignore
 from torch import multiprocessing  # type: ignore
@@ -14,7 +14,7 @@ import threading
 import platform
 
 DATA = None
-COLLATE: Union[None, Callable] = None
+COLLATE = None
 
 # If any thread takes longer than this, terminate it.
 TIMEOUT = 60.0 * 5
@@ -80,7 +80,7 @@ class MultiLoader(object):
         num_dataloader_workers: int = 1,
         batch_size: int = 1,
         shuffle: bool = False,
-        collate_fn: Callable = _collate_none,
+        collate_fn: callable = _collate_none,
         max_voxels_in_memory: int = 80,
     ):
         """Initialize the MultiLoader.
@@ -337,7 +337,7 @@ class MultiLoader(object):
         """
         return DataBatch(self, batch_size)
 
-    def map(self, fn: Callable) -> "DataLambda":
+    def map(self, fn: callable) -> "DataLambda":
         """Apply a function to each item in the data.
 
         Args:
@@ -353,7 +353,7 @@ class DataLambda(MultiLoader):
 
     """Apply a function to each item in the data."""
 
-    def __init__(self, data: Any, fn: Callable):
+    def __init__(self, data: Any, fn: callable):
         """Initialize a DataLambda object.
 
         Args:
@@ -385,15 +385,15 @@ class DataBatch(MultiLoader):
 
     """Batch the data."""
 
-    def __init__(self, data: Any, batch_size: int):
+    def __init__(self, data: Any, batch: int):
         """Initialize a DataBatch object.
 
         Args:
             data (Any): The data.
-            batch_size (int): The batch size.
+            batch (int): The batch size.
         """
         self.data = data
-        self.batch_size = batch_size
+        self.batch = batch
 
     def __len__(self) -> int:
         """Get the length of the data.
@@ -401,10 +401,10 @@ class DataBatch(MultiLoader):
         Returns:
             int: The length of the data.
         """
-        if len(self.data) % self.batch_size == 0:
-            return len(self.data) // self.batch_size
+        if len(self.data) % self.batch == 0:
+            return len(self.data) // self.batch
         else:
-            return (len(self.data) // self.batch_size) + 1
+            return (len(self.data) // self.batch) + 1
 
     def __iter__(self):
         """Iterate over the data.

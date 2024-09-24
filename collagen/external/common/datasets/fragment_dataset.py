@@ -13,7 +13,7 @@ from collagen.external.paired_csv.interface import PairedCsvInterface
 from torch.utils.data import Dataset  # type: ignore
 from collagen.core import args as user_args
 from collagen.external.common.split import create_full_dataset_as_single_split
-from .... import Mol
+from collagen.core.molecules.mol import Mol
 import sys
 from collagen.core.molecules.mol import BackedMol
 
@@ -444,7 +444,7 @@ class FragmentDataset(Dataset):
         """
         return len(self._internal_index_valids_filtered)
 
-    def __getitem__(self, idx: int) -> Union[None, Tuple[Mol, Mol, Mol, str, int], Any]:
+    def __getitem__(self, idx: int) -> Tuple[Mol, Mol, Mol]:
         """Return (receptor, parent, fragment)
 
         Args:
@@ -515,7 +515,7 @@ class FragmentDataset(Dataset):
                 assert len(sample) == 5, "Sample size is not 5"
 
                 # Actually performs voxelization and fingerprinting.
-                return self.transform(*sample) if self.transform else sample
+                return self.transform(sample) if self.transform else sample
 
             except AssertionError as e:
                 print(

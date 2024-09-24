@@ -2,10 +2,8 @@
 
 from argparse import ArgumentParser, Namespace
 import json
-from typing import Optional, Sequence, Tuple, Type, TypeVar, List, Union
-from collagen.core.molecules.mol import BackedMol, DelayedMolVoxel, Mol
+from typing import Sequence, Type, TypeVar, List, Union
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
-from collagen.external.common.types import StructureEntry
 from collagen.model_parents.moad_voxel.inference import VoxelModelInference
 from collagen.model_parents.moad_voxel.inference_custom_dataset import (
     VoxelModelInferenceCustomSet,

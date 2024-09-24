@@ -13,7 +13,7 @@ __all__ = [
     "AtomicNumFeaturizer",
     "AnyAtom",
     "MultiLoader",
-    "GraphMol",
+    # "GraphMol",
 ]
 
 from .molecules.mol import Mol, BackedMol, DelayedMolVoxel
@@ -23,8 +23,8 @@ from .molecules.atom_featurizer import AtomFeaturizer, AtomicNumFeaturizer
 from .types import AnyAtom
 from .loader import MultiLoader
 
-try:
-    from .molecules.graph_mol import GraphMol
-except Exception:
-    GraphMol = None
-    print("collagen.GraphMol requires torch_geometric!")
+# try:
+#     from .molecules.graph_mol import GraphMol
+# except Exception:
+#     GraphMol = None
+#     print("collagen.GraphMol requires torch_geometric!")

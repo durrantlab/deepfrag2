@@ -1,7 +1,7 @@
 """Test a model on the MOAD dataset."""
 
 import glob
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 import cProfile
 from io import StringIO
 import json
@@ -14,7 +14,6 @@ from collagen.external.common.types import StructureEntry, StructuresSplit
 from collagen.external.moad.interface import MOADInterface
 from collagen.external.paired_csv.interface import PairedCsvInterface
 from collagen.external.pdb_sdf_dir.interface import PdbSdfDirInterface
-from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
