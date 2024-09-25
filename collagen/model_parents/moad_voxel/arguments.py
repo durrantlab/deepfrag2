@@ -208,7 +208,7 @@ def fix_moad_args(args: Namespace) -> Namespace:
     Returns:
         Namespace: The fixed arguments.
     """
-    if args.cache is None:
+    if args.cache is None or args.cache == 'None':
         # Append `.cache.json` to the file path given by `--every_csv. Happens
         # when --cache not specified.
         import os

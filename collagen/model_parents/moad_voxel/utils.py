@@ -11,7 +11,8 @@ import torch  # type: ignore
 
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
-    
+
+
 class VoxelModelUtils(object):
     """Provides utility funcitons."""
 

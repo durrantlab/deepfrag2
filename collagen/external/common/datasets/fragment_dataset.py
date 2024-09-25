@@ -515,7 +515,7 @@ class FragmentDataset(Dataset):
                 assert len(sample) == 5, "Sample size is not 5"
 
                 # Actually performs voxelization and fingerprinting.
-                return self.transform(sample[0], sample[1], sample[2], sample[3], sample[4]) if self.transform else sample
+                return self.transform(sample) if self.transform else sample
 
             except AssertionError as e:
                 print(

@@ -2,7 +2,7 @@
 training and testing.
 """
 
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 import numpy as np  # type: ignore
 from torch import multiprocessing  # type: ignore
@@ -420,7 +420,7 @@ class DataBatch(MultiLoader):
             n += 1
             batch.append(item)
 
-            if n == self.batch:
+            if n == self.batch_size:
                 yield batch
                 batch = []
                 n = 0
