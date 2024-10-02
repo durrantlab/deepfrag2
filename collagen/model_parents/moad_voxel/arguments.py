@@ -208,13 +208,13 @@ def fix_moad_args(args: Namespace) -> Namespace:
     Returns:
         Namespace: The fixed arguments.
     """
-    if args.cache is None:
+    if args.cache is None or args.cache == 'None':
         # Append `.cache.json` to the file path given by `--every_csv. Happens
         # when --cache not specified.
         import os
 
         args.cache = f"{args.default_root_dir + os.sep}cache.json"
-    elif args.cache == "none":
+    elif args.cache == "temp":
         # Recreate cache every time. Note that this is now the default.
         # Essentially, to recreate cache every time (no cache from run to run,
         # just within a run).

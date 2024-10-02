@@ -1,11 +1,9 @@
 """Interface for Binding MOAD data."""
 
-from dataclasses import field
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 
 from collagen.external.common.parent_interface import ParentInterface
-from collagen.external.common.parent_targets_ligands import Parent_target
 from collagen.external.common.types import StructuresClass, StructuresFamily
 from .targets_ligands import (
     MOAD_ligand,
@@ -28,12 +26,6 @@ class MOADInterface(ParentInterface):
         structures: Path to a folder container structure files.
     """
 
-    classes: List["StructuresClass"]
-    _all_targets: List["str"] = field(default_factory=list)
-
-    # Maps PDB ID to target. No classes or families (BindingMOAD heirarchy)
-    _lookup: Dict["str", "Parent_target"] = field(default_factory=dict)
-
     def __init__(
         self,
         metadata: Union[str, Path],
@@ -55,21 +47,6 @@ class MOADInterface(ParentInterface):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
-        self._creating_logger_files()
-        self._load_targets_ligands_hierarchically(
-            metadata,
-            cache_pdbs_to_disk,
-            grid_width,
-            grid_resolution,
-            noh,
-            discard_distant_atoms,
-        )
-
-        # self._lookup = {}
-        # self._all_targets = []
-
-        # self._init_lookup()
-        # self._resolve_paths(structures_path)
 
         super().__init__(
             metadata,
@@ -80,9 +57,6 @@ class MOADInterface(ParentInterface):
             noh,
             discard_distant_atoms,
         )
-
-    def _creating_logger_files(self):
-        pass
 
     def _load_targets_ligands_hierarchically(
         self,

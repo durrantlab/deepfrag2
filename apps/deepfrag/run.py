@@ -36,8 +36,7 @@ class DeepFrag(VoxelModelParent):
         """
         super().__init__(
             # TODO: Cesar: Why DeepFragModelPairedDataFinetune?
-            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else VoxelAutoencoder
-            if args.use_density_net else DeepFragModel,
+            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else DeepFragModel,
             dataset_cls=FragmentDataset,
         )
 

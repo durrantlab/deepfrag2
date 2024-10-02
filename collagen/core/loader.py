@@ -2,7 +2,7 @@
 training and testing.
 """
 
-from typing import TYPE_CHECKING, Any, Callable, List, Union
+from typing import Any, Callable, List, Optional
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 import numpy as np  # type: ignore
 from torch import multiprocessing  # type: ignore
@@ -14,7 +14,7 @@ import threading
 import platform
 
 DATA = None
-COLLATE: Union[None, Callable] = None
+COLLATE: Optional[Callable] = None
 
 # If any thread takes longer than this, terminate it.
 TIMEOUT = 60.0 * 5
@@ -93,7 +93,7 @@ class MultiLoader(object):
             batch_size (int, optional): The batch size. Defaults to 1.
             shuffle (bool, optional): Whether to shuffle the data. Defaults to
                 False.
-            collate_fn (callable, optional): The collate function to use.
+            collate_fn (Callable, optional): The collate function to use.
                 Defaults to _collate_none.
             max_voxels_in_memory (int, optional): The maximum number of voxels
                 to keep in memory. Defaults to 80.
@@ -341,7 +341,7 @@ class MultiLoader(object):
         """Apply a function to each item in the data.
 
         Args:
-            fn (callable): The function to apply.
+            fn (Callable): The function to apply.
 
         Returns:
             DataLambda: A DataLambda object.
@@ -358,7 +358,7 @@ class DataLambda(MultiLoader):
 
         Args:
             data (Any): The data.
-            fn (callable): The function to apply to each item in the data.
+            fn (Callable): The function to apply to each item in the data.
         """
         self.data = data
         self.fn = fn
@@ -420,7 +420,7 @@ class DataBatch(MultiLoader):
             n += 1
             batch.append(item)
 
-            if n == self.batch:
+            if n == self.batch_size:
                 yield batch
                 batch = []
                 n = 0

@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-
-from collagen.external.common.parent_targets_ligands import Parent_ligand
-from collagen.external.pdb_sdf_dir.targets_ligands import PdbSdfDir_target
+from collagen.external.pdb_sdf_dir.targets_ligands import PdbSdfDir_target, PdbSdfDir_ligand
 
 
 @dataclass
@@ -12,7 +10,7 @@ class PairedCsv_target(PdbSdfDir_target):
 
 
 @dataclass
-class PairedCsv_ligand(Parent_ligand):
+class PairedCsv_ligand(PdbSdfDir_ligand):
     fragment_and_act: dict
     backed_parent: Any
     rdmol: Any

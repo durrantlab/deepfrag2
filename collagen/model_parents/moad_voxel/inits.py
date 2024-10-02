@@ -5,16 +5,16 @@ from argparse import Namespace
 from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
 from collagen.external.paired_csv.interface import PairedCsvInterface
-from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 import pytorch_lightning as pl  # type: ignore
 from pytorch_lightning.loggers.wandb import WandbLogger  # type: ignore
 from pytorch_lightning.loggers import TensorBoardLogger  # type: ignore
 from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch  # type: ignore
 import os
+from collagen.external.common.parent_interface import ParentInterface
 
 if TYPE_CHECKING:
-    from collagen.external.common.parent_interface import ParentInterface
+    from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
 class VoxelModelInits(object):

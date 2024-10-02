@@ -1,14 +1,16 @@
 """Utilities for MOAD voxel model."""
 
 from argparse import Namespace
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import Optional, TYPE_CHECKING
 from collagen.checkpoints import get_last_checkpoint
 from collagen.core.loader import DataLambda, MultiLoader
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.common.types import StructuresSplit
-from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 import torch  # type: ignore
+
+if TYPE_CHECKING:
+    from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
 
 class VoxelModelUtils(object):

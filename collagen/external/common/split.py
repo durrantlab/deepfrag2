@@ -11,9 +11,7 @@ import json
 from collagen.external.common.butina_clustering_split import (
     generate_splits_using_butina_clustering,
 )
-
-if TYPE_CHECKING:
-    from collagen.external.common.types import StructuresSplit
+from collagen.external.common.types import StructuresSplit
 
 
 split_rand_num_gen: Union[np.random.Generator, None] = None
