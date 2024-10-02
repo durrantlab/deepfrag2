@@ -56,7 +56,8 @@ class FragmentDataset(Dataset):
     split: "StructuresSplit"
 
     # function that performs voxelization and fingerprinting
-    transform: Optional[Callable[[Mol, Mol, Mol, str, int], Any]]
+    # Note that transform accepts a tuple or list: Tuple[Mol, Mol, Mol, str, int]
+    transform: Optional[Callable[[Tuple[Mol, Mol, Mol, str, int]], Any]]
 
     # The internal listing of every valid fragment example. This index is
     # generated on each run based on the runtime filters: (targets, smiles,
@@ -69,7 +70,7 @@ class FragmentDataset(Dataset):
         cache_file: Optional[Union[str, Path]] = None,
         cache_cores: int = 1,
         split: Optional["StructuresSplit"] = None,
-        transform: Optional[Callable[[Mol, Mol, Mol, str, int], Any]] = None,
+        transform: Optional[Callable[[Tuple[Mol, Mol, Mol, str, int]], Any]] = None,
         args: Optional[argparse.Namespace] = None,
     ):
         """Initialize a FragmentDataset.
