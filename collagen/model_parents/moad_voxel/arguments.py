@@ -45,11 +45,11 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     # might want to run a test on a given set of PDB files, but derive the label
     # sets from the BindingMOAD.
     parser.add_argument(
-        "--custom_test_set_dir",
+        "--input_receptor_ligand_complexes",
         required=False,
         # default=None,
         type=str,
-        help="Path to a folder containing a SDF file per each PDB file (protein-ligand pairs). Used for testing on a user-specified directory of protein/ligand pairs.",
+        help="Path to the directory containing a SDF file per each PDB file (protein-ligand complexes).",
     )
     parser.add_argument(
         "--fraction_train",

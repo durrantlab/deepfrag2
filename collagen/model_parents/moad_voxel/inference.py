@@ -1,266 +1,215 @@
-"""The inference mode for the MOAD voxel model."""
+"""A model for inference."""
 
-from argparse import ArgumentParser, Namespace
-import cProfile
-from io import StringIO
-import pstats
+from collagen.external.common.parent_interface import ParentInterface
+from collagen.external.common.types import StructureEntry, StructuresSplit
+from collagen.model_parents.moad_voxel.test import VoxelModelTest
+from argparse import Namespace
+import os
 from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
 import torch  # type: ignore
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
-from collagen.core.molecules.mol import Mol, mols_from_smi_file
-from collagen.metrics.metrics import most_similar_matches
-import prody  # type: ignore
-import numpy as np  # type: ignore
-from collagen.util import rand_rot
-import rdkit  # type: ignore
-from rdkit import Chem  # type: ignore
-import pytorch_lightning as pl  # type: ignore
-import os
-import json
-
-if TYPE_CHECKING:
-    from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
+from typing import Any, List, Optional, Tuple
+from collagen.core.voxelization.voxelizer import VoxelParams
+import pickle
 
 
-class VoxelModelInference(object):
-    """A model for inference."""
+class Inference(VoxelModelTest):
 
-    def __init__(self, parent: "VoxelModelParent"):
-        """Initialize the class.
+    """A model for inference on a custom set."""
+
+    def __init__(self, model_parent: Any):
+        """Initialize the model.
 
         Args:
-            parent (VoxelModelParent): The parent class.
+            model_parent (Any): The parent model.
         """
-        self.parent = parent
+        VoxelModelTest.__init__(self, model_parent)
 
-    def create_inference_label_set(
+    def _create_label_set(
         self,
         args: Namespace,
         device: torch.device,
-        smi_files: List[str],
+        data_interface: ParentInterface,
+        voxel_params: VoxelParams,
+        existing_label_set_fps: torch.Tensor = None,
+        existing_label_set_entry_infos: Optional[List[StructureEntry]] = None,
+        skip_test_set=False,
+        train_split: Optional[StructuresSplit] = None,
+        val_split: Optional[StructuresSplit] = None,
+        test_split: Optional[StructuresSplit] = None,
+        lbl_set_codes: Optional[List[str]] = None,
     ) -> Tuple[torch.Tensor, List[str]]:
-        """Create a label set (look-up) tensor and smiles list for testing.
-        Can be comprised of the fingerprints in the train and/or test and/or
-        val sets, as well as SMILES strings from a file.
+        """Create a label set (look-up) tensor and smiles list for inference
+        on custom label set. It can be comprised of the fingerprints in the
+        BindingMOAD database, as well as SMILES strings from a file.
 
         Args:
             self: This object
             args (Namespace): The user arguments.
             device (torch.device): The device to use.
-            smi_files (List[str]): The file(s) containing SMILES strings.
+            data_interface (ParentInterface, optional): The dataset interface.
+                Defaults to None.
+            voxel_params (VoxelParams): Parameters for voxelization. Defaults
+                to None.
+            existing_label_set_fps (torch.Tensor, optional): The existing tensor
+                of fingerprints to which these new ones should be added.
+                Defaults to None.
+            existing_label_set_entry_infos (List[StructureEntry], optional):
+                Infos about any existing label set entries to which these new
+                ones should be added. Defaults to None.
+            skip_test_set (bool, optional): Do not add test-set fingerprints,
+                presumably because they are already present in
+                existing_label_set_entry_infos. Defaults to False.
+            train (StructuresSplit, optional): The train split. Defaults to None.
+            val (StructuresSplit, optional): The val split. Defaults to None.
+            test (StructuresSplit, optional): The test split. Defaults to None.
+            lbl_set_codes (List[str], optional): The list of label set codes.
+                Comes from inference_label_sets. Defaults to None.
 
         Returns:
             Tuple[torch.Tensor, List[str]]: The updated fingerprint
                 tensor and smiles list.
         """
-        # Can we cache the label_set_fps and label_set_smis variables to a disk
-        # to not have to recalculate them every time? It can be a pretty
-        # expensive calculation.
+        if (
+            "train" in args.inference_label_sets
+            or "val" in args.inference_label_sets
+            or "test" in args.inference_label_sets
+        ):
+            raise Exception(
+                "The 'all' value or SMILES strings are the only values allowed for the --inference_label_sets parameter in inference mode on custom dataset"
+            )
 
-        # Get fingerprints from SMI files.
-        fp_tnsrs_from_smi_file = []
+        if lbl_set_codes is None:
+            lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
+
+        # When you finetune on a custom dataset, you essentially replace the
+        # original train/val/test splits (e.g., from the BindingMOAD) with the
+        # new splits from the custom data. In some circumstances, you might want
+        # to include additional fragments in the label set. You could specify
+        # these fragments using the --inference_label_sets="custom_frags.smi".
+        # However, for convenience, you can also simply use all fragments from
+        # BindingMOAD, in addition to those from a .smi file.
+
+        label_set_fps = None
         label_set_smis = []
-        for filename in smi_files:
-            for smi, mol in mols_from_smi_file(filename):
-                fp_tnsrs_from_smi_file.append(
-                    torch.tensor(
-                        mol.fingerprint(args.fragment_representation, args.fp_size),
-                        dtype=torch.float32,
-                        device=device,
-                        requires_grad=False,
-                    ).reshape((1, args.fp_size))
-                )
-                label_set_smis.append(smi)
-        label_set_fps: torch.Tensor = torch.cat(fp_tnsrs_from_smi_file)
 
-        # Remove redundancy
-        label_set_fps, label_set_smis = remove_redundant_fingerprints(
-            label_set_fps, label_set_smis, device
+        # If using a custom dataset, it's useful to generate a large fragment
+        # library derived from the BindingMOAD dataset (all ligands), plus any
+        # additional fragments that result from fragmenting the ligands in the
+        # custom set (which may be in BindingMOAD, but may not be). If you use
+        # --inference_label_sets="all", all these fragments wil be placed in a
+        # single cache (.bin) file for quickly loading later.
+        if "all" in lbl_set_codes:
+            # Get the location of the every_csv file
+            parent_every_csv = os.path.join(args.every_csv, os.pardir)
+            parent_every_csv = os.path.relpath(parent_every_csv)
+
+            # Get the locations of (possibly) cached label set files
+            label_set_fps_bin = (
+                parent_every_csv
+                + os.sep
+                + args.fragment_representation
+                + "_all_label_set_fps.bin"
+            )
+            label_set_smis_bin = (
+                parent_every_csv
+                + os.sep
+                + args.fragment_representation
+                + "_all_label_set_smis.bin"
+            )
+
+            if os.path.exists(label_set_fps_bin) and os.path.exists(label_set_smis_bin):
+                # Cache file exists, so load from that.
+                with open(label_set_fps_bin, "rb") as file:
+                    label_set_fps: torch.Tensor = pickle.load(file)
+                    file.close()
+                with open(label_set_smis_bin, "rb") as file:
+                    label_set_smis: List[str] = pickle.load(file)
+                    file.close()
+            else:
+                # Cache file does not exist, so generate.
+                assert existing_label_set_entry_infos is not None, (
+                    "Must provide existing label set entry infos when generating "
+                    "a label set from scratch"
+                )
+                label_set_fps, label_set_smis = remove_redundant_fingerprints(
+                    existing_label_set_fps,
+                    existing_label_set_entry_infos,
+                    device=device,
+                )
+
+                label_set_fps, label_set_smis = self._add_to_label_set(
+                    args,
+                    data_interface,
+                    voxel_params,
+                    device,
+                    label_set_fps,
+                    label_set_smis,
+                    None,
+                )
+
+                # Save to cache file.
+                with open(label_set_fps_bin, "wb") as file:
+                    pickle.dump(label_set_fps, file)
+                    file.close()
+                with open(label_set_smis_bin, "wb") as file:
+                    pickle.dump(label_set_smis, file)
+                    file.close()
+
+        # TODO: Cesar: label_set_fps and label_set_smis can be unbound. Good to check
+        # with Cesar.
+
+        # Add to that fingerprints from an SMI file.
+        label_set_fps, label_set_smis = self._add_fingerprints_from_smis(
+            args, lbl_set_codes, label_set_fps, label_set_smis, device
         )
 
-        # Move label_set_fps to cpu # TODO: Why needed?
-        label_set_fps = label_set_fps.cpu()
+        # self.model_parent.debug_smis_match_fps(label_set_fps, label_set_smis, device, args)
 
         print(f"Label set size: {len(label_set_fps)}")
 
         return label_set_fps, label_set_smis
 
-    def _validate_run_inference(self, args: Namespace, ckpt: Optional[str]):
-        """Validate the arguments for inference mode.
+    def _validate_run_test(self, args: Namespace, ckpt_filename: Optional[str]):
+        """Validate the arguments required to run inference.
 
         Args:
-            self: This object
-            args (Namespace): The user arguments.
-            ckpt (Optional[str]): The checkpoint to load.
+            args (Namespace): The arguments.
+            ckpt_filename (Optional[str]): The checkpoint.
 
         Raises:
             ValueError: If the arguments are invalid.
         """
-        if not ckpt:
+        if not ckpt_filename:
             raise ValueError(
-                "Must specify a checkpoint (e.g., --load_checkpoint) in inference mode"
+                "Must specify the --ckpt_filename parameter to run the inference mode. This parameter contains the path to the DeepFrag model (.ckpt file) to be used."
             )
-        if not args.inference_label_sets:
-            raise ValueError(
-                "Must specify a label set(s) (--inference_label_sets), which is a comma-separated list of files containing SMILES strings"
+        elif not args.inference_label_sets or ("train" in args.inference_label_sets or "test" in args.inference_label_sets or "val" in args.inference_label_sets):
+            raise Exception(
+                "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a list of .smi files, or containing both the 'all' value and the list of .smi files."
             )
-
-        smi_files = [l.strip() for l in args.inference_label_sets.split(",")]
-        if (
-            "test" in smi_files
-            or "train" in smi_files
-            or "val" in smi_files
-            or "all" in smi_files
-        ):
-            raise ValueError(
-                "Cannot use 'test', 'train', 'val', or 'all' as a label set in inference mode (via --inference_label_sets). Only a comma-separated list of files containing SMILES strings."
+        elif args.every_csv and args.data_dir and "all" not in args.inference_label_sets:
+            raise Exception(
+                "The --inference_label_sets parameter must contain the 'all' value when using the --every_csv and --data_dir parameters"
             )
-        if args.receptor is None:
-            raise ValueError("Must specify a receptor (--receptor) in inference mode")
-        if args.ligand is None:
-            raise ValueError("Must specify a ligand (--ligand) in inference mode")
-        if args.branch_atm_loc_xyz is None:
-            raise ValueError(
-                "Must specify a center (--branch_atm_loc_xyz) in inference mode"
+        elif args.load_splits:
+            raise Exception(
+                "There are not training, validation, or test sets in inference mode"
             )
 
-    def run_inference(
-        self,
-        args: Namespace,
-        ckpt_filename: str,
-        save_results_to_disk=True,
-    ) -> Union[Dict[str, Any], None]:
-        """Run a model on the test and evaluates the output.
+    def _get_load_splits(self, args):
+        """Get the splits to load. This is not required for inference."""
+        return None
 
-        Args:
-            self: This object
-            args (Namespace): The user arguments.
-            ckpt_filename (Optional[str]): The checkpoint to load.
-            save_results_to_disk (bool): Whether to save the results to disk.
-                If false, the results are returned as a dictionary.
+    def _get_cache(self, args):
+        """Get the cache. This is not required for inference."""
+        return None
 
-        Returns:
-            Union[Dict[str, Any], None]: The results dictionary, or None if
-                save_results_to_disk is True.
-        """
-        self._validate_run_inference(args, ckpt_filename)
+    def _get_json_name(self, args):
+        """Get the JSON name."""
+        return "predictions_Multiple_Complexes"
 
-        print(
-            f"Using the operator {args.aggregation_rotations} to aggregate the inferences."
-        )
-
-        pr = cProfile.Profile()
-        pr.enable()
-
-        voxel_params = self.parent.inits.init_voxel_params(args)
-        device = self.parent.inits.init_device(args)
-
-        # Load the receptor
-        with open(args.receptor, "r") as f:
-            m = prody.parsePDBStream(StringIO(f.read()), model=1)
-        prody_mol = m.select("all")
-        recep = Mol.from_prody(prody_mol)
-        center = np.array(
-            [float(v.strip()) for v in args.branch_atm_loc_xyz.split(",")]
-        )
-
-        # Load the ligand
-        suppl = Chem.SDMolSupplier(str(args.ligand))
-        rdmol = [x for x in suppl if x is not None][0]
-        lig = Mol.from_rdkit(rdmol, strict=False)
-
-        # Make the voxel
-        # cpu = device.type == "cpu"
-        cpu = True  # TODO: Required because model.device == "cpu", I think.
-
-        ckpts = [c.strip() for c in ckpt_filename.split(",")]
-        fps = []
-        for ckpt_filename in ckpts:
-            print(f"Using checkpoint {ckpt_filename}")
-            model = self.parent.inits.init_model(args, ckpt_filename)
-
-            model.eval()
-
-            # You're iterating through multiple checkpoints. This allows output
-            # from multiple trained models to be averaged.
-
-            for r in range(args.rotations):
-                print(f"    Rotation #{(r + 1)}")
-
-                rot = rand_rot()
-
-                recep_vox = recep.voxelize(
-                    voxel_params, cpu=cpu, center=center, rot=rot
-                )
-                lig_vox = lig.voxelize(voxel_params, cpu=cpu, center=center, rot=rot)
-
-                # Stack the receptor and ligand tensors
-                num_features = recep_vox.shape[1] + lig_vox.shape[1]
-                dimen1 = lig_vox.shape[2]
-                dimen2 = lig_vox.shape[3]
-                dimen3 = lig_vox.shape[4]
-                vox = torch.cat([recep_vox[0], lig_vox[0]]).reshape(
-                    [1, num_features, dimen1, dimen2, dimen3]
-                )
-
-                fps.append(model.forward(vox))
-
-        avg_over_ckpts_of_avgs = torch.mean(torch.stack(fps), dim=0)
-
-        # Now get the label sets to use.
-        (label_set_fingerprints, label_set_smis,) = self.create_inference_label_set(
-            args,
-            device,
-            [l.strip() for l in args.inference_label_sets.split(",")],
-        )
-
-        most_similar = most_similar_matches(
-            avg_over_ckpts_of_avgs,
-            label_set_fingerprints,
-            label_set_smis,
-            args.num_inference_predictions,
-        )
-
-        pr.disable()
-        s = StringIO()
-        ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
-        ps.print_stats()
-
-        output = {
-            "most_similar": most_similar[0],
-            "fps": {"per_rot": fps, "avg": avg_over_ckpts_of_avgs},
-        }
-
-        if not save_results_to_disk:
-            # Return the results
-            return output
-
-        # If you get here, you are saving the results to disk (default).
-        with open(f"{args.default_root_dir}{os.sep}inference_out.smi", "w") as f:
-            f.write("SMILES\tScore (Cosine Similarity)\n")
-            for smiles, score_cos_similarity, _ in most_similar[0]:
-                # [0] because only one prediction
-
-                line = f"{smiles}\t{score_cos_similarity:.3f}"
-                print(line)
-                f.write(line + "\n")
-
-        output["fps"]["per_rot"] = [
-            v.detach().numpy().tolist() for v in output["fps"]["per_rot"]
-        ]
-        output["fps"]["avg"] = output["fps"]["avg"].detach().numpy().tolist()
-
-        with open(f"{args.default_root_dir}{os.sep}inference_out.tsv", "w") as f:
-            f.write("most_similar\t" + json.dumps(output["most_similar"]) + "\n")
-            f.write(f"fps_avg\t" + json.dumps(output["fps"]["avg"][0]) + "\n")
-            for i, per_rot in enumerate(output["fps"]["per_rot"]):
-                f.write(f"fps_rot_{i + 1}\t" + json.dumps(per_rot[0]) + "\n")
-
-            # json.dump(output, f)
-
-        # TODO: Cesar: Need to check on some known answers as a "sanity check".
-
-        # TODO: Cesar:  Can we add the fragments in most_similar[0] to the parent
-        # molecule, to make a composite ligand ready for docking?
+    def _save_examples_used(self, model, args):
+        """Save the examples used. This is not required for inference."""
+        pass

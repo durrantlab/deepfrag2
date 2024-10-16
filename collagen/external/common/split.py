@@ -671,7 +671,7 @@ def create_full_dataset_as_single_split(data_interface: "ParentInterface") -> St
         max_pdbs_train=None,
         max_pdbs_val=None,
         max_pdbs_test=None,
-        butina_cluster_cutoff=0.0,
+        butina_cluster_cutoff=None,
     )
 
     return StructuresSplit(name="Full", targets=pdb_ids.train, smiles=all_smis.train)
