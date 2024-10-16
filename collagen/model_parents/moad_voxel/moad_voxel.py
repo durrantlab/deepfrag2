@@ -4,9 +4,9 @@ from argparse import ArgumentParser, Namespace
 import json
 from typing import Sequence, Type, TypeVar, List, Union
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
-from collagen.model_parents.moad_voxel.inference_single_complex import VoxelModelInference
+from collagen.model_parents.moad_voxel.inference_single_complex import InferenceSingleComplex
 from collagen.model_parents.moad_voxel.inference_multiple_complexes import (
-    VoxelModelInferenceCustomSet,
+    InferenceMultipleComplex,
 )
 from collagen.model_parents.moad_voxel.inits import VoxelModelInits
 from collagen.model_parents.moad_voxel.test import VoxelModelTest
@@ -48,8 +48,8 @@ class VoxelModelParent:
         self.inits = VoxelModelInits(self)
         self.train = VoxelModelTrain(self)
         self.test = VoxelModelTest(self)
-        self.inference_single_complex = VoxelModelInference(self)
-        self.inference_multiple_complexes = VoxelModelInferenceCustomSet(self)
+        self.inference_single_complex = InferenceSingleComplex(self)
+        self.inference_multiple_complexes = InferenceMultipleComplex(self)
         self.utils = VoxelModelUtils(self)
 
         self.model_cls = model_cls

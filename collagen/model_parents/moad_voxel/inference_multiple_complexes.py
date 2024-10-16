@@ -9,7 +9,7 @@ from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.model_parents.moad_voxel.inference import Inference
 
 
-class VoxelModelInferenceCustomSet(Inference):
+class InferenceMultipleComplex(Inference):
 
     """A model for inference on a custom set."""
 

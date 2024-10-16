@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
 
-class VoxelModelInference(Inference):
+class InferenceSingleComplex(Inference):
     """A model for inference."""
 
     def __init__(self, model_parent: Any):
