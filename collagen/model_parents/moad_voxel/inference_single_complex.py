@@ -102,7 +102,7 @@ class InferenceSingleComplex(Inference):
 
         # Make the voxel
         # cpu = device.type == "cpu"
-        cpu = True  # TODO: Required because model.device == "cpu", I think.
+        cpu = device = self.parent.inits.init_device(args)
 
         ckpts = [c.strip() for c in ckpt_filename.split(",")]
         fps = []
@@ -155,13 +155,8 @@ class InferenceSingleComplex(Inference):
             args.num_inference_predictions,
         )
 
-        # pr.disable()
-        # s = StringIO()
-        # ps = pstats.Stats(pr, stream=s).sort_stats("tottime")
-        # ps.print_stats()
-
         self.output_pred = {
-            "most_similar": most_similar[0][0],
+            "most_similar": most_similar[0],
             "fps_per_rot": fps,
             "fps_avg": avg_over_ckpts_of_avgs,
         }
@@ -173,7 +168,7 @@ class InferenceSingleComplex(Inference):
 
         self.output_path = args.default_root_dir + "predictions_Single_Complex" + os.sep + (os.path.basename(os.path.relpath(args.receptor)) + "_" + os.path.basename(os.path.relpath(args.ligand)))
         os.makedirs(self.output_path, exist_ok=True)
-        self.output_path = (
+        output_file = (
             self.output_path
             + os.sep
             + str(args.branch_atm_loc_xyz).replace(',', '_')
@@ -181,8 +176,15 @@ class InferenceSingleComplex(Inference):
         )
         torch.save(
             self.output_pred,
-            self.output_path,
+            output_file,
         )
+
+        # If you get here, you are saving the results to disk (default).
+        with open(f"{self.output_path}{os.sep}{str(args.branch_atm_loc_xyz).replace(',', '_')}_inference_out.tsv", "w") as f:
+            f.write("SMILES\tScore (Cosine Similarity)\n")
+            for entry, score_cos_similarity, _ in most_similar[0]:
+                line = f"{entry.fragment_smiles}\t{score_cos_similarity:.3f}"
+                f.write(line + "\n")
 
         # TODO: Cesar: Need to check on some known answers as a "sanity check".
 
