@@ -41,7 +41,7 @@ class VoxelModelUtils(object):
         voxel_params: VoxelParams,
         device: torch.device,
         # NOTE: `split` needs to be optional because no split when running
-        # inference. See inference_custom_dataset.py.
+        # inference. See inference_multiple_complexes.py.
         split: Optional[StructuresSplit],
         shuffle=True,
     ) -> DataLambda:

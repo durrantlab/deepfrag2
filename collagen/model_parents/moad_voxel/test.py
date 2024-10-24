@@ -79,7 +79,7 @@ class VoxelModelTest(object):
         existing_label_set_fps: torch.Tensor,
         existing_label_set_smis: List[str],
         # NOTE: `split` needs to be optional because no split when running
-        # inference. See inference_custom_dataset.py.
+        # inference. See inference_multiple_complexes.py.
         split: Optional[StructuresSplit] = None,
     ) -> Tuple[torch.Tensor, List[str]]:
         """Add fingerprints to a label set (lookup table). This function allows
@@ -319,7 +319,7 @@ class VoxelModelTest(object):
             f for f in lbl_set_codes if f not in ["train", "val", "test", "all"]
         ]
         if smi_files:
-            fp_tnsrs_from_smi_file = [label_set_fps]
+            fp_tnsrs_from_smi_file = [label_set_fps] if len(label_set_smis) > 0 else []
             for filename in smi_files:
                 for smi, mol in mols_from_smi_file(filename):
                     fp_tnsrs_from_smi_file.append(
@@ -330,7 +330,14 @@ class VoxelModelTest(object):
                             requires_grad=False,
                         ).reshape((1, args.fp_size))
                     )
-                    label_set_smis.append(smi)
+                    label_set_smis.append(StructureEntry(
+                        fragment_smiles=smi,
+                        parent_smiles=None,
+                        receptor_name=None,
+                        connection_pt=None,
+                        ligand_id=None,
+                        fragment_idx=None,
+                    ))
             label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
 
             # Remove redundancy
@@ -756,7 +763,7 @@ class VoxelModelTest(object):
             max_pdbs_val=args.max_pdbs_val,
             max_pdbs_test=args.max_pdbs_test,
             split_method=args.split_method,  # NOTE: I don't think it matters what split is for testing.
-            butina_cluster_cutoff=0.0,  # Hardcoded because no need to split test set.
+            butina_cluster_cutoff=None,  # Hardcoded because no need to split test set.
         )
 
         # You'll always need the test data. Note that ligands are not fragmented
@@ -938,7 +945,7 @@ class VoxelModelTest(object):
                 noh=args.noh,
                 discard_distant_atoms=args.discard_distant_atoms,
             )
-        else:  # test mode on a paired database other than MOAD database
+        else:  # test mode on a paired database
             dataset = PairedCsvInterface(
                 structures=args.paired_data_csv,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,

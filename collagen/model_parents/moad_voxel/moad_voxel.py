@@ -4,9 +4,9 @@ from argparse import ArgumentParser, Namespace
 import json
 from typing import Sequence, Type, TypeVar, List, Union
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
-from collagen.model_parents.moad_voxel.inference import VoxelModelInference
-from collagen.model_parents.moad_voxel.inference_custom_dataset import (
-    VoxelModelInferenceCustomSet,
+from collagen.model_parents.moad_voxel.inference_single_complex import InferenceSingleComplex
+from collagen.model_parents.moad_voxel.inference_multiple_complexes import (
+    InferenceMultipleComplex,
 )
 from collagen.model_parents.moad_voxel.inits import VoxelModelInits
 from collagen.model_parents.moad_voxel.test import VoxelModelTest
@@ -48,7 +48,8 @@ class VoxelModelParent:
         self.inits = VoxelModelInits(self)
         self.train = VoxelModelTrain(self)
         self.test = VoxelModelTest(self)
-        self.inference = VoxelModelInference(self)
+        self.inference_single_complex = InferenceSingleComplex(self)
+        self.inference_multiple_complexes = InferenceMultipleComplex(self)
         self.utils = VoxelModelUtils(self)
 
         self.model_cls = model_cls
@@ -198,18 +199,18 @@ class VoxelModelParent:
             print("Starting 'test' process")
             assert ckpt_filename is not None, "Must specify a checkpoint to test"
             self.test.run_test(args, ckpt_filename)
-        elif args.mode == "inference":
-            print("Starting 'inference' process")
+        elif args.mode == "inference_single_complex":
+            print("Starting 'inference_single_complex' process")
             assert (
                 ckpt_filename is not None
             ), "Must specify a checkpoint to run inference"
-            self.inference.run_inference(args, ckpt_filename)
-        elif args.mode == "inference_custom_set":
-            print("Starting 'inference_custom_set' process")
+            self.inference_single_complex.run_test(args, ckpt_filename)
+        elif args.mode == "inference_multiple_complexes":
+            print("Starting 'inference_multiple_complexes' process")
             assert (
                 ckpt_filename is not None
             ), "Must specify a checkpoint to run inference"
-            VoxelModelInferenceCustomSet(self).run_test(args, ckpt_filename)
+            self.inference_multiple_complexes.run_test(args, ckpt_filename)
         else:
             raise ValueError(f"Invalid mode: {args.mode}")
 
