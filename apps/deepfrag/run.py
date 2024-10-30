@@ -14,6 +14,7 @@ from collagen.util import rand_rot
 from collagen.model_parents import VoxelModelParent
 from collagen.core.args import get_args
 from apps.deepfrag.model import DeepFragModel
+from apps.deepfrag.model_fusing_modalities import DeepFragModelESM2
 
 ENTRY_T = Tuple[Mol, Mol, BackedMol, str, int]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, StructureEntry]
@@ -36,7 +37,7 @@ class DeepFrag(VoxelModelParent):
         """
         super().__init__(
             # TODO: Cesar: Why DeepFragModelPairedDataFinetune?
-            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else DeepFragModel,
+            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else DeepFragModelESM2 if args.esm2_model else DeepFragModel,
             dataset_cls=FragmentDataset,
         )
 
@@ -60,6 +61,7 @@ class DeepFrag(VoxelModelParent):
 
         frag_smiles = frag.smiles(True)
         parent_smiles = parent.smiles(True)
+        rec_sequence = rec.aminoacid_sequence()
 
         assert (
             frag_smiles is not None and parent_smiles is not None
@@ -69,6 +71,7 @@ class DeepFrag(VoxelModelParent):
             fragment_smiles=frag_smiles,
             parent_smiles=parent_smiles,
             receptor_name=rec.meta["name"],
+            receptor_sequence=rec_sequence,
             connection_pt=center,
             ligand_id=ligand_id,
             fragment_idx=fragment_idx,
@@ -158,6 +161,7 @@ def function_to_run_deepfrag():
         parser_funcs=[
             VoxelModelParent.add_moad_args,
             DeepFragModel.add_model_args,
+            DeepFragModelESM2.add_model_args,
             FragmentDataset.add_fragment_args,
         ],
         post_parse_args_funcs=[VoxelModelParent.fix_moad_args],

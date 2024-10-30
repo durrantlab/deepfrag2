@@ -16,6 +16,7 @@ from collagen.external.common.parent_interface import ParentInterface
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
+
 # A few function to initialize the trainer, model, voxel parameters, and device.
 class VoxelModelInits(object):
 

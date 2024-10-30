@@ -242,11 +242,12 @@ class DeepFragModel(pl.LightningModule):
         )
         return parent_parser
 
-    def forward(self, voxel: torch.Tensor) -> torch.Tensor:
+    def forward(self, voxel: torch.Tensor, entry_infos: Optional[List[StructureEntry]] = None) -> torch.Tensor:
         """Forward pass of the model.
         
         Args:
             voxel (torch.Tensor): The voxel grid.
+            entry_infos: the information for each voxel
             
         Returns:
             torch.Tensor: The predicted fragment fingerprint.
@@ -308,7 +309,7 @@ class DeepFragModel(pl.LightningModule):
         """
         voxels, fps, entry_infos = batch
 
-        pred = self(voxels)
+        pred = self(voxels, entry_infos)
 
         batch_size = voxels.shape[0]
 
@@ -363,7 +364,7 @@ class DeepFragModel(pl.LightningModule):
 
         # print("::", voxels.shape, fps.shape, len(smis))
 
-        pred = self(voxels)
+        pred = self(voxels, entry_infos)
 
         batch_size = voxels.shape[0]
 
@@ -390,7 +391,7 @@ class DeepFragModel(pl.LightningModule):
                 and target fingerprints, and the entry infos.
         """
         voxels, fps, entry_infos = batch
-        pred = self(voxels)
+        pred = self(voxels, entry_infos)
 
         batch_size = voxels.shape[0]
 

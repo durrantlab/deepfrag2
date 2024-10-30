@@ -39,12 +39,10 @@ class StructureEntry(object):
     """Class to hold information about a specific structure entry."""
 
     fragment_smiles: str
-
-    # TODO: Really need to calculate this? Not sure how long it takes, but not
-    # really needed.
     parent_smiles: str
 
     receptor_name: str
+    receptor_sequence: str
     connection_pt: List[float]
 
     # these attributes are used when performing fine-tuning on paired data

@@ -4,8 +4,6 @@ import numpy as np  # type: ignore
 import rdkit.Chem.AllChem as Chem  # type: ignore
 from rdkit.Chem import DataStructs  # type: ignore
 from rdkit.Chem import AllChem  # type: ignore
-from rdkit.Chem import Descriptors  # type: ignore
-from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator  # type: ignore
 from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 import os
 import wget  # type: ignore
@@ -24,8 +22,6 @@ PATH_MOLBERT_CKPT = os.path.join(
 )
 
 MOLBERT_MODEL = None
-
-RDKit_DESC_CALC = MolecularDescriptorCalculator([x[0] for x in Descriptors._descList])
 
 
 def bar_progress(current: float, total: float, width=80):
