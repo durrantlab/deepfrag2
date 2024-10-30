@@ -43,7 +43,8 @@ class DeepFragModelESM2(DeepFragModel):
         """
         super().__init__(**kwargs)
 
-        for esm2_model_name in ["esm2_t6_8M_UR50D", "esm2_t12_35M_UR50D", "esm2_t30_150M_UR50D", "esm2_t33_650M_UR50D", "esm2_t36_3B_UR50D", "esm2_t48_15B_UR50D"]:
+        for esm2_model_name in ["esm2_t6_8M_UR50D", "esm2_t12_35M_UR50D", "esm2_t30_150M_UR50D", "esm2_t33_650M_UR50D",
+                                "esm2_t36_3B_UR50D", "esm2_t48_15B_UR50D"]:
             if kwargs["esm2_model"] == esm2_model_name:
                 # download and load the ESM-2 model
                 download_esm2_model(esm2_model_name, bool(kwargs["cpu"]))
