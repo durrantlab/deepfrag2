@@ -72,7 +72,7 @@ class VoxelModelUtils(object):
             cache_cores=args.num_dataloader_workers,
             split=split,
             transform=(
-                lambda entry: self.parent.__class__.pre_voxelize(
+                lambda entry: self.parent.pre_voxelize(
                     args, voxel_params, entry
                 )
             ),
@@ -91,7 +91,7 @@ class VoxelModelUtils(object):
             # fragments, I think. For fragments only, use
             # voxel_params.frag_fpts_only = True
             .map(
-                lambda batch: self.parent.__class__.voxelize(
+                lambda batch: self.parent.voxelize(
                     args, voxel_params, device, batch
                 )
             )

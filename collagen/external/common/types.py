@@ -42,7 +42,6 @@ class StructureEntry(object):
     parent_smiles: str
 
     receptor_name: str
-    receptor_sequence: str
     connection_pt: List[float]
 
     # these attributes are used when performing fine-tuning on paired data
@@ -68,3 +67,8 @@ class StructureEntry(object):
             + ","
             + str(self.connection_pt[2])
         )
+
+
+@dataclass
+class StructureEntryForMultimodal(StructureEntry):
+    receptor_sequence: str
