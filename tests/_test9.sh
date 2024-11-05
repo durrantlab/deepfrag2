@@ -1,6 +1,6 @@
 . _init.sh
 
-echo "Inference on a single complex by giving the receptor, the ligand, and the connection point"
+echo "Perform inference on a single example using the model trained on MOAD"
 
 mkdir -p 9.inference_single_complex.output
 

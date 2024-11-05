@@ -9,14 +9,14 @@ mkdir -p 6.inference_custom_set.output
 # --MODE TEST, AS ABOVE.
 
 $PYTHON_EXEC -u $MAIN_DF2_PY \
-    --mode inference_custom_set \
-    --default_root_dir $(pwd)/6.inference_custom_set.output/  `# The output directory` \
-    --load_checkpoint ./3.finetune_moad.output/last.ckpt \
-    --custom_test_set_dir ./data_to_finetune/  `# separate from --data_dir so you can run test on one PDB set, but get labels from BindingMOAD.` \
-    --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
-    --cache ./every_csv.cache.json \
-    --data_dir $MOAD_DIR/  `# For labels` \
-    --inference_label_sets all \
+    --mode inference_multiple_complexes \
+    --input_receptor_ligand_complexes ./data_for_inference_multiple_complexes/ \
+    --default_root_dir $(pwd)/6.inference_custom_set.output/ \
     --rotations 2 \
-    --json_params common_params.json.inp \
+    --aggregation_rotations mean \
+    --load_checkpoint ./3.finetune_moad.output/last.ckpt \
+    --inference_label_sets ./data_for_inference/label_set.smi \
+    --fragment_representation rdk10 \
+    --cache_pdbs_to_disk \
+    --cache None \
     | tee 5.OUT-python_out.txt
