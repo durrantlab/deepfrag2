@@ -1,19 +1,16 @@
 """Run DeepFrag."""
 
 import argparse
-from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.molecules.mol import BackedMol
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 from collagen.external.common.types import StructureEntry
 import torch  # type: ignore
 import pytorch_lightning as pl  # type: ignore
-
+from typing import final, Type
 from typing import List, Sequence, Tuple, Union
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.util import rand_rot
 from collagen.model_parents import VoxelModelParent
-from collagen.core.args import get_args
-from apps.deepfrag.model import DeepFragModel
 
 ENTRY_T = Tuple[Mol, Mol, BackedMol, str, int]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, StructureEntry]
@@ -28,22 +25,19 @@ class DeepFrag(VoxelModelParent):
 
     """DeepFrag model."""
 
-    def __init__(self, args: argparse.Namespace):
+    def __init__(self, model_cls: Type[pl.LightningModule], dataset_cls: FragmentDataset = FragmentDataset):
         """Initialize the DeepFrag model parent.
-        
-        Args:
-            args (argparse.Namespace): The arguments.
-        """
-        super().__init__(
-            # TODO: Cesar: Why DeepFragModelPairedDataFinetune?
-            model_cls=DeepFragModelPairedDataFinetune if args.paired_data_csv else DeepFragModel,
-            dataset_cls=FragmentDataset,
-        )
 
-    @staticmethod
-    def pre_voxelize(
-        args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T
-    ) -> TMP_T:
+        Args:
+            model_cls (Type[pl.LightningModule]): The model class. Soemthing
+                like DeepFragModelSDFData or DeepFragModel.
+            dataset_cls (FragmentDataset): The dataset class.
+                Something like FragmentDataset.
+        """
+        super().__init__(model_cls=model_cls, dataset_cls=dataset_cls)
+
+    @final
+    def pre_voxelize(self, args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:
         """Preprocess the entry before voxelization.
         
         Args:
@@ -58,24 +52,7 @@ class DeepFrag(VoxelModelParent):
         rot = rand_rot()
         center = frag.connectors[0]
 
-        frag_smiles = frag.smiles(True)
-        parent_smiles = parent.smiles(True)
-
-        assert (
-            frag_smiles is not None and parent_smiles is not None
-        ), f"Fragment ({frag_smiles}) or parent ({parent_smiles}) SMILES is None"
-
-        payload = StructureEntry(
-            fragment_smiles=frag_smiles,
-            parent_smiles=parent_smiles,
-            receptor_name=rec.meta["name"],
-            connection_pt=center,
-            ligand_id=ligand_id,
-            fragment_idx=fragment_idx,
-        )
-
-        # if rec.meta["name"] == "Receptor 2v0u":
-        #     print(["2", rec.meta["name"], frag.smiles()])
+        payload = self._get_payload(rec, parent, frag, ligand_id, fragment_idx, center)
 
         return (
             rec.voxelize_delayed(voxel_params, center=center, rot=rot),
@@ -84,13 +61,26 @@ class DeepFrag(VoxelModelParent):
             payload,
         )
 
-    @staticmethod
-    def voxelize(
-        args: argparse.Namespace,
-        voxel_params: VoxelParams,
-        device: torch.device,
-        batch: Sequence[TMP_T],
-    ) -> OUT_T:
+    def _get_payload(self, rec, parent, frag, ligand_id, fragment_idx, center):
+        frag_smiles = frag.smiles(True)
+        parent_smiles = parent.smiles(True)
+
+        assert (
+                frag_smiles is not None and parent_smiles is not None
+        ), f"Fragment ({frag_smiles}) or parent ({parent_smiles}) SMILES is None"
+
+        return StructureEntry(
+            fragment_smiles=frag_smiles,
+            parent_smiles=parent_smiles,
+            receptor_name=rec.meta["name"],
+            connection_pt=center,
+            ligand_id=ligand_id,
+            fragment_idx=fragment_idx,
+        )
+
+    @final
+    def voxelize(self, args: argparse.Namespace, voxel_params: VoxelParams, device: torch.device,
+                 batch: Sequence[TMP_T], ) -> OUT_T:
         """Voxelize the batch.
         
         Args:
@@ -147,22 +137,3 @@ class DeepFrag(VoxelModelParent):
             frag_smis.append(smi)
 
         return voxels, fingerprints, frag_smis
-
-
-def function_to_run_deepfrag():
-    """Run DeepFrag."""
-    print("PyTorch", torch.__version__)
-    print("PytorchLightning", pl.__version__)
-
-    args = get_args(
-        parser_funcs=[
-            VoxelModelParent.add_moad_args,
-            DeepFragModel.add_model_args,
-            FragmentDataset.add_fragment_args,
-        ],
-        post_parse_args_funcs=[VoxelModelParent.fix_moad_args],
-        is_pytorch_lightning=True,
-    )
-
-    model = DeepFrag(args)
-    model.run(args)

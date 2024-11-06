@@ -100,10 +100,6 @@ class InferenceSingleComplex(Inference):
         rdmol = [x for x in suppl if x is not None][0]
         lig = Mol.from_rdkit(rdmol, strict=False)
 
-        # Make the voxel
-        # cpu = device.type == "cpu"
-        cpu = device = self.parent.inits.init_device(args)
-
         ckpts = [c.strip() for c in ckpt_filename.split(",")]
         fps = []
         for ckpt_filename in ckpts:
@@ -118,9 +114,9 @@ class InferenceSingleComplex(Inference):
 
                 rot = rand_rot()
                 recep_vox = recep.voxelize(
-                    voxel_params, cpu=cpu, center=center, rot=rot
+                    voxel_params, cpu=device, center=center, rot=rot
                 )
-                lig_vox = lig.voxelize(voxel_params, cpu=cpu, center=center, rot=rot)
+                lig_vox = lig.voxelize(voxel_params, cpu=device, center=center, rot=rot)
 
                 # Stack the receptor and ligand tensors
                 num_features = recep_vox.shape[1] + lig_vox.shape[1]
@@ -138,7 +134,7 @@ class InferenceSingleComplex(Inference):
         label_set_fingerprints, label_set_entry_infos = self._create_label_set(
             args,
             device,
-            self._read_BindingMOAD_database(args, voxel_params),
+            self._read_BindingMOAD_database(args, voxel_params) if args.every_csv and args.data_dir else None,
             voxel_params,
             existing_label_set_fps=torch.empty(0, dtype=torch.float32),
             existing_label_set_entry_infos=[],

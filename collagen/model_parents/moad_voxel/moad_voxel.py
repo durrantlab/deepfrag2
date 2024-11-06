@@ -82,10 +82,7 @@ class VoxelModelParent:
         """
         return arguments.fix_moad_args(args)
 
-    @staticmethod
-    def pre_voxelize(
-        args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T
-    ) -> TMP_T:
+    def pre_voxelize(self, args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:
         """Preprocess the entry before voxelization. Should be overwritten by
         child class.
 
@@ -97,15 +94,10 @@ class VoxelModelParent:
         Returns:
             TMP_T: The preprocessed entry.
         """
-        return entry
+        raise NotImplementedError()
 
-    @staticmethod
-    def voxelize(
-        args: Namespace,
-        voxel_params: VoxelParams,
-        device: torch.device,
-        batch: Sequence[TMP_T],
-    ) -> OUT_T:
+    def voxelize(self, args: Namespace, voxel_params: VoxelParams, device: torch.device,
+                 batch: Sequence[TMP_T], ) -> OUT_T:
         """Voxelize the batch. Should be overwritten by child class.
 
         Args:

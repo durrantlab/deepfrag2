@@ -687,6 +687,12 @@ class BackedMol(Mol):
         smi = standardize_smiles(smi, none_if_fails)
         return smi
 
+    def aminoacid_sequence(self) -> Union[str, None]:
+        to_pdb = self.pdb()
+        from_pdb = Chem.MolFromPDBBlock(to_pdb, sanitize=False)
+        sequence = Chem.MolToSequence(from_pdb)
+        return sequence
+
     @property
     def coords(self) -> "np.ndarray":
         """Return atomic coordinates as a numpy array.

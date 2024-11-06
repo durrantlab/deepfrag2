@@ -39,9 +39,6 @@ class StructureEntry(object):
     """Class to hold information about a specific structure entry."""
 
     fragment_smiles: str
-
-    # TODO: Really need to calculate this? Not sure how long it takes, but not
-    # really needed.
     parent_smiles: str
 
     receptor_name: str
@@ -70,3 +67,8 @@ class StructureEntry(object):
             + ","
             + str(self.connection_pt[2])
         )
+
+
+@dataclass
+class StructureEntryForMultimodal(StructureEntry):
+    receptor_sequence: str
