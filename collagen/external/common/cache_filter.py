@@ -345,6 +345,8 @@ def _build_cache_file(
         ):
             pdb_id = pdb_id.lower()
 
+            print(pdb_id)  # debugging
+
             if pdb_id not in cache:
                 cache[pdb_id] = {}
 
