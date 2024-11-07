@@ -1,7 +1,6 @@
 """DeepFrag model combined with ESM-2 embeddings."""
 
 import os
-import esm
 import torch
 import argparse
 from torch import nn
@@ -9,6 +8,11 @@ from torch import hub
 from typing import List, Optional
 from apps.deepfrag.model import DeepFragModel
 from collagen.external.common.types import StructureEntry
+
+try:
+    import esm
+except:
+    print("Library esm is not installed...")
 
 ESM2_MODEL = None
 BATCH_CONVERTER = None
