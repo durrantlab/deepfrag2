@@ -297,17 +297,21 @@ def _build_cache_file(
     data_interface: "ParentInterface",
     cache_items_to_update: CacheItemsToUpdate,
     cores: Optional[int] = None,
-) -> dict:
-    """Builds/updates the whole BindingMOAD cache (on disk).
+    chunk_size: int = 1000,
+) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    """Builds/updates the whole BindingMOAD cache (on disk) using a chunked approach
+    to manage memory usage.
 
     Args:
-        filename (str): The filename to save the cache to.
+        filename (Optional[str]): The filename to save the cache to.
         data_interface (ParentInterface): The ParentInterface object to use.
         cache_items_to_update (CacheItemsToUpdate): The cache items to update.
-        cores (int, optional): The number of cores to use. Defaults to None.
+        cores (Optional[int], optional): The number of cores to use. Defaults to None.
+        chunk_size (int, optional): Number of items to process in each chunk. Defaults to 1000.
 
     Returns:
-        dict: The cache.
+        Dict[str, Dict[str, Dict[str, Any]]]: The cache containing molecular properties
+        for each PDB ID and ligand.
     """
     # Load existing cache if it exists. So you can add to it.
     if filename and os.path.exists(filename):
@@ -327,43 +331,75 @@ def _build_cache_file(
         # Nothing to update
         return cache
 
-    # global MOAD_REF
-    # MOAD_REF = moad
-
-    pdb_ids_queue = data_interface.targets
+    # Prepare the list of work items - each item contains PDB ID and necessary context
     list_ids_moad: List[Tuple[str, Parent_target, CacheItemsToUpdate]] = [
-        (pdb_id, data_interface[pdb_id], CACHE_ITEMS_TO_UPDATE) for pdb_id in data_interface.targets
+        (pdb_id, data_interface[pdb_id], CACHE_ITEMS_TO_UPDATE) 
+        for pdb_id in data_interface.targets
     ]
-    # NOTE: Filename specified via --cache parameter
-
-    print("Building/updating " + (filename or "dataset"))
-    with multiprocessing.Pool(cores) as p:
-        for pdb_id, lig_infs in tqdm(
-            p.imap_unordered(get_info_given_pdb_id, list_ids_moad),
-            total=len(pdb_ids_queue),
-            desc="Building cache",
-        ):
-            pdb_id = pdb_id.lower()
-
-            print(pdb_id)  # debugging
-
+    
+    # Split work into chunks for better memory management
+    chunks: List[List[Tuple[str, Parent_target, CacheItemsToUpdate]]] = [
+        list_ids_moad[i:i + chunk_size] 
+        for i in range(0, len(list_ids_moad), chunk_size)
+    ]
+    
+    print(f"Building/updating {filename or 'dataset'} in {len(chunks)} chunks")
+    
+    # Process each chunk separately to prevent memory buildup
+    for chunk_idx, chunk in enumerate(chunks):
+        chunk_cache: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        
+        print(f"\nProcessing chunk {chunk_idx + 1}/{len(chunks)}")
+        with multiprocessing.Pool(cores) as p:
+            # Use imap instead of imap_unordered for more predictable memory usage
+            # Calculate appropriate chunksize for imap based on chunk size and cores
+            imap_chunksize = max(1, len(chunk) // (cores or multiprocessing.cpu_count()))
+            
+            for pdb_id, lig_infs in tqdm(
+                p.imap(
+                    get_info_given_pdb_id, 
+                    chunk,
+                    chunksize=imap_chunksize
+                ),
+                total=len(chunk),
+                desc=f"Processing entries"
+            ):
+                pdb_id = pdb_id.lower()
+                
+                # Initialize dictionary for this PDB ID if needed
+                if pdb_id not in chunk_cache:
+                    chunk_cache[pdb_id] = {}
+                    
+                # Process each ligand's information
+                for lig_name, lig_inf in lig_infs.items():
+                    if lig_name not in chunk_cache[pdb_id]:
+                        chunk_cache[pdb_id][lig_name] = {}
+                    # Update ligand information in chunk cache
+                    chunk_cache[pdb_id][lig_name].update(lig_inf)
+            
+            p.close()
+        
+        # Merge chunk results into main cache
+        for pdb_id, pdb_data in chunk_cache.items():
             if pdb_id not in cache:
                 cache[pdb_id] = {}
-
-            for lig_name in lig_infs.keys():
-                if lig_name not in cache[pdb_id]:
-                    cache[pdb_id][lig_name] = {}
-                lig_inf = lig_infs[lig_name]
-                for prop_name in lig_inf.keys():
-                    prop_val = lig_inf[prop_name]
-                    cache[pdb_id][lig_name][prop_name] = prop_val
-        p.close()
-
-    # Save cache with updated information.
+            cache[pdb_id].update(pdb_data)
+            
+        # Save intermediate results to prevent data loss and manage memory
+        if filename:
+            temp_filename = f"{filename}.temp"
+            with open(temp_filename, "w") as f:
+                json.dump(cache, f, indent=4)
+    
+    # Save final results
     if filename:
         with open(filename, "w") as f:
             json.dump(cache, f, indent=4)
-
+        # Clean up temporary file if it exists
+        temp_filename = f"{filename}.temp"
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
+    
     return cache
 
 
