@@ -26,7 +26,8 @@ def log(txt: str):
     Args:
         txt (str): The message to log.
     """
-    os.system(f'echo "{txt}" >> log.txt')
+    with open("log.txt", "a") as f:
+        f.write(f"{txt}\n")
     print(txt)
 
 
