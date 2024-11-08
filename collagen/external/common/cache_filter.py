@@ -297,7 +297,7 @@ def _build_cache_file(
     data_interface: "ParentInterface",
     cache_items_to_update: CacheItemsToUpdate,
     cores: Optional[int] = None,
-    chunk_size: int = 1000,
+    chunk_size: int = 250,
 ) -> Dict[str, Dict[str, Dict[str, Any]]]:
     """Builds/updates the whole BindingMOAD cache (on disk) using a chunked approach
     to manage memory usage.
@@ -307,7 +307,7 @@ def _build_cache_file(
         data_interface (ParentInterface): The ParentInterface object to use.
         cache_items_to_update (CacheItemsToUpdate): The cache items to update.
         cores (Optional[int], optional): The number of cores to use. Defaults to None.
-        chunk_size (int, optional): Number of items to process in each chunk. Defaults to 1000.
+        chunk_size (int, optional): Number of items to process in each chunk. Defaults to 250.
 
     Returns:
         Dict[str, Dict[str, Dict[str, Any]]]: The cache containing molecular properties
