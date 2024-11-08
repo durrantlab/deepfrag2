@@ -17,4 +17,5 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --fragment_representation rdk10 \
     --cache_pdbs_to_disk \
     --cache None \
+    --json_params common_params.json.inp \
     | tee 4.OUT-python_out.txt

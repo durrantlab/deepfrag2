@@ -1,6 +1,7 @@
 """DeepFrag model combined with ESM-2 embeddings."""
 
 import os
+import sys
 import esm
 import torch
 import argparse
@@ -10,12 +11,14 @@ from typing import List, Optional
 from apps.deepfrag.model import DeepFragModel
 from collagen.external.common.types import StructureEntry
 
+ESM2_ON_GPU = False
 ESM2_MODEL = None
 BATCH_CONVERTER = None
 
 
 def download_esm2_model(esm2_model_name, cpu: bool):
     global ESM2_MODEL
+    global ESM2_ON_GPU
     global BATCH_CONVERTER
 
     # set directory where the ESM-2 model will be downloaded
@@ -27,6 +30,10 @@ def download_esm2_model(esm2_model_name, cpu: bool):
     ESM2_MODEL.eval()  # disables dropout for deterministic results
     if torch.cuda.is_available() and not cpu:
         ESM2_MODEL = ESM2_MODEL.cuda()
+        ESM2_ON_GPU = True
+        print("Setting CUDA device for ESM-2 model")
+    else:
+        print("Using CPU device for ESM-2 model")
 
 
 class DeepFragModelESM2(DeepFragModel):
@@ -177,32 +184,40 @@ class DeepFragModelESM2(DeepFragModel):
             torch.Tensor: The predicted fragment fingerprint.
         """
         latent_space = self.encoder(voxel)
+        if ESM2_ON_GPU is True and latent_space.get_device() == -1:
+            latent_space = latent_space.cuda()
 
-        if entry_infos is not None:
-            combined_latent_space = torch.zeros((latent_space.size()[0], self.combined_embedding_size),
-                                                dtype=torch.float32)
+        try:
+            if entry_infos is not None:
+                combined_latent_space = torch.zeros((latent_space.size()[0], self.combined_embedding_size),
+                                                    dtype=torch.float32)
 
-            for idx, entry_info in enumerate(entry_infos):
-                hash_id = hash(entry_info.receptor_sequence)
-                if hash_id not in self.embedding_per_seq.keys():
-                    # building the input data to the ESM-2 model
-                    batch_labels, batch_strs, batch_tokens = BATCH_CONVERTER([(hash_id, entry_info.receptor_sequence)])
+                for idx, entry_info in enumerate(entry_infos):
+                    hash_id = hash(entry_info.receptor_sequence)
+                    if hash_id not in self.embedding_per_seq.keys():
+                        # building the input data to the ESM-2 model
+                        batch_labels, batch_strs, batch_tokens = BATCH_CONVERTER(
+                            [(hash_id, entry_info.receptor_sequence)])
+                        if ESM2_ON_GPU is True and batch_tokens.get_device() == -1:
+                            batch_tokens = batch_tokens.cuda()
 
-                    # Extract per-residue representations
-                    with torch.no_grad():
-                        result = ESM2_MODEL(batch_tokens, repr_layers=[self.num_layers], return_contacts=False)
-                        token_representation = result["representations"][self.num_layers]
-                        esm2_embedding = token_representation[0, 1:len(batch_strs[0]) + 1].mean(0)
-                        self.embedding_per_seq[hash_id] = esm2_embedding
-                else:
-                    esm2_embedding = self.embedding_per_seq[hash_id]
+                        # Extract per-residue representations
+                        with torch.no_grad():
+                            result = ESM2_MODEL(batch_tokens, repr_layers=[self.num_layers], return_contacts=False)
+                            token_representation = result["representations"][self.num_layers]
+                            esm2_embedding = token_representation[0, 1:len(batch_strs[0]) + 1].mean(0)
+                            self.embedding_per_seq[hash_id] = esm2_embedding
+                    else:
+                        esm2_embedding = self.embedding_per_seq[hash_id]
 
-                # concatenate CNN latent space with ESM-2 embedding
-                latent_space_idx = torch.cat((latent_space[idx], esm2_embedding))
-                combined_latent_space[idx] = latent_space_idx
+                    # concatenate CNN latent space with ESM-2 embedding
+                    latent_space_idx = torch.cat((latent_space[idx], esm2_embedding))
+                    combined_latent_space[idx] = latent_space_idx
 
-            # apply linear layers to decrease the combined feature tensor to dimension 512
-            latent_space = self.reduction_combined_embedding(combined_latent_space)
+                # apply linear layers to decrease the combined feature tensor to dimension 512
+                latent_space = self.reduction_combined_embedding(combined_latent_space)
+        except Exception as e:
+            print("Sequence error: ", e, file=sys.stderr)
 
         fps = self.deepfrag_after_encoder(latent_space)
         return fps
