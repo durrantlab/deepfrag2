@@ -14,4 +14,5 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --rotations 2 \
     --max_pdbs_test 100 \
     --json_params common_params.json.inp \
+    --num_inference_predictions 5 \
     | tee 4.OUT-python_out.txt
