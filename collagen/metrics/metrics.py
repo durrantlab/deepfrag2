@@ -184,9 +184,13 @@ def most_similar_matches(
         raise ValueError(
             f"Requested top-K ({k}) is greater than the number of label set fingerprints ({len(label_set_fingerprints)}). You may need to reduce your --num_inference_predictions parameter."
         )
+    
+    # If predictions[0] is on device cpu but label_set_fingerprints is on device cuda, then
+    # move predictions to device cuda.
+    if predictions.device != label_set_fingerprints.device:
+        predictions = predictions.to(label_set_fingerprints.device)
 
     for entry_idx in tqdm(range(len(predictions)), desc="Most Similar Matches"):
-        import pdb; pdb.set_trace()
         dists = _broadcast_fn(cos_loss, predictions[entry_idx], label_set_fingerprints)
         sorted_idxs = torch.argsort(dists, dim=-1).narrow(0, 0, k)
         sorted_dists: torch.Tensor = torch.index_select(dists, 0, sorted_idxs)
