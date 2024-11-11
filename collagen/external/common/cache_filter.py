@@ -343,7 +343,7 @@ def _build_cache_file(
         for i in range(0, len(list_ids_moad), chunk_size)
     ]
     
-    print(f"Building/updating {filename or 'dataset'} in {len(chunks)} chunks")
+    print(f"Building/updating {filename or 'dataset'} (cache) in {len(chunks)} chunks")
     
     # Process each chunk separately to prevent memory buildup
     for chunk_idx, chunk in enumerate(chunks):
