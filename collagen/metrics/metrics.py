@@ -187,7 +187,6 @@ def most_similar_matches(
 
     for entry_idx in tqdm(range(len(predictions)), desc="Most Similar Matches"):
         dists = _broadcast_fn(cos_loss, predictions[entry_idx], label_set_fingerprints)
-        import pdb; pdb.set_trace()
         sorted_idxs = torch.argsort(dists, dim=-1).narrow(0, 0, k)
         sorted_dists: torch.Tensor = torch.index_select(dists, 0, sorted_idxs)
         sorted_smis: List[T] = [label_set_identifiers[idx] for idx in sorted_idxs]
