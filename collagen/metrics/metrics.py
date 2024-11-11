@@ -180,6 +180,11 @@ def most_similar_matches(
 
     all_most_similar: List[List[Tuple[T, float, Optional[List[float]]]]] = []
 
+    if k > len(label_set_fingerprints):
+        raise ValueError(
+            f"Requested top-K ({k}) is greater than the number of label set fingerprints ({len(label_set_fingerprints)}). You may need to reduce your --num_inference_predictions parameter."
+        )
+
     for entry_idx in tqdm(range(len(predictions)), desc="Most Similar Matches"):
         dists = _broadcast_fn(cos_loss, predictions[entry_idx], label_set_fingerprints)
         import pdb; pdb.set_trace()
