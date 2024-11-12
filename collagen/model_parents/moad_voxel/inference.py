@@ -71,14 +71,12 @@ class Inference(VoxelModelTest):
             Tuple[torch.Tensor, List[str]]: The updated fingerprint
                 tensor and smiles list.
         """
-        if (
-            "train" in args.inference_label_sets
-            or "val" in args.inference_label_sets
-            or "test" in args.inference_label_sets
-        ):
-            raise Exception(
-                "The 'all' value or SMILES strings are the only values allowed for the --inference_label_sets parameter in inference mode on custom dataset"
-            )
+        for elem in args.inference_label_sets.split(','):
+            if elem == "train" or elem == "test" or elem == "val" or not (
+                    elem.endswith(".smi") or elem.endswith(".smiles")):
+                raise Exception(
+                    "The 'all' value or SMILES strings are the only values allowed for the --inference_label_sets parameter in inference mode on custom dataset"
+                )
 
         if lbl_set_codes is None:
             lbl_set_codes = [p.strip() for p in args.inference_label_sets.split(",")]
@@ -185,7 +183,7 @@ class Inference(VoxelModelTest):
             raise ValueError(
                 "Must specify the --ckpt_filename parameter to run the inference mode. This parameter contains the path to the DeepFrag model (.ckpt file) to be used."
             )
-        elif not args.inference_label_sets or ("train" in args.inference_label_sets or "test" in args.inference_label_sets or "val" in args.inference_label_sets):
+        elif not args.inference_label_sets:
             raise Exception(
                 "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a list of .smi files, or containing both the 'all' value and the list of .smi files."
             )
@@ -197,6 +195,13 @@ class Inference(VoxelModelTest):
             raise Exception(
                 "There are not training, validation, or test sets in inference mode"
             )
+
+        for elem in args.inference_label_sets.split(','):
+            if elem == "train" or elem == "test" or elem == "val" or not (
+                    elem.endswith(".smi") or elem.endswith(".smiles")):
+                raise Exception(
+                    "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a list of .smi files, or containing both the 'all' value and the list of .smi files."
+                )
 
     def _get_load_splits(self, args):
         """Get the splits to load. This is not required for inference."""
