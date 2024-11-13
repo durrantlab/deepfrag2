@@ -26,7 +26,8 @@ def log(txt: str):
     Args:
         txt (str): The message to log.
     """
-    os.system(f'echo "{txt}" >> log.txt')
+    with open("log.txt", "a") as f:
+        f.write(f"{txt}\n")
     print(txt)
 
 
@@ -58,6 +59,15 @@ def _process2(batch_of_batches: List[List[Any]], return_list: List[Any], id: str
 
             print("FAILED", id, batch)
             traceback.print_exc()
+
+            # print("")
+            # print("====================================")
+            # print("FAILED")
+            # print(id)
+            # print(batch)
+            # print(e)
+            # print("\n\n\n")
+            # traceback.print_exc()
 
 
 def _collate_none(x: List[Any]) -> Any:

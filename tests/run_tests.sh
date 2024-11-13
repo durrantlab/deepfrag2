@@ -14,4 +14,6 @@
 
 . _test8.sh
 
+. _test9.sh
+
 . _eval_results.sh

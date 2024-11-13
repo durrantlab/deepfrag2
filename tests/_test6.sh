@@ -10,7 +10,7 @@ mkdir -p 6.inference_custom_set.output
 
 $PYTHON_EXEC -u $MAIN_DF2_PY \
     --mode inference_multiple_complexes \
-    --input_receptor_ligand_complexes ./data_for_inference_multiple_complexes/ \
+    --input_receptor_ligand_complexes ./data_for_inference/ \
     --default_root_dir $(pwd)/6.inference_custom_set.output/ \
     --rotations 2 \
     --load_checkpoint ./3.finetune_moad.output/last.ckpt \
