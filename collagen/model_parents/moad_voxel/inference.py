@@ -9,7 +9,7 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
     remove_redundant_fingerprints,
 )
 import torch  # type: ignore
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 from collagen.core.voxelization.voxelizer import VoxelParams
 import pickle
 
