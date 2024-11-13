@@ -162,11 +162,7 @@ class InferenceSingleComplex(Inference):
         ]
         self.output_pred["fps_avg"] = self.output_pred["fps_avg"].detach().numpy().tolist()
 
-<<<<<<< HEAD
-        self.output_path = args.default_root_dir + "predictions_Single_Complex" + os.sep + (os.path.basename(os.path.relpath(args.receptor)) + "_" + os.path.basename(os.path.relpath(args.ligand))) + ".results"
-=======
-        self.output_path = args.default_root_dir + os.sep + "predictions_Single_Complex" + os.sep + (os.path.basename(os.path.relpath(args.receptor)) + "_" + os.path.basename(os.path.relpath(args.ligand)))
->>>>>>> cdd221c4e2049e8167993ef1e3f43222ab2fae20
+        self.output_path = args.default_root_dir + os.sep + "predictions_Single_Complex" + os.sep + (os.path.basename(os.path.relpath(args.receptor)) + "_" + os.path.basename(os.path.relpath(args.ligand))) + ".results"
         os.makedirs(self.output_path, exist_ok=True)
         output_file = (
             self.output_path
