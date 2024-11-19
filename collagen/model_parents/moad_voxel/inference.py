@@ -72,10 +72,10 @@ class Inference(VoxelModelTest):
                 tensor and smiles list.
         """
         for elem in args.inference_label_sets.split(','):
-            if elem == "train" or elem == "test" or elem == "val" or not (
-                    elem.endswith(".smi") or elem.endswith(".smiles")):
+            if elem == "train" or elem == "test" or elem == "val" or (
+                    elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
                 raise Exception(
-                    "The 'all' value or SMILES strings are the only values allowed for the --inference_label_sets parameter in inference mode on custom dataset"
+                    "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a list of .smi files, or containing both the 'all' value and the list of .smi files."
                 )
 
         if lbl_set_codes is None:
@@ -197,8 +197,8 @@ class Inference(VoxelModelTest):
             )
 
         for elem in args.inference_label_sets.split(','):
-            if elem == "train" or elem == "test" or elem == "val" or not (
-                    elem.endswith(".smi") or elem.endswith(".smiles")):
+            if elem == "train" or elem == "test" or elem == "val" or (
+                    elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
                 raise Exception(
                     "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a list of .smi files, or containing both the 'all' value and the list of .smi files."
                 )
