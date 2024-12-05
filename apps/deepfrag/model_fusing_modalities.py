@@ -1,7 +1,9 @@
 """DeepFrag model combined with ESM-2 embeddings."""
 
 import os
+import sys
 import torch
+import logging
 import argparse
 from torch import nn
 from torch import hub
@@ -34,13 +36,15 @@ def download_esm2_model(esm2_model_name, cpu: bool):
     if torch.cuda.is_available() and not cpu:
         ESM2_MODEL = ESM2_MODEL.cuda()
         ESM2_ON_GPU = True
-        print("Setting CUDA device for ESM-2 model")
+        print("Setting CUDA device for ESM-2 model: " + esm2_model_name)
     else:
-        print("Using CPU device for ESM-2 model")
+        print("Using CPU device for ESM-2 model: " + esm2_model_name)
 
 
 class DeepFragModelESM2(DeepFragModel):
     """DeepFrag model combined with ESM-2 embeddings."""
+
+    print_unique_sequences = True
 
     def __init__(self, **kwargs):
         """Initialize the model.
@@ -66,9 +70,29 @@ class DeepFragModelESM2(DeepFragModel):
                 # attributes to work with the combined multimodal features
                 self.combined_embedding_size = 512 + DeepFragModelESM2.__get_embedding_size(kwargs["esm2_model"])
                 self.reduction_combined_embedding = self.__get_deep_layers_to_reduce_combined_features()
+
+                if self.print_unique_sequences:
+                    DeepFragModelESM2.__setup_logger('print_unique_sequences', os.getcwd() + os.sep + "01_unique_sequences.log")
+                    self.print_unique_sequences = logging.getLogger('print_unique_sequences')
+                    self.print_unique_sequences.propagate = False
+                else:
+                    self.print_unique_sequences = None
+
                 break
         else:
             raise Exception("The specified ESM-2 model is not valid.")
+
+    @staticmethod
+    def __setup_logger(logger_name, log_file, level=logging.INFO):
+        log_setup = logging.getLogger(logger_name)
+        formatter = logging.Formatter('%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        file_handler = logging.FileHandler(log_file, mode='a')
+        file_handler.setFormatter(formatter)
+        # stream_handler = logging.StreamHandler()
+        # stream_handler.setFormatter(formatter)
+        log_setup.setLevel(level)
+        log_setup.addHandler(file_handler)
+        # log_setup.addHandler(stream_handler)
 
     @staticmethod
     def __get_embedding_size(esm2_model_name):
@@ -86,67 +110,15 @@ class DeepFragModelESM2(DeepFragModel):
         return 5120  # corresponds to esm2_t48_15B_UR50D
 
     def __get_deep_layers_to_reduce_combined_features(self):
-        if self.combined_embedding_size <= 1152:  # for esm2_t6_8M_UR50D, esm2_t12_35M_UR50D, esm2_t30_150M_UR50D
-            return nn.Sequential(
-                # Randomly zero some values
-                nn.Dropout(),
-                # Linear transform.
-                # https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-                nn.Linear(self.combined_embedding_size, 512),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-            )
-        elif self.combined_embedding_size == 1792:  # for esm2_t33_650M_UR50D
-            return nn.Sequential(
-                # Randomly zero some values
-                nn.Dropout(),
-                # Linear transform.
-                nn.Linear(1792, 896),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-                # Linear transform.
-                nn.Linear(896, 512),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-            )
-        elif self.combined_embedding_size == 3072:  # for esm2_t36_3B_UR50D
-            return nn.Sequential(
-                # Randomly zero some values
-                nn.Dropout(),
-                # Linear transform.
-                nn.Linear(3072, 1536),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-                # Linear transform.
-                nn.Linear(1536, 768),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-                # Linear transform.
-                nn.Linear(768, 512),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-            )
-        elif self.combined_embedding_size == 5632:  # for esm2_t48_15B_UR50D
-            return nn.Sequential(
-                # Randomly zero some values
-                nn.Dropout(),
-                # Linear transform.
-                nn.Linear(5632, 2816),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-                # Linear transform.
-                nn.Linear(2816, 1408),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-                # Linear transform.
-                nn.Linear(1408, 704),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-                # Linear transform.
-                nn.Linear(704, 512),
-                # Activation function. Output 0 if negative, same if positive.
-                nn.ReLU(),
-            )
+        return nn.Sequential(
+            # Randomly zero some values
+            nn.Dropout(),
+            # Linear transform.
+            # https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+            nn.Linear(self.combined_embedding_size, 512),
+            # Activation function. Output 0 if negative, same if positive.
+            nn.ReLU(),
+        )
 
     @staticmethod
     def add_model_args(
@@ -210,6 +182,9 @@ class DeepFragModelESM2(DeepFragModel):
                             token_representation = result["representations"][self.num_layers]
                             esm2_embedding = token_representation[0, 1:len(batch_strs[0]) + 1].mean(0)
                             self.embedding_per_seq[hash_id] = esm2_embedding
+
+                        if self.print_unique_sequences:
+                            self.print_unique_sequences.info(entry_info.receptor_sequence)
                     else:
                         esm2_embedding = self.embedding_per_seq[hash_id]
 
