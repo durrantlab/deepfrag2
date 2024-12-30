@@ -19,7 +19,7 @@ from collagen.external.paired_csv.targets_ligands import PairedCsv_ligand
 from torch import multiprocessing  # type: ignore
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, Tuple, Union, Any, Optional, List
+from typing import Callable, Dict, Tuple, Union, Any, Optional, List
 from tqdm.std import tqdm  # type: ignore
 import numpy as np  # type: ignore
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmilesFromSmiles  # type: ignore

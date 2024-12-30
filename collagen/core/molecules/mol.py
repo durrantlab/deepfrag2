@@ -11,7 +11,6 @@ from typing import (
     List,
     Literal,
     Tuple,
-    Iterator,
     Any,
     Dict,
     Optional,

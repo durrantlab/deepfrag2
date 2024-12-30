@@ -1,6 +1,6 @@
 """Featurizes atoms in a molecule."""
 
-from typing import TYPE_CHECKING, List, Any, Tuple, Optional, Union, cast
+from typing import TYPE_CHECKING, List, Tuple, Optional, Union, cast
 import warnings
 
 import numpy as np  # type: ignore

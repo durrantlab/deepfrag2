@@ -7,7 +7,7 @@ import pickle
 import sys
 from typing import Any, List, OrderedDict, Tuple, Union
 import prody  # type: ignore
-from collagen.core.molecules.mol import BackedMol, Mol
+from collagen.core.molecules.mol import BackedMol
 
 
 @dataclass

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple
 from collagen.core.molecules.mol import BackedMol, Mol
 from collagen.external.common.parent_targets_ligands import Parent_ligand, Parent_target
 import prody  # type: ignore

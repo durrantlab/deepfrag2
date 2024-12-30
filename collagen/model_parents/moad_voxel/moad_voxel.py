@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser, Namespace
 import json
-from typing import Sequence, Type, TypeVar, List, Union
+from typing import Sequence, Type, TypeVar, Union
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 from collagen.model_parents.moad_voxel.inference_single_complex import InferenceSingleComplex
 from collagen.model_parents.moad_voxel.inference_multiple_complexes import (

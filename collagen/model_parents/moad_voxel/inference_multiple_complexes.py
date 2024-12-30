@@ -3,7 +3,6 @@
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.pdb_sdf_dir.interface import PdbSdfDirInterface
 from argparse import Namespace
-import torch  # type: ignore
 from typing import Any, Tuple, Optional
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.model_parents.moad_voxel.inference import Inference

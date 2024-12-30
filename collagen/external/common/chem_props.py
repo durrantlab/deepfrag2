@@ -1,6 +1,6 @@
 """Code to roughly identify aromatic/aliphatic and acid/base/neutral groups."""
 
-from typing import Literal, Optional, Tuple, Union
+from typing import Optional, Tuple
 from rdkit import Chem  # type: ignore
 
 acid_substructs_smi = [

@@ -2,7 +2,7 @@
 
 import os
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 from collagen.external.common.parent_interface import ParentInterface
 import numpy as np  # type: ignore

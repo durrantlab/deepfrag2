@@ -1,6 +1,6 @@
 """Functions to initialize the trainer, model, voxel parameters, and device."""
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional
 from argparse import Namespace
 from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault

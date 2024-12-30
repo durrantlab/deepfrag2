@@ -1,11 +1,6 @@
 from typing import Any
 import torch  # type: ignore
-from sklearn.cluster import DBSCAN  # type: ignore
-from sklearn.preprocessing import StandardScaler  # type: ignore
 import numpy as np  # type: ignore
-from sklearn.covariance import EmpiricalCovariance, MinCovDet  # type: ignore
-from sklearn.covariance import EllipticEnvelope  # type: ignore
-from scipy import stats
 from scipy.spatial.distance import cdist
 import math
 

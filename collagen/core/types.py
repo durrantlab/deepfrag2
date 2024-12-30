@@ -1,6 +1,6 @@
 """Atom type definition."""
 
-from typing import TYPE_CHECKING, Type
+from typing import Type
 
 # https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
 # if TYPE_CHECKING:

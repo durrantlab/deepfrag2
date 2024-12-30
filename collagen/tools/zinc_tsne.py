@@ -3,14 +3,14 @@ This is a utility script to generate a bunch of latent fragment embeddings from
 a ZINC database a run a T-SNE projection. You can use this to precompute a CSV
 database in the format that viz/fragment_explorer expects.
 """
-import argparse
-import time
+# import argparse
+# import time
 
-import numpy as np  # type: ignore
-from sklearn.manifold import TSNE  # type: ignore
-from sklearn.decomposition import PCA  # type: ignore
-import torch  # type: ignore
-from tqdm import tqdm  # type: ignore
+# import numpy as np  # type: ignore
+# from sklearn.manifold import TSNE  # type: ignore
+# from sklearn.decomposition import PCA  # type: ignore
+# import torch  # type: ignore
+# from tqdm import tqdm  # type: ignore
 
 # TODO: Not used anywhere. Commenting out for now.
 

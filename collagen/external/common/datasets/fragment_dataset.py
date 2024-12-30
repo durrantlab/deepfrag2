@@ -4,7 +4,7 @@ ligands on single bonds. Used in DeepFrag, for example.
 
 import argparse
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Dict, Union, Tuple, Set, Optional, Any, Callable
+from typing import TYPE_CHECKING, List, Dict, Union, Tuple, Optional, Any, Callable
 from pathlib import Path
 from collagen.external.common.parent_targets_ligands import Parent_ligand
 from collagen.external.common.types import StructuresSplit

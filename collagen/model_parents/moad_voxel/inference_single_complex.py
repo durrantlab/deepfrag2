@@ -4,20 +4,18 @@ from argparse import Namespace
 import cProfile
 from io import StringIO
 import torch  # type: ignore
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import Any, Optional
 from collagen.core.molecules.mol import Mol
 from collagen.metrics.metrics import most_similar_matches
 import prody  # type: ignore
 import numpy as np  # type: ignore
 from collagen.util import rand_rot
-import rdkit  # type: ignore
 from rdkit import Chem  # type: ignore
-import pytorch_lightning as pl  # type: ignore
 import os
 from collagen.model_parents.moad_voxel.inference import Inference
 
-if TYPE_CHECKING:
-    from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
+# if TYPE_CHECKING:
+#     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
 
 class InferenceSingleComplex(Inference):

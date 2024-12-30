@@ -3,10 +3,9 @@
 from dataclasses import dataclass
 import torch  # type: ignore
 from torch import nn  # type: ignore
-from typing import Callable, List, Dict, Optional, Tuple, Any, Union, TypeVar
+from typing import Callable, List, Dict, Optional, Tuple, Any, TypeVar
 from tqdm.auto import tqdm  # type: ignore
 from sklearn.decomposition import PCA  # type: ignore
-from sklearn.manifold import TSNE  # type: ignore
 from sklearn.preprocessing import Normalizer  # type: ignore
 import numpy as np  # type: ignore
 

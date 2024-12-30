@@ -1,7 +1,7 @@
 """The MOAD voxel model for training."""
 
 from argparse import Namespace
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 from collagen.core.loader import DataLambda
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.paired_csv.interface import PairedCsvInterface
