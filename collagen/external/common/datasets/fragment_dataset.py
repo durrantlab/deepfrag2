@@ -548,8 +548,6 @@ class FragmentDataset(Dataset):
             sample: (receptor, parent, fragment, ligand_id, frag_idx)
             center: Center point for voxelization
         """
-        import os
-        
         # Create debug directory
         os.makedirs("debug_viz", exist_ok=True)
         
@@ -573,6 +571,7 @@ class FragmentDataset(Dataset):
         spacing = voxel_params.resolution
         origin = -(nx * spacing) / 2.0  # Center grid at origin
         
+        print("TEST", voxel.shape)
         # Save each channel as DX file
         for channel in range(voxel.shape[1]):
             grid_data = voxel[0, channel]  # First batch, each channel
