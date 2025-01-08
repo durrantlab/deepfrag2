@@ -53,9 +53,9 @@ def save_batch_first_item_channels(
 
     half_box = (nx * spacing) / 2.0
 
-    origin_x = center[0] - half_box  # Add center offset
-    origin_y = center[1] - half_box  # Add center offset
-    origin_z = center[2] - half_box  # Add center offset
+    origin_x = -center[0] - half_box  # Add center offset
+    origin_y = -center[1] - half_box  # Add center offset
+    origin_z = -center[2] - half_box  # Add center offset
 
     # Save each channel as a separate DX file
     for channel in range(first_item.shape[0]):
