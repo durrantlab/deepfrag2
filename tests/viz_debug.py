@@ -65,7 +65,7 @@ def save_batch_first_item_channels(
         # but you want (x_dim, y_dim, z_dim).
         # grid_data = np.transpose(grid_data, (2, 1, 0))
         # grid_data = np.transpose(grid_data, (1, 2, 0))
-        grid_data = np.transpose(grid_data, (0, 2, 1))
+        # grid_data = np.transpose(grid_data, (0, 2, 1))
 
         # print("B")
         
