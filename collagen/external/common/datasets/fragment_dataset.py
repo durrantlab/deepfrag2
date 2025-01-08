@@ -18,6 +18,7 @@ import sys
 from collagen.core.molecules.mol import BackedMol
 import torch
 import numpy as np
+import os
 
 
 if TYPE_CHECKING:
@@ -506,11 +507,13 @@ class FragmentDataset(Dataset):
                 assert len(sample) == 5, "Sample size is not 5"
 
                 # Add debug visualization for first sample
-                print(idx, hasattr(self, '_debug_saved'))
-                if idx == 0 and not hasattr(self, '_debug_saved'):
+                # print(idx, hasattr(self, '_debug_saved'))
+                # if idx == 0 and not hasattr(self, '_debug_saved'):
+                if not os.path.exists("debug_viz"):
                     print("HEREEEEEEE!!!!!!!!!!")
-                    self._debug_saved = True
+                    # self._debug_saved = True
                     self._save_debug_visualization(sample, fragment.connectors[0])
+                    sys.exit(0)  # Debugging, so stop immediately.
 
                 return self.transform(sample) if self.transform else sample
 
