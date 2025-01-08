@@ -563,9 +563,10 @@ class FragmentDataset(Dataset):
         from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
         voxel_params = VoxelParamsDefault.DeepFrag
         
-        # Get the voxelized grid directly from receptor
-        voxel_tensor = receptor.voxelize(voxel_params, center=center)
+        # Get the voxelized grid directly from receptor, forcing CPU usage
+        voxel_tensor = receptor.voxelize(voxel_params, center=center, cpu=True) # Added cpu=True here
         voxel = voxel_tensor.numpy()
+        
         
         # Get grid parameters
         nx = ny = nz = voxel.shape[2]  # Assuming cubic grid
