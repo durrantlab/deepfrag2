@@ -42,8 +42,7 @@ def save_batch_first_item_channels(
         grid_data = first_item[channel].cpu().numpy()
         mx = grid_data.max()
         mn = grid_data.min()
-        print("mx", mx, "mn", mn)
-        grid_data = (grid_data - mn) / (mx - mn)
+        # grid_data = (grid_data - mn) / (mx - mn)
 
         # print("B")
         
@@ -62,4 +61,4 @@ def save_batch_first_item_channels(
             for val in grid_data.flatten():
                 f.write(f"{val} ")
             
-            print(f"Saved channel {channel} to {filename}")
+            print(f"Saved channel {channel} to {filename}", "mx", mx, "mn", mn)
