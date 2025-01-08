@@ -22,7 +22,10 @@ def save_batch_first_item_channels(
 
     voxel_params = VoxelParamsDefault.DeepFrag
     center = entry_info.connection_pt
-    print(entry_info.receptor_name)
+    pdbid = entry_info.receptor_name.split()[-1]
+    ligid = entry_info.ligand_id
+
+    print(pdbid, ligid)
 
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
