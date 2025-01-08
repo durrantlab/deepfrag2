@@ -26,6 +26,8 @@ def save_batch_first_item_channels(
     
     # Extract the first item from the batch
     first_item = batch_tensor[0]
+
+    print(first_item)
     
     # Compute grid parameters
     nx = ny = nz = voxel_params.width
@@ -38,7 +40,9 @@ def save_batch_first_item_channels(
     
     # Save each channel as a separate DX file
     for channel in range(first_item.shape[0]):
+        print("A")
         grid_data = first_item[channel].numpy()
+        print("B")
         
         filename = os.path.join(output_dir, f"channel_{channel}.dx")
         with open(filename, "w") as f:

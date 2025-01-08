@@ -313,7 +313,8 @@ class DeepFragModel(pl.LightningModule):
         if not os.path.exists("voxels_debug"):
             save_batch_first_item_channels(
                 voxels,
-                entry_infos[0].connection_pt
+                entry_infos[0].connection_pt,
+                "voxels_debug"
             )
             
 
