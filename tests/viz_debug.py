@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import os
 from collagen.core.voxelization.voxelizer import VoxelParamsDefault
+import json
 
 def save_batch_first_item_channels(
     batch_tensor: torch.Tensor, 
@@ -25,7 +26,12 @@ def save_batch_first_item_channels(
     pdbid = entry_info.receptor_name.split()[-1]
     ligid = entry_info.ligand_id
 
-    print(pdbid, ligid)
+    with open(output_dir + "/info.json", "w") as f:
+        json.dump({
+            "pdbid": pdbid,
+            "ligid": ligid,
+            "center": np.array(center).tolist()
+        }, f)
 
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
