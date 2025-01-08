@@ -515,7 +515,10 @@ class FragmentDataset(Dataset):
                     self._save_debug_visualization(sample, fragment.connectors[0])
                     sys.exit(0)  # Debugging, so stop immediately.
 
-                return self.transform(sample) if self.transform else sample
+                resp = self.transform(sample) if self.transform else sample
+                print("YO")
+                import pdb; pdb.set_trace()
+                return resp
 
             except AssertionError as e:
                 print(
