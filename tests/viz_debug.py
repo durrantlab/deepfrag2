@@ -37,8 +37,11 @@ def save_batch_first_item_channels(
     origin_y = -half_box 
     origin_z = -half_box
 
+
     for channel in range(first_item.shape[0]):
         grid_data = first_item[channel].cpu().numpy()
+        grid_data_for_dx = np.transpose(grid_data, (2, 1, 0))
+
         mx = grid_data.max()
         mn = grid_data.min()
 
@@ -51,7 +54,7 @@ def save_batch_first_item_channels(
             f.write(f"delta 0.0 0.0 {spacing}\n")
             f.write(f"object 2 class gridconnections counts {nx} {ny} {nz}\n")
             f.write(f"object 3 class array type double rank 0 items {nx*ny*nz} data follows\n")
-            
-            for val in grid_data.flatten():
+
+            for val in grid_data_for_dx.flatten():
                 f.write(f"{val} ")
             print(f"Saved channel {channel} to {filename}", "mx", mx, "mn", mn)
