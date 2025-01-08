@@ -33,7 +33,9 @@ def save_batch_first_item_channels(
         json.dump({
             "pdbid": pdbid,
             "ligid": ligid,
-            "center": np.array(center).tolist()
+            "center": np.array(center).tolist(),
+            "fragmentSmiles": entry_info.fragment_smiles,
+            "parentSmiles": entry_info.parent_smiles
         }, f)
 
     # Extract the first item from the batch

@@ -12,7 +12,7 @@ def rand_rot() -> np.ndarray:
         np.ndarray: A random uniform quaternion rotation.
     """
 
-    # For debugging purposes, we will not do rotation.
+    # For debugging purposes, we will not do random rotation.
     rot = np.array([0, 0, 0, 1])
     return rot
 
