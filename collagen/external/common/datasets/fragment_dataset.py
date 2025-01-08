@@ -516,8 +516,7 @@ class FragmentDataset(Dataset):
                     sys.exit(0)  # Debugging, so stop immediately.
 
                 resp = self.transform(sample) if self.transform else sample
-                print("YO")
-                import pdb; pdb.set_trace()
+                print("YO", resp)
                 return resp
 
             except AssertionError as e:
