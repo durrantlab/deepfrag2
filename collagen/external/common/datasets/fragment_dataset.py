@@ -581,7 +581,7 @@ class FragmentDataset(Dataset):
             f.write(receptor_centered.pdb())
         
         # Get the voxelized grid using same centering
-        voxel_tensor = receptor.voxelize(voxel_params, center=center, cpu=True)
+        voxel_tensor = receptor.voxelize(voxel_params, center=center, cpu=True, debug=True)
         voxel = voxel_tensor.numpy()
         
         # Get grid parameters - matching DeepFrag's voxelization

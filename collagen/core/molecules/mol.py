@@ -17,6 +17,7 @@ from typing import (
     Union,
 )
 import warnings
+import os
 
 import numpy as np  # type: ignore
 from collagen.core.molecules.smiles_utils import standardize_smiles
@@ -28,6 +29,7 @@ from .fingerprints import fingerprint_for
 from ..voxelization.voxelizer import numba_ptr, mol_gridify
 from ..types import AnyAtom
 from ...draw import MolView
+import copy
 
 if TYPE_CHECKING:
     import rdkit  # type: ignore
@@ -351,6 +353,7 @@ class Mol(object):
         cpu: bool = False,
         center: "np.ndarray" = None,
         rot: "np.ndarray" = np.array([0, 0, 0, 1]),
+        debug: bool = False,
     ) -> "torch.Tensor":
         """Convert a Mol to a voxelized tensor.
 
@@ -371,6 +374,10 @@ class Mol(object):
             center: (numpy.ndarray): Optional, if set, center the grid on this 3D coordinate.
             rot: (numpy.ndarray): A size 4 array describing a quaternion rotation for the grid.
         """
+        
+        # For debugging purposes, we will not do rotation.
+        rot = np.array([0, 0, 0, 1])
+
         params.validate()
 
         tensor = torch.zeros(size=params.tensor_size())
@@ -378,11 +385,81 @@ class Mol(object):
             tensor = tensor.cuda()
 
         self.voxelize_into(
-            tensor, batch_idx=0, center=center, params=params, cpu=cpu, rot=rot
+            tensor, batch_idx=0, center=center, params=params, cpu=cpu, rot=rot, debug=debug  # Add debug parameter here
         )
 
         return tensor
 
+
+
+
+    def save_debug_visualization(
+        self, 
+        voxel: np.ndarray, 
+        center: np.ndarray, 
+        rot: np.ndarray, 
+        voxel_params: VoxelParams, 
+        output_dir: str = "debug_viz"
+    ):
+        """
+        Save debugging visualization for a molecule's voxelization.
+        
+        Args:
+            voxel: The generated voxel grid
+            center: The center point used for voxelization
+            rot: The rotation quaternion used
+            voxel_params: Voxelization parameters
+            output_dir: Directory to save visualization files
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Create a copy to avoid modifying the original
+        mol_copy = copy.deepcopy(self)
+        
+        # Apply translation
+        coords = mol_copy.coords
+        translation = center - np.mean(coords, axis=0)
+        new_coords = coords + translation
+        
+        # Apply rotation using quaternion
+        conf = mol_copy.rdmol.GetConformer()
+        for i in range(len(new_coords)):
+            x, y, z = new_coords[i]
+            conf.SetAtomPosition(i, (float(x), float(y), float(z)))
+        
+        # Save rotated, translated PDB
+        with open(os.path.join(output_dir, "molecule_transformed.pdb"), "w") as f:
+            f.write(mol_copy.pdb())
+        
+        # Save voxel grid for each channel
+        for channel in range(voxel.shape[1]):
+            grid_data = voxel[0, channel]
+            
+            # Compute grid parameters
+            nx = ny = nz = voxel_params.width
+            spacing = voxel_params.resolution
+            half_width = (voxel_params.width * spacing) / 2.0
+            
+            origin_x = center[0] - half_width
+            origin_y = center[1] - half_width
+            origin_z = center[2] - half_width
+            
+            # Save as OpenDX file
+            with open(f"{output_dir}/channel_{channel}.dx", "w") as f:
+                f.write(f"object 1 class gridpositions counts {nx} {ny} {nz}\n")
+                f.write(f"origin {origin_x} {origin_y} {origin_z}\n")
+                f.write(f"delta {spacing} 0.0 0.0\n")
+                f.write(f"delta 0.0 {spacing} 0.0\n")
+                f.write(f"delta 0.0 0.0 {spacing}\n")
+                f.write(f"object 2 class gridconnections counts {nx} {ny} {nz}\n")
+                f.write(f"object 3 class array type double rank 0 items {nx*ny*nz} data follows\n")
+                
+                for val in grid_data.flatten():
+                    f.write(f"{val} ")
+
+
+
+                    
     def voxelize_into(
         self,
         tensor: "torch.Tensor",
@@ -392,6 +469,7 @@ class Mol(object):
         layer_offset: int = 0,
         center: "np.ndarray" = None,
         rot: "np.ndarray" = np.array([0, 0, 0, 1]),
+        debug: bool = False,
     ):
         """Voxelize a Mol into an existing 5-D tensor.
 
@@ -434,6 +512,7 @@ class Mol(object):
         """
         grid = numba_ptr(tensor, cpu=cpu)
         assert params.atom_featurizer is not None, "Atom featurizer is None"
+        
         atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
         mol_gridify(
             grid=grid,
@@ -451,6 +530,16 @@ class Mol(object):
             acc_type=params.acc_type.value,
             cpu=cpu,
         )
+        
+        if debug:
+            # Convert tensor to numpy for visualization
+            debug_voxel = tensor.numpy()
+            self.save_debug_visualization(
+                debug_voxel, 
+                center=(center if center is not None else self.center), 
+                rot=rot, 
+                voxel_params=params
+            )
 
     def voxelize_delayed(
         self,
