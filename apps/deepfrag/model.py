@@ -9,7 +9,7 @@ from torch import nn  # type: ignore
 import pytorch_lightning as pl  # type: ignore
 from apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
-
+import os
 
 class DeepFragModel(pl.LightningModule):
 
@@ -308,6 +308,11 @@ class DeepFragModel(pl.LightningModule):
             torch.Tensor: The loss.
         """
         voxels, fps, entry_infos = batch
+
+        # if not os.path.exists("voxels_debug"):
+
+        print(entry_infos[0])
+            
 
         pred = self(voxels, entry_infos)
 

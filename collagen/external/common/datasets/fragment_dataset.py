@@ -556,29 +556,29 @@ class FragmentDataset(Dataset):
         from collagen.core.voxelization.voxelizer import VoxelParamsDefault
         voxel_params = VoxelParamsDefault.DeepFrag
         
-        # Get coordinates centered at the connection point
-        # Create a copy of the receptor to modify
-        import copy
-        receptor_centered = copy.deepcopy(receptor)
+        # # Get coordinates centered at the connection point
+        # # Create a copy of the receptor to modify
+        # import copy
+        # receptor_centered = copy.deepcopy(receptor)
         
-        # Get current coordinates
-        coords = receptor_centered.coords
+        # # Get current coordinates
+        # coords = receptor_centered.coords
         
-        # Calculate translation needed to center at connection point
-        translation = center - np.mean(coords, axis=0)
+        # # Calculate translation needed to center at connection point
+        # translation = center - np.mean(coords, axis=0)
         
-        # Apply translation to all coordinates
-        new_coords = coords + translation
+        # # Apply translation to all coordinates
+        # new_coords = coords + translation
         
-        # Update coordinates in receptor copy - fixing the SetPositions issue
-        conf = receptor_centered.rdmol.GetConformer()
-        for i in range(len(new_coords)):
-            x, y, z = new_coords[i]
-            conf.SetAtomPosition(i, (float(x), float(y), float(z)))
+        # # Update coordinates in receptor copy - fixing the SetPositions issue
+        # conf = receptor_centered.rdmol.GetConformer()
+        # for i in range(len(new_coords)):
+        #     x, y, z = new_coords[i]
+        #     conf.SetAtomPosition(i, (float(x), float(y), float(z)))
         
-        # Save the centered PDB file
-        with open(f"debug_viz/receptor_centered.pdb", "w") as f:
-            f.write(receptor_centered.pdb())
+        # # Save the centered PDB file
+        # with open(f"debug_viz/receptor_centered.pdb", "w") as f:
+        #     f.write(receptor_centered.pdb())
         
         # Get the voxelized grid using same centering
         voxel_tensor = receptor.voxelize(voxel_params, center=center, cpu=True, debug=True)
