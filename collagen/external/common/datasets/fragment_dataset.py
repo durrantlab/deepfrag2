@@ -16,6 +16,8 @@ from collagen.external.common.split import create_full_dataset_as_single_split
 from collagen.core.molecules.mol import Mol
 import sys
 from collagen.core.molecules.mol import BackedMol
+import torch
+import numpy as np
 
 
 if TYPE_CHECKING:
@@ -460,13 +462,7 @@ class FragmentDataset(Dataset):
         entry: Union[FragmentDataset_entry, None] = None
         counter = 1
         max_counter = 3
-        # For some reason, id we repeat this code more than 1 times, then we
-        # avoid 'a ligand not found' or 'atoms do not have coordinates'
-        # exceptions Is this only for Windows platforms due to the
-        # multiprocessing implemented in the loader.py file? I don't know Can
-        # this occur on Unix-type platforms with the fork multiprocessing
-        # implemented in the loader.py file? I don't know, if required to
-        # experiment
+
         while counter <= max_counter:
             try:
                 entry = self._internal_index_valids_filtered[idx]
@@ -477,12 +473,6 @@ class FragmentDataset(Dataset):
                 assert isinstance(receptor, BackedMol), "Receptor not found"
                 assert len(ligands) >= 1, "Ligand list not found"
 
-                # with open("/mnt/extra/fragz2.txt", "a") as f:
-                #     f.write(receptor.meta["name"] + "\t" + str(ligands) + "\n")
-
-                # This chunk has many ligands. You need to look up the one that matches
-                # entry.ligand_id (the one that actually corresponds to this entry).
-                # Once you find it, actually do the fragmenting.
                 for ligand in ligands:
                     if ligand.meta["moad_ligand"].name == entry.ligand_id:
                         if isinstance(self.data_interface, PairedCsvInterface):
@@ -498,8 +488,8 @@ class FragmentDataset(Dataset):
                             backed_frag = list_frag_and_act[entry.frag_idx][2]
                             parent = ligand.meta[
                                 "moad_ligand"
-                            ].backed_parent  # BackedMol(rdmol=ligand.rdmol)
-                            fragment = backed_frag  # BackedMol(rdmol=backed_frag.rdmol)
+                            ].backed_parent
+                            fragment = backed_frag
                             break
                         else:
                             pairs = ligand.split_bonds()
@@ -515,7 +505,11 @@ class FragmentDataset(Dataset):
                 sample = (receptor, parent, fragment, entry.ligand_id, entry.frag_idx)
                 assert len(sample) == 5, "Sample size is not 5"
 
-                # Actually performs voxelization and fingerprinting.
+                # Add debug visualization for first sample
+                if idx == 0 and not hasattr(self, '_debug_saved'):
+                    self._debug_saved = True
+                    self._save_debug_visualization(sample, fragment.connectors[0])
+
                 return self.transform(sample) if self.transform else sample
 
             except AssertionError as e:
@@ -541,3 +535,62 @@ class FragmentDataset(Dataset):
                     raise
                 else:
                     counter += 1
+
+    def _save_debug_visualization(self, sample: Tuple[Mol, Mol, Mol, str, int], center: np.ndarray):
+        """Save debug visualization of voxelization.
+        
+        Args:
+            sample: (receptor, parent, fragment, ligand_id, frag_idx)
+            center: Center point for voxelization
+        """
+        import os
+        
+        # Create debug directory
+        os.makedirs("debug_viz", exist_ok=True)
+        
+        receptor, parent, fragment, ligand_id, frag_idx = sample
+        
+        # Save the PDB file before voxelization
+        with open(f"debug_viz/receptor.pdb", "w") as f:
+            f.write(receptor.pdb())
+        
+        # Get voxel params from parent class
+        voxel_params = self.transform.keywords['voxel_params']
+        
+        # Get the voxelized grid using the same voxelization as transform
+        tensor = receptor.voxelize(voxel_params, cpu=True, center=center)
+        
+        # Convert tensor to numpy
+        voxel = tensor.numpy()
+        
+        # Get grid parameters
+        nx = ny = nz = voxel.shape[2]  # Assuming cubic grid 
+        spacing = voxel_params.resolution
+        origin = -(nx * spacing) / 2.0  # Center grid at origin
+        
+        # Save each channel as DX file
+        for channel in range(voxel.shape[1]):
+            grid_data = voxel[0, channel]  # First batch, each channel
+            with open(f"debug_viz/channel_{channel}.dx", "w") as f:
+                f.write("object 1 class gridpositions counts %d %d %d\n" % (nx, ny, nz))
+                f.write("origin %.2f %.2f %.2f\n" % (origin, origin, origin))
+                f.write("delta %.2f 0.0 0.0\n" % spacing)
+                f.write("delta 0.0 %.2f 0.0\n" % spacing)
+                f.write("delta 0.0 0.0 %.2f\n" % spacing)
+                f.write("object 2 class gridconnections counts %d %d %d\n" % (nx, ny, nz))
+                f.write("object 3 class array type double rank 0 items %d data follows\n" % (nx*ny*nz))
+                
+                # Write grid data
+                count = 0
+                for val in grid_data.flatten():
+                    f.write("%.6f " % val)
+                    count += 1
+                    if count % 3 == 0:
+                        f.write("\n")
+                if count % 3 != 0:
+                    f.write("\n")
+        
+        # Save center point
+        with open(f"debug_viz/center.txt", "w") as f:
+            f.write(f"x,y,z\n")
+            f.write(f"{center[0]:.3f},{center[1]:.3f},{center[2]:.3f}\n")
