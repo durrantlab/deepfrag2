@@ -375,9 +375,6 @@ class Mol(object):
             rot: (numpy.ndarray): A size 4 array describing a quaternion rotation for the grid.
         """
         
-        # For debugging purposes, we will not do rotation.
-        rot = np.array([0, 0, 0, 1])
-
         params.validate()
 
         tensor = torch.zeros(size=params.tensor_size())

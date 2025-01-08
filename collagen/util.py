@@ -11,6 +11,11 @@ def rand_rot() -> np.ndarray:
     Returns:
         np.ndarray: A random uniform quaternion rotation.
     """
+
+    # For debugging purposes, we will not do rotation.
+    rot = np.array([0, 0, 0, 1])
+    return rot
+
     # Had to do the below to get the rotation to be different on every rotation
     # during inferance. Note that if two rotations are requested within a
     # microsecond of each other, will return same rotation. But even that

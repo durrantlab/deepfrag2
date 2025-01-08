@@ -50,6 +50,7 @@ class DeepFrag(VoxelModelParent):
         """
         rec, parent, frag, ligand_id, fragment_idx = entry
         rot = rand_rot()
+        
         center = frag.connectors[0]
 
         payload = self._get_payload(rec, parent, frag, ligand_id, fragment_idx, center)

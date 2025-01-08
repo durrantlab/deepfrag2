@@ -553,7 +553,7 @@ class FragmentDataset(Dataset):
         os.makedirs("debug_viz", exist_ok=True)
         
         receptor, parent, fragment, ligand_id, frag_idx = sample
-        from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
+        from collagen.core.voxelization.voxelizer import VoxelParamsDefault
         voxel_params = VoxelParamsDefault.DeepFrag
         
         # Get coordinates centered at the connection point
