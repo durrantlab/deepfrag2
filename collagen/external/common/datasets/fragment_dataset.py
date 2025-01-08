@@ -553,15 +553,31 @@ class FragmentDataset(Dataset):
         os.makedirs("debug_viz", exist_ok=True)
         
         receptor, parent, fragment, ligand_id, frag_idx = sample
-        
-        # Save the PDB file before voxelization
-        with open(f"debug_viz/receptor.pdb", "w") as f:
-            f.write(receptor.pdb())
-        
         from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
         voxel_params = VoxelParamsDefault.DeepFrag
         
-        # Get the voxelized grid directly from receptor
+        # Get coordinates centered at the connection point
+        # Create a copy of the receptor to modify
+        import copy
+        receptor_centered = copy.deepcopy(receptor)
+        
+        # Get current coordinates
+        coords = receptor_centered.coords
+        
+        # Calculate translation needed to center at connection point
+        translation = center - np.mean(coords, axis=0)
+        
+        # Apply translation to all coordinates
+        new_coords = coords + translation
+        
+        # Update coordinates in receptor copy
+        receptor_centered.rdmol.GetConformer().SetPositions(new_coords)
+        
+        # Save the centered PDB file
+        with open(f"debug_viz/receptor_centered.pdb", "w") as f:
+            f.write(receptor_centered.pdb())
+        
+        # Get the voxelized grid using same centering
         voxel_tensor = receptor.voxelize(voxel_params, center=center, cpu=True)
         voxel = voxel_tensor.numpy()
         
@@ -570,7 +586,6 @@ class FragmentDataset(Dataset):
         spacing = voxel_params.resolution   # This should be 0.75
         
         # Calculate origin to match protein coordinates
-        # The grid should be centered on the branching point (center)
         half_width = (voxel_params.width * spacing) / 2.0
         origin_x = center[0] - half_width
         origin_y = center[1] - half_width
@@ -585,7 +600,6 @@ class FragmentDataset(Dataset):
         for channel in range(voxel.shape[1]):
             grid_data = voxel[0, channel]  # First batch, each channel
             with open(f"debug_viz/channel_{channel}.dx", "w") as f:
-                # Header specifying grid dimensions and placement in 3D space
                 f.write("object 1 class gridpositions counts %d %d %d\n" % (nx, ny, nz))
                 f.write("origin %.6f %.6f %.6f\n" % (origin_x, origin_y, origin_z))
                 f.write("delta %.6f 0.0 0.0\n" % spacing)
@@ -594,7 +608,6 @@ class FragmentDataset(Dataset):
                 f.write("object 2 class gridconnections counts %d %d %d\n" % (nx, ny, nz))
                 f.write("object 3 class array type double rank 0 items %d data follows\n" % (nx*ny*nz))
                 
-                # Write grid data
                 count = 0
                 for val in grid_data.flatten():
                     f.write("%.6f " % val)
