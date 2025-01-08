@@ -47,16 +47,12 @@ def save_batch_first_item_channels(
     # half_width = (voxel_params.width * spacing) / 2.0
     
     # Suppose nx = ny = nz = voxel_params.width
-    spacing  = voxel_params.resolution
-    nx       = voxel_params.width
     half_box = (nx * spacing) / 2.0
-
-    half_box = (nx * spacing) / 2.0
-
-    origin_x = -center[0] - half_box  # Add center offset
-    origin_y = -center[1] - half_box  # Add center offset
-    origin_z = -center[2] - half_box  # Add center offset
-
+    # Offset origin by -center to match the translated PDB coordinates
+    origin_x = -half_box + (-center[0])
+    origin_y = -half_box + (-center[1]) 
+    origin_z = -half_box + (-center[2])
+    
     # Save each channel as a separate DX file
     for channel in range(first_item.shape[0]):
         # print("A", first_item.shape, channel)
