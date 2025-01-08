@@ -42,11 +42,11 @@ def save_batch_first_item_channels(
     # Compute grid parameters
     nx = ny = nz = voxel_params.width
     spacing = voxel_params.resolution
-    half_width = (voxel_params.width * spacing) / 2.0
+    # half_width = (voxel_params.width * spacing) / 2.0
     
-    origin_x = center[0] - half_width
-    origin_y = center[1] - half_width
-    origin_z = center[2] - half_width
+    origin_x = 0  # center[0] - half_width
+    origin_y = 0  # center[1] - half_width
+    origin_z = 0  # center[2] - half_width
     
     # Save each channel as a separate DX file
     for channel in range(first_item.shape[0]):
