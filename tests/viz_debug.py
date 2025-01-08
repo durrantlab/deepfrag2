@@ -1,4 +1,5 @@
 from collagen.core.voxelization.voxelizer import VoxelParams
+from collagen.external.common.types import StructureEntry
 import torch
 import numpy as np
 import os
@@ -6,7 +7,7 @@ from collagen.core.voxelization.voxelizer import VoxelParamsDefault
 
 def save_batch_first_item_channels(
     batch_tensor: torch.Tensor, 
-    center: np.ndarray,
+    entry_info: StructureEntry,
     output_dir: str = "debug_viz"
 ):
     """
@@ -20,6 +21,8 @@ def save_batch_first_item_channels(
     """
 
     voxel_params = VoxelParamsDefault.DeepFrag
+    center = entry_info.connection_pt
+    print(entry_info.receptor_name)
 
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
