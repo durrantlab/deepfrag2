@@ -570,8 +570,11 @@ class FragmentDataset(Dataset):
         # Apply translation to all coordinates
         new_coords = coords + translation
         
-        # Update coordinates in receptor copy
-        receptor_centered.rdmol.GetConformer().SetPositions(new_coords)
+        # Update coordinates in receptor copy - fixing the SetPositions issue
+        conf = receptor_centered.rdmol.GetConformer()
+        for i in range(len(new_coords)):
+            x, y, z = new_coords[i]
+            conf.SetAtomPosition(i, (float(x), float(y), float(z)))
         
         # Save the centered PDB file
         with open(f"debug_viz/receptor_centered.pdb", "w") as f:
