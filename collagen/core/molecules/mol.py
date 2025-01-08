@@ -398,7 +398,7 @@ class Mol(object):
         voxel: np.ndarray, 
         center: np.ndarray, 
         rot: np.ndarray, 
-        voxel_params: VoxelParams, 
+        voxel_params: "VoxelParams", 
         output_dir: str = "debug_viz"
     ):
         """
