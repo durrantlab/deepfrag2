@@ -312,11 +312,12 @@ class DeepFragModel(pl.LightningModule):
         voxels, fps, entry_infos = batch
 
         # if not os.path.exists("voxels_debug"):
-        save_batch_first_item_channels(
-            voxels,
-            entry_infos[0],
-            "voxels_debug_" + str(random.randint(0, 1000000)),
-        )
+        for i in range(len(entry_infos)):
+            save_batch_first_item_channels(
+                voxels[i],
+                entry_infos[i],
+                "voxels_debug_" + str(random.randint(0, 1000000)),
+            )
             
 
         pred = self(voxels, entry_infos)

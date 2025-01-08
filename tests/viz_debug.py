@@ -7,7 +7,7 @@ from collagen.core.voxelization.voxelizer import VoxelParamsDefault
 import json
 
 def save_batch_first_item_channels(
-    batch_tensor: torch.Tensor, 
+    tensor: torch.Tensor, 
     entry_info: StructureEntry,
     output_dir: str = "debug_viz"
 ):
@@ -28,8 +28,6 @@ def save_batch_first_item_channels(
             "parentSmiles": entry_info.parent_smiles
         }, f)
 
-    first_item = batch_tensor[0]
-
     nx = ny = nz = voxel_params.width
     spacing = voxel_params.resolution
 
@@ -39,8 +37,8 @@ def save_batch_first_item_channels(
     origin_y = -half_box
     origin_z = -half_box
 
-    for channel in range(first_item.shape[0]):
-        grid_data = first_item[channel].cpu().numpy()
+    for channel in range(tensor.shape[0]):
+        grid_data = tensor[channel].cpu().numpy()
 
         # Direct flattening with Fortran order to match DX requirements
         # grid_data_flattened = grid_data.ravel(order='F')
