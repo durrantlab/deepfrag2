@@ -40,6 +40,11 @@ def save_batch_first_item_channels(
     for channel in range(first_item.shape[0]):
         # print("A", first_item.shape, channel)
         grid_data = first_item[channel].cpu().numpy()
+        mx = grid_data.max()
+        mn = grid_data.min()
+        print("mx", mx, "mn", mn)
+        grid_data = (grid_data - mn) / (mx - mn)
+
         # print("B")
         
         filename = os.path.join(output_dir, f"channel_{channel}.dx")
