@@ -26,6 +26,9 @@ def save_batch_first_item_channels(
     pdbid = entry_info.receptor_name.split()[-1]
     ligid = entry_info.ligand_id
 
+    # Ensure the output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    
     with open(output_dir + "/info.json", "w") as f:
         json.dump({
             "pdbid": pdbid,
@@ -33,9 +36,6 @@ def save_batch_first_item_channels(
             "center": np.array(center).tolist()
         }, f)
 
-    # Ensure the output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-    
     # Extract the first item from the batch
     first_item = batch_tensor[0]
 
