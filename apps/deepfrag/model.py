@@ -11,6 +11,7 @@ import pytorch_lightning as pl  # type: ignore
 from apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
 import os
+import random
 
 class DeepFragModel(pl.LightningModule):
 
@@ -310,12 +311,12 @@ class DeepFragModel(pl.LightningModule):
         """
         voxels, fps, entry_infos = batch
 
-        if not os.path.exists("voxels_debug"):
-            save_batch_first_item_channels(
-                voxels,
-                entry_infos[0],
-                "voxels_debug"
-            )
+        # if not os.path.exists("voxels_debug"):
+        save_batch_first_item_channels(
+            voxels,
+            entry_infos[0],
+            "voxels_debug_" + str(random.randint(0, 1000000)),
+        )
             
 
         pred = self(voxels, entry_infos)
