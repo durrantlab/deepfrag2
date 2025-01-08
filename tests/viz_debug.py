@@ -38,9 +38,9 @@ def save_batch_first_item_channels(
     
     # Save each channel as a separate DX file
     for channel in range(first_item.shape[0]):
-        print("A", first_item.shape, channel)
-        grid_data = first_item[channel].numpy()
-        print("B")
+        # print("A", first_item.shape, channel)
+        grid_data = first_item[channel].cpu().numpy()
+        # print("B")
         
         filename = os.path.join(output_dir, f"channel_{channel}.dx")
         with open(filename, "w") as f:
