@@ -311,7 +311,7 @@ class DeepFragModel(pl.LightningModule):
 
         # if not os.path.exists("voxels_debug"):
 
-        print(entry_infos[0])
+        print("YO!", entry_infos[0])
             
 
         pred = self(voxels, entry_infos)
