@@ -11,6 +11,8 @@ def save_batch_first_item_channels(
     entry_info: StructureEntry,
     output_dir: str = "debug_viz"
 ):
+    PDB_THRESHOLD = 0.5
+
     voxel_params = VoxelParamsDefault.DeepFrag
     center = entry_info.connection_pt
     pdbid = entry_info.receptor_name.split()[-1]
@@ -59,3 +61,21 @@ def save_batch_first_item_channels(
             for val in grid_data_flattened:
                 f.write(f"{val} ")
             print(f"Saved channel {channel} to {filename}", "mx", mx, "mn", mn)
+
+        # Save PDB file with dummy atoms for values > threshold
+        pdb_filename = os.path.join(output_dir, f"channel_{channel}.pdb")
+        with open(pdb_filename, "w") as f:
+            atom_id = 1
+            for ix in range(nx):
+                for iy in range(ny):
+                    for iz in range(nz):
+                        value = grid_data[ix, iy, iz]
+                        if value > PDB_THRESHOLD:
+                            x = origin_x + ix * spacing
+                            y = origin_y + iy * spacing
+                            z = origin_z + iz * spacing
+                            f.write(
+                                f"HETATM{atom_id:5d}  DUM DUM A   1    {x:8.3f}{y:8.3f}{z:8.3f}  1.00  {value:6.2f}          D\n"
+                            )
+                            atom_id += 1
+            print(f"Saved PDB channel {channel} to {pdb_filename}, threshold {PDB_THRESHOLD}")
