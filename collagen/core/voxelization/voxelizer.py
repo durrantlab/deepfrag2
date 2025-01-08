@@ -387,28 +387,33 @@ def cpu_gridify(
                 ty = ty * res
                 tz = tz * res
 
-                # apply rotation vector
-                aw = rot[0]
-                ax = rot[1]
-                ay = rot[2]
-                az = rot[3]
+                # # apply rotation vector
+                # aw = rot[0]
+                # ax = rot[1]
+                # ay = rot[2]
+                # az = rot[3]
 
-                bw = 0
-                bx = tx
-                by = ty
-                bz = tz
+                # bw = 0
+                # bx = tx
+                # by = ty
+                # bz = tz
 
-                # multiply by rotation vector
-                cw = (aw * bw) - (ax * bx) - (ay * by) - (az * bz)
-                cx = (aw * bx) + (ax * bw) + (ay * bz) - (az * by)
-                cy = (aw * by) + (ay * bw) + (az * bx) - (ax * bz)
-                cz = (aw * bz) + (az * bw) + (ax * by) - (ay * bx)
+                # # multiply by rotation vector
+                # cw = (aw * bw) - (ax * bx) - (ay * by) - (az * bz)
+                # cx = (aw * bx) + (ax * bw) + (ay * bz) - (az * by)
+                # cy = (aw * by) + (ay * bw) + (az * bx) - (ax * bz)
+                # cz = (aw * bz) + (az * bw) + (ax * by) - (ay * bx)
 
-                # multiply by conjugate
-                # dw = (cw * aw) - (cx * (-ax)) - (cy * (-ay)) - (cz * (-az))
-                dx = (cw * (-ax)) + (cx * aw) + (cy * (-az)) - (cz * (-ay))
-                dy = (cw * (-ay)) + (cy * aw) + (cz * (-ax)) - (cx * (-az))
-                dz = (cw * (-az)) + (cz * aw) + (cx * (-ay)) - (cy * (-ax))
+                # # multiply by conjugate
+                # # dw = (cw * aw) - (cx * (-ax)) - (cy * (-ay)) - (cz * (-az))
+                # dx = (cw * (-ax)) + (cx * aw) + (cy * (-az)) - (cz * (-ay))
+                # dy = (cw * (-ay)) + (cy * aw) + (cz * (-ax)) - (cx * (-az))
+                # dz = (cw * (-az)) + (cz * aw) + (cx * (-ay)) - (cy * (-ax))
+
+                # NOTE: No rotation for debugging
+                dx = tx
+                dy = ty
+                dz = tz
 
                 # apply translation vector
                 tx = dx + center[0]
