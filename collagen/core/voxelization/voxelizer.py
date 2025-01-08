@@ -387,8 +387,6 @@ def cpu_gridify(
                 ty = ty * res
                 tz = tz * res
 
-                print(rot)
-
                 # apply rotation vector
                 aw = rot[0]
                 ax = rot[1]

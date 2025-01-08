@@ -13,7 +13,7 @@ def rand_rot() -> np.ndarray:
     """
 
     # For debugging purposes, we will not do random rotation.
-    rot = np.array([0, 0, 0, 1])
+    rot = np.array([1, 0, 0, 0])
     return rot
 
     # Had to do the below to get the rotation to be different on every rotation
