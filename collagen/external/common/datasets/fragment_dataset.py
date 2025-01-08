@@ -506,7 +506,9 @@ class FragmentDataset(Dataset):
                 assert len(sample) == 5, "Sample size is not 5"
 
                 # Add debug visualization for first sample
+                print(idx, hasattr(self, '_debug_saved'))
                 if idx == 0 and not hasattr(self, '_debug_saved'):
+                    print("HEREEEEEEE!!!!!!!!!!")
                     self._debug_saved = True
                     self._save_debug_visualization(sample, fragment.connectors[0])
 
