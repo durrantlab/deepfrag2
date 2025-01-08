@@ -506,6 +506,8 @@ class FragmentDataset(Dataset):
                 sample = (receptor, parent, fragment, entry.ligand_id, entry.frag_idx)
                 assert len(sample) == 5, "Sample size is not 5"
 
+                resp = self.transform(sample) if self.transform else sample
+
                 # Add debug visualization for first sample
                 # print(idx, hasattr(self, '_debug_saved'))
                 # if idx == 0 and not hasattr(self, '_debug_saved'):
@@ -515,8 +517,6 @@ class FragmentDataset(Dataset):
                     self._save_debug_visualization(sample, fragment.connectors[0])
                     sys.exit(0)  # Debugging, so stop immediately.
 
-                resp = self.transform(sample) if self.transform else sample
-                print("YO", resp)
                 return resp
 
             except AssertionError as e:
@@ -560,13 +560,20 @@ class FragmentDataset(Dataset):
             f.write(receptor.pdb())
         
         # Get voxel params from parent class
+        print("1")
         voxel_params = self.transform.keywords['voxel_params']
         
+        print("2")
+
         # Get the voxelized grid using the same voxelization as transform
         tensor = receptor.voxelize(voxel_params, cpu=True, center=center)
+
+        print("3")
         
         # Convert tensor to numpy
         voxel = tensor.numpy()
+
+        print("4", voxel)
         
         # Get grid parameters
         nx = ny = nz = voxel.shape[2]  # Assuming cubic grid 
