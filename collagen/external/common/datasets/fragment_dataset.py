@@ -559,31 +559,23 @@ class FragmentDataset(Dataset):
         with open(f"debug_viz/receptor.pdb", "w") as f:
             f.write(receptor.pdb())
         
-        # Run the transform on our sample to get the transformed output
-        # This should generate the voxel grids with the correct parameters
-        assert self.transform is not None, "Transform function is not defined"
-        transformed_output = self.transform(sample)
+        # Use standard DeepFrag parameters
+        from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
+        voxel_params = VoxelParamsDefault.DeepFrag
         
-        # The transformed output will have voxel grids as first element
-        if isinstance(transformed_output, tuple):
-            voxel_tensor = transformed_output[0]  # First element should be voxel grid
-        else:
-            voxel_tensor = transformed_output
-
-        # Convert to numpy and ensure we're working with CPU tensor
-        if voxel_tensor.is_cuda:
-            voxel_tensor = voxel_tensor.cpu()
-        voxel = voxel_tensor.detach().numpy()
+        # Get the voxelized grid directly from receptor
+        voxel_tensor = receptor.voxelize(voxel_params, center=center)
+        voxel = voxel_tensor.numpy()
         
-        # Get grid parameters - assuming 24Å box with 0.75Å resolution from DeepFrag defaults
+        # Get grid parameters
         nx = ny = nz = voxel.shape[2]  # Assuming cubic grid
-        spacing = 0.75  # Standard DeepFrag resolution
+        spacing = voxel_params.resolution
         origin = -(nx * spacing) / 2.0  # Center grid at origin
         
         print("DEBUG: Voxel shape:", voxel.shape)
         
         # Save each channel as DX file
-        for channel in range(voxel.shape[1]):  # Iterate over channels
+        for channel in range(voxel.shape[1]):
             grid_data = voxel[0, channel]  # First batch, each channel
             with open(f"debug_viz/channel_{channel}.dx", "w") as f:
                 f.write("object 1 class gridpositions counts %d %d %d\n" % (nx, ny, nz))
@@ -594,7 +586,6 @@ class FragmentDataset(Dataset):
                 f.write("object 2 class gridconnections counts %d %d %d\n" % (nx, ny, nz))
                 f.write("object 3 class array type double rank 0 items %d data follows\n" % (nx*ny*nz))
                 
-                # Write grid data
                 count = 0
                 for val in grid_data.flatten():
                     f.write("%.6f " % val)
@@ -604,7 +595,7 @@ class FragmentDataset(Dataset):
                 if count % 3 != 0:
                     f.write("\n")
         
-        # Save center point 
+        # Save center point
         with open(f"debug_viz/center.txt", "w") as f:
             f.write(f"x,y,z\n")
             f.write(f"{center[0]:.3f},{center[1]:.3f},{center[2]:.3f}\n")
