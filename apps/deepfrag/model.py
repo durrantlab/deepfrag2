@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 
 from collagen.external.common.types import StructureEntry
 from collagen.metrics.metrics import mse_loss
+from tests.viz_debug import save_batch_first_item_channels
 from torch import nn  # type: ignore
 import pytorch_lightning as pl  # type: ignore
 from apps.deepfrag.AggregationOperators import *
@@ -309,9 +310,11 @@ class DeepFragModel(pl.LightningModule):
         """
         voxels, fps, entry_infos = batch
 
-        # if not os.path.exists("voxels_debug"):
-
-        print("YO!", entry_infos[0])
+        if not os.path.exists("voxels_debug"):
+            save_batch_first_item_channels(
+                voxels,
+                entry_infos[0].connection_pt
+            )
             
 
         pred = self(voxels, entry_infos)
