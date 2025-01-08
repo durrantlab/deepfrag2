@@ -17,7 +17,7 @@ def save_batch_first_item_channels(
     ligid = entry_info.ligand_id
 
     os.makedirs(output_dir, exist_ok=True)
-    with open(output_dir + "/info.json", "w") as f:
+    with open(os.path.join(output_dir, "info.json"), "w") as f:
         json.dump({
             "pdbid": pdbid,
             "ligid": ligid,
@@ -30,17 +30,18 @@ def save_batch_first_item_channels(
 
     nx = ny = nz = voxel_params.width
     spacing = voxel_params.resolution
-    
-    # Since we want the grid centered at (0,0,0), simply place origin at -half_box
+
+    # Since we want the grid centered at (0,0,0), place origin at -half_box
     half_box = (nx * spacing) / 2.0
     origin_x = -half_box
-    origin_y = -half_box 
+    origin_y = -half_box
     origin_z = -half_box
-
 
     for channel in range(first_item.shape[0]):
         grid_data = first_item[channel].cpu().numpy()
-        grid_data_for_dx = np.transpose(grid_data, (2, 1, 0))
+
+        # Direct flattening with Fortran order to match DX requirements
+        grid_data_flattened = grid_data.ravel(order='F')
 
         mx = grid_data.max()
         mn = grid_data.min()
@@ -55,6 +56,6 @@ def save_batch_first_item_channels(
             f.write(f"object 2 class gridconnections counts {nx} {ny} {nz}\n")
             f.write(f"object 3 class array type double rank 0 items {nx*ny*nz} data follows\n")
 
-            for val in grid_data_for_dx.flatten():
+            for val in grid_data_flattened:
                 f.write(f"{val} ")
             print(f"Saved channel {channel} to {filename}", "mx", mx, "mn", mn)
