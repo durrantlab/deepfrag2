@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 
 from collagen.external.common.types import StructureEntry
 from collagen.metrics.metrics import mse_loss
-from tests.viz_debug import save_batch_first_item_channels
+from collagen.test.viz_debug import save_batch_first_item_channels
 from torch import nn  # type: ignore
 import pytorch_lightning as pl  # type: ignore
 from apps.deepfrag.AggregationOperators import *
