@@ -5,10 +5,13 @@ from typing import List, Optional, Tuple
 
 from collagen.external.common.types import StructureEntry
 from collagen.metrics.metrics import mse_loss
+from collagen.test.viz_debug import save_batch_first_item_channels
 from torch import nn  # type: ignore
 import pytorch_lightning as pl  # type: ignore
 from apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
+import os
+import random
 
 
 class DeepFragModel(pl.LightningModule):
@@ -41,6 +44,8 @@ class DeepFragModel(pl.LightningModule):
         self.predictions = None
         self.prediction_targets = None
         self.prediction_targets_entry_infos = None
+
+        self.debug_voxels = "debug_voxels" in kwargs
 
         # Only record the examples used for the first epoch. After first epoch,
         # add to below to stop recording. Will eventually contain "train",
@@ -308,6 +313,15 @@ class DeepFragModel(pl.LightningModule):
             torch.Tensor: The loss.
         """
         voxels, fps, entry_infos = batch
+
+        # if not os.path.exists("voxels_debug"):
+        if self.debug_voxels:
+            for i in range(len(entry_infos)):
+                save_batch_first_item_channels(
+                    voxels[i],
+                    entry_infos[i],
+                    "voxels_debug_" + str(random.randint(0, 1000000)),
+                )
 
         pred = self(voxels, entry_infos)
 
