@@ -140,6 +140,7 @@ class MOAD_target(Parent_target):
         """
         # First try loading from the cache on file (.pkl).
         cached_recep_and_ligs, pkl_filename = self._get_pdb_from_disk_cache(idx)
+
         if cached_recep_and_ligs is not None:
             return cached_recep_and_ligs
 

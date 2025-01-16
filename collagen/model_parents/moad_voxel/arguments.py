@@ -96,6 +96,13 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
         # default=None,
         help="Path to MOAD cache.json file. If not given, `.cache.json` is appended to the file path given by `--every_csv`. If 'none' (default), will create new, temporary cache with a random filename.",
     )
+
+    parser.add_argument(
+        "--debug_voxels",
+        required=False,
+        default=False,
+        help="Write voxel grid information to disk for debugging. Used for development purposes (debugging)."
+    )
     parser.add_argument(
         "--cache_pdbs_to_disk",
         # default=False,
@@ -221,4 +228,9 @@ def fix_moad_args(args: Namespace) -> Namespace:
         import tempfile
 
         args.cache = tempfile.NamedTemporaryFile().name
+
+    if args.cache_pdbs_to_disk is True and args.debug_voxels is True:
+        # Never cache pdbs if debug_voxels is on
+        args.cache_pdbs_to_disk = False
+    
     return args

@@ -110,7 +110,9 @@ class InferenceSingleComplex(Inference):
             for r in range(args.rotations):
                 print(f"    Rotation #{(r + 1)}")
 
-                rot = rand_rot()
+                # Random rotations, unless debugging voxels
+                rot = np.array([1, 0, 0, 0]) if args.debug_voxels else rand_rot()
+
                 recep_vox = recep.voxelize(
                     voxel_params, cpu=device, center=center, rot=rot
                 )

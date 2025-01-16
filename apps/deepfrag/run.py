@@ -11,6 +11,7 @@ from typing import List, Sequence, Tuple, Union
 from collagen import Mol, DelayedMolVoxel, VoxelParams
 from collagen.util import rand_rot
 from collagen.model_parents import VoxelModelParent
+import numpy as np
 
 ENTRY_T = Tuple[Mol, Mol, BackedMol, str, int]
 TMP_T = Tuple[DelayedMolVoxel, DelayedMolVoxel, torch.Tensor, StructureEntry]
@@ -49,7 +50,10 @@ class DeepFrag(VoxelModelParent):
             TMP_T: The preprocessed entry.
         """
         rec, parent, frag, ligand_id, fragment_idx = entry
-        rot = rand_rot()
+
+        # Random rotations, unless debugging voxels
+        rot = np.array([1, 0, 0, 0]) if args.debug_voxels else rand_rot()
+
         center = frag.connectors[0]
 
         payload = self._get_payload(rec, parent, frag, ligand_id, fragment_idx, center)
