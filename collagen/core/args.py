@@ -5,7 +5,6 @@ anyway.
 """
 
 import argparse
-from argparse import NameSpace
 import json
 from ..args_defaults import get_default_args
 

@@ -4,9 +4,7 @@ import numpy as np  # type: ignore
 import rdkit.Chem.AllChem as Chem  # type: ignore
 from rdkit.Chem import DataStructs  # type: ignore
 from rdkit.Chem import AllChem  # type: ignore
-from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
 import os
-import wget  # type: ignore
 import sys
 from zipfile import ZipFile
 from functools import lru_cache
@@ -22,7 +20,19 @@ PATH_MOLBERT_CKPT = os.path.join(
 )
 
 MOLBERT_MODEL = None
+try:
+    from molbert.utils.featurizer.molbert_featurizer import MolBertFeaturizer
+    HAS_MOLBERT = True
+except ImportError:
+    HAS_MOLBERT = False
+    MolBertFeaturizer = None
 
+try:
+    import wget  # type: ignore
+    HAS_WGET = True
+except ImportError:
+    HAS_WGET = False
+    wget = None
 
 def bar_progress(current: float, total: float, width=80):
     """Progress bar for downloading Molbert model.
@@ -44,6 +54,11 @@ def bar_progress(current: float, total: float, width=80):
 
 def download_molbert_ckpt():
     """Download Molbert model checkpoint."""
+    if not HAS_MOLBERT:
+        raise ImportError("molbert package is required but not installed")
+    if not HAS_WGET:
+        raise ImportError("wget package is required but not installed")
+
     global PATH_MOLBERT_CKPT
     global PATH_MOLBERT_MODEL
 
@@ -154,6 +169,9 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     Returns:
         np.array: Fingerprint.
     """
+    if not HAS_MOLBERT:
+        raise ImportError("molbert package is required for molbert fingerprints but not installed")
+
     global MOLBERT_MODEL
 
     # Make sure MOLBERT_MODEL is not None, using assert
