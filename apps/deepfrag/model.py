@@ -40,7 +40,7 @@ class DeepFragModel(pl.LightningModule):
 
         self.save_hyperparameters()
         self.aggregation = Aggregate1DTensor(operator=kwargs["aggregation_loss_vector"])
-        self.learning_rate = kwargs["learning_rate"]
+        self.learning_rate = float(kwargs["learning_rate"])
         self.predictions = None
         self.prediction_targets = None
         self.prediction_targets_entry_infos = None

@@ -99,8 +99,9 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
 
     parser.add_argument(
         "--debug_voxels",
-        required=False,
-        default=False,
+        action="store_true",
+        # required=False,
+        # default=False,
         help="Write voxel grid information to disk for debugging. Used for development purposes (debugging)."
     )
     parser.add_argument(
