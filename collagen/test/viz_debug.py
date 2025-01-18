@@ -18,6 +18,8 @@ def save_batch_first_item_channels(
     pdbid = entry_info.receptor_name.split()[-1]
     ligid = entry_info.ligand_id
 
+    print(entry_info)
+
     os.makedirs(output_dir, exist_ok=True)
     with open(os.path.join(output_dir, "info.json"), "w") as f:
         json.dump({
@@ -64,6 +66,12 @@ def save_batch_first_item_channels(
         pdb_filename = os.path.join(output_dir, f"channel_{channel}.pdb")
         with open(pdb_filename, "w") as f:
             atom_id = 1
+            # Always write a dummy atom at the center, so every channel has at
+            # least one atom. And to mark the center (branch point).
+            f.write(
+                f"HETATM{atom_id:5d}  DUM DUM A   1    {0:8.3f}{0:8.3f}{0:8.3f}  1.00  {0:6.2f}          D\n"
+            )
+
             for ix in range(nx):
                 for iy in range(ny):
                     for iz in range(nz):

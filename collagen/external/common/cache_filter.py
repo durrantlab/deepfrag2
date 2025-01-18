@@ -191,7 +191,7 @@ def get_info_given_pdb_id(payload: Tuple[str, Parent_target, CacheItemsToUpdate]
                     # Get all the fragments
                     frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
 
-            print("TTT", cache_items_to_update.frag_masses)
+            # print("TTT", cache_items_to_update.frag_masses)
             if cache_items_to_update.frag_masses:
                 lig_infs[lig_name]["frag_masses"] = _set_molecular_prop(
                     lambda f: [x[1].mass for x in f], frags, []

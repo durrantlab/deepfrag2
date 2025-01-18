@@ -190,6 +190,8 @@ class DeepFragModel(pl.LightningModule):
                 # Values ranging between 0 and 1
                 nn.Sigmoid(),
             )
+        
+        self.has_saved_some_debug_voxels = False
 
     @staticmethod
     def add_model_args(
@@ -315,13 +317,14 @@ class DeepFragModel(pl.LightningModule):
         voxels, fps, entry_infos = batch
 
         # if not os.path.exists("voxels_debug"):
-        if self.debug_voxels:
+        if self.debug_voxels and not self.has_saved_some_debug_voxels:
             for i in range(len(entry_infos)):
                 save_batch_first_item_channels(
                     voxels[i],
                     entry_infos[i],
                     "voxels_debug_" + str(random.randint(0, 1000000)),
                 )
+            self.has_saved_some_debug_voxels = True
 
         pred = self(voxels, entry_infos)
 
