@@ -16,7 +16,7 @@ import numba.cuda  # type: ignore
 import numpy as np  # type: ignore
 from collagen.core.voxelization import gen_grid_gpu
 
-from ..molecules.atom_featurizer import AtomicNumFeaturizer
+from ..molecules.atom_featurizer import AtomicNumFeaturizer, DeepFragAtomicNumFeaturizer
 from functools import lru_cache
 
 if TYPE_CHECKING:
@@ -110,7 +110,7 @@ class VoxelParamsDefault(object):
         atom_scale=1.75,
         atom_shape=VoxelParams.AtomShapeType.EXP,
         acc_type=VoxelParams.AccType.SUM,
-        atom_featurizer=AtomicNumFeaturizer([1, 6, 7, 8, 16]),
+        atom_featurizer=DeepFragAtomicNumFeaturizer([6, 7, 8, 16]),
     )
 
 
