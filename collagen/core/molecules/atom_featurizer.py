@@ -311,12 +311,12 @@ class DeepFragLigandFeaturizer(AtomFeaturizer):
         """
         # Ligand channels are 5-8
         if atomic_num == 6:  # Carbon
-            return 1 << 5
+            return 1 << 0
         elif atomic_num == 8:  # Oxygen 
-            return 1 << 6
+            return 1 << 1
         elif atomic_num == 7:  # Nitrogen
-            return 1 << 7
+            return 1 << 2
 
         # Other heavy atoms
-        return 1 << 8
+        return 1 << 3
 
