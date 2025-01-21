@@ -26,7 +26,7 @@ class DeepFrag(VoxelModelParent):
 
     """DeepFrag model."""
 
-    def __init__(self, model_cls: Type[pl.LightningModule], dataset_cls: FragmentDataset = FragmentDataset):
+    def __init__(self, model_cls: Type[pl.LightningModule], dataset_cls: FragmentDataset = FragmentDataset, num_voxel_features: int = 10):
         """Initialize the DeepFrag model parent.
 
         Args:
@@ -35,7 +35,7 @@ class DeepFrag(VoxelModelParent):
             dataset_cls (FragmentDataset): The dataset class.
                 Something like FragmentDataset.
         """
-        super().__init__(model_cls=model_cls, dataset_cls=dataset_cls)
+        super().__init__(model_cls=model_cls, dataset_cls=dataset_cls, num_voxel_features=num_voxel_features)
 
     @final
     def pre_voxelize(self, args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:

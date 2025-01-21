@@ -37,7 +37,10 @@ class DeepFragFactory:
         if df_args.esm2_model:
             df_model = MultimodalDeepFrag()
         else:
-            df_model = DeepFrag(model_cls=DeepFragModelPairedDataFinetune if df_args.paired_data_csv else DeepFragModel)
+            df_model = DeepFrag(
+                model_cls=DeepFragModelPairedDataFinetune if df_args.paired_data_csv else DeepFragModel,
+                num_voxel_features=10
+            )
 
         return df_model, df_args
 

@@ -136,11 +136,10 @@ class AtomicNumFeaturizer(AtomFeaturizer):
         """
         return len(self.layers)
 
-class DeepFragAtomicNumFeaturizer(AtomFeaturizer):
+class DeepFragReceptorFeaturizer(AtomFeaturizer):
     """A featurizer that creates voxel grids for specific atom types in receptors and ligands.
     
-    For receptors: Creates separate grids for C, O, N, S and other heavy atoms (ignores H)
-    For ligands: Creates separate grids for C, O, N and other heavy atoms (ignores H)
+    Creates separate grids for C, O, N, S and other heavy atoms (ignores H)
     """
 
     def __init__(self, layers: List[int], radii: Optional[List[float]] = None):
@@ -155,29 +154,27 @@ class DeepFragAtomicNumFeaturizer(AtomFeaturizer):
         # Validate we have the expected atom types in expected order
         assert len(layers) == 4, "Must provide exactly 4 atomic numbers: C, O, N, S"
         assert layers[0] == 6, "First atomic number must be Carbon (6)"
-        assert layers[1] == 7, "Second atomic number must be Nitrogen (7)" 
-        assert layers[2] == 8, "Third atomic number must be Oxygen (8)"
+        assert layers[1] == 8, "Third atomic number must be Oxygen (8)"
+        assert layers[2] == 7, "Second atomic number must be Nitrogen (7)" 
         assert layers[3] == 16, "Fourth atomic number must be Sulfur (16)"
 
         self.layers = layers
         
         if radii is not None:
-            assert len(radii) == 4, "Must provide exactly 4 radii values"
+            assert len(radii) == 4, "Must provide exactly 4 radii"
             self.radii = radii
         else:
             # Use van der Waals radii if none provided
             self.radii = [get_vdw_radius(num) for num in layers]
 
-        # For receptor: C, O, N, S, other (no H) = 5 channels
-        # For ligand: C, O, N, other (no H) = 4 channels
-        # Total number of channels = 9
-        self._num_features = 9
+        # C, O, N, S, other (no H) = 5 channels
+        self._num_features = 5
 
     def size(self) -> int:
         """Return the number of features produced by this featurizer.
         
         Returns:
-            int: The number of features (9 total - 5 receptor + 4 ligand channels)
+            int: The number of features
         """
         return self._num_features
 
@@ -205,46 +202,121 @@ class DeepFragAtomicNumFeaturizer(AtomFeaturizer):
         # Get radius - use van der Waals if not one of our specific atoms
         radius = self.radii[self.layers.index(atomic_num)] if atomic_num in self.layers else get_vdw_radius(atomic_num)
         
-        # Check if this is a receptor atom based on the molecule metadata
-        # This is handled in _get_mask()
-        is_receptor = hasattr(atom, "GetOwningMol") and "Receptor" in getattr(atom.GetOwningMol(), "meta", {}).get("name", "")
-        
         # Initialize mask to 0
-        mask = self._get_mask(atomic_num, is_receptor)
+        mask = self._get_mask(atomic_num)
             
         return (mask, radius)
 
-    def _get_mask(self, atomic_num: int, is_receptor: bool) -> int:
+    def _get_mask(self, atomic_num: int) -> int:
         """Helper method to get the appropriate channel mask for an atom.
         
         Args:
             atomic_num (int): The atomic number
-            is_receptor (bool): Whether this is a receptor atom
             
         Returns:
             int: The channel mask for this atom
         """
-        if is_receptor:
-            # Receptor channels are 0-4
-            if atomic_num == 6:  # Carbon
-                return 1 << 0
-            elif atomic_num == 8:  # Oxygen
-                return 1 << 1
-            elif atomic_num == 7:  # Nitrogen
-                return 1 << 2
-            elif atomic_num == 16:  # Sulfur
-                return 1 << 3
-            else:
-                # Other heavy atoms
-                return 1 << 4
+        # if is_receptor:
+        # Receptor channels are 0-4
+        if atomic_num == 6:  # Carbon
+            return 1 << 0
+        elif atomic_num == 8:  # Oxygen
+            return 1 << 1
+        elif atomic_num == 7:  # Nitrogen
+            return 1 << 2
+        elif atomic_num == 16:  # Sulfur
+            return 1 << 3
+
+        # Other heavy atoms
+        return 1 << 4
+
+class DeepFragLigandFeaturizer(AtomFeaturizer):
+    """A featurizer that creates voxel grids for specific atom types in receptors and ligands.
+    
+    Creates separate grids for C, O, N and other heavy atoms (ignores H)
+    """
+
+    def __init__(self, layers: List[int], radii: Optional[List[float]] = None):
+        """Initialize the featurizer with atom types and radii.
+
+        Args:
+            layers (List[int]): Must contain the atomic numbers in order:
+                [6, 8, 7] (C, O, N) for proper channel assignment
+            radii (Optional[List[float]]): Optional list of radii for the atoms.
+                If not provided, van der Waals radii will be used.
+        """
+        # Validate we have the expected atom types in expected order
+        assert len(layers) == 3, "Must provide exactly 4 atomic numbers: C, O, N, S"
+        assert layers[0] == 6, "First atomic number must be Carbon (6)"
+        assert layers[1] == 8, "Third atomic number must be Oxygen (8)"
+        assert layers[2] == 7, "Second atomic number must be Nitrogen (7)" 
+
+        self.layers = layers
+        
+        if radii is not None:
+            assert len(radii) == 3, "Must provide exactly 3 radii"
+            self.radii = radii
         else:
-            # Ligand channels are 5-8
-            if atomic_num == 6:  # Carbon
-                return 1 << 5
-            elif atomic_num == 8:  # Oxygen 
-                return 1 << 6
-            elif atomic_num == 7:  # Nitrogen
-                return 1 << 7
-            else:
-                # Other heavy atoms
-                return 1 << 8
+            # Use van der Waals radii if none provided
+            self.radii = [get_vdw_radius(num) for num in layers]
+
+        # C, O, N, other (no H) = 4 channels
+        self._num_features = 4
+
+    def size(self) -> int:
+        """Return the number of features produced by this featurizer.
+        
+        Returns:
+            int: The number of features
+        """
+        return self._num_features
+
+    def featurize(self, atom: Union["rdkit.Chem.rdchem.Atom", "AbstractAtom"]) -> Tuple[int, float]:
+        """Feature an atom.
+
+        Args:
+            atom (Union[rdkit.Chem.rdchem.Atom, AbstractAtom]): The atom to featurize
+
+        Returns:
+            Tuple[int, float]: (bitmask, atom_radius)
+        """
+        # Get atomic number
+        if isinstance(atom, rdkit.Chem.rdchem.Atom):
+            atomic_num = atom.GetAtomicNum()
+        elif isinstance(atom, AbstractAtom):
+            atomic_num = atom.num
+        else:
+            raise ValueError(f"Unknown atom type: {type(atom)}")
+
+        # Skip hydrogen atoms
+        if atomic_num == 1:
+            return (0, 0)
+
+        # Get radius - use van der Waals if not one of our specific atoms
+        radius = self.radii[self.layers.index(atomic_num)] if atomic_num in self.layers else get_vdw_radius(atomic_num)
+        
+        # Initialize mask to 0
+        mask = self._get_mask(atomic_num)
+            
+        return (mask, radius)
+
+    def _get_mask(self, atomic_num: int) -> int:
+        """Helper method to get the appropriate channel mask for an atom.
+        
+        Args:
+            atomic_num (int): The atomic number
+            
+        Returns:
+            int: The channel mask for this atom
+        """
+        # Ligand channels are 5-8
+        if atomic_num == 6:  # Carbon
+            return 1 << 5
+        elif atomic_num == 8:  # Oxygen 
+            return 1 << 6
+        elif atomic_num == 7:  # Nitrogen
+            return 1 << 7
+
+        # Other heavy atoms
+        return 1 << 8
+

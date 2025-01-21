@@ -36,6 +36,7 @@ class VoxelModelParent:
         self,
         model_cls: Type[pl.LightningModule],
         dataset_cls: FragmentDataset,
+        num_voxel_features: int = 10
     ):
         """Initialize the model parent.
 
@@ -44,6 +45,7 @@ class VoxelModelParent:
                 like DeepFragModelSDFData or DeepFragModel.
             dataset_cls (FragmentDataset): The dataset class.
                 Something like FragmentDataset.
+            num_voxel_features (int): The number of voxel features. Defaults to 10.
         """
         self.inits = VoxelModelInits(self)
         self.train = VoxelModelTrain(self)
@@ -53,6 +55,8 @@ class VoxelModelParent:
         self.utils = VoxelModelUtils(self)
 
         self.model_cls = model_cls
+        self.num_voxel_features = num_voxel_features
+
         self.dataset_cls = dataset_cls
 
         self.utils.disable_warnings()

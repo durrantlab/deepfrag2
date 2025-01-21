@@ -110,7 +110,7 @@ class VoxelModelInits(object):
             pl.LightningModule: The model.
         """
         if not ckpt_filename:
-            return self.parent.model_cls(**vars(args))
+            return self.parent.model_cls(**vars(args), num_voxel_features=self.parent.num_voxel_features)
 
         print(f"\nLoading model from checkpoint {ckpt_filename}\n")
         model = self.parent.model_cls.load_from_checkpoint(ckpt_filename)
@@ -165,7 +165,7 @@ class VoxelModelInits(object):
         Returns:
             pl.LightningModule: The model.
         """
-        model = self.parent.model_cls(**vars(args))
+        model = self.parent.model_cls(**vars(args), num_voxel_features=self.parent.num_voxel_features)
         state_dict = torch.load(args.model_for_warm_starting)
         model.load_state_dict(state_dict)
         if isinstance(data_interface, PairedCsvInterface) and isinstance(model, DeepFragModelPairedDataFinetune):

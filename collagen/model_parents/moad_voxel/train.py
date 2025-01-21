@@ -47,7 +47,7 @@ class VoxelModelTrain(object):
 
         model = self.parent.inits.init_model(args, ckpt_filename)
 
-        model_stats = summary(model, (16, 10, 24, 24, 24), verbose=0)
+        model_stats = summary(model, (16, self.parent.num_voxel_features, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
         print(summary_str)
 
@@ -66,7 +66,7 @@ class VoxelModelTrain(object):
 
         model = self.parent.inits.init_warm_model(args, data_interface)
 
-        model_stats = summary(model, (16, 10, 24, 24, 24), verbose=0)
+        model_stats = summary(model, (16, self.parent.num_voxel_features, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
         print(summary_str)
 

@@ -435,6 +435,7 @@ class Mol(object):
         grid = numba_ptr(tensor, cpu=cpu)
         assert params.atom_featurizer is not None, "Atom featurizer is None"
         atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
+
         mol_gridify(
             grid=grid,
             atom_coords=self.coords,
@@ -477,6 +478,13 @@ class Mol(object):
         params.validate()
         assert params.atom_featurizer is not None, "Atom featurizer is None"
         atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
+
+        with open("debug.txt", "a") as f:
+            f.write(f"atom_mask: {atom_mask}\n")
+            f.write(f"atom_radii: {atom_radii}\n")
+            f.write("\n\n")
+
+
         return DelayedMolVoxel(
             atom_coords=self.coords,
             atom_mask=atom_mask,

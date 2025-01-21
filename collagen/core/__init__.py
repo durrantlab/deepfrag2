@@ -11,7 +11,7 @@ __all__ = [
     "VoxelParamsDefault",
     "AtomFeaturizer",
     "AtomicNumFeaturizer",
-    "DeepFragAtomicNumFeaturizer",
+    "DeepFragReceptorFeaturizer",
     "AnyAtom",
     "MultiLoader",
     # "GraphMol",
@@ -20,7 +20,7 @@ __all__ = [
 from .molecules.mol import Mol, BackedMol, DelayedMolVoxel
 from .molecules.abstract_mol import AbstractMol, AbstractAtom, AbstractBond
 from .voxelization.voxelizer import VoxelParams, VoxelParamsDefault
-from .molecules.atom_featurizer import AtomFeaturizer, AtomicNumFeaturizer, DeepFragAtomicNumFeaturizer
+from .molecules.atom_featurizer import AtomFeaturizer, AtomicNumFeaturizer, DeepFragReceptorFeaturizer
 from .types import AnyAtom
 from .loader import MultiLoader
 
