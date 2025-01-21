@@ -39,7 +39,7 @@ class DeepFragFactory:
         else:
             df_model = DeepFrag(
                 model_cls=DeepFragModelPairedDataFinetune if df_args.paired_data_csv else DeepFragModel,
-                num_voxel_features=10
+                num_voxel_features=9   # TODO: Hardcode this?
             )
 
         return df_model, df_args

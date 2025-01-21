@@ -390,6 +390,7 @@ class Mol(object):
         params: "VoxelParams",
         cpu: bool = False,
         layer_offset: int = 0,
+        is_receptor: bool = True,
         center: "np.ndarray" = None,
         rot: "np.ndarray" = np.array([0, 0, 0, 1]),
     ):
@@ -426,6 +427,8 @@ class Mol(object):
             cpu (bool): If True, will force computation to run on the CPU.
             layer_offset (int): An optional integer specifying a start layer
                 for voxelation.
+            is_receptor (bool): Whether this molecule is a receptor (True) or
+                ligand (False)
             center (numpy.ndarray): A size 3 array containing the (x,y,z)
                 coordinate of the grid center. If not specified, will use the
                 center of the molecule.
@@ -433,8 +436,12 @@ class Mol(object):
                 describing a grid rotation.
         """
         grid = numba_ptr(tensor, cpu=cpu)
-        assert params.atom_featurizer is not None, "Atom featurizer is None"
-        atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
+
+        # Select appropriate featurizer based on molecule type
+        featurizer = params.receptor_featurizer if is_receptor else params.ligand_featurizer
+        assert featurizer is not None, f"{'Receptor' if is_receptor else 'Ligand'} featurizer is None"
+        
+        atom_mask, atom_radii = featurizer.featurize_mol(self)
 
         mol_gridify(
             grid=grid,
@@ -458,6 +465,7 @@ class Mol(object):
         params: "VoxelParams",
         center: "np.ndarray" = None,
         rot: "np.ndarray" = np.array([0, 0, 0, 1]),
+        is_receptor: bool = True,
     ) -> "DelayedMolVoxel":
         """Pre-compute voxelation parameters without actually invoking
         ``voxelize``.
@@ -470,20 +478,25 @@ class Mol(object):
                 center of the molecule.
             rot (numpy.ndarray): A size 4 quaternion in form (x,y,z,w)
                 describing a grid rotation.
+            is_receptor (bool): Whether this molecule is a receptor (True) or
+                ligand (False)
 
         Returns:
             DelayedMolVoxel: An ephemeral, minimal Mol object with pre-computed
                 voxelation arguments.
         """
         params.validate()
-        assert params.atom_featurizer is not None, "Atom featurizer is None"
-        atom_mask, atom_radii = params.atom_featurizer.featurize_mol(self)
+        assert params.receptor_featurizer is not None, "Receptor featurizer is None"
+        assert params.ligand_featurizer is not None, "Ligand featurizer is None"
 
-        with open("debug.txt", "a") as f:
-            f.write(f"atom_mask: {atom_mask}\n")
-            f.write(f"atom_radii: {atom_radii}\n")
-            f.write("\n\n")
+        featurizer = params.receptor_featurizer if is_receptor else params.ligand_featurizer
 
+        atom_mask, atom_radii = featurizer.featurize_mol(self)
+
+        # with open("debug.txt", "a") as f:
+        #     f.write(f"atom_mask: {atom_mask}\n")
+        #     f.write(f"atom_radii: {atom_radii}\n")
+        #     f.write("\n\n")
 
         return DelayedMolVoxel(
             atom_coords=self.coords,

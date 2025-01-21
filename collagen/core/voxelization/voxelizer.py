@@ -16,7 +16,7 @@ import numba.cuda  # type: ignore
 import numpy as np  # type: ignore
 from collagen.core.voxelization import gen_grid_gpu
 
-from ..molecules.atom_featurizer import AtomicNumFeaturizer, DeepFragReceptorFeaturizer
+from ..molecules.atom_featurizer import DeepFragLigandFeaturizer, DeepFragReceptorFeaturizer
 from functools import lru_cache
 
 if TYPE_CHECKING:
@@ -43,8 +43,9 @@ class VoxelParams(object):
             sampling function.
         acc_type: (VoxelParams.AccType): Describes how overlapping atomic
             densities are handled.
-        atom_featurizer (AtomFeaturizer): An atom featurizer that describes how
-            to assign atoms to layers.
+        receptor_featurizer (AtomFeaturizer): An atom featurizer for receptor
+            atoms.
+        ligand_featurizer (AtomFeaturizer): An atom featurizer for ligand atoms.
     """
 
     class AtomShapeType(Enum):
@@ -70,7 +71,10 @@ class VoxelParams(object):
     atom_scale: float = 1
     atom_shape: AtomShapeType = AtomShapeType.EXP
     acc_type: AccType = AccType.SUM
-    atom_featurizer: Optional[
+    receptor_featurizer: Optional[
+        "collagen.core.molecules.atom_featurizer.AtomFeaturizer"
+    ] = None
+    ligand_featurizer: Optional[
         "collagen.core.molecules.atom_featurizer.AtomFeaturizer"
     ] = None
     calc_voxels: bool = True
@@ -79,7 +83,8 @@ class VoxelParams(object):
     def validate(self):
         """Validate the VoxelParams object."""
         assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
-        assert self.atom_featurizer is not None, "atom_featurizer must not be None"
+        assert self.receptor_featurizer is not None, "receptor_featurizer must not be None"
+        assert self.ligand_featurizer is not None, "ligand_featurizer must not be None"
 
     def tensor_size(self, batch=1, feature_mult=1) -> Tuple[int, int, int, int, int]:
         """Compute the required tensor size given the voxel parameters.
@@ -93,9 +98,14 @@ class VoxelParams(object):
         Returns:
             Tuple[int, int, int, int, int]: The tensor size.
         """
-        assert self.atom_featurizer is not None, "atom_featurizer must not be None"
+        assert self.receptor_featurizer is not None, "receptor_featurizer must not be None"
+        assert self.ligand_featurizer is not None, "ligand_featurizer must not be None" 
 
-        N = self.atom_featurizer.size() * feature_mult
+        # N = self.atom_featurizer.size() * feature_mult
+        # W = self.width
+        # return (batch, N, W, W, W)
+    
+        N = (self.receptor_featurizer.size() + self.ligand_featurizer.size()) * feature_mult
         W = self.width
         return (batch, N, W, W, W)
 
@@ -110,7 +120,9 @@ class VoxelParamsDefault(object):
         atom_scale=1.75,
         atom_shape=VoxelParams.AtomShapeType.EXP,
         acc_type=VoxelParams.AccType.SUM,
-        atom_featurizer=DeepFragReceptorFeaturizer([6, 8, 7, 16]),
+        # atom_featurizer=DeepFragReceptorFeaturizer([6, 8, 7, 16]),
+        receptor_featurizer=DeepFragReceptorFeaturizer([6, 8, 7, 16]),
+        ligand_featurizer=DeepFragLigandFeaturizer([6, 8, 7])
     )
 
 

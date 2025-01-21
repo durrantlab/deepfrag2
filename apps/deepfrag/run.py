@@ -59,8 +59,8 @@ class DeepFrag(VoxelModelParent):
         payload = self._get_payload(rec, parent, frag, ligand_id, fragment_idx, center)
 
         return (
-            rec.voxelize_delayed(voxel_params, center=center, rot=rot),
-            parent.voxelize_delayed(voxel_params, center=center, rot=rot),
+            rec.voxelize_delayed(voxel_params, center=center, rot=rot, is_receptor=True),
+            parent.voxelize_delayed(voxel_params, center=center, rot=rot, is_receptor=False),
             _fingerprint_fn(args, frag),
             payload,
         )
@@ -98,7 +98,7 @@ class DeepFrag(VoxelModelParent):
         """
         voxels = (
             torch.zeros(
-                size=voxel_params.tensor_size(batch=len(batch), feature_mult=2),
+                size=voxel_params.tensor_size(batch=len(batch), feature_mult=1),
                 device=device,
             )
             if voxel_params.calc_voxels
@@ -123,14 +123,18 @@ class DeepFrag(VoxelModelParent):
 
                 # atom_featurizer must not be None
                 assert (
-                    voxel_params.atom_featurizer is not None
-                ), "Atom featurizer is None"
+                    voxel_params.receptor_featurizer is not None
+                ), "Receptor featurizer is None"
+
+                assert(
+                    voxel_params.ligand_featurizer is not None
+                ), "Ligand featurizer is None"
 
                 parent.voxelize_into(
                     voxels,
                     batch_idx=i,
-                    layer_offset=voxel_params.atom_featurizer.size(),
-                    cpu=(device.type == "cpu"),
+                    layer_offset=voxel_params.receptor_featurizer.size(),
+                    cpu=(device.type == "cpu")
                 )
 
             if voxel_params.calc_fps:
