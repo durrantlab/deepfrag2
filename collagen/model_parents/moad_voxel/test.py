@@ -381,7 +381,7 @@ class VoxelModelTest(object):
                 The PCA space, the predictions (all zeros), the label set
                 fingerprints, and the label set entry infos.
         """
-        voxel_params = self.parent.inits.init_voxel_params(args)
+        voxel_params = self.parent.voxel_params
 
         # Get the label set to use. Note that it only does this once (for the
         # first-checkpoint model), but I need model so I'm leaving it in the
@@ -741,7 +741,7 @@ class VoxelModelTest(object):
             f"Using the operator {args.aggregation_rotations} to aggregate the inferences."
         )
 
-        voxel_params = self.parent.inits.init_voxel_params(args)
+        voxel_params = self.parent.voxel_params
         device = self.parent.inits.init_device(args)
 
         data_interface, set2run_test_on_single_checkpoint = self._read_datasets_to_run_test(

@@ -91,7 +91,7 @@ class VoxelModelTrain(object):
         if args.custom_test_set_dir:
             raise Exception("The custom test set can only be used in inference mode")
 
-        voxel_params = self.parent.inits.init_voxel_params(args)
+        voxel_params = self.parent.voxel_params
         device = self.parent.inits.init_device(args)
 
         if not finetuning:

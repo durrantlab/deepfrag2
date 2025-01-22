@@ -81,7 +81,7 @@ class InferenceSingleComplex(Inference):
         pr = cProfile.Profile()
         pr.enable()
 
-        voxel_params = self.parent.inits.init_voxel_params(args)
+        voxel_params = self.parent.voxel_params
         device = self.parent.inits.init_device(args)
 
         # Load the receptor
@@ -114,9 +114,9 @@ class InferenceSingleComplex(Inference):
                 rot = np.array([1, 0, 0, 0]) if args.debug_voxels else rand_rot()
 
                 recep_vox = recep.voxelize(
-                    voxel_params, cpu=device, center=center, rot=rot
+                    cpu=device, center=center, rot=rot
                 )
-                lig_vox = lig.voxelize(voxel_params, cpu=device, center=center, rot=rot)
+                lig_vox = lig.voxelize(cpu=device, center=center, rot=rot)
 
                 # Stack the receptor and ligand tensors
                 num_features = recep_vox.shape[1] + lig_vox.shape[1]

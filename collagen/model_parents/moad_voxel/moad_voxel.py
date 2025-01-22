@@ -34,20 +34,24 @@ class VoxelModelParent:
 
     def __init__(
         self,
+        args: Namespace,
         model_cls: Type[pl.LightningModule],
         dataset_cls: FragmentDataset,
-        num_voxel_features: int = 10
     ):
         """Initialize the model parent.
 
         Args:
+            args (Namespace): The arguments parsed by argparse.
             model_cls (Type[pl.LightningModule]): The model class. Soemthing
                 like DeepFragModelSDFData or DeepFragModel.
             dataset_cls (FragmentDataset): The dataset class.
                 Something like FragmentDataset.
-            num_voxel_features (int): The number of voxel features. Defaults to 10.
         """
         self.inits = VoxelModelInits(self)
+
+        self.voxel_params = self.inits.init_voxel_params(args)
+        self.num_voxel_features = self.voxel_params.receptor_featurizer.size() + self.voxel_params.ligand_featurizer.size()
+
         self.train = VoxelModelTrain(self)
         self.test = VoxelModelTest(self)
         self.inference_single_complex = InferenceSingleComplex(self)
@@ -55,7 +59,6 @@ class VoxelModelParent:
         self.utils = VoxelModelUtils(self)
 
         self.model_cls = model_cls
-        self.num_voxel_features = num_voxel_features
 
         self.dataset_cls = dataset_cls
 
@@ -86,13 +89,12 @@ class VoxelModelParent:
         """
         return arguments.fix_moad_args(args)
 
-    def pre_voxelize(self, args: Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:
+    def pre_voxelize(self, args: Namespace, entry: ENTRY_T) -> TMP_T:
         """Preprocess the entry before voxelization. Should be overwritten by
         child class.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
-            voxel_params (VoxelParams): The voxelization parameters.
             entry (ENTRY_T): The entry to preprocess.
 
         Returns:
@@ -100,13 +102,12 @@ class VoxelModelParent:
         """
         raise NotImplementedError()
 
-    def voxelize(self, args: Namespace, voxel_params: VoxelParams, device: torch.device,
+    def voxelize(self, args: Namespace, device: torch.device,
                  batch: Sequence[TMP_T], ) -> OUT_T:
         """Voxelize the batch. Should be overwritten by child class.
 
         Args:
             args (Namespace): The arguments parsed by argparse.
-            voxel_params (VoxelParams): The voxelization parameters.
             device (torch.device): The device to use.
             batch (List[TMP_T]): The batch to voxelize.
 

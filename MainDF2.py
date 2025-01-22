@@ -38,9 +38,8 @@ class DeepFragFactory:
             df_model = MultimodalDeepFrag()
         else:
             df_model = DeepFrag(
+                args=df_args, 
                 model_cls=DeepFragModelPairedDataFinetune if df_args.paired_data_csv else DeepFragModel,
-                TODO: Hardcode this?
-                num_voxel_features=9
             )
 
         return df_model, df_args

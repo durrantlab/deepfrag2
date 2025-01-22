@@ -26,24 +26,24 @@ class DeepFrag(VoxelModelParent):
 
     """DeepFrag model."""
 
-    def __init__(self, model_cls: Type[pl.LightningModule], dataset_cls: FragmentDataset = FragmentDataset, num_voxel_features: int = 10):
+    def __init__(self, args: argparse.Namespace, model_cls: Type[pl.LightningModule], dataset_cls: FragmentDataset = FragmentDataset):
         """Initialize the DeepFrag model parent.
 
         Args:
+            args (Namespace): The arguments parsed by argparse.
             model_cls (Type[pl.LightningModule]): The model class. Soemthing
                 like DeepFragModelSDFData or DeepFragModel.
             dataset_cls (FragmentDataset): The dataset class.
                 Something like FragmentDataset.
         """
-        super().__init__(model_cls=model_cls, dataset_cls=dataset_cls, num_voxel_features=num_voxel_features)
+        super().__init__(args, model_cls=model_cls, dataset_cls=dataset_cls)
 
     @final
-    def pre_voxelize(self, args: argparse.Namespace, voxel_params: VoxelParams, entry: ENTRY_T) -> TMP_T:
+    def pre_voxelize(self, args: argparse.Namespace, entry: ENTRY_T) -> TMP_T:
         """Preprocess the entry before voxelization.
         
         Args:
             args (argparse.Namespace): The arguments parsed by argparse.
-            voxel_params (VoxelParams): The voxelization parameters.
             entry (ENTRY_T): The entry to preprocess.
             
         Returns:
@@ -59,8 +59,8 @@ class DeepFrag(VoxelModelParent):
         payload = self._get_payload(rec, parent, frag, ligand_id, fragment_idx, center)
 
         return (
-            rec.voxelize_delayed(voxel_params, center=center, rot=rot, is_receptor=True),
-            parent.voxelize_delayed(voxel_params, center=center, rot=rot, is_receptor=False),
+            rec.voxelize_delayed(self.voxel_params, center=center, rot=rot, is_receptor=True),
+            parent.voxelize_delayed(self.voxel_params, center=center, rot=rot, is_receptor=False),
             _fingerprint_fn(args, frag),
             payload,
         )
@@ -83,13 +83,12 @@ class DeepFrag(VoxelModelParent):
         )
 
     @final
-    def voxelize(self, args: argparse.Namespace, voxel_params: VoxelParams, device: torch.device,
+    def voxelize(self, args: argparse.Namespace, device: torch.device,
                  batch: Sequence[TMP_T], ) -> OUT_T:
         """Voxelize the batch.
         
         Args:
             args (argparse.Namespace): The arguments parsed by argparse.
-            voxel_params (VoxelParams): The voxelization parameters.
             device (torch.device): The device to use.
             batch (List[TMP_T]): The batch to voxelize.
             
@@ -98,16 +97,16 @@ class DeepFrag(VoxelModelParent):
         """
         voxels = (
             torch.zeros(
-                size=voxel_params.tensor_size(batch=len(batch), feature_mult=1),
+                size=self.voxel_params.tensor_size(batch=len(batch), feature_mult=1),
                 device=device,
             )
-            if voxel_params.calc_voxels
+            if self.voxel_params.calc_voxels
             else None
         )
 
         fingerprints: Union[torch.Tensor, None] = (
             torch.zeros(size=(len(batch), args.fp_size), device=device)
-            if voxel_params.calc_fps
+            if self.voxel_params.calc_fps
             else None
         )
 
@@ -116,28 +115,28 @@ class DeepFrag(VoxelModelParent):
         for i in range(len(batch)):
             rec, parent, frag, smi = batch[i]
 
-            if voxel_params.calc_voxels:
+            if self.voxel_params.calc_voxels:
                 rec.voxelize_into(
                     voxels, batch_idx=i, layer_offset=0, cpu=(device.type == "cpu")
                 )
 
                 # atom_featurizer must not be None
                 assert (
-                    voxel_params.receptor_featurizer is not None
+                    self.voxel_params.receptor_featurizer is not None
                 ), "Receptor featurizer is None"
 
                 assert(
-                    voxel_params.ligand_featurizer is not None
+                    self.voxel_params.ligand_featurizer is not None
                 ), "Ligand featurizer is None"
 
                 parent.voxelize_into(
                     voxels,
                     batch_idx=i,
-                    layer_offset=voxel_params.receptor_featurizer.size(),
+                    layer_offset=self.voxel_params.receptor_featurizer.size(),
                     cpu=(device.type == "cpu")
                 )
 
-            if voxel_params.calc_fps:
+            if self.voxel_params.calc_fps:
                 # Make sure fingerprint is not None
                 assert fingerprints is not None, "Fingerprint tensor is None"
                 fingerprints[i] = frag

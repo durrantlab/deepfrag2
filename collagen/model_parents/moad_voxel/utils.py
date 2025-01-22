@@ -73,7 +73,7 @@ class VoxelModelUtils(object):
             split=split,
             transform=(
                 lambda entry: self.parent.pre_voxelize(
-                    args, voxel_params, entry
+                    args, entry
                 )
             ),
             args=args,
@@ -92,7 +92,7 @@ class VoxelModelUtils(object):
             # voxel_params.frag_fpts_only = True
             .map(
                 lambda batch: self.parent.voxelize(
-                    args, voxel_params, device, batch
+                    args, device, batch
                 )
             )
         )
