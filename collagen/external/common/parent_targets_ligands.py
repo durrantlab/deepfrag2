@@ -78,7 +78,7 @@ class Parent_target(ABC):
             except Exception as e:
                 # If there's an error loading the pickle file, regenerate the
                 # pickle file
-                print(f"Error loading pkl: {str(e)}", file=sys.stderr)
+                print(f"Error loading pkl {pkl_filename}: {str(e)}", file=sys.stderr)
 
         return None, pkl_filename
 
@@ -109,12 +109,21 @@ class Parent_target(ABC):
 
             # Create prody molecule.
             m = prody.parsePDBStream(StringIO(pdb_txt), model=1)
+
         else:
             # Not caching, so just load the file without preprocessing.
             with open(self.files[idx], "r") as f:
-                m = prody.parsePDBStream(
-                    f, model=1
-                )  # model=1 not necessary, but just in case...
+                # model=1 not necessary, but just in case...
+                m = prody.parsePDBStream(f, model=1)
+
+        if m is None:
+            with open("debug.txt", "a") as f:
+                # print("Error loading PDB file", self.cache_pdbs_to_disk, self.files[idx])
+                # print(pdb_txt)
+                f.write(f"Error loading PDB file {self.cache_pdbs_to_disk} {self.files[idx]}\n")
+                f.write(pdb_txt + "\n")
+            
+
         return m
 
     @abstractmethod

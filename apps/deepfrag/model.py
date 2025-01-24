@@ -45,7 +45,7 @@ class DeepFragModel(pl.LightningModule):
         self.prediction_targets = None
         self.prediction_targets_entry_infos = None
 
-        self.debug_voxels = "debug_voxels" in kwargs
+        self.debug_voxels = kwargs["debug_voxels"] if "debug_voxels" in kwargs else False
 
         # Only record the examples used for the first epoch. After first epoch,
         # add to below to stop recording. Will eventually contain "train",
@@ -432,6 +432,8 @@ class DeepFragModel(pl.LightningModule):
                 training_step(), or if there are multiple dataloaders, a list
                 containing a list of outputs for each dataloader.
         """
+        with open("debug.txt", "a") as f: f.write(f"start training_epoch_end\n")
+
         self._examples_used_stop_recording.add("train")
 
         # See https://github.com/Lightning-AI/lightning/issues/2110
@@ -445,6 +447,8 @@ class DeepFragModel(pl.LightningModule):
         except Exception:
             self.log("loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
 
+        with open("debug.txt", "a") as f: f.write(f"end training_epoch_end\n")
+
     def validation_epoch_end(self, outputs: List[dict]):
         """Run at the end of the validation epoch with the outputs of all
             validation steps. Logs the info.
@@ -454,6 +458,7 @@ class DeepFragModel(pl.LightningModule):
                 validation_step(), or if there are multiple dataloaders, a
                 list containing a list of outputs for each dataloader.
         """
+        with open("debug.txt", "a") as f: f.write(f"start validation_epoch_end\n")
         self._examples_used_stop_recording.add("val")
 
         # See https://github.com/Lightning-AI/lightning/issues/2110
@@ -469,6 +474,7 @@ class DeepFragModel(pl.LightningModule):
             self.log(
                 "val_loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1}
             )
+        with open("debug.txt", "a") as f: f.write(f"end validation_epoch_end\n")
 
     def test_epoch_end(
         self, results: List[Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]]
@@ -479,6 +485,7 @@ class DeepFragModel(pl.LightningModule):
             results (List[Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]]): The
                 results from all batches.
         """
+        with open("debug.txt", "a") as f: f.write(f"start test_epoch_end\n")
         self._examples_used_stop_recording.add("test")
 
         predictions = torch.cat([x[0] for x in results])
@@ -514,6 +521,7 @@ class DeepFragModel(pl.LightningModule):
         self.predictions = predictions
         self.prediction_targets = prediction_targets
         self.prediction_targets_entry_infos = prediction_targets_entry_infos
+        with open("debug.txt", "a") as f: f.write(f"end test_epoch_end\n")
 
     def _mark_example_as_used(self, lbl: str, entry_infos: List[StructureEntry]):
         """Mark the example as used.

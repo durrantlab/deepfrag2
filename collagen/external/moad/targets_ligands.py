@@ -147,6 +147,10 @@ class MOAD_target(Parent_target):
         # Loading from cache didn't work. Load from PDB file instead (slower).
         m = self._load_pdb(idx)
 
+        if m is None:
+            print(f"Error loading PDB, will skip: {self.files[idx]}", file=sys.stderr)
+            return None, None
+
         not_part_of_protein_sels = []
         lig_sels = []
         lig_mols: List[BackedMol] = []
