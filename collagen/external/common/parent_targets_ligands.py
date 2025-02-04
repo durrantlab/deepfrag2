@@ -89,43 +89,53 @@ class Parent_target(ABC):
         # previous cached PDB you can use, or that cached file is corrupted. So
         # loading from original PDB file (slower).
         prody.LOGGER._logger.disabled = True
-        if self.cache_pdbs_to_disk:
-            # To improve caching, consider only lines that start with ATOM or
-            # HETATM, etc. This makes files smaller and speeds pickling a bit.
-            with open(self.files[idx]) as f:
-                lines = [
-                    l
-                    # Seems being that readLines() is necessary to run on Windows
-                    for l in f.readlines()
-                    if l.startswith("ATOM")
-                    or l.startswith("HETATM")
-                    or l.startswith("MODEL")
-                    or l.startswith("END")
-                ]
-            pdb_txt = "".join(lines)
+        pdb_txt = None
 
-            # Also, keep only the first model.
-            pdb_txt = pdb_txt.split("ENDMDL")[0]
+        try:
+            if self.cache_pdbs_to_disk:
+                # To improve caching, consider only lines that start with ATOM or
+                # HETATM, etc. This makes files smaller and speeds pickling a bit.
+                with open(self.files[idx]) as f:
+                    lines = [
+                        l
+                        # Seems being that readLines() is necessary to run on Windows
+                        for l in f.readlines()
+                        if l.startswith("ATOM")
+                        or l.startswith("HETATM")
+                        or l.startswith("MODEL")
+                        or l.startswith("END")
+                    ]
+                pdb_txt = "".join(lines)
 
-            # Create prody molecule.
-            m = prody.parsePDBStream(StringIO(pdb_txt), model=1)
+                # Also, keep only the first model.
+                pdb_txt = pdb_txt.split("ENDMDL")[0]
 
-        else:
-            # Not caching, so just load the file without preprocessing.
-            with open(self.files[idx], "r") as f:
-                # model=1 not necessary, but just in case...
-                m = prody.parsePDBStream(f, model=1)
+                # Create prody molecule.
+                m = prody.parsePDBStream(StringIO(pdb_txt), model=1)
 
-        if m is None:
+            else:
+                # Not caching, so just load the file without preprocessing.
+                with open(self.files[idx], "r") as f:
+                    # model=1 not necessary, but just in case...
+                    m = prody.parsePDBStream(f, model=1)
+            
+            if m is None:
+                raise RuntimeError(f"ProDy failed to parse PDB file {self.files[idx]}")
+                
+            return m
+
+        except Exception as e:
             with open("debug.txt", "a") as f:
                 # print("Error loading PDB file", self.cache_pdbs_to_disk, self.files[idx])
                 # print(pdb_txt)
                 f.write(f"Error loading PDB file {self.cache_pdbs_to_disk} {self.files[idx]}\n")
-                f.write(pdb_txt + "\n")
-            
+                if pdb_txt:
+                    f.write(pdb_txt + "\n")
+                f.write(f"Exception: {str(e)}\n")                
 
-        return m
-
+            # Re-raise to be handled by caller
+            raise RuntimeError(f"Failed to load PDB file {self.files[idx]}: {str(e)}")
+        
     @abstractmethod
     def _get_lig_from_prody_mol(self, lig_atoms, lig) -> Union["BackedMol", None]:
         pass
