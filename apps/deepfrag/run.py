@@ -8,7 +8,7 @@ import torch  # type: ignore
 import pytorch_lightning as pl  # type: ignore
 from typing import final, Type
 from typing import List, Sequence, Tuple, Union
-from collagen import Mol, DelayedMolVoxel, VoxelParams
+from collagen import Mol, DelayedMolVoxel # , VoxelParams
 from collagen.util import rand_rot
 from collagen.model_parents import VoxelModelParent
 import numpy as np

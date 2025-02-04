@@ -18,7 +18,7 @@ from collagen.core.molecules.fingerprints import download_molbert_ckpt
 import pytorch_lightning as pl  # type: ignore
 import torch  # type: ignore
 
-from ... import VoxelParams
+# from ... import VoxelParams
 
 ENTRY_T = TypeVar("ENTRY_T")
 TMP_T = TypeVar("TMP_T")

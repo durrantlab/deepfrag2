@@ -10,7 +10,6 @@ from torch import nn  # type: ignore
 import pytorch_lightning as pl  # type: ignore
 from apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
-import os
 import random
 
 
