@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-import json
 
 num_epochs = 60
 result_paths = {
@@ -26,18 +25,28 @@ for key in result_paths:
     ]
 
     for json_file in json_files:
-        with open(json_file) as f:
-            json_result_inf = json.load(f)
-        f.close()
+        with open(json_file, 'r') as file:
+            for line in file:
+                line = line.strip()
 
-        entries = json_result_inf["checkpoints"][0]
-        idx_ckpt = int(entries["name"].split("loss-epoch=")[1].split("-loss")[0])
-        topk = entries["topK"]
-        for key_top_k in data_sorted_by_topk:
-            top_k = data_sorted_by_topk[key_top_k]
-            if key not in top_k:
-                top_k[key] = [0] * num_epochs
-            top_k[key][idx_ckpt] = float(topk[key_top_k])
+                if "name" in line:
+                    idx_ckpt = int(line.split("loss-epoch=")[1].split("-loss")[0])
+                    if idx_ckpt >= num_epochs:
+                        break
+                elif "topK" in line:
+                    for line_top_k in file:
+                        line_top_k = line_top_k.strip().split(":")
+                        if "}" in line_top_k:
+                            break
+
+                        key_top_k = str(line_top_k[0].split('\"')[1].split('\"')[0])
+                        val_top_k = float(line_top_k[1].split(' ')[1].split(',')[0])
+                        top_k = data_sorted_by_topk[key_top_k]
+                        if key not in top_k:
+                            top_k[key] = [0] * num_epochs
+                        top_k[key][idx_ckpt] = val_top_k
+                    break
+        file.close()
 
 for key_top_k in data_sorted_by_topk:
     data = data_sorted_by_topk[key_top_k]

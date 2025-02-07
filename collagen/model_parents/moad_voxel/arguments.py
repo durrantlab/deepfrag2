@@ -45,7 +45,15 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     # might want to run a test on a given set of PDB files, but derive the label
     # sets from the BindingMOAD.
     parser.add_argument(
-        "--input_receptor_ligand_complexes",
+        "--csv_of_receptor_ligand_complexes",
+        required=False,
+        # default=None,
+        type=str,
+        help="CSV file containing two columns. One column containing the path to each PDB file, and the another one  "
+             "containing the path to each SDF file (protein-ligand complexes).",
+    )
+    parser.add_argument(
+        "--path_to_receptor_ligand_complexes",
         required=False,
         # default=None,
         type=str,

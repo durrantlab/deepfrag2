@@ -186,13 +186,13 @@ class VoxelModelParent:
         self.setup_fingerprint_scheme(args)
         ckpt_filename = self.load_checkpoint(args)
 
-        if args.mode == "train":
+        if args.mode == "train" or args.mode == "train_on_pdb_sdf_files":
             print("Starting 'training' process")
             self.train.run_train(args, ckpt_filename)
         elif args.mode == "warm_starting":
             print("Starting 'warm_starting' process")
             self.train.run_warm_starting(args)
-        elif args.mode == "test":
+        elif args.mode == "test" or args.mode == "test_on_pdb_sdf_files":
             print("Starting 'test' process")
             assert ckpt_filename is not None, "Must specify a checkpoint to test"
             self.test.run_test(args, ckpt_filename)
@@ -248,7 +248,7 @@ class VoxelModelParent:
         else:
             pth = args.default_root_dir + os.sep
 
-        if args.mode == "train":
+        if "train" in args.mode:
             torch.save(model.state_dict(), f"{pth}model_train.pt")
         elif args.mode == "warm_starting":
             torch.save(model.state_dict(), f"{pth}model_fine_tuned.pt")

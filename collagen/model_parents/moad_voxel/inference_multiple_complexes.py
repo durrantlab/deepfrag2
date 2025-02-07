@@ -32,9 +32,10 @@ class InferenceMultipleComplex(Inference):
         """
         super()._validate_run_test(args, ckpt_filename)
 
-        if not args.input_receptor_ligand_complexes:
+        if not args.csv_of_receptor_ligand_complexes or not args.path_to_receptor_ligand_complexes:
             raise Exception(
-                "Must specify the --input_receptor_ligand_complexes parameter. This parameter contains the path to the receptor-ligand complexes to be used in the inference mode."
+                "Specify the --csv_of_receptor_ligand_complexes and --path_to_receptor_ligand_complexes parameters. "
+                "These parameters contain the paths to the receptor-ligand complexes to be used in the inference mode."
             )
 
     def _read_datasets_to_run_test(
@@ -57,7 +58,8 @@ class InferenceMultipleComplex(Inference):
 
         print("Loading custom database.")
         dataset = PdbSdfDirInterface(
-            structures_dir=args.input_receptor_ligand_complexes,
+            metadata=args.csv_of_receptor_ligand_complexes,
+            structures_path=args.path_to_receptor_ligand_complexes,
             cache_pdbs_to_disk=args.cache_pdbs_to_disk,
             grid_width=voxel_params.width,
             grid_resolution=voxel_params.resolution,

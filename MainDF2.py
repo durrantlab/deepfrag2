@@ -34,7 +34,7 @@ class DeepFragFactory:
             is_pytorch_lightning=True,
         )
 
-        if df_args.esm2_model:
+        if bool(df_args.run_mm_model):
             df_model = MultimodalDeepFrag()
         else:
             df_model = DeepFrag(
