@@ -703,15 +703,15 @@ class VoxelModelTest(object):
             raise ValueError(
                 "Must specify a label set (--inference_label_sets argument)"
             )
-        elif args.every_csv and not args.data_dir:
+        elif args.csv and not args.data_dir:
             raise Exception(
                 "To load the MOAD database, you must specify the --every_csv and --data_dir arguments"
             )
-        elif not args.every_csv and not args.data_dir and not args.paired_data_csv:
+        elif not args.csv and not args.data_dir and not args.paired_data_csv:
             raise Exception(
                 "To run the test mode, you must specify the --every_csv and --data_dir arguments for the MOAD database, the --data_dir argument for a non-paired database other than MOAD, or the --paired_data_csv argument for a paired database other than MOAD."
             )
-        elif args.paired_data_csv and (args.every_csv or args.data_dir):
+        elif args.paired_data_csv and (args.csv or args.data_dir):
             raise Exception(
                 "To run the test mode using a paired database other than MOAD database, you must only specify the --paired_data_csv argument."
             )
@@ -949,17 +949,17 @@ class VoxelModelTest(object):
             mode they are different.
         """
         # These two arguments can be used either to read the MOAD database or to read PDB/SDF files from a CSV file
-        if args.every_csv and args.data_dir:
+        if args.csv and args.data_dir:
             # test mode on a Binding MOAD Database
-            if args.mode == "test":
+            if args.mode == "test_on_moad":
                 print("Loading MOAD database.")
                 dataset = self._read_BindingMOAD_database(args, voxel_params)
 
             # test mode on PDB/SDF files
-            elif args.mode == "test_on_pdb_sdf_files":
+            elif args.mode == "test_on_complexes":
                 print("Loading PDB/SDF files from a CSV file.")
                 dataset = PdbSdfDirInterface(
-                    metadata=args.every_csv,
+                    metadata=args.csv,
                     structures_path=args.data_dir,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
@@ -994,7 +994,7 @@ class VoxelModelTest(object):
             The MOAD database.
         """
         return MOADInterface(
-            metadata=args.every_csv,
+            metadata=args.csv,
             structures_path=args.data_dir,
             cache_pdbs_to_disk=args.cache_pdbs_to_disk,
             grid_width=voxel_params.width,
@@ -1036,7 +1036,7 @@ class VoxelModelTest(object):
         """
         return (
             "predictions_MOAD"
-            if (args.data_dir and args.every_csv)
+            if (args.data_dir and args.csv)
             else "predictions_nonMOAD"
         )
 

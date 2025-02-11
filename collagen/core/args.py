@@ -43,16 +43,15 @@ def _add_generic_params(
         "-m",
         "--mode",
         type=str,
-        choices=["train", "train_on_pdb_sdf_files", "warm_starting", "test", "test_on_pdb_sdf_files", "inference_single_complex", "inference_multiple_complexes"],
+        choices=["train_on_moad", "train_on_complexes", "warm_starting", "test_on_moad", "test_on_complexes", "inference_single_complex", "inference_multiple_complexes"],
         help="Can be train, warm_starting, test, inference_single_complex, or inference_multiple_complexes.\n"
-        + "\tIf train, trains the model on the Binding MOAD Database.\n"
-        + "\tIf train_on_pdb_sdf_files, trains the model receiving as input a CSV file with PDB/SDF file pairs corresponding to receptor/ligand complexes.\n"
+        + "\tIf train_on_moad, trains the model on the Binding MOAD Database.\n"
+        + "\tIf train_on_complexes, trains the model receiving as input a CSV file with PDB/SDF file pairs corresponding to receptor/ligand complexes.\n"
         + "\tIf warm_starting, runs an incremental learning on a new dataset. It is suitable for fine tuning.\n"
-        + "\tIf test, runs inference on the test set extracted from the Binding MOAD Database.\n"
-        + "\tIf test_on_pdb_sdf_files, runs inference on the test set extracted from a CSV file with PDB/SDF file pairs corresponding to receptor/ligand complexes.\n"
+        + "\tIf test_on_moad, runs inference on the test set extracted from the Binding MOAD Database.\n"
+        + "\tIf test_on_complexes, runs inference on the test set extracted from a CSV file with PDB/SDF file pairs corresponding to receptor/ligand complexes.\n"
         + "\tIf inference_single_complex, runs inference on an external set by specifying the fragment coordinates.\n"
         + "\tIf inference_multiple_complexes, runs inference on an external set comprised of protein-ligand pairs, that is, a SDF file per each ligand and a PDB file per each receptor.\n",
-        default="train",
     )
 
     # TODO: Why was this added to jacob branch but not in cesar branch?

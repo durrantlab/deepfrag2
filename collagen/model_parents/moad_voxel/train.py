@@ -103,7 +103,7 @@ class VoxelModelTrain(object):
                 raise ValueError(
                     "For 'train' mode, you must specify the '--data_dir' parameter."
                 )
-            if not args.every_csv:
+            if not args.csv:
                 raise ValueError(
                     "For 'train' mode, you must specify the '--every_csv' parameter."
                 )
@@ -113,9 +113,9 @@ class VoxelModelTrain(object):
                 )
 
             # Training on BidingMOAD database
-            if args.mode == "train":
+            if args.mode == "train_on_moad":
                 data_interface = MOADInterface(
-                    metadata=args.every_csv,
+                    metadata=args.csv,
                     structures_path=args.data_dir,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
@@ -124,9 +124,9 @@ class VoxelModelTrain(object):
                     discard_distant_atoms=args.discard_distant_atoms,
                 )
             # Training on PDB/SDF files
-            elif args.mode == "train_on_pdb_sdf_files":
+            elif args.mode == "train_on_complexes":
                 data_interface = PdbSdfDirInterface(
-                    metadata=args.every_csv,
+                    metadata=args.csv,
                     structures_path=args.data_dir,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
@@ -136,12 +136,12 @@ class VoxelModelTrain(object):
                 )
             else:
                 raise ValueError(
-                    "The training modes are 'train' for Biding MOAD Database, or 'train_on_pdb_sdf_files' for input PDB "
-                    "and SDF files."
+                    "The training modes are 'train_on_moad' for Biding MOAD Database, or 'train_on_complexes' "
+                    "for input PDB and SDF files."
                 )
         else:
-            if (args.every_csv and not args.data_dir) or (args.data_dir and not args.every_csv) or \
-                    (args.paired_data_csv and (args.every_csv or args.data_dir)):
+            if (args.csv and not args.data_dir) or (args.data_dir and not args.csv) or \
+                    (args.paired_data_csv and (args.csv or args.data_dir)):
                 raise ValueError(
                     "For fine-tuning, the '--every_csv' and '--data_dir' parameters are specified when the input are "
                     "PDB/SDF files that are read from a CSV file, whereas the '--paired_data_csv' parameter is "
@@ -149,9 +149,9 @@ class VoxelModelTrain(object):
                 )
 
             # Fine-tuning mode using a non-paired database other than MOAD
-            if args.every_csv and args.data_dir:
+            if args.csv and args.data_dir:
                 data_interface = PdbSdfDirInterface(
-                    metadata=args.every_csv,
+                    metadata=args.csv,
                     structures_path=args.data_dir,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,

@@ -5,11 +5,11 @@ echo "Train on a small subset of the Binding MOAD (for testing; --max_pdbs_train
 mkdir -p 1.train_on_moad.output
 
 $PYTHON_EXEC -u $MAIN_DF2_PY \
-    --mode train \
+    --mode train_on_moad \
     --max_epochs 3 \
     --save_params ./1.train_on_moad.output/params.saved.json \
     --save_splits ./1.train_on_moad.output/splits.saved.json \
-    --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
+    --csv $MOAD_DIR/${EVERY_CSV_BSNM} \
     --data_dir $MOAD_DIR/ \
     --cache ./1.train_on_moad.output/every_csv.cache.json \
     --default_root_dir $(pwd)/1.train_on_moad.output/  `# The output directory` \
