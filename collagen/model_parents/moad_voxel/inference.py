@@ -72,8 +72,9 @@ class Inference(VoxelModelTest):
                 tensor and smiles list.
         """
         for elem in args.inference_label_sets.split(','):
-            if elem == "train" or elem == "train_on_pdb_sdf_files" or elem == "test" or elem == "test_on_pdb_sdf_files" \
-                    or elem == "val" or (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
+            if elem == "train_on_moad" or elem == "train_on_complexes" or elem == "test_on_moad" or \
+                    elem == "test_on_complexes" or elem == "val" or \
+                    (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
                 raise Exception(
                     "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing"
                     " a list of .smi files, or containing both the 'all' value and the list of .smi files."
@@ -101,7 +102,7 @@ class Inference(VoxelModelTest):
         # single cache (.bin) file for quickly loading later.
         if "all" in lbl_set_codes:
             # Get the location of the every_csv file
-            parent_every_csv = os.path.join(args.every_csv, os.pardir)
+            parent_every_csv = os.path.join(args.csv, os.pardir)
             parent_every_csv = os.path.relpath(parent_every_csv)
 
             # Get the locations of (possibly) cached label set files
@@ -190,7 +191,7 @@ class Inference(VoxelModelTest):
                 "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a "
                 "list of .smi files, or containing both the 'all' value and the list of .smi files."
             )
-        elif args.every_csv and args.data_dir and "all" not in args.inference_label_sets:
+        elif args.csv and args.data_dir and "all" not in args.inference_label_sets:
             raise Exception(
                 "The --inference_label_sets parameter must contain the 'all' value when using the --every_csv and"
                 " --data_dir parameters"
@@ -201,8 +202,9 @@ class Inference(VoxelModelTest):
             )
 
         for elem in args.inference_label_sets.split(','):
-            if elem == "train" or elem == "train_on_pdb_sdf_files" or elem == "test" or elem == "test_on_pdb_sdf_files"\
-                    or elem == "val" or (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
+            if elem == "train_on_moad" or elem == "train_on_complexes" or elem == "test_on_moad" or \
+                    elem == "test_on_complexes" or elem == "val" or \
+                    (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
                 raise Exception(
                     "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing "
                     "a list of .smi files, or containing both the 'all' value and the list of .smi files."

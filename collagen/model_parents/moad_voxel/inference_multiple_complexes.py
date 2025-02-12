@@ -32,9 +32,9 @@ class InferenceMultipleComplex(Inference):
         """
         super()._validate_run_test(args, ckpt_filename)
 
-        if not args.csv_of_receptor_ligand_complexes or not args.path_to_receptor_ligand_complexes:
+        if not args.csv_complexes or not args.path_complexes:
             raise Exception(
-                "Specify the --csv_of_receptor_ligand_complexes and --path_to_receptor_ligand_complexes parameters. "
+                "Specify the --csv_complexes and --path_complexes parameters. "
                 "These parameters contain the paths to the receptor-ligand complexes to be used in the inference mode."
             )
 
@@ -53,13 +53,13 @@ class InferenceMultipleComplex(Inference):
         """
         print("Loading MOAD database.")
         moad = None
-        if args.every_csv and args.data_dir:
+        if args.csv and args.data_dir:
             moad = self._read_BindingMOAD_database(args, voxel_params)
 
         print("Loading custom database.")
         dataset = PdbSdfDirInterface(
-            metadata=args.csv_of_receptor_ligand_complexes,
-            structures_path=args.path_to_receptor_ligand_complexes,
+            metadata=args.csv_complexes,
+            structures_path=args.path_complexes,
             cache_pdbs_to_disk=args.cache_pdbs_to_disk,
             grid_width=voxel_params.width,
             grid_resolution=voxel_params.resolution,

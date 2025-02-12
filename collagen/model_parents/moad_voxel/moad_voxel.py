@@ -186,13 +186,13 @@ class VoxelModelParent:
         self.setup_fingerprint_scheme(args)
         ckpt_filename = self.load_checkpoint(args)
 
-        if args.mode == "train" or args.mode == "train_on_pdb_sdf_files":
+        if args.mode == "train_on_moad" or args.mode == "train_on_complexes":
             print("Starting 'training' process")
             self.train.run_train(args, ckpt_filename)
         elif args.mode == "warm_starting":
             print("Starting 'warm_starting' process")
             self.train.run_warm_starting(args)
-        elif args.mode == "test" or args.mode == "test_on_pdb_sdf_files":
+        elif args.mode == "test_on_moad" or args.mode == "test_on_complexes":
             print("Starting 'test' process")
             assert ckpt_filename is not None, "Must specify a checkpoint to test"
             self.test.run_test(args, ckpt_filename)

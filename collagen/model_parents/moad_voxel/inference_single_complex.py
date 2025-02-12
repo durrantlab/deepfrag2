@@ -113,19 +113,14 @@ class InferenceSingleComplex(Inference):
                 # Random rotations, unless debugging voxels
                 rot = np.array([1, 0, 0, 0]) if args.debug_voxels else rand_rot()
 
-                recep_vox = recep.voxelize(
+                voxel = recep.voxelize(
+                    voxel_params, cpu=device, center=center, rot=rot
+                )
+                voxel = lig.voxelize(
+                    voxel_params, tensor=voxel, layer_offset=voxel_params.receptor_featurizer.size(), is_receptor=False,
                     cpu=device, center=center, rot=rot
                 )
-                lig_vox = lig.voxelize(cpu=device, center=center, rot=rot)
 
-                # Stack the receptor and ligand tensors
-                num_features = recep_vox.shape[1] + lig_vox.shape[1]
-                dim1 = lig_vox.shape[2]
-                dim2 = lig_vox.shape[3]
-                dim3 = lig_vox.shape[4]
-                voxel = torch.cat([recep_vox[0], lig_vox[0]]).reshape(
-                    [1, num_features, dim1, dim2, dim3]
-                )
                 fps.append(model.forward(voxel))
 
         avg_over_ckpts_of_avgs = torch.mean(torch.stack(fps), dim=0)
@@ -134,7 +129,7 @@ class InferenceSingleComplex(Inference):
         label_set_fingerprints, label_set_entry_infos = self._create_label_set(
             args,
             device,
-            self._read_BindingMOAD_database(args, voxel_params) if args.every_csv and args.data_dir else None,
+            self._read_BindingMOAD_database(args, voxel_params) if args.csv and args.data_dir else None,
             voxel_params,
             existing_label_set_fps=torch.empty(0, dtype=torch.float32),
             existing_label_set_entry_infos=[],

@@ -348,6 +348,9 @@ class Mol(object):
     def voxelize(
         self,
         params: "VoxelParams",
+        tensor: "torch.Tensor" = torch.zeros(1),
+        layer_offset: int = 0,
+        is_receptor: bool = True,
         cpu: bool = False,
         center: "np.ndarray" = None,
         rot: "np.ndarray" = np.array([0, 0, 0, 1]),
@@ -367,18 +370,23 @@ class Mol(object):
 
         Args:
             params (VoxelParams): Voxelation parameter container.
+            tensor (torch.Tensor): Tensor where saving the voxelization.
+            layer_offset (int): An optional integer specifying a start layer for voxelation.
+            is_receptor (bool): Whether this molecule is a receptor (True) or ligand (False)
             cpu (bool): If True, run on the CPU, otherwise use CUDA.
             center: (numpy.ndarray): Optional, if set, center the grid on this 3D coordinate.
             rot: (numpy.ndarray): A size 4 array describing a quaternion rotation for the grid.
         """
         params.validate()
 
-        tensor = torch.zeros(size=params.tensor_size())
-        if not cpu:
-            tensor = tensor.cuda()
+        if len(tensor.size()) == 1:
+            tensor = torch.zeros(size=params.tensor_size())
+            if not cpu:
+                tensor = tensor.cuda()
 
         self.voxelize_into(
-            tensor, batch_idx=0, center=center, params=params, cpu=cpu, rot=rot
+            tensor, batch_idx=0, center=center, params=params, cpu=cpu, layer_offset=layer_offset,
+            is_receptor=is_receptor, rot=rot
         )
 
         return tensor
