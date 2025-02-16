@@ -28,13 +28,21 @@ acid_substructs_smi = [
     # is 10.24. For CS(N)(=O)=O, it is 13.11. For O=S1(=O)CCCCN1, it is
     # 12.55. For O=S1(=O)NC=CC=C1, it is 8.52. Not going to do all
     # sulfonamides, just ones attached to aromatic rings.
-    "O=S(c)[N+0;H1;X3]",  # Covers CNS(=O)(=O)c1ccccc1
-    "O=S(c)[N+0;H2;X3]",  # Covers NS(=O)(=O)c1ccccc1
-    "O=S(c)[N-;H0;X2]",  # Covers C[N-]S(=O)(=O)c1ccccc1
-    "O=S(c)[N-;H1;X2]",  # Covers [NH-]S(=O)(=O)c1ccccc1
-    "O=S[N+0;H1;X3](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)Nc1ccccc1
-    "O=S[N+0;H2;X3](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)Nc1ccccc1
-    "O=S[N-;H0;X2](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)[N-]c1ccccc1
+
+    "O=S[N+0;H1;X3]",
+    "O=S[N+0;H2;X3]",
+    "O=S[N-;H0;X2]",
+    "O=S[N-;H1;X2]",
+
+    # Used before to match sulfonamides, now above used to cover these.
+    # "O=S(c)[N+0;H1;X3]",  # Covers CNS(=O)(=O)c1ccccc1
+    # "O=S(c)[N+0;H2;X3]",  # Covers NS(=O)(=O)c1ccccc1
+    # "O=S(c)[N-;H0;X2]",  # Covers C[N-]S(=O)(=O)c1ccccc1
+    # "O=S(c)[N-;H1;X2]",  # Covers [NH-]S(=O)(=O)c1ccccc1
+    # "O=S[N+0;H1;X3](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)Nc1ccccc1
+    # "O=S[N+0;H2;X3](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)Nc1ccccc1
+    # "O=S[N-;H0;X2](c)",  # Covers aromatic off nitrogen, e.g., CS(=O)(=O)[N-]c1ccccc1
+
     ### DON'T USE THE BELOW ###
     # Thiols have pretty low pKa, much lower than alcohols. But not used
     # much in drugs.
@@ -178,8 +186,39 @@ def is_neutral(mol: Chem.Mol) -> bool:
     Returns:
         True if a neutral, False if not.
     """
-    return not is_acid(mol) and not is_base(mol)
+    if is_acid(mol):
+        return False
+    if is_base(mol):
+        return False
 
+    # If a nitrogen is next to the bond-cut, it is not counted as basic because
+    # the atom on the other side could be something like a carbonyl carbon. But
+    # in many cases these will be basic, so they should not be included in the
+    # neutral count.
+    smi = Chem.MolToSmiles(mol)
+    if "*N" in smi:
+        return False
+    if "*]N" in smi:
+        return False
+    if "N*" in smi:
+        return False
+    if "N[*" in smi:
+        return False
+    
+    # If a P is ever single-bound to a terminal O (let's just assume (O) to keep
+    # it simple), let's not consider it neutral. To many edge cases (see PDB
+    # 3M89, with its terminal group. Not marked as acidic, but it is).
+    if "P(O)" in smi:
+        return False
+    if "(O)P" in smi:
+        return False
+    if "P([O-])" in smi:
+        return False
+    if "([O-])P" in smi:
+        return False
+
+    return True
+    
 
 if __name__ == "__main__":
     import pandas as pd  # type: ignore

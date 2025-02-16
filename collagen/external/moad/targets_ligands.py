@@ -101,14 +101,25 @@ class MOAD_target(Parent_target):
             # calculations.
             rec_sel = f"not hydrogen and {rec_sel}"
 
-        # if debug:
-        #     print("1", "rec_sel", rec_sel)
-        #     # print("2", m.select(rec_sel))
-        #     # print("3", Mol.from_prody(m.select(rec_sel)))
-
         # Note that "(altloc _ or altloc A)" makes sure only the first alternate
         # locations are used.
         rec_sel = f"{rec_sel} and (altloc _ or altloc A)"
+
+        # Example #1 (multi-residue ligand, accounted for):
+
+        # not hydrogen and not water and 
+        # not ((chain P and resnum >= 0 and resnum < 10)) and 
+        # exwithin 21.588457268119896 of ((chain P and resnum >= 0 and resnum < 10)) and 
+        # (altloc _ or altloc A)
+
+        # Example #2:
+
+        # not hydrogen and not water and 
+        # not ((chain A and resnum 401) or (chain B and resnum 401) or (chain A and resnum 404) or (chain A and resnum 405) or (chain A and resnum 403) or (chain B and resnum 404)) and
+        # exwithin 21.588457268119896 of ((chain A and resnum 401) or (chain B and resnum 401)) and 
+        # (altloc _ or altloc A)
+
+        print(rec_sel)
 
         try:
             # So strange. Sometimes prody can't parse perfectly valid selection
