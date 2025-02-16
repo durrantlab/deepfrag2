@@ -17,11 +17,16 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     """
     parser = parent_parser.add_argument_group("Binding MOAD")
 
-    parser.add_argument("--every_csv", required=False, help="Path to MOAD every.csv")
+    parser.add_argument(
+        "--csv",
+        required=False,
+        help="Path to MOAD every.csv"
+    )
     parser.add_argument(
         "--data_dir",
         required=False,  # Not required if running in --mode "inference"
-        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-ligand pairs). This parameter can be used for both training and fine-tuning.",
+        help="Path to MOAD root structure folder, or path to a folder containing a SDF file per each PDB file (protein-"
+             "ligand pairs). This parameter can be used for both training and fine-tuning.",
     )
     parser.add_argument(
         "--paired_data_csv",
@@ -45,7 +50,15 @@ def add_moad_args(parent_parser: ArgumentParser) -> ArgumentParser:
     # might want to run a test on a given set of PDB files, but derive the label
     # sets from the BindingMOAD.
     parser.add_argument(
-        "--input_receptor_ligand_complexes",
+        "--csv_complexes",
+        required=False,
+        # default=None,
+        type=str,
+        help="CSV file containing two columns. One column containing the path to each PDB file, and the another one  "
+             "containing the path to each SDF file (protein-ligand complexes).",
+    )
+    parser.add_argument(
+        "--path_complexes",
         required=False,
         # default=None,
         type=str,

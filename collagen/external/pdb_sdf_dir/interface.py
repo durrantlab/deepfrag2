@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Union
-import glob
 import os
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.common.types import StructuresClass, StructuresFamily
@@ -10,6 +9,7 @@ from collagen.external.pdb_sdf_dir.targets_ligands import (
 )
 from rdkit import Chem  # type: ignore
 import linecache
+import pandas as pd
 
 
 class PdbSdfDirInterface(ParentInterface):
@@ -18,7 +18,8 @@ class PdbSdfDirInterface(ParentInterface):
 
     def __init__(
         self,
-        structures_dir: Union[str, Path],
+        metadata: Union[str, Path],
+        structures_path: Union[str, Path],
         cache_pdbs_to_disk: bool,
         grid_width: int,
         grid_resolution: float,
@@ -28,7 +29,8 @@ class PdbSdfDirInterface(ParentInterface):
         """Interface for data stored in a directory of PDBs and SDFs.
 
         Args:
-            structures_dir (Union[str, Path]): Path to the directory containing the
+            metadata (Union[str, Path]): CSV file containing the PDB and SDF files.
+            structures_path (Union[str, Path]): Path to the directory containing the
                 PDBs and SDFs.
             cache_pdbs_to_disk (bool): Whether to cache the PDBs to disk.
             grid_width (int): Width of the grid.
@@ -37,8 +39,8 @@ class PdbSdfDirInterface(ParentInterface):
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
         super().__init__(
-            structures_dir,
-            structures_dir,
+            metadata,
+            structures_path,
             cache_pdbs_to_disk,
             grid_width,
             grid_resolution,
@@ -48,7 +50,7 @@ class PdbSdfDirInterface(ParentInterface):
 
     def _load_targets_ligands_hierarchically(
         self,
-        dir_path: Union[str, Path],
+        metadata: Union[str, Path],
         cache_pdbs_to_disk: bool,
         grid_width: int,
         grid_resolution: float,
@@ -67,6 +69,14 @@ class PdbSdfDirInterface(ParentInterface):
             noh (bool): Whether to remove hydrogens.
             discard_distant_atoms (bool): Whether to discard distant atoms.
         """
+        receptor_ligand_pairs = {}
+        df = pd.read_csv(metadata)
+        for index, row in df.iterrows():
+            pdb_path = row['receptor']
+            if pdb_path not in receptor_ligand_pairs:
+                receptor_ligand_pairs[pdb_path] = []
+            receptor_ligand_pairs[pdb_path].append(row['ligand'])
+
         classes = []
         curr_class = None
         curr_class_name = None
@@ -75,16 +85,11 @@ class PdbSdfDirInterface(ParentInterface):
         curr_target = None
         curr_target_name = None
 
-        # if every_csv_path is a Path, convert to str
-        if isinstance(dir_path, Path):
-            dir_path = str(dir_path)
-
-        pdb_files = glob.glob(dir_path + os.sep + "*.pdb", recursive=True)
+        pdb_files = list(receptor_ligand_pairs)
         pdb_files.sort()
-        for line in pdb_files:
-            parts = line.split(os.sep)
-            full_pdb_name = parts[len(parts) - 1].split(".")[0]
-            parts = full_pdb_name.split("_")
+        for pdb_path in pdb_files:
+            pdb_path_parts = pdb_path.split(os.sep)
+            full_pdb_name = pdb_path_parts[len(pdb_path_parts) - 1].split(".")[0]
 
             if (curr_target is None) or (full_pdb_name != curr_target_name):
                 if curr_target is not None and curr_family is not None:
@@ -99,41 +104,35 @@ class PdbSdfDirInterface(ParentInterface):
                     noh=noh,
                     discard_distant_atoms=discard_distant_atoms,
                 )
-                sdf_name = f"{parts[0]}_lig_{parts[2]}"
-                sdf_reader = Chem.SDMolSupplier(
-                    dir_path + os.sep + sdf_name + ".sdf"
-                )
-                for ligand_ in sdf_reader:
-                    # it is expected only one iteration because each SDF file
-                    # must have a single molecule
-                    if ligand_ is not None:
-                        curr_target.ligands.append(
-                            PdbSdfDir_ligand(
-                                name=linecache.getline(
-                                    dir_path + os.sep + sdf_name + ".sdf", 1
-                                ).rstrip(),
-                                validity="valid",
-                                # affinity_measure="",
-                                # affinity_value="",
-                                # affinity_unit="",
-                                smiles=Chem.MolToSmiles(ligand_),
-                                rdmol=ligand_,
+                for sdf_path in receptor_ligand_pairs[pdb_path]:
+                    sdf_reader = Chem.SDMolSupplier(sdf_path)
+                    for ligand_ in sdf_reader:
+                        if ligand_ is not None:
+                            curr_target.ligands.append(
+                                PdbSdfDir_ligand(
+                                    name=linecache.getline(sdf_path, 1).rstrip(),
+                                    validity="valid",
+                                    # affinity_measure="",
+                                    # affinity_value="",
+                                    # affinity_unit="",
+                                    smiles=Chem.MolToSmiles(ligand_),
+                                    rdmol=ligand_,
+                                )
                             )
-                        )
 
-            if (curr_family is None) or (parts[0] != curr_family_name):
+            if (curr_family is None) or (full_pdb_name != curr_family_name):
                 if curr_family is not None and curr_class is not None:
                     curr_class.families.append(curr_family)
-                curr_family_name = parts[0]
-                curr_family = StructuresFamily(rep_pdb_id=parts[0], targets=[])
+                curr_family_name = full_pdb_name
+                curr_family = StructuresFamily(rep_pdb_id=full_pdb_name, targets=[])
 
             if curr_class is None:
-                curr_class_name = parts[0]
-                curr_class = StructuresClass(ec_num=parts[0], families=[])
-            elif parts[0] != curr_class_name:
+                curr_class_name = full_pdb_name
+                curr_class = StructuresClass(ec_num=full_pdb_name, families=[])
+            elif full_pdb_name != curr_class_name:
                 classes.append(curr_class)
-                curr_class_name = parts[0]
-                curr_class = StructuresClass(ec_num=parts[0], families=[])
+                curr_class_name = full_pdb_name
+                curr_class = StructuresClass(ec_num=full_pdb_name, families=[])
 
         if curr_target is not None and curr_family is not None:
             curr_family.targets.append(curr_target)

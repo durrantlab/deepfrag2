@@ -72,10 +72,12 @@ class Inference(VoxelModelTest):
                 tensor and smiles list.
         """
         for elem in args.inference_label_sets.split(','):
-            if elem == "train" or elem == "test" or elem == "val" or not (
-                    elem.endswith(".smi") or elem.endswith(".smiles")):
+            if elem == "train_on_moad" or elem == "train_on_complexes" or elem == "test_on_moad" or \
+                    elem == "test_on_complexes" or elem == "val" or \
+                    (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
                 raise Exception(
-                    "The 'all' value or SMILES strings are the only values allowed for the --inference_label_sets parameter in inference mode on custom dataset"
+                    "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing"
+                    " a list of .smi files, or containing both the 'all' value and the list of .smi files."
                 )
 
         if lbl_set_codes is None:
@@ -100,7 +102,7 @@ class Inference(VoxelModelTest):
         # single cache (.bin) file for quickly loading later.
         if "all" in lbl_set_codes:
             # Get the location of the every_csv file
-            parent_every_csv = os.path.join(args.every_csv, os.pardir)
+            parent_every_csv = os.path.join(args.csv, os.pardir)
             parent_every_csv = os.path.relpath(parent_every_csv)
 
             # Get the locations of (possibly) cached label set files
@@ -181,15 +183,18 @@ class Inference(VoxelModelTest):
         """
         if not ckpt_filename:
             raise ValueError(
-                "Must specify the --ckpt_filename parameter to run the inference mode. This parameter contains the path to the DeepFrag model (.ckpt file) to be used."
+                "Must specify the --ckpt_filename parameter to run the inference mode. This parameter contains the path "
+                "to the DeepFrag model (.ckpt file) to be used."
             )
         elif not args.inference_label_sets:
             raise Exception(
-                "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a list of .smi files, or containing both the 'all' value and the list of .smi files."
+                "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a "
+                "list of .smi files, or containing both the 'all' value and the list of .smi files."
             )
-        elif args.every_csv and args.data_dir and "all" not in args.inference_label_sets:
+        elif args.csv and args.data_dir and "all" not in args.inference_label_sets:
             raise Exception(
-                "The --inference_label_sets parameter must contain the 'all' value when using the --every_csv and --data_dir parameters"
+                "The --inference_label_sets parameter must contain the 'all' value when using the --every_csv and"
+                " --data_dir parameters"
             )
         elif args.load_splits:
             raise Exception(
@@ -197,10 +202,12 @@ class Inference(VoxelModelTest):
             )
 
         for elem in args.inference_label_sets.split(','):
-            if elem == "train" or elem == "test" or elem == "val" or not (
-                    elem.endswith(".smi") or elem.endswith(".smiles")):
+            if elem == "train_on_moad" or elem == "train_on_complexes" or elem == "test_on_moad" or \
+                    elem == "test_on_complexes" or elem == "val" or \
+                    (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
                 raise Exception(
-                    "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing a list of .smi files, or containing both the 'all' value and the list of .smi files."
+                    "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing "
+                    "a list of .smi files, or containing both the 'all' value and the list of .smi files."
                 )
 
     def _get_load_splits(self, args):

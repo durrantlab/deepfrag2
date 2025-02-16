@@ -103,7 +103,7 @@ class VoxelModelTrain(object):
                 raise ValueError(
                     "For 'train' mode, you must specify the '--data_dir' parameter."
                 )
-            if not args.every_csv:
+            if not args.csv:
                 raise ValueError(
                     "For 'train' mode, you must specify the '--every_csv' parameter."
                 )
@@ -112,35 +112,22 @@ class VoxelModelTrain(object):
                     "Rational division based on Butina clustering is only for fine-tuning."
                 )
 
-            data_interface = MOADInterface(
-                metadata=args.every_csv,
-                structures_path=args.data_dir,
-                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-                grid_width=voxel_params.width,
-                grid_resolution=voxel_params.resolution,
-                noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms,
-            )
-        else:
-            if args.every_csv:
-                raise ValueError(
-                    "For 'fine-tuning' mode, you must not specify the '--every_csv' parameter."
+            # Training on BidingMOAD database
+            if args.mode == "train_on_moad":
+                data_interface = MOADInterface(
+                    metadata=args.csv,
+                    structures_path=args.data_dir,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms,
                 )
-            if (args.data_dir and args.paired_data_csv) or (
-                not args.data_dir and not args.paired_data_csv
-            ):
-                raise ValueError(
-                    "For 'fine-tuning' mode, you must specify the '--data_dir' parameter or the '--paired_data_csv' parameter."
-                )
-
-            # TODO: Below makes me uncomfortable. It would be better if there
-            # was a base class that everything inherited. NOTE: Every training
-            # mode uses this class, so just rename the class instead of
-            # refactoring.
-            if args.data_dir:
-                # for fine-tuning mode using a non-paired database other than MOAD
+            # Training on PDB/SDF files
+            elif args.mode == "train_on_complexes":
                 data_interface = PdbSdfDirInterface(
-                    structures_dir=args.data_dir,
+                    metadata=args.csv,
+                    structures_path=args.data_dir,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,
                     grid_width=voxel_params.width,
                     grid_resolution=voxel_params.resolution,
@@ -148,7 +135,32 @@ class VoxelModelTrain(object):
                     discard_distant_atoms=args.discard_distant_atoms,
                 )
             else:
-                # for fine-tuning mode using a paired database other than MOAD
+                raise ValueError(
+                    "The training modes are 'train_on_moad' for Biding MOAD Database, or 'train_on_complexes' "
+                    "for input PDB and SDF files."
+                )
+        else:
+            if (args.csv and not args.data_dir) or (args.data_dir and not args.csv) or \
+                    (args.paired_data_csv and (args.csv or args.data_dir)):
+                raise ValueError(
+                    "For fine-tuning, the '--every_csv' and '--data_dir' parameters are specified when the input are "
+                    "PDB/SDF files that are read from a CSV file, whereas the '--paired_data_csv' parameter is "
+                    "specified when using paired data."
+                )
+
+            # Fine-tuning mode using a non-paired database other than MOAD
+            if args.csv and args.data_dir:
+                data_interface = PdbSdfDirInterface(
+                    metadata=args.csv,
+                    structures_path=args.data_dir,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms,
+                )
+            # Fine-tuning mode using a paired database other than MOAD
+            elif args.paired_data_csv:
                 data_interface = PairedCsvInterface(
                     structures=args.paired_data_csv,
                     cache_pdbs_to_disk=args.cache_pdbs_to_disk,

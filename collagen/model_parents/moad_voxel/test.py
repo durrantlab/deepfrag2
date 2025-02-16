@@ -20,7 +20,7 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
 import torch  # type: ignore
 from tqdm.std import tqdm
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
-
+import pickle
 # import multiprocessing
 # from torch import multiprocessing
 from collagen.core.molecules.mol import mols_from_smi_file
@@ -321,15 +321,28 @@ class VoxelModelTest(object):
         if smi_files:
             fp_tnsrs_from_smi_file = [label_set_fps] if len(label_set_smis) > 0 else []
             for filename in smi_files:
+                filename_fps = filename + "_" + args.fragment_representation + "_fps.bin"
+                if os.path.exists(filename_fps):
+                    with open(filename_fps, "rb") as file:
+                        dictionary_smi_fps: torch.Tensor = pickle.load(file)
+                        filename_fps = None
+                        file.close()
+                else:
+                    dictionary_smi_fps = {}
+
                 for smi, mol in mols_from_smi_file(filename):
-                    fp_tnsrs_from_smi_file.append(
-                        torch.tensor(
-                            mol.fingerprint(args.fragment_representation, args.fp_size),
-                            dtype=torch.float32,
-                            device=device,
-                            requires_grad=False,
-                        ).reshape((1, args.fp_size))
-                    )
+                    if dictionary_smi_fps and smi in dictionary_smi_fps:
+                        fp_tnsrs_from_smi_file.append(dictionary_smi_fps[smi])
+                    else:
+                        fps = torch.tensor(
+                                mol.fingerprint(args.fragment_representation, args.fp_size),
+                                dtype=torch.float32,
+                                device=device,
+                                requires_grad=False,
+                            ).reshape((1, args.fp_size))
+                        fp_tnsrs_from_smi_file.append(fps)
+                        dictionary_smi_fps[smi] = fps
+
                     label_set_smis.append(StructureEntry(
                         fragment_smiles=smi,
                         parent_smiles=None,
@@ -338,6 +351,11 @@ class VoxelModelTest(object):
                         ligand_id=None,
                         fragment_idx=None,
                     ))
+
+                if filename_fps is not None:
+                    with open(filename_fps, "wb") as file:
+                        pickle.dump(dictionary_smi_fps, file)
+                        file.close()
             label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
 
             # Remove redundancy
@@ -685,15 +703,15 @@ class VoxelModelTest(object):
             raise ValueError(
                 "Must specify a label set (--inference_label_sets argument)"
             )
-        elif args.every_csv and not args.data_dir:
+        elif args.csv and not args.data_dir:
             raise Exception(
                 "To load the MOAD database, you must specify the --every_csv and --data_dir arguments"
             )
-        elif not args.every_csv and not args.data_dir and not args.paired_data_csv:
+        elif not args.csv and not args.data_dir and not args.paired_data_csv:
             raise Exception(
                 "To run the test mode, you must specify the --every_csv and --data_dir arguments for the MOAD database, the --data_dir argument for a non-paired database other than MOAD, or the --paired_data_csv argument for a paired database other than MOAD."
             )
-        elif args.paired_data_csv and (args.every_csv or args.data_dir):
+        elif args.paired_data_csv and (args.csv or args.data_dir):
             raise Exception(
                 "To run the test mode using a paired database other than MOAD database, you must only specify the --paired_data_csv argument."
             )
@@ -930,22 +948,27 @@ class VoxelModelTest(object):
             test mode, both coefficients are the same ones, but in inference
             mode they are different.
         """
-        if args.every_csv and args.data_dir:  # test mode on MOAD database
-            print("Loading MOAD database.")
-            dataset = self._read_BindingMOAD_database(args, voxel_params)
-        elif (
-            args.data_dir
-        ):  # test mode on a non-paired database other than MOAD database
-            print("Loading a database other than MOAD database.")
-            dataset = PdbSdfDirInterface(
-                structures_dir=args.data_dir,
-                cache_pdbs_to_disk=args.cache_pdbs_to_disk,
-                grid_width=voxel_params.width,
-                grid_resolution=voxel_params.resolution,
-                noh=args.noh,
-                discard_distant_atoms=args.discard_distant_atoms,
-            )
-        else:  # test mode on a paired database
+        # These two arguments can be used either to read the MOAD database or to read PDB/SDF files from a CSV file
+        if args.csv and args.data_dir:
+            # test mode on a Binding MOAD Database
+            if args.mode == "test_on_moad":
+                print("Loading MOAD database.")
+                dataset = self._read_BindingMOAD_database(args, voxel_params)
+
+            # test mode on PDB/SDF files
+            elif args.mode == "test_on_complexes":
+                print("Loading PDB/SDF files from a CSV file.")
+                dataset = PdbSdfDirInterface(
+                    metadata=args.csv,
+                    structures_path=args.data_dir,
+                    cache_pdbs_to_disk=args.cache_pdbs_to_disk,
+                    grid_width=voxel_params.width,
+                    grid_resolution=voxel_params.resolution,
+                    noh=args.noh,
+                    discard_distant_atoms=args.discard_distant_atoms,
+                )
+        # test mode on a paired database
+        elif args.paired_data_csv:
             dataset = PairedCsvInterface(
                 structures=args.paired_data_csv,
                 cache_pdbs_to_disk=args.cache_pdbs_to_disk,
@@ -971,7 +994,7 @@ class VoxelModelTest(object):
             The MOAD database.
         """
         return MOADInterface(
-            metadata=args.every_csv,
+            metadata=args.csv,
             structures_path=args.data_dir,
             cache_pdbs_to_disk=args.cache_pdbs_to_disk,
             grid_width=voxel_params.width,
@@ -1013,7 +1036,7 @@ class VoxelModelTest(object):
         """
         return (
             "predictions_MOAD"
-            if (args.data_dir and args.every_csv)
+            if (args.data_dir and args.csv)
             else "predictions_nonMOAD"
         )
 

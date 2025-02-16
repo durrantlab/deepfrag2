@@ -19,7 +19,7 @@ class MultimodalDeepFrag(DeepFrag):
         frag_smiles = frag.smiles(True)
         parent_smiles = parent.smiles(True)
         receptor_name = rec.meta['name']
-        receptor_sequence = rec.aminoacid_sequence()
+        receptor_sequence = rec.aminoacid_sequence().upper()
 
         assert (frag_smiles is not None and parent_smiles is not None and receptor_sequence is not None), \
             f"Fragment ({frag_smiles}) or parent ({parent_smiles}) SMILES, or Receptor sequence ({receptor_name}) " \
