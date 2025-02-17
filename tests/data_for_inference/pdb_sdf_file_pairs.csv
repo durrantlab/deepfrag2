@@ -1,0 +1,2 @@
+receptor,ligand
+./data_for_inference/5VUP_prot_955.pdb,./data_for_inference/5VUP_lig_955.sdf

@@ -5,11 +5,11 @@ echo "Train on a small subset of the Binding MOAD, only larger fragments that ar
 mkdir -p 7.train_on_moad_large_aromatic_frags.output
 
 $PYTHON_EXEC -u $MAIN_DF2_PY \
-    --mode train \
+    --mode train_on_moad \
     --max_epochs 3 \
     --save_params ./7.train_on_moad_large_aromatic_frags.output/params.saved.json \
     --save_splits ./7.train_on_moad_large_aromatic_frags.output/splits.saved.json \
-    --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
+    --csv $MOAD_DIR/${EVERY_CSV_BSNM} \
     --cache ./every_csv.cache.json \
     --data_dir $MOAD_DIR/ \
     --default_root_dir $(pwd)/7.train_on_moad_large_aromatic_frags.output/  `# The output directory` \

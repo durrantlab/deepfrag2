@@ -1,0 +1,11 @@
+receptor,ligand
+./data_to_finetune/3JT8_prot_165.pdb,./data_to_finetune/3JT8_lig_165.sdf
+./data_to_finetune/3JTA_prot_172.pdb,./data_to_finetune/3JTA_lig_172.sdf
+./data_to_finetune/3NLO_prot_287.pdb,./data_to_finetune/3NLO_lig_287.sdf
+./data_to_finetune/3UFP_prot_383.pdb,./data_to_finetune/3UFP_lig_383.sdf
+./data_to_finetune/3UFW_prot_411.pdb,./data_to_finetune/3UFW_lig_411.sdf
+./data_to_finetune/4CTR_prot_449.pdb,./data_to_finetune/4CTR_lig_449.sdf
+./data_to_finetune/4CTR_prot_450.pdb,./data_to_finetune/4CTR_lig_450.sdf
+./data_to_finetune/4JSJ_prot_585.pdb,./data_to_finetune/4JSJ_lig_585.sdf
+./data_to_finetune/5FVT_prot_820.pdb,./data_to_finetune/5FVT_lig_820.sdf
+./data_to_finetune/5VUY_prot_991.pdb,./data_to_finetune/5VUY_lig_991.sdf
