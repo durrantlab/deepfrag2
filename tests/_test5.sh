@@ -11,7 +11,7 @@ $PYTHON_EXEC -u $MAIN_DF2_PY \
     --branch_atm_loc_xyz 12.413000,3.755000,59.021999 \
     --default_root_dir $(pwd)/5.inference.output/ \
     --rotations 20 \
-    --load_checkpoint ./3.finetune_moad.output/last.ckpt \
+    --load_checkpoint ./3.finetune_custom.output/last.ckpt \
     --inference_label_sets ./data_for_inference/label_set.smi \
     --cache_pdbs_to_disk \
     --cache None \
