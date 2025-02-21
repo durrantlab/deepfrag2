@@ -119,8 +119,6 @@ class MOAD_target(Parent_target):
         # exwithin 21.588457268119896 of ((chain A and resnum 401) or (chain B and resnum 401)) and 
         # (altloc _ or altloc A)
 
-        print(rec_sel)
-
         try:
             # So strange. Sometimes prody can't parse perfectly valid selection
             # strings, but if you just try a second time, it works. I don't know

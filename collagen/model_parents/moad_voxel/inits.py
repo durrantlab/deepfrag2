@@ -62,13 +62,19 @@ class VoxelModelInits(object):
                 MyModelCheckpointEveryEpoch(
                     dirpath=args.default_root_dir,
                     monitor="val_loss",
-                    filename="val-loss-{epoch:02d}-{val_loss:.2f}",
-                    save_top_k=args.max_epochs,
+                    filename="val-loss-{epoch:02d}-{val_loss:.4f}",
+                    save_top_k=args.max_epochs
+                ),
+                MyModelCheckpointEveryEpoch(
+                    dirpath=args.default_root_dir,
+                    monitor="val_loss",
+                    filename="best",
+                    save_top_k=1,
                 ),
                 MyModelCheckpointEveryEpoch(
                     dirpath=args.default_root_dir,
                     monitor="loss",
-                    filename="loss-{epoch:02d}-{loss:.2f}",
+                    filename="train-loss-{epoch:02d}-{loss:.4f}",
                     save_last=True,
                     save_top_k=args.max_epochs,
                 ),
@@ -78,13 +84,19 @@ class VoxelModelInits(object):
                 MyModelCheckpoint(
                     dirpath=args.default_root_dir,
                     monitor="val_loss",
-                    filename="val-loss-{epoch:02d}-{val_loss:.2f}",
+                    filename="val-loss-{epoch:02d}-{val_loss:.4f}",
                     save_top_k=3,
                 ),
                 MyModelCheckpoint(
                     dirpath=args.default_root_dir,
+                    monitor="val_loss",
+                    filename="best",
+                    save_top_k=1
+                ),
+                MyModelCheckpoint(
+                    dirpath=args.default_root_dir,
                     monitor="loss",
-                    filename="loss-{epoch:02d}-{loss:.2f}",
+                    filename="train-loss-{epoch:02d}-{loss:.4f}",
                     save_last=True,
                     save_top_k=3,
                 ),
