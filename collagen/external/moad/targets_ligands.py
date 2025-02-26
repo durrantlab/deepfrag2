@@ -130,7 +130,6 @@ class MOAD_target(Parent_target):
 
         # Print numer of atoms in selection
         # if prody_mol is None:
-        # print(rec_sel)
         # print("Number of atoms in selection:", prody_mol.numAtoms())
         rec_mol = Mol.from_prody(prody_mol)
         rec_mol.meta["name"] = f"Receptor {self.pdb_id.lower()}"

@@ -192,6 +192,25 @@ class DeepFragModel(pl.LightningModule):
         
         self.has_saved_some_debug_voxels = False
 
+    def on_train_start(self):
+        """Called when the actual training begins (after sanity check).
+        This is a good place to reset the validation example tracking. The
+        problem is the "Validation sanity check" step, which records only two
+        batches worth of receptors. You want to record all the validation
+        receptors for storage in the train_on_moad.actually_used.json file, so
+        you must reset.
+        """
+        super().on_train_start()
+        
+        # Remove 'val' from the stop recording set if it was added during sanity check
+        if 'val' in self._examples_used_stop_recording:
+            self._examples_used_stop_recording.remove('val')
+            # print("Reset validation example tracking after sanity check")
+            
+            # Also clear any validation examples recorded during sanity check
+            if 'val' in self._examples_used:
+                self._examples_used['val'] = {}
+
     @staticmethod
     def add_model_args(
         parent_parser: argparse.ArgumentParser,

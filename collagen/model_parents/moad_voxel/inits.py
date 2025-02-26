@@ -65,6 +65,11 @@ class VoxelModelInits(object):
                     filename="val-loss-{epoch:02d}-{val_loss:.4f}",
                     save_top_k=args.max_epochs
                 ),
+
+                # NOTE: Model weights between best.ckpt and best val-loss*ckpt
+                # will be identical, but files will differ (when using unix
+                # `diff` command) because they include additional metadata from
+                # different callback instances. I have double checked this.
                 MyModelCheckpointEveryEpoch(
                     dirpath=args.default_root_dir,
                     monitor="val_loss",
@@ -87,6 +92,11 @@ class VoxelModelInits(object):
                     filename="val-loss-{epoch:02d}-{val_loss:.4f}",
                     save_top_k=3,
                 ),
+
+                # NOTE: Model weights between best.ckpt and best val-loss*ckpt
+                # will be identical, but files will differ (when using unix
+                # `diff` command) because they include additional metadata from
+                # different callback instances. I have double checked this.
                 MyModelCheckpoint(
                     dirpath=args.default_root_dir,
                     monitor="val_loss",
