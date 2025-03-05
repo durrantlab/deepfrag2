@@ -56,20 +56,13 @@ class VoxelModelInits(object):
         else:
             logger = TensorBoardLogger("tb_logs", "my_model_run_name")
 
-        # Determine which metric to monitor based on whether validation set exists
-        monitor_metric = "val_loss" if args.fraction_val > 0.0 else "test_loss"
-        checkpoint_filename_prefix = "val" if args.fraction_val > 0.0 else "test"
-
-        if args.fraction_val == 0.0:
-            print("WARNING: No validation set. Will monitor test_loss instead of val_loss to identify best.ckpt.")
-
         if args.save_every_epoch:
             print("Saving a checkpoint per epoch")
             callbacks = [
                 MyModelCheckpointEveryEpoch(
                     dirpath=args.default_root_dir,
-                    monitor=monitor_metric,
-                    filename=f"{checkpoint_filename_prefix}-loss-{{epoch:02d}}-{{{monitor_metric}:.4f}}",
+                    monitor="val_loss",
+                    filename="val-loss-{epoch:02d}-{val_loss:.4f}",
                     save_top_k=args.max_epochs
                 ),
 
@@ -79,7 +72,7 @@ class VoxelModelInits(object):
                 # different callback instances. I have double checked this.
                 MyModelCheckpointEveryEpoch(
                     dirpath=args.default_root_dir,
-                    monitor=monitor_metric,
+                    monitor="val_loss",
                     filename="best",
                     save_top_k=1,
                 ),
@@ -95,8 +88,8 @@ class VoxelModelInits(object):
             callbacks = [
                 MyModelCheckpoint(
                     dirpath=args.default_root_dir,
-                    monitor=monitor_metric,
-                    filename=f"{checkpoint_filename_prefix}-loss-{{epoch:02d}}-{{{monitor_metric}:.4f}}",
+                    monitor="val_loss",
+                    filename="val-loss-{epoch:02d}-{val_loss:.4f}",
                     save_top_k=3,
                 ),
 
@@ -106,7 +99,7 @@ class VoxelModelInits(object):
                 # different callback instances. I have double checked this.
                 MyModelCheckpoint(
                     dirpath=args.default_root_dir,
-                    monitor=monitor_metric,
+                    monitor="val_loss",
                     filename="best",
                     save_top_k=1
                 ),
