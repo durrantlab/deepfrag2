@@ -47,11 +47,11 @@ def get_default_args() -> dict:
         "batch_size": 16,
         "rotations": 8,
         "cache_pdbs_to_disk": False,
-        "cache": "temp",  # Means recreate cache every time. If None, append `.cache.json` to the file path given by `--every_csv
+        "cache": "temp",  # Means recreate cache every time. If None, append `.cache.json` to the file path given by `--csv
         "wandb_project": None,
         "save_every_epoch": False,
         "custom_test_set_dir": None,
-        "every_csv": None,
+        "csv": None,
         "split_method": "random_default",
         "butina_cluster_cutoff": None,
         "max_frag_repeats": None,

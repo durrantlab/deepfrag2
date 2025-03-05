@@ -121,7 +121,7 @@ with open(f"{args.working_dir}/run.sh", "w") as f:
     parts = [
         "--gpus 1",
         "--json_params /mnt/extra/params.json",
-        "--every_csv " + params["csv"],
+        "--csv " + params["csv"],
         "--data_dir " + params["data"],
         "--max_voxels_in_memory " + str(params["max_voxels_in_memory"]),
         "--save_params /mnt/extra/params.json",  # So overwrites input

@@ -24,7 +24,7 @@ prody.confProDy(verbosity="none")
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser()
-#     parser.add_argument("--every_csv", required=True, help="Path to MOAD every.csv")
+#     parser.add_argument("--csv", required=True, help="Path to MOAD every.csv")
 #     parser.add_argument(
 #         "--data_dir", required=True, help="Path to MOAD root structure folder"
 #     )

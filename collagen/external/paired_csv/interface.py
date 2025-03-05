@@ -139,34 +139,31 @@ class PairedCsvInterface(ParentInterface):
     def __read_data_from_csv(self, paired_data_csv):
         # reading input parameters
         paired_data_csv_sep = paired_data_csv.split(",")
-        path_csv_file = paired_data_csv_sep[0]  # path to the csv (or tab) file
-        path_pdb_sdf_files = paired_data_csv_sep[
-            1
-        ]  # path containing the pdb and/or sdf files
-        col_pdb_name = paired_data_csv_sep[2]  # pdb file name containing the receptor
-        col_sdf_name = paired_data_csv_sep[
-            3
-        ]  # sdf (or pdb) file name containing the ligand
-        col_parent_smi = paired_data_csv_sep[4]  # SMILES string for the parent
-        col_first_frag_smi = paired_data_csv_sep[
-            5
-        ]  # SMILES string for the first fragment
-        col_second_frag_smi = paired_data_csv_sep[
-            6
-        ]  # SMILES string for the second fragment
-        col_act_first_frag_smi = paired_data_csv_sep[
-            7
-        ]  # activity for the first fragment
-        col_act_second_frag_smi = paired_data_csv_sep[
-            8
-        ]  # activity for the second fragment
-        col_first_ligand_template = paired_data_csv_sep[
-            9
-        ]  # first SMILES string for assigning bonds to the ligand
-        col_second_ligand_template = paired_data_csv_sep[
-            10
-        ]  # if fail the previous SMILES, second SMILES string for assigning bonds to the ligand
-        col_gen_book_id = paired_data_csv_sep[11]  # Gene Book ID column
+        # path to the csv (or tab) file
+        path_csv_file = paired_data_csv_sep[0]
+        # path containing the pdb and/or sdf files
+        path_pdb_sdf_files = paired_data_csv_sep[1]
+        # pdb file name containing the receptor
+        col_pdb_name = paired_data_csv_sep[2]
+        # sdf (or pdb) file name containing the ligand
+        col_sdf_name = paired_data_csv_sep[3]
+        # SMILES string for the parent
+        col_parent_smi = paired_data_csv_sep[4]
+        # SMILES string for the first fragment
+        col_first_frag_smi = paired_data_csv_sep[5]
+        # SMILES string for the second fragment
+        col_second_frag_smi = paired_data_csv_sep[6]
+        # activity for the first fragment
+        col_act_first_frag_smi = paired_data_csv_sep[7]
+        # activity for the second fragment
+        col_act_second_frag_smi = paired_data_csv_sep[8]
+        # first SMILES string for assigning bonds to the ligand
+        col_first_ligand_template = paired_data_csv_sep[9]
+        # if fail the previous SMILES, second SMILES string for assigning bonds
+        # to the ligand
+        col_second_ligand_template = paired_data_csv_sep[10]
+        # Gene Book ID column
+        col_gen_book_id = paired_data_csv_sep[11]
 
         total_entries = 0
         gene_book_id_counter = {}

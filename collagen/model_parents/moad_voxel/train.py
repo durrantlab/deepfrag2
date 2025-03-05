@@ -105,7 +105,7 @@ class VoxelModelTrain(object):
                 )
             if not args.csv:
                 raise ValueError(
-                    "For 'train' mode, you must specify the '--every_csv' parameter."
+                    "For 'train' mode, you must specify the '--csv' parameter."
                 )
             if args.butina_cluster_cutoff:
                 raise ValueError(
@@ -143,7 +143,7 @@ class VoxelModelTrain(object):
             if (args.csv and not args.data_dir) or (args.data_dir and not args.csv) or \
                     (args.paired_data_csv and (args.csv or args.data_dir)):
                 raise ValueError(
-                    "For fine-tuning, the '--every_csv' and '--data_dir' parameters are specified when the input are "
+                    "For fine-tuning, the '--csv' and '--data_dir' parameters are specified when the input are "
                     "PDB/SDF files that are read from a CSV file, whereas the '--paired_data_csv' parameter is "
                     "specified when using paired data."
                 )

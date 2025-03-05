@@ -101,19 +101,19 @@ class Inference(VoxelModelTest):
         # --inference_label_sets="all", all these fragments wil be placed in a
         # single cache (.bin) file for quickly loading later.
         if "all" in lbl_set_codes:
-            # Get the location of the every_csv file
-            parent_every_csv = os.path.join(args.csv, os.pardir)
-            parent_every_csv = os.path.relpath(parent_every_csv)
+            # Get the location of the csv file
+            parent_csv = os.path.join(args.csv, os.pardir)
+            parent_csv = os.path.relpath(parent_csv)
 
             # Get the locations of (possibly) cached label set files
             label_set_fps_bin = (
-                parent_every_csv
+                parent_csv
                 + os.sep
                 + args.fragment_representation
                 + "_all_label_set_fps.bin"
             )
             label_set_smis_bin = (
-                parent_every_csv
+                parent_csv
                 + os.sep
                 + args.fragment_representation
                 + "_all_label_set_smis.bin"
@@ -193,7 +193,7 @@ class Inference(VoxelModelTest):
             )
         elif args.csv and args.data_dir and "all" not in args.inference_label_sets:
             raise Exception(
-                "The --inference_label_sets parameter must contain the 'all' value when using the --every_csv and"
+                "The --inference_label_sets parameter must contain the 'all' value when using the --csv and"
                 " --data_dir parameters"
             )
         elif args.load_splits:

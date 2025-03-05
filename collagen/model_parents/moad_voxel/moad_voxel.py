@@ -249,9 +249,9 @@ class VoxelModelParent:
             pth = args.default_root_dir + os.sep
 
         if "train" in args.mode:
-            torch.save(model.state_dict(), f"{pth}model_train.pt")
+            torch.save(model.state_dict(), f"{pth}model_train_last.pt")
         elif args.mode == "warm_starting":
-            torch.save(model.state_dict(), f"{pth}model_fine_tuned.pt")
+            torch.save(model.state_dict(), f"{pth}model_fine_tuned_last.pt")
 
         out_name = pth + os.sep + args.mode + ".actually_used.json"
         if not os.path.exists(out_name):

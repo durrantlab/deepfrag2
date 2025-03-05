@@ -705,11 +705,11 @@ class VoxelModelTest(object):
             )
         elif args.csv and not args.data_dir:
             raise Exception(
-                "To load the MOAD database, you must specify the --every_csv and --data_dir arguments"
+                "To load the MOAD database, you must specify the --csv and --data_dir arguments"
             )
         elif not args.csv and not args.data_dir and not args.paired_data_csv:
             raise Exception(
-                "To run the test mode, you must specify the --every_csv and --data_dir arguments for the MOAD database, the --data_dir argument for a non-paired database other than MOAD, or the --paired_data_csv argument for a paired database other than MOAD."
+                "To run the test mode, you must specify the --csv and --data_dir arguments for the MOAD database, the --data_dir argument for a non-paired database other than MOAD, or the --paired_data_csv argument for a paired database other than MOAD."
             )
         elif args.paired_data_csv and (args.csv or args.data_dir):
             raise Exception(

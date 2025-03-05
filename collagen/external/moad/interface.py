@@ -60,7 +60,7 @@ class MOADInterface(ParentInterface):
 
     def _load_targets_ligands_hierarchically(
         self,
-        every_csv_path: Union[str, Path],
+        csv_path: Union[str, Path],
         cache_pdbs_to_disk: bool,
         grid_width: int,
         grid_resolution: float,
@@ -74,7 +74,7 @@ class MOADInterface(ParentInterface):
         StructuresClass, StructuresFamily, MOAD_target, and MOAD_ligand dataclasses.
 
         Args:
-            every_csv_path (Union[str, Path]): Path to the metadata "every.csv"
+            csv_path (Union[str, Path]): Path to the metadata "every.csv"
                 file.
             cache_pdbs_to_disk (bool): Whether to cache PDBs to disk.
             grid_width (int): Grid width.
@@ -84,7 +84,7 @@ class MOADInterface(ParentInterface):
         """
         # Note that the output of this function gets put in self.classes.
 
-        with open(every_csv_path, "r") as f:
+        with open(csv_path, "r") as f:
             dat = f.read().strip().split("\n")
 
         classes = []
