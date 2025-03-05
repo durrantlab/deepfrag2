@@ -73,7 +73,7 @@ for finetuned_ckpt_file in $finetuned_ckpt_files; do
             --mode test \
             --load_splits ${initial_model_output_dir}/splits.saved.json \
             --load_checkpoint ${finetuned_ckpt_file}   `# Note loading finetuned checkpoint` \
-            --every_csv $MOAD_DIR/${EVERY_CSV_BSNM} \
+            --csv $MOAD_DIR/${EVERY_CSV_BSNM} \
             --data_dir $MOAD_DIR/ \
             --default_root_dir ${epoch_output_initial_model_dir}  `# The output directory` \
             --inference_label_sets test \
