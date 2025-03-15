@@ -32,6 +32,7 @@ from collagen.metrics.metrics import (
     pca_space_from_label_set_fingerprints,
     top_k,
 )
+from collagen.core.molecules.smiles_utils import standardize_smiles_or_rdmol
 
 if TYPE_CHECKING:
     import pytorch_lightning as pl  # type: ignore
@@ -602,7 +603,7 @@ class VoxelModelTest(object):
                     "averagedPrediction"
                 ]["closestFromLabelSet"].append(
                     {
-                        "smiles": predicted_entry_info.fragment_smiles,
+                        "smiles": standardize_smiles_or_rdmol(predicted_entry_info.fragment_smiles),
                         "cosSimilarityWithAvgPrediction": cos_similarity,
                         "pcaProjection": pca[0],
                     }
@@ -824,7 +825,6 @@ class VoxelModelTest(object):
                 args, ckpt_filename, fragment_set=set2run_test_on_single_checkpoint
             )
             model.eval()
-
             payload = self._run_test_on_single_checkpoint(
                 all_test_data,
                 args,

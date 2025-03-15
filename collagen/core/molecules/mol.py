@@ -19,7 +19,7 @@ from typing import (
 import warnings
 
 import numpy as np  # type: ignore
-from collagen.core.molecules.smiles_utils import standardize_smiles
+from collagen.core.molecules.smiles_utils import standardize_smiles_or_rdmol
 import prody  # type: ignore
 import rdkit.Chem.AllChem as Chem  # type: ignore
 from rdkit.Chem.Descriptors import ExactMolWt  # type: ignore
@@ -704,15 +704,15 @@ class BackedMol(Mol):
 
         Args:
             isomeric (bool): If True, will return an isomeric SMILES.
-            none_if_fails (bool): If True, will return None if standardize_smiles fails.
+            none_if_fails (bool): If True, will return None if standardize_smiles_or_rdmol fails.
 
         Note:
             This version returns a non-isomeric SMILES, even if isomeric = True
-            (because standardize_smiles removes chirality). I believe
+            (because standardize_smiles_or_rdmol removes chirality). I believe
             rdkfingerprint does not account for chirality, so shouldn't matter.
         """
         smi = Chem.MolToSmiles(self.rdmol, isomericSmiles=isomeric)
-        smi = standardize_smiles(smi, none_if_fails)
+        smi = standardize_smiles_or_rdmol(smi, none_if_fails)
         return smi
 
     def aminoacid_sequence(self) -> Union[str, None]:
@@ -838,6 +838,13 @@ class BackedMol(Mol):
             # Filter by atomic mass (if enabled).
             if max_frag_size != -1 and frag.mass > max_frag_size:
                 continue
+
+            # Good to standardize the fragment here, when you first load it.
+            # TODO: How much does this slow things down? Strickly speaking, not
+            # needed for predicitng, just for classifying (aromatic vs. acid vs.
+            # base) and reporting (json).
+            frag.rdmol = standardize_smiles_or_rdmol(frag.rdmol, none_if_fails=True)
+            assert frag.rdmol is not None, f"Fragment {frag.smiles(True)} could not be standardized"
 
             pairs.append((parent, frag))
 

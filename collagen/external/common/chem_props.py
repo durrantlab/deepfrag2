@@ -1,7 +1,10 @@
-"""Code to roughly identify aromatic/aliphatic and acid/base/neutral groups."""
+"""Code to roughly identify aromatic/aliphatic and acid/base groups."""
 
 from typing import Optional, Tuple
-from rdkit import Chem  # type: ignore
+from rdkit import Chem
+
+from collagen.core.molecules.mol import BackedMol
+from collagen.core.molecules.smiles_utils import standardize_smiles_or_rdmol  # type: ignore
 
 acid_substructs_smi = [
     # Carboxylates
@@ -19,11 +22,12 @@ acid_substructs_smi = [
     # Sulfate-like
     "S(=O)[O+0;H1]",
     "S(=O)[O-]",
-    # Tetrazoles
+    # Tetrazoles are acidic.
     "c1nnn[nH]1",
     "c1nnn[n-]1",
     "c1nn[nH]n1",
     "c1nn[n-]n1",
+
     # sulfonamides are acidic. NOTE: for NS(=O)(=O)c1ccccc1, predicted pKa
     # is 10.24. For CS(N)(=O)=O, it is 13.11. For O=S1(=O)CCCCN1, it is
     # 12.55. For O=S1(=O)NC=CC=C1, it is 8.52. Not going to do all
@@ -68,33 +72,72 @@ base_substructs_smi = [
     # Tertiary amines. For simplicity's sake, must be bound to SP3 carbons.
     "[C;X4][N+0;H0;X3]([C;X4])[C;X4]",
     "[C;X4][N+;H1;X4]([C;X4])[C;X4]",
-    # Imine-like
-    "[N+0;H0;X2]",
-    "[N+;H1;X3]",
-    "[N+0;H1;X2]",
-    "[N+;H2;X3]",
+    # Imine-like. There will be cases where the below will capture molecules
+    # that are not particularly basic. For example, *c1ccc(C2=NNC(=O)CC2C)cc1.
+    # But the overwhelming majority of these molecules will be basic. Good to
+    # mention in the paper.
+    # "[N+0;H0;X2]",
+    # "[N+;H1;X3]",
+    # "[N+0;H1;X2]",
+    # "[N+;H2;X3]",
+
+    # NOTE: using version below. The above captures too many non-basic
+    # molecules. If the nitrogen is bound to an oxygen, it's unlikely to be
+    # basic. If bound to a nitrogen, could be basic, but not always (e.g.,
+    # azides). Not perfect (e.g., catches *N=C=S), but very good.
+
+    "[N+0;H0;X2;!$(*~[O,N])]",
+    "[N+;H1;X3;!$(*~[O,N])]",
+    "[N+0;H1;X2;!$(*~[O,N])]",
+    "[N+;H2;X3;!$(*~[O,N])]",
 ]
 
 acid_substructs = [Chem.MolFromSmarts(smi) for smi in acid_substructs_smi]
 base_substructs = [Chem.MolFromSmarts(smi) for smi in base_substructs_smi]
 
 
-def is_aromatic(mol: Chem.Mol) -> bool:
+def is_aromatic(mol: BackedMol) -> bool:
     """Determine if a molecule is aromatic. Below is overkill. Could probably
     just keep the first one.
 
     Args:
-        mol: RDKit molecule object.
+        mol: BackedMol molecule object.
 
     Returns:
         True if aromatic, False if not.
     """
-    return (
-        len(mol.GetAromaticAtoms()) > 0
-        or mol.HasSubstructMatch(Chem.MolFromSmarts("a"))
-        or any(atom.GetIsAromatic() for atom in mol.GetAtoms())
+
+    # try:
+    mol_to_test = standardize_smiles_or_rdmol(mol.rdmol, none_if_fails=True)
+    if mol_to_test is None:
+        mol_to_test = mol.rdmol
+
+    # print("TEST AROMATIC:", mol_to_test, Chem.MolToSmiles(mol_to_test))
+
+    initial_assessment = (
+        len(mol_to_test.GetAromaticAtoms()) > 0
+        or mol_to_test.HasSubstructMatch(Chem.MolFromSmarts("a"))
+        or any(atom.GetIsAromatic() for atom in mol_to_test.GetAtoms())
     )
 
+    return initial_assessment
+
+    # if initial_assessment:
+    #     return True
+
+    # Soemtimes when rdkit fragments a molecule, the aromatic fragment is no
+    # longer aromatic. It's not just a case of kekulization. It comes up with a
+    # tautomer that breaks aromaticity. I spent quite a bit of time trying to
+    # figure out how to correct this on the level of the rdmol, but could not do
+    # it. But the smiles() function returns the aromatic form, so I'm going to
+    # use that here.
+    # if "c" in mol.smiles():
+    #     print("HEREHEREHEREHEREHEREHEREHEREHERE")
+    #     return True
+    # return False
+    # except Exception as e:
+    #     print("ERROR AROMATIC:", e)
+    #     return False
 
 def is_acid_testing(mol: Chem.Mol) -> Tuple[bool, Optional[str]]:
     """Determine if a molecule is an acid.
@@ -107,7 +150,7 @@ def is_acid_testing(mol: Chem.Mol) -> Tuple[bool, Optional[str]]:
         return (False, None).
     """
     # Make copy of mol, so substitution doesn't change original
-    mol = Chem.Mol(mol)
+    mol = {"rdmol": Chem.Mol(mol)}
 
     return next(
         (
@@ -119,20 +162,47 @@ def is_acid_testing(mol: Chem.Mol) -> Tuple[bool, Optional[str]]:
     )
 
 
-def is_acid(mol: Chem.Mol) -> bool:
+def is_acid(mol: BackedMol, check_basic_counter_example=True) -> bool:
     """Determine if a molecule is an acid.
 
     Args:
-        mol: RDKit molecule object.
+        mol: BackedMol molecule object.
+        check_basic_counter_example: If True, will check if the molecule is a
+            base. If it is, will return False.
 
     Returns:
         True if an acid, False if not.
     """
+    smiles = mol.smiles(none_if_fails=True)  # runs through standardize_smiles_or_rdmol()
+
+    # If a molecule is a base, it is not an acid (fragments with multiple
+    # conflict groups not allowed in training data)
+    if check_basic_counter_example:
+        if is_base(mol, check_acid_counter_example=False):
+            return False
+
+        # Need to remove any with nitrogen bound to the conneciton point. These
+        # are not counted as basic because the atom on the other side could be
+        # something like a carbonyl carbon. But in many cases these will be
+        # basic, so they should not be considered acids.
+        if smiles is not None:
+            if "*N" in smiles:  # runs through standardize_smiles_or_rdmol()
+                return False
+            if "*]N" in smiles:  # runs through standardize_smiles_or_rdmol()
+                return False
+            if "N*" in smiles:  # runs through standardize_smiles_or_rdmol()
+                return False
+            if "N[*" in smiles:  # runs through standardize_smiles_or_rdmol()
+                return False
+
     # Make copy of mol, so substitution doesn't change original
-    mol = Chem.Mol(mol)
+    
+    rdmol = Chem.MolFromSmiles(smiles)  # Standardized at this point
+    if rdmol is None:
+        rdmol = mol.rdmol
 
     return any(
-        mol.HasSubstructMatch(acid_substruct) for acid_substruct in acid_substructs
+        rdmol.HasSubstructMatch(acid_substruct) for acid_substruct in acid_substructs
     )
 
 
@@ -147,7 +217,7 @@ def is_base_testing(mol: Chem.Mol) -> Tuple[bool, Optional[str]]:
         return (False, None).
     """
     # Make copy of mol, so substitution doesn't change original
-    mol = Chem.Mol(mol)
+    mol = {"rdmol": Chem.Mol(mol)}
 
     return next(
         (
@@ -159,33 +229,45 @@ def is_base_testing(mol: Chem.Mol) -> Tuple[bool, Optional[str]]:
     )
 
 
-def is_base(mol: Chem.Mol) -> bool:
+def is_base(mol: BackedMol, check_acid_counter_example=True) -> bool:
     """Determine if a molecule is a base.
 
     Args:
-        mol: RDKit molecule object.
+        mol: BackedMol molecule object.
+        check_acid_counter_example: If True, will check if the molecule is an
+            acid. If it is, will return False.
 
     Returns:
         True if a base, False if not.
     """
+    # If a molecule is an acid, it is not a base (fragments with multiple
+    # conflict groups not allowed in training data)
+    if check_acid_counter_example and is_acid(mol, check_basic_counter_example=False):
+        return False
+    
+    rdmol = standardize_smiles_or_rdmol(mol.rdmol, none_if_fails=True)
+    if rdmol is None:
+        rdmol = mol.rdmol
+
     # Make copy of mol, so substitution doesn't change original
-    mol = Chem.Mol(mol)
+    # rdmol = Chem.Mol(mol.rdmol)
 
     return any(
-        mol.HasSubstructMatch(base_substruct) for base_substruct in base_substructs
+        rdmol.HasSubstructMatch(base_substruct) for base_substruct in base_substructs
     )
 
-
-def is_neutral(mol: Chem.Mol) -> bool:
+def is_neutral(mol: BackedMol) -> bool:
     """Determine if a molecule is neutral. If not acid and not base, assume
     neutral.
 
     Args:
-        mol: RDKit molecule object.
+        mol: BackedMol molecule object.
 
     Returns:
         True if a neutral, False if not.
     """
+    assert False, "is_neutral is now depreciated. In testing, we found we could not reliably predict neutral molecules because of many, many edge cases."
+
     if is_acid(mol):
         return False
     if is_base(mol):
@@ -195,7 +277,8 @@ def is_neutral(mol: Chem.Mol) -> bool:
     # the atom on the other side could be something like a carbonyl carbon. But
     # in many cases these will be basic, so they should not be included in the
     # neutral count.
-    smi = Chem.MolToSmiles(mol)
+    # smi = Chem.MolToSmiles(mol.rdmol)
+    smi = mol.smiles()  # runs through standardize_smiles_or_rdmol()
     if "*N" in smi:
         return False
     if "*]N" in smi:

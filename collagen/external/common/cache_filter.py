@@ -10,7 +10,7 @@ from collagen.external.common.chem_props import (
     is_acid,
     is_aromatic,
     is_base,
-    is_neutral,
+    # is_neutral,
 )
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.common.parent_targets_ligands import Parent_target
@@ -44,7 +44,7 @@ class CacheItemsToUpdate(object):
     frag_aromatic: bool = False
     frag_acid: bool = False
     frag_base: bool = False
-    frag_neutral: bool = False
+    # frag_neutral: bool = False
 
     def updatable(self) -> bool:
         """Return True if any of the properties are updatable.
@@ -65,7 +65,7 @@ class CacheItemsToUpdate(object):
                 self.frag_aromatic,
                 self.frag_acid,
                 self.frag_base,
-                self.frag_neutral,
+                # self.frag_neutral,
             ]
         )
 
@@ -179,7 +179,7 @@ def get_info_given_pdb_id(payload: Tuple[str, Parent_target, CacheItemsToUpdate]
                 or cache_items_to_update.frag_aromatic
                 or cache_items_to_update.frag_acid
                 or cache_items_to_update.frag_base
-                or cache_items_to_update.frag_neutral
+                # or cache_items_to_update.frag_neutral
             ):
                 moad_ligand_ = lig.meta["moad_ligand"]
                 if isinstance(moad_ligand_, PairedCsv_ligand):
@@ -189,7 +189,19 @@ def get_info_given_pdb_id(payload: Tuple[str, Parent_target, CacheItemsToUpdate]
                         frags.append([moad_ligand_.smiles, backed_frag])
                 else:
                     # Get all the fragments
+                    # if pdb_id == "4oma":
+                    #     print("DEBUG!!!DEBUG!!!DEBUG!!!DEBUG!!!DEBUG")
+                    #     from rdkit import Chem
+                    #     print("LIG:", lig.smiles(), Chem.MolToSmiles(lig.rdmol))
+
                     frags = _set_molecular_prop(lambda x: x.split_bonds(), lig, [])
+
+                    # if pdb_id == "4oma":
+                    #     print("DEBUG!!!DEBUG!!!DEBUG!!!DEBUG!!!DEBUG")
+                    #     from rdkit import Chem
+                    #     for frag in frags:
+                    #         print(frag[1].smiles(), Chem.MolToSmiles(frag[1].rdmol))
+                    #     print("")
 
             # print("TTT", cache_items_to_update.frag_masses)
             if cache_items_to_update.frag_masses:
@@ -219,23 +231,33 @@ def get_info_given_pdb_id(payload: Tuple[str, Parent_target, CacheItemsToUpdate]
 
             if cache_items_to_update.frag_aromatic:
                 lig_infs[lig_name]["frag_aromatic"] = _set_molecular_prop(
-                    lambda f: [is_aromatic(x[1].rdmol) for x in f], frags, []
+                    lambda f: [is_aromatic(x[1]) for x in f], frags, []
                 )
+
+                # if pdb_id == "4oma":
+                #     print("DEBUG!!!DEBUG!!!")
+                #     from rdkit import Chem
+                #     print([frag[1] for frag in frags])
+                #     print([Chem.MolToSmiles(frag[1].rdmol) for frag in frags])
+                #     print([frag[1].smiles() for frag in frags])
+                #     print(lig_infs[lig_name]["frag_aromatic"])
+                #     print("")
+                    
 
             if cache_items_to_update.frag_acid:
                 lig_infs[lig_name]["frag_acid"] = _set_molecular_prop(
-                    lambda f: [is_acid(x[1].rdmol) for x in f], frags, []
+                    lambda f: [is_acid(x[1]) for x in f], frags, []
                 )
 
             if cache_items_to_update.frag_base:
                 lig_infs[lig_name]["frag_base"] = _set_molecular_prop(
-                    lambda f: [is_base(x[1].rdmol) for x in f], frags, []
+                    lambda f: [is_base(x[1]) for x in f], frags, []
                 )
 
-            if cache_items_to_update.frag_neutral:
-                lig_infs[lig_name]["frag_neutral"] = _set_molecular_prop(
-                    lambda f: [is_neutral(x[1].rdmol) for x in f], frags, []
-                )
+            # if cache_items_to_update.frag_neutral:
+            #     lig_infs[lig_name]["frag_neutral"] = _set_molecular_prop(
+            #         lambda f: [is_neutral(x[1]) for x in f], frags, []
+            #     )
 
     return pdb_id, lig_infs
 
@@ -289,8 +311,8 @@ def _set_cache_params_to_update(cache: Dict[str, Dict[str, Dict[str, Any]]]):
         CACHE_ITEMS_TO_UPDATE.frag_acid = False
     if "frag_base" in first_lig:
         CACHE_ITEMS_TO_UPDATE.frag_base = False
-    if "frag_neutral" in first_lig:
-        CACHE_ITEMS_TO_UPDATE.frag_neutral = False
+    # if "frag_neutral" in first_lig:
+    #     CACHE_ITEMS_TO_UPDATE.frag_neutral = False
 
 
 def _build_cache_file(
@@ -343,7 +365,11 @@ def _build_cache_file(
         list_ids_moad[i:i + chunk_size] 
         for i in range(0, len(list_ids_moad), chunk_size)
     ]
-    
+
+    # DEBUG
+    # chunks = chunks[10:20]
+    # print("DEBUG!!!!DEBUG!!!!")
+
     print(f"Building/updating {filename or 'dataset'} (cache) in {len(chunks)} chunks")
     
     # Process each chunk separately to prevent memory buildup

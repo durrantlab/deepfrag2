@@ -160,7 +160,7 @@ class FragmentDataset(Dataset):
             required=False,
             type=str,
             # default="",
-            help='Consider only fragments that match selected chemical properties. A comma-separated list. Options are "aromatic", "aliphatic", "acid", "base", "neutral". If specifying multiple properties (e.g., "aromatic,acid"), only fragments matching all properties (acidic aromatics) will be considered. Default is "" (no filtering).',
+            help='Consider only fragments that match selected chemical properties. A comma-separated list. Options are "aromatic", "aliphatic", "acid", "base". If specifying multiple properties (e.g., "aromatic,acid"), only fragments matching all properties (acidic aromatics) will be considered. Default is "" (no filtering).',
         )
         parser.add_argument(
             "--max_frag_repeats",
@@ -215,21 +215,21 @@ class FragmentDataset(Dataset):
                     "Cannot specify both aromatic and aliphatic properties. They are mutually exclusive."
                 )
 
-            if "acid" in mol_props and "neutral" in mol_props:
-                raise ValueError(
-                    "Cannot specify both acid and neutral properties. They are mutually exclusive."
-                )
+            # if "acid" in mol_props and "neutral" in mol_props:
+            #     raise ValueError(
+            #         "Cannot specify both acid and neutral properties. They are mutually exclusive."
+            #     )
 
-            if "base" in mol_props and "neutral" in mol_props:
-                raise ValueError(
-                    "Cannot specify both base and neutral properties. They are mutually exclusive."
-                )
+            # if "base" in mol_props and "neutral" in mol_props:
+            #     raise ValueError(
+            #         "Cannot specify both base and neutral properties. They are mutually exclusive."
+            #     )
 
             # If anything in molprops other than aromatic, aliphatic, acid,
             # base, or neutral is specified, raise an error saying which one is
             # not recognized.
             for prop in mol_props:
-                if prop not in ["aromatic", "aliphatic", "acid", "base", "neutral"]:
+                if prop not in ["aromatic", "aliphatic", "acid", "base"]:  #  , "neutral"]:
                     raise ValueError(f"Unrecognized property: {prop}")
 
             self.mol_props_param_validated = True
@@ -245,7 +245,7 @@ class FragmentDataset(Dataset):
         frag_aromatic: bool,
         frag_acid: bool,
         frag_base: bool,
-        frag_neutral: bool,
+        # frag_neutral: bool,
         frag_smi: str,
     ) -> bool:
         """Filter is passed to cache_filter.load_cache_and_filter via the
@@ -259,7 +259,7 @@ class FragmentDataset(Dataset):
             frag_aromatic (bool): Whether the fragment is aromatic.
             frag_acid (bool): Whether the fragment is acid.
             frag_base (bool): Whether the fragment is base.
-            frag_neutral (bool): Whether the fragment is neutral.
+            # frag_neutral (bool): Whether the fragment is neutral.
             frag_smi (str): The fragment's SMILES string.
 
         Returns:
@@ -330,10 +330,10 @@ class FragmentDataset(Dataset):
                     print("Fragment rejected; not base.")
                 return False
 
-            if "neutral" in mol_props and not frag_neutral:
-                if user_args.verbose:
-                    print("Fragment rejected; not neutral.")
-                return False
+            # if "neutral" in mol_props and not frag_neutral:
+            #     if user_args.verbose:
+            #         print("Fragment rejected; not neutral.")
+            #     return False
 
         return True
 
@@ -362,7 +362,7 @@ class FragmentDataset(Dataset):
         frag_aromatics = lig_inf["frag_aromatic"]
         frag_acids = lig_inf["frag_acid"]
         frag_bases = lig_inf["frag_base"]
-        frag_neutrals = lig_inf["frag_neutral"]
+        # frag_neutrals = lig_inf["frag_neutral"]
         # Uses Chem.MolToSmiles, so should be cannonical
         frag_smiles = lig_inf["frag_smiles"]
 
@@ -376,7 +376,7 @@ class FragmentDataset(Dataset):
             frag_aromatic = frag_aromatics[frag_idx]
             frag_acid = frag_acids[frag_idx]
             frag_base = frag_bases[frag_idx]
-            frag_neutral = frag_neutrals[frag_idx]
+            # frag_neutral = frag_neutrals[frag_idx]
             frag_smi = frag_smiles[frag_idx]
 
             if self._frag_filter(
@@ -387,7 +387,7 @@ class FragmentDataset(Dataset):
                 frag_aromatic,
                 frag_acid,
                 frag_base,
-                frag_neutral,
+                # frag_neutral,
                 frag_smi,
             ):
                 entries_to_return.append(
@@ -428,7 +428,7 @@ class FragmentDataset(Dataset):
                 frag_aromatic=True,
                 frag_acid=True,
                 frag_base=True,
-                frag_neutral=True,
+                # frag_neutral=True,
             ),
             cache_file,
             cores,

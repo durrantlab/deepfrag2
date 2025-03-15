@@ -49,6 +49,9 @@ if __name__ == "__main__":
     numba_logger = logging.getLogger("numba")
     numba_logger.setLevel(logging.WARNING)
 
+    thread_logger = logging.getLogger('thread_errors')
+    thread_logger.setLevel(logging.ERROR)
+
     print("Hello DeepFrag")
     print("PyTorch", torch.__version__)
     print("PytorchLightning", pl.__version__)
