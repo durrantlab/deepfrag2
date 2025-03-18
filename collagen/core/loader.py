@@ -57,7 +57,7 @@ def _process2(batch_of_batches: List[List[Any]], return_list: List[Any], id: str
                         )
                     )
 
-            print("FAILED", id, batch)
+            print("FAILED", id, batch, e)
             traceback.print_exc()
 
             # print("")
@@ -154,7 +154,7 @@ class MultiLoader(object):
             if p.is_alive():
                 if cur_time - timestamp > TIMEOUT:
                     # It's been running for too long
-                    print(f"timed out, killing a process: {p.name}")
+                    print(f"timed out, killing a process: {p.name}. Insufficient memory?")
                     if (
                         "molbert" not in self.fragment_representation
                         and platform.system().lower() != "windows"
