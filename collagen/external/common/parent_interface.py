@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Union, TYPE_CHECKING
 from dataclasses import field
+import glob
 
 if TYPE_CHECKING:
     from collagen.external.common.types import StructuresClass
@@ -70,12 +71,22 @@ class ParentInterface(ABC):
             path (Union[str, Path]): Path to the directory containing the
                 PDBs.
         """
+        path_str = path[:] + "/"
         path = Path(path)
+        ext = self._get_structure_file_extension()
 
         # Map the pdb to the file on disk.
         files = {}
-        if self._get_structure_file_extension():
-            for fam in path.glob(f"./**/*.{self._get_structure_file_extension()}"):
+        if ext:
+            # print("EXT:", ext, path_str + f"**/*.{ext}")
+            # NOTE: using recursive can be slow. So I'm just going to look at
+            # the path_str and its immediate children directories.
+            filenames = glob.glob(path_str + f"**/*.{ext}") # , recursive=True)
+            filenames += glob.glob(path_str + f"/*.{ext}") # , recursive=True)
+            filenames = [Path(f) for f in filenames]
+
+            
+            for fam in filenames:
                 if str(fam).endswith(".pkl"):
                     continue
                 pdbid = fam.stem  # Removes extension (.bio?)
@@ -86,6 +97,11 @@ class ParentInterface(ABC):
                 if pdbid not in files:
                     files[pdbid] = []
                 files[pdbid].append(fam)
+
+                # print(pdbid, self._get_structure_file_extension())
+
+                # if pdbid == "3hca":
+                #     import pdb; pdb.set_trace()
         else:
             files["Non"] = ["Non"]
 

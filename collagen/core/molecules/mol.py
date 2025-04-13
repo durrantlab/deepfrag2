@@ -843,8 +843,16 @@ class BackedMol(Mol):
             # TODO: How much does this slow things down? Strickly speaking, not
             # needed for predicitng, just for classifying (aromatic vs. acid vs.
             # base) and reporting (json).
-            frag.rdmol = standardize_smiles_or_rdmol(frag.rdmol, none_if_fails=True)
-            assert frag.rdmol is not None, f"Fragment {frag.smiles(True)} could not be standardized"
+            
+            # When below is commented in, I get errors. Still need to see what
+            # happens when commented out (as below)
+            
+            # frag.rdmol = standardize_smiles_or_rdmol(frag.rdmol, none_if_fails=True)
+            # print(">", frag.rdmol, "<")
+            # assert frag.rdmol is not None, f"Fragment {frag.smiles(True)} could not be standardized"
+
+            # NOTE: I believe standardization occurs when the molecule is
+            # loaded, so not needed here.
 
             pairs.append((parent, frag))
 
