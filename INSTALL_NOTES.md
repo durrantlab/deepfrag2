@@ -1,32 +1,13 @@
-1. Install the conda enviroment
+# Clone the repository:
 
-* Create conda environment at least with python v3.8:
-  * `conda create --name env_name python==3.8`, where `env_name` is the name of
-    the environment to be created. In this manual, `env_name` is `deepfrag`
-    (`conda create --name deepfrag python==3.8`)
-* Activate the created conda environment to install the different packages:
-  * `conda activate deepfrag`
-* Install the following packages in the same order listed:
-  * `conda install -c conda-forge prody`
-  * `conda install -c pytorch pytorch=1.11`
-  * `conda install -c conda-forge pytorch-lightning=1.7.1`
-  * `conda install -c conda-forge rdkit`
-  * `conda install -c conda-forge k3d`
-  * `conda install -c conda-forge py3dmol`
-  * `conda install -c anaconda h5py`
-  * `conda install -c anaconda scikit-learn`
-  * `conda install -c conda-forge torchinfo`
-  * `conda install -c conda-forge wandb`
-  * `conda install -c pyg pyg`
-  * `conda install -c anaconda pip`
-  * `conda install filelock`
-  * `conda install regex`
-  * `conda install sacremoses`
-  * `pip install wget`
-  * `conda install "numpy<=1.21"`
-  * `pip install Fancy-aggregations`
+* git clone https://github.com/durrantlab/deepfrag2
 
-2. Description of the scripts provided
+# Installation of Python environment via conda
+
+* conda env create -f environment.yml
+* conda activate Deepfrag2
+
+# Description of the scripts provided
 
 * `paths.sh`: this script is used to configure the different variables to be
   used by the scripts detailed below (also see Section 4).
@@ -52,9 +33,6 @@
   an external dataset, that is, on a dataset other than the MOAD and
   `PDB_SDF_FILES` databases that were used for the training and fine-tunning
   process.
-
-3. Command to download DeepFrag from GitLab
-   * `git clone https://git.durrantlab.pitt.edu/jdurrant/deepfrag2.git`
 
 4. How to configure the `paths.sh` script
    * This script contains several variables that are required to run DeepFrag.
