@@ -58,6 +58,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
     model, args = DeepFragFactory.build_deepfrag_instance()
+    print("DeepFrag is using " + ("GPU" if torch.cuda.is_available() and bool(args["cpu"]) else "CPU"))
     model.run(args)
     final_time = time.time()
 
