@@ -297,6 +297,12 @@ class FragmentDataset(Dataset):
                 )
             return False
 
+        if frag_smi is None:
+            # A fragment with no mass, so skip.
+            if user_args.verbose:
+                print(f"Fragment SMILE was not successfully read")
+            return False
+
         if args.max_frag_repeats is not None:
             if frag_smi not in self.smi_counts:
                 self.smi_counts[frag_smi] = 0
@@ -372,12 +378,12 @@ class FragmentDataset(Dataset):
             dist_to_recep = (
                 0 if len(frag_dists_to_recep) == 0 else frag_dists_to_recep[frag_idx]
             )
-            num_heavy_atom = frag_num_heavy_atoms[frag_idx]
-            frag_aromatic = frag_aromatics[frag_idx]
-            frag_acid = frag_acids[frag_idx]
-            frag_base = frag_bases[frag_idx]
+            num_heavy_atom = frag_num_heavy_atoms[frag_idx] if frag_idx < len(frag_num_heavy_atoms) else 0
+            frag_aromatic = frag_aromatics[frag_idx] if frag_idx < len(frag_aromatics) else False
+            frag_acid = frag_acids[frag_idx] if frag_idx < len(frag_acids) else False
+            frag_base = frag_bases[frag_idx] if frag_idx < len(frag_bases) else False
             # frag_neutral = frag_neutrals[frag_idx]
-            frag_smi = frag_smiles[frag_idx]
+            frag_smi = frag_smiles[frag_idx] if frag_idx < len(frag_smiles) else None
 
             if self._frag_filter(
                 args,
