@@ -4,8 +4,12 @@
 
 # Installation of Python environment via conda
 
-* conda env create -f environment.yml
-* conda activate Deepfrag2
+##  Windows
+* conda env create -f environment_windows.yml
+##  Linux
+* conda env create -f environment_linux.yml
+##  OSX
+* conda env create -f environment_osx.yml
 
 # Description of the scripts provided
 
