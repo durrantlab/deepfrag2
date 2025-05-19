@@ -94,6 +94,8 @@ class VoxelModelTrain(object):
         voxel_params = self.parent.voxel_params
         device = self.parent.inits.init_device(args)
 
+        data_interface = None
+
         if not finetuning:
             if args.paired_data_csv:
                 raise ValueError(
@@ -140,6 +142,7 @@ class VoxelModelTrain(object):
                     "for input PDB and SDF files."
                 )
         else:
+            # So you are fine-tuning, because finetuning is True
             if (args.csv and not args.data_dir) or (args.data_dir and not args.csv) or \
                     (args.paired_data_csv and (args.csv or args.data_dir)):
                 raise ValueError(
@@ -170,6 +173,8 @@ class VoxelModelTrain(object):
                     discard_distant_atoms=args.discard_distant_atoms,
                     use_prevalence=args.use_prevalence,
                 )
+
+        assert data_interface is not None, "Data interface is None"
 
         train_split, val_split, _ = create_train_val_test_splits(
             data_interface,
