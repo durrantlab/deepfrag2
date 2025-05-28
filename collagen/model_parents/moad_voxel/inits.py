@@ -170,7 +170,9 @@ class VoxelModelInits(object):
         Returns:
             torch.device: The device.
         """
-        return torch.device("cpu") if args.cpu else torch.device("cuda")
+        device = torch.device("cpu") if (args.cpu or not torch.cuda.is_available()) else torch.device("cuda")
+        print("DeepFrag is using " + str(device) + " to run.")
+        return device
 
     def init_warm_model(
         self,
