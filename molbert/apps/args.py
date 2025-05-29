@@ -53,7 +53,7 @@ def get_default_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--learning_rate",
-        default=3e-5,
+        default=1e-4,
         type=float,
         help="The initial learning rate for Adam.",
     )
@@ -85,7 +85,7 @@ def get_default_parser() -> argparse.ArgumentParser:
         default=1,
         help="Accumulates grads every k batches or as set up in the dict.",
     )
-    parser.add_argument("--gpus", type=int, default=0, help="How many GPUs to train on")
+    parser.add_argument("--gpus", type=int, default=1, help="How many GPUs to train on")
     parser.add_argument(
         "--distributed_backend",
         type=str,

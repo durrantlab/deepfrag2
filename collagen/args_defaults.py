@@ -27,6 +27,7 @@ def get_default_args() -> dict:
         "aggregation_loss_vector": Operator.MEAN.value,
         "aggregation_rotations": Operator.MEAN.value,
         "cpu": False,
+        "gpus": 1,
         "save_params": None,
         "learning_rate": 1e-4,
         "min_frag_mass": 0,
