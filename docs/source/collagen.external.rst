@@ -1,30 +1,18 @@
 collagen.external package
 =========================
 
-Submodules
-----------
+Subpackages
+-----------
 
-collagen.external.moad module
------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: collagen.external.moad
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-collagen.external.zinc module
------------------------------
-
-.. automodule:: collagen.external.zinc
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   collagen.external.moad
 
 Module contents
 ---------------
 
 .. automodule:: collagen.external
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,0 +1,23 @@
+export NCCL_ASYNC_ERROR_HANDLING=1
+#wandb login
+echo START: $(date)
+# 
+CUDA_LAUNCH_BLOCKING=1 NCCL_ASYNC_ERROR_HANDLING=1 /miniconda/bin/python3 deeplig.py \
+    --every_csv ../data/moad/every.csv \
+    --data_dir ../data/moad/BindingMoad2019/ \
+    --cache ./cache.json \
+    --gpus 1 \
+    --wandb_project 3aee432b3e7c672a3b2d2accf15b6b56a2770584 \
+    --num_dataloader_workers 16 \
+    --max_voxels_in_memory 320
+
+    # based on https://discuss.pytorch.org/t/pytorch-cannot-allocate-memory/134754/2
+    # --num_dataloader_workers 0
+
+
+    # --num_sanity_val_steps 0 \
+    # --cpu
+    # --num_workers 0
+#16
+
+#--num_workers 1

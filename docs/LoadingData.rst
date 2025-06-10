@@ -16,7 +16,11 @@ ZINC
 
 Homepage: https://zinc.docking.org/
 
-...
+Interfaces:
+
+.. autosummary::
+    ~collagen.external.ZINCDataset
+    ~collagen.external.ZINCDatasetH5
 
 Binding MOAD
 ^^^^^^^^^^^^
@@ -33,3 +37,5 @@ Datasets:
 .. autosummary::
     ~collagen.external.moad.MOADFragmentDataset
     ~collagen.external.moad.MOADPocketDataset
+    ~collagen.external.moad.MOADWholeLigDataset
+    ~collagen.external.moad.MOADMurckoLigDataset

@@ -16,7 +16,7 @@ Collagen documentation!
    Voxelization.rst
    Jupyter.rst
    Examples.rst
-
+   Docker.rst
 
 Indices and tables
 ==================

@@ -7,15 +7,14 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   collagen.core
    collagen.draw
    collagen.external
+   collagen.skeletons
 
 Module contents
 ---------------
 
 .. automodule:: collagen
-   :noindex:
    :members:
    :undoc-members:
    :show-inheritance:

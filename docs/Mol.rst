@@ -1,25 +1,25 @@
 The Mol Class
 =============
 
-Molecular structures in Collagen are stored in the :class:`~collagen.core.mol.Mol` class. There are several variants depending on the type and source of molecular data:
+Molecular structures in Collagen are stored in the :class:`~collagen.Mol` class. There are several variants depending on the type and source of molecular data:
 
-* :class:`~collagen.core.mol.BackedMol`: A Mol backed by an RDKit :class:`rdkit.Chem.rdchem.Mol`. Used for representing *real* molecular data (i.e. loaded from a dataset or constructed from SMILES strings).
-* :class:`~collagen.core.abstract_mol.AbstractMol`: A customizeable Mol that does not care about chemical feasability constraints. Used for representing graph-like molecular information in the same coordinate space as a :class:`~collagen.core.mol.BackedMol`.
+* :class:`~collagen.BackedMol`: A Mol backed by an RDKit :class:`rdkit.Chem.rdchem.Mol`. Used for representing *real* molecular data (i.e. loaded from a dataset or constructed from SMILES strings).
+* :class:`~collagen.AbstractMol`: A customizeable Mol that does not care about chemical feasability constraints. Used for representing graph-like molecular information in the same coordinate space as a :class:`~collagen.BackedMol`.
 
 Constructing a Mol
 ------------------
 
 You can construct a Mol using the provided ``from_*`` method or using an external data loader (see :doc:`LoadingData`).
 
-.. currentmodule:: collagen.core.mol
+.. currentmodule:: collagen
 .. autosummary::
     Mol.from_smiles
     Mol.from_rdkit
     Mol.from_prody
 
-The :class:`~collagen.core.abstract_mol.AbstractMol` is intended to be created programatically using the following two methods:
+The :class:`~collagen.AbstractMol` is intended to be created programatically using the following two methods:
 
-.. currentmodule:: collagen.core.abstract_mol
+.. currentmodule:: collagen
 .. autosummary::
     AbstractMol.add_atom
     AbstractMol.add_bond
@@ -38,7 +38,7 @@ Attributes
 
 There are several attribute wrappers for quick access to molecular data:
 
-.. currentmodule:: collagen.core.mol
+.. currentmodule:: collagen
 .. autosummary::
     Mol.coords
     Mol.center

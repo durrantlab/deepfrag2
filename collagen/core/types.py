@@ -1,3 +1,14 @@
-from typing import Union
+"""Atom type definition."""
 
-AnyAtom = Union["rdkit.Chem.rdchem.Atom", "collagen.core.abstract_mol.AbstractAtom"]
+from typing import Type
+
+# https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
+# if TYPE_CHECKING:
+import rdkit  # type: ignore
+#    import collagen.core.molecules.abstract_mol
+
+AnyAtom = Type[rdkit.Chem.rdchem.Atom]
+
+# Union[
+#     "rdkit.Chem.rdchem.Atom", "collagen.core.molecules.abstract_mol.AbstractAtom"
+# ]

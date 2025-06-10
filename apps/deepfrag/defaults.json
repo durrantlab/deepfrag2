@@ -1,0 +1,5 @@
+{
+    "csv": "/mnt/data/moad/every.csv",
+    "data": "/mnt/data/moad/",
+    "max_voxels_in_memory": 512
+}
