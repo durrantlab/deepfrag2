@@ -259,6 +259,43 @@ def get_info_given_pdb_id(payload: Tuple[str, Parent_target, CacheItemsToUpdate]
             #         lambda f: [is_neutral(x[1]) for x in f], frags, []
             #     )
 
+            # Make sure all lists have the same length. To fix a bug Cesar encountered.
+            max_len = max(
+                len(lig_infs[lig_name]["frag_masses"]),
+                len(lig_infs[lig_name]["frag_num_heavy_atoms"]),
+                len(lig_infs[lig_name]["frag_dists_to_recep"]),
+                len(lig_infs[lig_name]["frag_smiles"]),
+                len(lig_infs[lig_name]["frag_aromatic"]),
+                len(lig_infs[lig_name]["frag_acid"]),
+                len(lig_infs[lig_name]["frag_base"]),
+            )
+            min_len = min(
+                len(lig_infs[lig_name]["frag_masses"]),
+                len(lig_infs[lig_name]["frag_num_heavy_atoms"]),
+                len(lig_infs[lig_name]["frag_dists_to_recep"]),
+                len(lig_infs[lig_name]["frag_smiles"]),
+                len(lig_infs[lig_name]["frag_aromatic"]),
+                len(lig_infs[lig_name]["frag_acid"]),
+                len(lig_infs[lig_name]["frag_base"]),
+            )
+            if max_len != min_len:
+                # If the lengths are not equal, pad the lists with None.
+                print("WARNING: Fragment lists have different lengths!")
+                for key in [
+                    "frag_masses",
+                    "frag_num_heavy_atoms",
+                    "frag_dists_to_recep",
+                    "frag_smiles",
+                    "frag_aromatic",
+                    "frag_acid",
+                    "frag_base",
+                ]:
+                    print(
+                        f"  {key}: {lig_infs[lig_name][key]}; {len(lig_infs[lig_name][key])} != {max_len}"
+                    )
+                    print(payload)
+                    
+
     return pdb_id, lig_infs
 
 

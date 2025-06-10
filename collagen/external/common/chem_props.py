@@ -196,7 +196,14 @@ def is_acid(mol: BackedMol, check_basic_counter_example=True) -> bool:
                 return False
 
     # Make copy of mol, so substitution doesn't change original
-    
+
+    # On rare occasions, the smiles() function returns None. For example,
+    # fragment *[BH3-] derived from
+    # *[P+](O)(OCC1OC(n2cc(C)c(=O)[nH]c2=O)CC1O)OP(=O)(O)O. There's no
+    # recovering from this. So assume not an acid.
+    if smiles is None:
+        return False
+
     rdmol = Chem.MolFromSmiles(smiles)  # Standardized at this point
     if rdmol is None:
         rdmol = mol.rdmol
