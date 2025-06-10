@@ -10,10 +10,6 @@ has been used successfully in computer vision. The DeepFrag output is a continuo
 the suggested fragment to add. DeepFrag compares this output fingerprint to a database of fragments with precalculated
 fingerprints to recover the most suitable fragments for specific ligands. 
 
-# Features
-
-TODO
-
 # Documentation
 
 Below, the parameters to be used to run DeepFrag for training, testing and inference on external sets are described.
