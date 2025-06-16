@@ -1035,9 +1035,7 @@ class VoxelModelTest(object):
             The name of the JSON file to save the results to.
         """
         return (
-            "predictions_MOAD"
-            if (args.data_dir and args.csv)
-            else "predictions_nonMOAD"
+            "predictions_MOAD" if "moad" in args.mode else "predictions_nonMOAD"
         )
 
     def _save_examples_used(self, model: "pl.LightningModule", args: Namespace):
