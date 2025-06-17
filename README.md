@@ -1,24 +1,16 @@
+# DeepFrag: A Deep Learning Framework for Fragment-Based Lead Optimization
 
-# Overview
+## Overview
 
-Lead optimization involves modifying ligands to improve specific properties such as binding affinity. We here present 
-DeepFrag, a convolutional neural network (CNN) that suggests optimizing fragment additions given the structure of a 
-/ligand complex. DeepFrag converts input receptor/parent complexes into 3D grids, where each grid point represents a 
-cubic region of the 3D space (a voxel). We selected this representation because the 3D local context is important for 
-fragment binding, and converting molecular structures to voxels allows us to apply CNNs, a network architecture that 
-has been used successfully in computer vision. The DeepFrag output is a continuous-valued topological fingerprint of 
-the suggested fragment to add. DeepFrag compares this output fingerprint to a database of fragments with precalculated
-fingerprints to recover the most suitable fragments for specific ligands. 
+Lead optimization involves modifying ligands to improve specific properties such as binding affinity. We here present DeepFrag, a convolutional neural network (CNN) that suggests optimizing fragment additions given the structure of a receptor/ligand complex. DeepFrag converts input receptor/parent complexes into 3D grids, where each grid point represents a cubic region of the 3D space (a voxel). We selected this representation because the 3D local context is important for fragment binding, and converting molecular structures to voxels allows us to apply CNNs, a network architecture that has been used successfully in computer vision. The DeepFrag output is a continuous-valued topological fingerprint of the suggested fragment to add. DeepFrag compares this output fingerprint to a database of fragments with precalculated fingerprints to recover the most suitable fragments for specific complexes.
 
-# Documentation
+## Documentation
 
-Below, the parameters to be used to run DeepFrag for training, testing and inference on external sets are described.
-The kind of fingerprint to be used to recover the most similar fragments is a common parameter tu run DeepFrag. In this
-version, it can be specified the 'rdk10' and 'molbert' values for the 'fragment_representation' parameter. The next 
-examples are described using 'rdk10'.
+Below, the parameters to be used to run DeepFrag for training, testing and inference on external sets are described. The kind of fingerprint to be used to recover the most similar fragments is a common parameter tu run DeepFrag. In this version, it can be specified the `rdk10` and `molbert` values for the `fragment_representation` parameter. The next examples are described using `rdk10`.
 
 The output directory after running the DeepFrag framework:
-```
+
+```text
 DeepFrag
 ├── tb_logs                                     <- Dirctory containing the logs files.
 ├── predictions_MOAD                            <- Dirctory containing the results on the test set of the MOAD database.
@@ -36,8 +28,9 @@ DeepFrag
 ├── model_train_last.pt                         <- .pt file of the trained model.
 ```
 
-## **For training step on MOAD database**
-```
+### Training on MOAD Database
+
+```bash
 python MainDF2.py \
     --csv path/to/moad/every.csv \
     --data_dir path/to/moad/BindingMOAD_2020 \
@@ -50,8 +43,10 @@ python MainDF2.py \
     --cache_pdbs_to_disk \
     --gpus 1
 ```
-### Optional parameters
-```
+
+#### Optional Parameters
+
+```bash
 --save_params path/to/save/the/training/output /training_parameters.json
 --cpu True (to use CPU and not GPU)
 --save_every_epoch
@@ -59,23 +54,17 @@ python MainDF2.py \
 --max_frag_num_heavy_atoms 9999
 ```
 
-## **For training step on a custom database**
-To this end, it is used the same command line described for the training process on the MOAD database. But in this case, 
-the 'mode' parameter should be equal to 'train_on_complexes', the '--csv' parameter should be pointed out to a .csv file 
-containing the path of the receptor-ligand complexes; and the '--data_dir' parameter should be pointed out to the 
-directory where the .pdb and .sdf files of the receptor-ligand complexes described in the input .csv file are saved. 
+### Training on a Custom Database
 
-The input .csv file is comprised of two columns, one column named 'receptor' that contains the path of the .pdb files 
-corresponding to the receptors, while the other column, named 'ligand', contains the path of the .sdf files 
-corresponding to the ligands.
+To train on a custom database, use the same command line described above for training on the MOAD database, but set the `mode` parameter to `train_on_complexes`, the `--csv` parameter to a .csv file containing the paths of the receptor-ligand complexes, and the `--data_dir` parameter to the directory where the .pdb and .sdf files of the receptor-ligand complexes file are saved.
 
-## **For test step for MOAD database**
+The input .csv file consists of two columns: one column named `receptor` that contains the paths of the .pdb files corresponding to the receptors, and another column named `ligand` that contains the paths of the .sdf files corresponding to the ligands.
 
-In this mode, the path of the ‘split.json’, ‘cache.json’, and ‘model.ckpt’ files specified in the ‘load_splits’, 
-‘cache’, and ‘load_checkpoint’ parameters, respectively, should be pointed to the directory of the training output
-since these files were created during the training process. Noticed that ‘model.ckpt’ is a generic name used in this 
-manual and, thus, the true name of the .ckpt file should be specified in the ‘load_checkpoint’ parameter.
-```
+### Testing on MOAD Database
+
+To test on examples from the MOAD database, specify the paths of the `splits.json`, `cache.json`, and `model.ckpt` files via the `load_splits`, `cache`, and `load_checkpoint` parameters, respectively. These parameters should point to the training output directory since these files were created during the training process. Note that `model.ckpt` is a generic name used in this manual; the actual name of the .ckpt file should be specified in the `load_checkpoint` parameter.
+
+```bash
 python MainDF2.py \
     --csv path/to/moad/every.csv \
     --data_dir path/to/moad/BindingMOAD_2020 \
@@ -90,26 +79,26 @@ python MainDF2.py \
     --load_checkpoint path/for/training/output/model.ckpt \
     --gpus 1
 ```
-### Optional parameters
-```
+
+#### Optional Parameters
+
+```bash
 --save_params path/to/save/the/training/output /test_parameters.json
 --cpu True (to use CPU and not GPU)
 ```
-## **For test step on a custom database**
-To this end, it can be used the same command line to run the test mode on the MOAD database. But in case, the 'mode' 
-parameter should be equal to 'train_on_complexes', the '--csv' parameter should be pointed out to a .csv file containing 
-the path of the receptor-ligand complexes, and the '--data_dir' parameter should be pointed out to the directory where 
-the .pdb and .sdf files of the receptor-ligand complexes described in the input .csv file are saved. 
 
-The input .csv file is comprised of two columns, one column named 'receptor' that contains the path of the .pdb files 
-corresponding to the receptors, while the other column, named 'ligand', contains the path of the .sdf files 
-corresponding to the ligands.
+### Testing on a Custom Database
 
-## **For inference step on a single complex**
+To test a trained DeepFrag model on a custom database, use the same command line used to test on the MOAD database, but set the `mode` parameter to `test_on_complexes`, the `--csv` parameter to a .csv file containing the paths of the receptor-ligand complexes, and the `--data_dir` parameter to the directory where the .pdb and .sdf files of the receptor-ligand complexes are located.
 
-In this mode, the MOAD database (optional) could be specified to consider all their chemical fragments in the inference 
-process. If specified, the ‘inference_label_sets’ parameter should contain the value ‘all’.
-```
+The input .csv file consists of two columns: one column named `receptor` that contains the paths of the .pdb files corresponding to the receptors, and another column named `ligand` that contains the paths of the .sdf files corresponding to the ligands.
+
+### Inference on a Single Complex
+
+This mode optionally allows you to include all chemical fragments from the MOAD database in the inference process by setting the `inference_label_sets` parameter to `all`.
+
+
+```bash
 python MainDF2.py \
     --csv path/to/moad/every.csv \
     --data_dir path/to/moad/BindingMOAD_2020 \
@@ -126,10 +115,10 @@ python MainDF2.py \
     --load_checkpoint path/to/the/mode/model.ckpt \
     --gpus 1
 ```
-In addition to the chemical fragment contained in the MOAD database, you could also provide one or several SMILES files 
-containing different chemical fragments to be used in the inference process. The SMILES files are specified in the 
-‘inference_label_sets’ parameter.
-```
+
+In addition to the chemical fragments contained in the MOAD database, you can also provide one or several SMILES files containing different chemical fragments to be used as a label set during the inference process. Specfiy the SMILES files via the `inference_label_sets` parameter.
+
+```bash
 python MainDF2.py \
     --csv path/to/moad/every.csv \
     --data_dir path/to/moad/BindingMOAD_2020 \
@@ -146,9 +135,10 @@ python MainDF2.py \
     --load_checkpoint path/to/the/mode/model.ckpt \
     --gpus 1
 ```
-As mentioned before, it is not mandatory to specify the MOAD database to consider their chemical fragments for 
-inference. That is, it can be considered only chemical fragments provided in the SMILES files.
-```
+
+Users are not required to include the fragments of the MOAD database in the label set during inference. That is, you can consider only the chemical fragments provided in the SMILES files.
+
+```bash
 python MainDF2.py \
     --receptor path/to/the/receptor/file/receptor.pdb \
     --ligand path/to/the/ligand/file/ligand.sdf \
@@ -163,23 +153,23 @@ python MainDF2.py \
     --load_checkpoint path/to/the/mode/model.ckpt \
     --gpus 1
 ```
-### Optional parameters
-```
+
+#### Optional Parameters
+
+```bash
 --save_params path/to/save/the/training/output /inference_parameters.json
 --cpu True (to use CPU and not GPU)
 --min_frag_num_heavy_atoms 1
 --max_frag_num_heavy_atoms 9999
 ```
-## **For inference step on multiple complexes**
 
-In this mode, the MOAD database (optional) could be specified to consider all their chemical fragments in the inference 
-step. If specified, the ‘inference_label_sets’ parameter should contain the value ‘all’.
+### Inference on Multiple Complexes
 
-The difference between the inference process on a single complex and multiple complexes lies on the former is only 
-carried out for a single receptor/ligand complex; whereas the latter is carried out on several complex/ligand complexes
-that are described in a .csv file containing two columns.  One column named ‘receptor’ with all paths of the PDB files, 
-and the other column named ligand with all paths of the SDF files.
-```
+To run inference on multiple complexes, you can optionally use all fragments derived from the MOAD database as a label set; in this case, the `inference_label_sets` parameter should equal the value `all`.
+
+Users should specify the multiple receptor/ligand complexes in a .csv file that contains two columns: one column named `receptor` has all paths to the PDB files, and another column named `ligand` has all paths of the SDF files.
+
+```bash
 python MainDF2.py \
     --csv path/to/moad/every.csv \
     --data_dir path/to/moad/BindingMOAD_2020 \
@@ -195,23 +185,15 @@ python MainDF2.py \
     --load_checkpoint path/to/the/mode/model.ckpt \
     --gpus 1
 ```
-Similar to the inference process on a single receptor-ligand complex, SMILES files can be specified in the 
-‘inference_label_sets’ parameter to consider chemical fragments other than the ones contained in the MOAD database.
 
-## **Reusing calculated fingerprints**
+Users can also specify fragment SMILES files to use as a custom label set via the `inference_label_sets` parameter. This option allows DeepFrag to consider chemical fragments that are not included in the small molecules of the MOAD database.
 
-When running the inference modes, the fingerprints calculated for the chemical fragments into the MOAD database and/or
-into the SMILES files are automatically saved in the same directories where they are. These files are saved to avoid 
-recomputing the same fingerprints for the same chemical fragments. Thus, it is necessary to specify the same directories
-where the MOAD database and/or SMILES files were used for inference to reuse the .pt files containing the calculated 
-fingerprints.
+### Reusing Calculated Fingerprints
 
-## **Fingerprints**
+When running DeepFrag in any inference mode, the fingerprints calculated for the chemical fragments are automatically saved (cached) to local files to avoid recomputing the same fingerprints for the same chemical fragments. Users must specify the same paths to the MOAD database and/or SMILES files to reuse the .pt files containing the calculated fingerprints.
 
-The previous examples were using the 'rdk10' fingerprint representation. Additionally, it can be specified other two 
-types of fingerprint representations. One of them is a combination between 'rdk10' and 'morgan' fingerprints named as
-'rdk10_x_morgan'. The another one is named as 'molbert'. For its calculation, it is used the 'molbert' large language 
-model freely available at https://github.com/BenevolentAI/MolBERT.
+### Fingerprints
 
-To use these fingerprint representations, it should be modified the 'fragment_representation' parameter in the command
-line explained above.
+In the examples above, we used the `rdk10` fingerprint representation. You can also specify two other types of fingerprint representations. The first is a combination of `rdk10` and `morgan` fingerprints named `rdk10_x_morgan`. The other is named `molbert`, which uses the `molbert` large language model that is freely available at [https://github.com/BenevolentAI/MolBERT](https://github.com/BenevolentAI/MolBERT).
+
+To use these fingerprint representations, change the `fragment_representation` parameter in the command line examples above.
