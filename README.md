@@ -198,6 +198,26 @@ python MainDF2.py \
 Similar to the inference process on a single receptor-ligand complex, SMILES files can be specified in the 
 ‘inference_label_sets’ parameter to consider chemical fragments other than the ones contained in the MOAD database.
 
+## **Using in-house DeepFrag models for inference**
+
+For inference mode, it is required to specify the path of the .ckpt file corresponding to a specific DeepFrag model. 
+However, we trained several models on the Biding MOAD database whose names can be specified in the '--load_checkpoint'
+parameter instead of the path of a given model. These in-house models will be automatically downloaded into a directory 
+named 'in-house_models' that is created in the directory of the DeepFrag framework. The name of the in-house models are
+given below:
+
+
+| Name                     | Description                                                                                                     |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------|
+| all_best                 | Model trained on the entire MOAD database for all chemical fragment sizes                                       |
+| gte_4_acid_best          | Model trained on the MOAD database only considering acid chemical fragments with at least four heavy atoms      |
+| gte_4_aliphatic_best     | Model trained on the MOAD database only considering aliphatic chemical fragments with at least four heavy atoms |
+| gte_4_aromatic_best      | Model trained on the MOAD database only considering aromatic chemical fragments with at least four heavy atoms  |
+| gte_4_base_best          | Model trained on the MOAD database only considering base chemical fragments with at least four heavy atoms      |
+| gte_4_best               | Model trained on the MOAD database considering all chemical fragments with at least four heavy atoms            |
+| lte_3_best               | Model trained on the MOAD database considering all chemical fragments containing as maximum three heavy atoms   |
+
+
 ## **Reusing calculated fingerprints**
 
 When running the inference modes, the fingerprints calculated for the chemical fragments into the MOAD database and/or
