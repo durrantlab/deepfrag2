@@ -8,6 +8,9 @@ from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.common.types import StructuresSplit
 import torch  # type: ignore
+import os
+import wget
+import sys
 
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
@@ -114,15 +117,22 @@ class VoxelModelUtils(object):
         Returns:
             Optional[str]: The checkpoint filename.
         """
+        url_by_in_house_model = {
+            "all_best": "https://durrantlab.pitt.edu/apps/deepfrag2/models/all_best.ckpt",
+            "gte_4_acid_best": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_acid_best.ckpt",
+            "gte_4_aliphatic_best": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aliphatic_best.ckpt",
+            "gte_4_aromatic_best": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aromatic_best.ckpt",
+            "gte_4_base_best": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_base_best.ckpt",
+            "gte_4_best": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_best.ckpt",
+            "lte_3_best": "https://durrantlab.pitt.edu/apps/deepfrag2/models/lte_3_best.ckpt",
+        }
+
         if validate_args:
             if args.load_checkpoint and args.load_newest_checkpoint:
                 raise ValueError(
                     "Can specify 'load_checkpoint=xyz' or 'load_newest_checkpoint' but not both."
                 )
-
-            if args.model_for_warm_starting and (
-                args.load_checkpoint or args.load_newest_checkpoint
-            ):
+            if args.model_for_warm_starting and (args.load_checkpoint or args.load_newest_checkpoint):
                 raise ValueError(
                     "If warm starting will be performed, then it cannot specify 'load_checkpoint=xyz' nor 'load_newest_checkpoint'."
                 )
@@ -134,41 +144,57 @@ class VoxelModelUtils(object):
                 raise ValueError(
                     "The 'model_for_warm_starting' parameter is only valid when 'warm_starting' mode is specified."
                 )
+            if args.load_checkpoint and args.load_checkpoint in url_by_in_house_model and not ("inference_" in args.mode):
+                raise ValueError(
+                    "The in-house models can be only used in inference mode."
+                )
 
         ckpt = None
         if args.load_checkpoint:
+            if args.load_checkpoint in url_by_in_house_model:
+                args.load_checkpoint = VoxelModelUtils.__download_deepfrag_ckpt(
+                    args.load_checkpoint + ".ckpt",
+                    url_by_in_house_model[args.load_checkpoint])
+
             ckpt = args.load_checkpoint
         elif args.load_newest_checkpoint:
             ckpt = get_last_checkpoint(args)
 
         return ckpt
 
-    # def debug_smis_match_fps(
-    #     self, smis: List[str], device: torch.device, args: Namespace
-    # ):
-    #     """Debugging function to check that the SMILES strings match the
-    #     fingerprints.
+    @staticmethod
+    def __download_deepfrag_ckpt(deepfrag_model_ckpt, deepfrag_model_url):
+        """Download an in-house DeepFrag model checkpoint."""
 
-    #     Args:
-    #         smis (List[str]): The SMILES strings.
-    #         device (torch.device): The device to use.
-    #         args (Namespace): The user arguments.
-    #     """
-    #     # TODO: Not currently used.
+        current_directory = os.getcwd() + os.sep + "in-house_models"
+        if not os.path.exists(current_directory):
+            os.makedirs(current_directory, exist_ok=True)
 
-    #     for idx in range(len(smis)):
-    #         smi = smis[idx]
-    #         fp1 = self[idx]
+        deepfrag_model_path = current_directory + os.sep + deepfrag_model_ckpt
+        if not os.path.exists(deepfrag_model_path):
+            print("Starting download of the DeepFrag model: ", deepfrag_model_ckpt)
+            wget.download(
+                deepfrag_model_url,
+                deepfrag_model_path,
+                VoxelModelUtils.__bar_progress,
+            )
 
-    #         mol = Mol.from_smiles(smi)
-    #         # TODO: 2048 should be hardcoded here? I think it's a user parameter.
-    #         fp2 = torch.tensor(
-    #             mol.fingerprint(args.fragment_representation, args.fp_size),
-    #             device=device,
-    #             dtype=torch.float32,
-    #         )
-    #         print((fp1 - fp2).max() == (fp1 - fp2).min())
+        return deepfrag_model_path
 
-    #     import pdb
+    @staticmethod
+    def __bar_progress(current: float, total: float, width=80):
+        """Progress bar for downloading Molbert model.
 
-    #     pdb.set_trace()
+        Args:
+            current (float): Current progress.
+            total (float): Total progress.
+            width (int, optional): Width of the progress bar. Defaults to 80.
+        """
+        progress_message = "Downloading DeepFrag model: %d%% [%d / %d] bytes" % (
+            current / total * 100,
+            current,
+            total,
+        )
+        # Don't use print() as it will print in new line every time.
+        sys.stdout.write("\r" + progress_message)
+        sys.stdout.flush()
