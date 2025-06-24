@@ -186,10 +186,9 @@ python MainDF2.py \
     --gpus 1
 ```
 
-## Using In-house DeepFrag Models for Inference
+### Using Already-Trained DeepFrag Models for Inference
 
-For inference mode, it is required to specify the path of the .ckpt file corresponding to a specific DeepFrag model. However, we trained several models on the Biding MOAD database whose names can be specified in the '--load_checkpoint' parameter instead of the path of a given model. These in-house models will be automatically downloaded into a directory  named 'in-house_models' that is created in the directory of the DeepFrag framework. The name of the in-house models are given below:
-
+To run DeepFrag in inference mode, users must specify the path of the .ckpt file corresponding to a specific DeepFrag model. The names of already-trained models (trained on the Binding MOAD database) can also be specified in the `--load_checkpoint` parameter, instead of the path to a specific model. These in-house models will be automatically downloaded into a directory  named `in-house_models`, which is created in the main directory of the DeepFrag framework. The name of the in-house models are given below:
 
 | Name                     | Description                                                                                                     |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------|
