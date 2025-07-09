@@ -186,9 +186,23 @@ python MainDF2.py \
     --gpus 1
 ```
 
-Users can also specify fragment SMILES files to use as a custom label set via the `inference_label_sets` parameter. This option allows DeepFrag to consider chemical fragments that are not included in the small molecules of the MOAD database.
+### Using Already-Trained DeepFrag Models for Inference
+
+To run DeepFrag in inference mode, users must specify the path of the .ckpt file corresponding to a specific DeepFrag model. The names of already-trained models (trained on the Binding MOAD database) can also be specified in the `--load_checkpoint` parameter, instead of the path to a specific model. These in-house models will be automatically downloaded into a directory  named `in-house_models`, which is created in the main directory of the DeepFrag framework. The name of the in-house models are given below:
+
+| Name                     | Description                                                                                                     |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------|
+| all_best                 | Model trained on the entire MOAD database for all chemical fragment sizes                                       |
+| gte_4_acid_best          | Model trained on the MOAD database only considering acid chemical fragments with at least four heavy atoms      |
+| gte_4_aliphatic_best     | Model trained on the MOAD database only considering aliphatic chemical fragments with at least four heavy atoms |
+| gte_4_aromatic_best      | Model trained on the MOAD database only considering aromatic chemical fragments with at least four heavy atoms  |
+| gte_4_base_best          | Model trained on the MOAD database only considering base chemical fragments with at least four heavy atoms      |
+| gte_4_best               | Model trained on the MOAD database considering all chemical fragments with at least four heavy atoms            |
+| lte_3_best               | Model trained on the MOAD database considering all chemical fragments containing as maximum three heavy atoms   |
 
 ### Reusing Calculated Fingerprints
+
+Users can also specify fragment SMILES files to use as a custom label set via the `inference_label_sets` parameter. This option allows DeepFrag to consider chemical fragments that are not included in the small molecules of the MOAD database.
 
 When running DeepFrag in any inference mode, the fingerprints calculated for the chemical fragments are automatically saved (cached) to local files to avoid recomputing the same fingerprints for the same chemical fragments. Users must specify the same paths to the MOAD database and/or SMILES files to reuse the .pt files containing the calculated fingerprints.
 
