@@ -171,15 +171,15 @@ class VoxelModelInits(object):
             torch.device: The device.
         """
         if torch.cuda.is_available():
-            print("CUDA is available: " + str(torch.cuda.is_available()))
+            print("\nCUDA is available: " + str(torch.cuda.is_available()))
             print("CUDA device count: " + str(torch.cuda.device_count()))
             print("CUDA current device: " + str(torch.cuda.current_device()))
             print("CUDA device name: " + str(torch.cuda.get_device_name(torch.cuda.current_device())))
         else:
-            print("CUDA is not available!!.")
+            print("\nCUDA is not available!!.")
 
         device = torch.device("cpu") if (args.cpu or not torch.cuda.is_available()) else torch.device("cuda")
-        print("DeepFrag is using " + str(device) + " to run.")
+        print("The DEVICE to be used is " + str(device) + ".\n")
         return device
 
     def init_warm_model(
