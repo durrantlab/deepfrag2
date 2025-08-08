@@ -146,14 +146,10 @@ class VoxelModelParent:
         if args.fragment_representation in [
             "rdk10",
             "rdk10_x_morgan",
-            "random_binary_2048",
         ]:
             args.__setattr__("fp_size", 2048)
         elif args.fragment_representation in [
             "molbert",
-            "molbert_binary",
-            "random_binary_1536",
-            "molbert_shuffled",
         ]:
             args.__setattr__("fp_size", 1536)
             download_molbert_ckpt()

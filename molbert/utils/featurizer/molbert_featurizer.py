@@ -44,7 +44,7 @@ class MolBertFeaturizer:
         self.checkpoint_path = checkpoint_path
         self.model_dir = os.path.dirname(os.path.dirname(checkpoint_path))
         self.hparams_path = os.path.join(self.model_dir, "hparams.yaml")
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device or "cuda" if torch.cuda.is_available() else "cpu"
         self.embedding_type = embedding_type
         self.output_all = False if self.embedding_type in ["pooled"] else True
         self.max_seq_len = max_seq_len
