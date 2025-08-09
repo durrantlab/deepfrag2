@@ -152,6 +152,7 @@ class AveragedEnsembled(ParentEnsembled):
                     requires_grad=False,
                 )
                 self.predictions_ensembled[i] = tensor_resp
+
             self.predictions_ensembled = torch.tensor(
                 self.predictions_ensembled,
                 dtype=torch.float32,
