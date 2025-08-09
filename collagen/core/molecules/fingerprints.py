@@ -34,6 +34,7 @@ except ImportError:
     HAS_WGET = False
     wget = None
 
+
 def bar_progress(current: float, total: float, width=80):
     """Progress bar for downloading Molbert model.
 
@@ -172,68 +173,16 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     if not HAS_MOLBERT:
         raise ImportError("molbert package is required for molbert fingerprints but not installed")
 
-    global MOLBERT_MODEL
-
     # Make sure MOLBERT_MODEL is not None, using assert
     assert MOLBERT_MODEL is not None, "Molbert model is not loaded"
 
-    fp = MOLBERT_MODEL.transform_single(smiles)
-    return np.array(fp[0][0])
-
-
-def _molbert_shuffled(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
-    molbert_fp = _molbert(m, size, smiles)
-    np.random.shuffle(molbert_fp)
-    return molbert_fp
-
-
-def _molbert_binary(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Molbert fingerprints with positive values. Any value less than 0 is just
-    set to 0.
-
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
-        size (int): Size of the fingerprint.
-        smiles (str): SMILES string.
-
-    Returns:
-        np.array: Fingerprint.
-    """
-    try:
-        molbert_fp = _molbert(m, size, smiles)
-        molbert_fp[molbert_fp <= 0] = 0
-        molbert_fp[molbert_fp > 0] = 1
-        return molbert_fp
-    except Exception as e:
-        raise Exception("Error calculating binary molbert fingerprints " + str(e))
-
-
-def _random_binary(m: "rdkit.Chem.rdchem.Mol", size_: int, smiles: str) -> np.array:
-    """Random binary fingerprints to validate non-random correlation .
-
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
-        size (int): Size of the fingerprint.
-        smiles (str): SMILES string.
-
-    Returns:
-        np.array: Random Fingerprint.
-    """
-    prob0 = np.random.uniform(0.1, 1.0)
-    prob1 = 1 - prob0
-    random_fp = np.random.choice([0, 1], size=(size_,), p=[prob0, prob1])
-    np.random.shuffle(random_fp)
-    return random_fp
+    return MOLBERT_MODEL.transform_single(smiles)[0][0]
 
 
 FINGERPRINTS = {
     "rdk10": _rdk10,
     "rdk10_x_morgan": _rdk10_x_morgan,
-    "random_binary_2048": _random_binary,
     "molbert": _molbert,
-    "molbert_binary": _molbert_binary,
-    "molbert_shuffled": _molbert_shuffled,
-    "random_1536": _random_binary,
 }
 
 
