@@ -48,7 +48,7 @@ python MainDF2.py \
 
 ```bash
 --save_params path/to/save/the/training/output /training_parameters.json
---cpu True (to use CPU and not GPU)
+--cpu [true if specified]
 --save_every_epoch
 --min_frag_num_heavy_atoms 1
 --max_frag_num_heavy_atoms 9999
@@ -84,7 +84,7 @@ python MainDF2.py \
 
 ```bash
 --save_params path/to/save/the/training/output /test_parameters.json
---cpu True (to use CPU and not GPU)
+--cpu [true if specified]
 ```
 
 ### Testing on a Custom Database
@@ -158,7 +158,7 @@ python MainDF2.py \
 
 ```bash
 --save_params path/to/save/the/training/output /inference_parameters.json
---cpu True (to use CPU and not GPU)
+--cpu [true if specified]
 --min_frag_num_heavy_atoms 1
 --max_frag_num_heavy_atoms 9999
 ```
