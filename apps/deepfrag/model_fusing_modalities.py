@@ -17,26 +17,24 @@ try:
 except:
     print("Library esm is not installed...")
 
-ESM2_ON_GPU = False
+ON_GPU = torch.cuda.is_available()
 ESM2_MODEL = None
 BATCH_CONVERTER = None
 
 
-def download_esm2_model(esm2_model_name, cpu: bool):
+def download_esm2_model(esm2_model_name):
     global ESM2_MODEL
-    global ESM2_ON_GPU
     global BATCH_CONVERTER
 
-    # set directory where the ESM-2 model will be downloaded
+    # set the directory where the ESM-2 model will be downloaded
     hub.set_dir(os.getcwd() + os.sep + "esm2" + os.sep + esm2_model_name)
 
     # download and load the ESM-2 model
     ESM2_MODEL, alphabet = esm.pretrained.load_model_and_alphabet_hub(esm2_model_name)
     BATCH_CONVERTER = alphabet.get_batch_converter()
     ESM2_MODEL.eval()  # disables dropout for deterministic results
-    if torch.cuda.is_available() and not cpu:
+    if ON_GPU:
         ESM2_MODEL = ESM2_MODEL.cuda()
-        ESM2_ON_GPU = True
         print("ESM-2 is using cuda: " + esm2_model_name)
     else:
         print("ESM-2 is using cpu: " + esm2_model_name)
@@ -66,7 +64,7 @@ class DeepFragModelESM2(DeepFragModel):
                                 "esm2_t36_3B_UR50D", "esm2_t48_15B_UR50D"]:
             if kwargs["esm2_model_for_mm"] == esm2_model_name:
                 # download and load the ESM-2 model
-                download_esm2_model(esm2_model_name, bool(kwargs["cpu"]))
+                download_esm2_model(esm2_model_name)
                 self.num_layers = ESM2_MODEL.num_layers
 
                 # hashtable(seq, embedding): to avoid repeated calculation of embeddings
@@ -197,13 +195,14 @@ class DeepFragModelESM2(DeepFragModel):
             torch.Tensor: The predicted fragment fingerprint.
         """
         latent_space = self.encoder(voxel)
-        if ESM2_ON_GPU is True and latent_space.get_device() == -1:
+        if ON_GPU is True and latent_space.get_device() == -1:
             latent_space = latent_space.cuda()
 
         try:
             if entry_infos is not None:
-                combined_latent_space = torch.zeros((latent_space.size()[0], self.combined_embedding_size),
-                                                    dtype=torch.float32)
+                combined_latent_space = torch.zeros((latent_space.size()[0], self.combined_embedding_size), dtype=torch.float32)
+                if ON_GPU is True and combined_latent_space.get_device() == -1:
+                    combined_latent_space = combined_latent_space.cuda()
 
                 for idx, entry_info in enumerate(entry_infos):
                     latent_space_idx = latent_space[idx]
@@ -230,7 +229,7 @@ class DeepFragModelESM2(DeepFragModel):
         if hash_id not in self.embedding_per_seq.keys():
             # building the input data to the ESM-2 model
             batch_labels, batch_strs, batch_tokens = BATCH_CONVERTER([(hash_id, entry_info.receptor_sequence)])
-            if ESM2_ON_GPU is True and batch_tokens.get_device() == -1:
+            if ON_GPU is True and batch_tokens.get_device() == -1:
                 batch_tokens = batch_tokens.cuda()
 
             # Extract per-residue representations
@@ -251,7 +250,7 @@ class DeepFragModelESM2(DeepFragModel):
         hash_id = hash(entry_info.parent_smiles)
         if hash_id not in self.embedding_per_parent.keys():
             molbert_embedding = torch.tensor(_molbert(m=None, size=0, smiles=entry_info.parent_smiles))
-            if ESM2_ON_GPU is True and molbert_embedding.get_device() == -1:
+            if ON_GPU is True and molbert_embedding.get_device() == -1:
                 molbert_embedding = molbert_embedding.cuda()
             self.embedding_per_parent[hash_id] = molbert_embedding
 
