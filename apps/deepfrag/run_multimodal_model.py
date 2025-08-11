@@ -1,5 +1,6 @@
 """Run DeepFrag."""
 
+import argparse
 from apps.deepfrag.run import DeepFrag
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 from collagen.external.common.types import StructureEntryForMultimodal
@@ -10,10 +11,14 @@ class MultimodalDeepFrag(DeepFrag):
 
     """DeepFrag model."""
 
-    def __init__(self):
-        """Initialize the DeepFrag model parent."""
+    def __init__(self, args: argparse.Namespace):
+        """Initialize the DeepFrag model parent.
 
-        super().__init__(model_cls=DeepFragModelESM2, dataset_cls=FragmentDataset)
+        Args:
+            args (Namespace): The arguments parsed by argparse.
+        """
+
+        super().__init__(args=args, model_cls=DeepFragModelESM2, dataset_cls=FragmentDataset)
 
     def _get_payload(self, rec, parent, frag, ligand_id, fragment_idx, center):
         frag_smiles = frag.smiles(True)

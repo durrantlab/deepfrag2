@@ -10,6 +10,7 @@ from collagen.model_parents.moad_voxel.inits import VoxelModelInits
 from torchinfo import summary  # type: ignore
 from collagen.external.moad.interface import MOADInterface
 from collagen.external.common.split import create_train_val_test_splits
+import torch
 
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
@@ -34,8 +35,9 @@ class VoxelModelTrain(object):
             ckpt_filename (Optional[str]): The checkpoint filename to use.
         """
         # Runs training.
+        device = self.parent.inits.init_device(args)
         trainer = VoxelModelInits.init_trainer(args)
-        data_interface, train_data, val_data = self.get_train_val_sets(args, False)
+        data_interface, train_data, val_data = self.get_train_val_sets(args, False, device)
 
         # Below is helpful for debugging
         # for batch in train_data:
@@ -46,6 +48,7 @@ class VoxelModelTrain(object):
         #     continue
 
         model = self.parent.inits.init_model(args, ckpt_filename)
+        print("\nDeepFrag is using " + str(model.device) + " to run.\n")
 
         model_stats = summary(model, (16, self.parent.num_voxel_features, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
@@ -61,10 +64,12 @@ class VoxelModelTrain(object):
         Args:
             args (Namespace): The arguments passed to the program.
         """
+        device = self.parent.inits.init_device(args)
         trainer = self.parent.inits.init_trainer(args)
-        data_interface, train_data, val_data = self.get_train_val_sets(args, True)
+        data_interface, train_data, val_data = self.get_train_val_sets(args, True, device)
 
         model = self.parent.inits.init_warm_model(args, data_interface)
+        print("\nDeepFrag is using " + str(model.device) + " to run.\n")
 
         model_stats = summary(model, (16, self.parent.num_voxel_features, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
@@ -75,7 +80,7 @@ class VoxelModelTrain(object):
         self.parent.save_examples_used(model, args)
 
     def get_train_val_sets(
-        self, args: Namespace, finetuning: bool
+        self, args: Namespace, finetuning: bool, device: torch.device
     ) -> Tuple[ParentInterface, DataLambda, Union[DataLambda, None],]:
         # NOTE: All interfaces should inherit from a base class.
         """Get the training and validation sets.
@@ -83,6 +88,7 @@ class VoxelModelTrain(object):
         Args:
             args (Namespace): The arguments passed to the program.
             finetuning (bool): Whether to fine-tune or train.
+            device (torch.device): The device to use.
 
         Returns:
             Tuple[Any, DataLambda, DataLambda]: The MOAD, training and
@@ -92,10 +98,7 @@ class VoxelModelTrain(object):
             raise Exception("The custom test set can only be used in inference mode")
 
         voxel_params = self.parent.voxel_params
-        device = self.parent.inits.init_device(args)
-
         data_interface = None
-
         if not finetuning:
             if args.paired_data_csv:
                 raise ValueError(

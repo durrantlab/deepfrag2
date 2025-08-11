@@ -5,7 +5,6 @@ from collagen.core.molecules.mol import BackedMol
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 from collagen.external.common.types import StructureEntry
 import torch  # type: ignore
-from collagen.core.molecules.smiles_utils import standardize_smiles_or_rdmol
 import pytorch_lightning as pl  # type: ignore
 from typing import final, Type
 from typing import List, Sequence, Tuple, Union

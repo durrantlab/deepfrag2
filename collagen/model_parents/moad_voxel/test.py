@@ -461,6 +461,7 @@ class VoxelModelTest(object):
         data_interface: ParentInterface,
         lbl_set_codes: Optional[List[str]],
         avg_over_ckpts_of_avgs: Any,
+        device: torch.device,
         pca_space: Optional["PCAProject"] = None,
         label_set_fingerprints: Optional[torch.Tensor] = None,
         label_set_entry_infos: Optional[List[StructureEntry]] = None,
@@ -484,6 +485,7 @@ class VoxelModelTest(object):
             data_interface (ParentInterface): The data interface.
             lbl_set_codes (List[str]): The label set codes.
             avg_over_ckpts_of_avgs (Any): The averaged ensemble predictions.
+            device (torch.device): The device to use.
             pca_space (Optional[PCAProject], optional): The PCA space. Defaults
                 to None (None on first checkpoint).
             label_set_fingerprints (Optional[torch.Tensor], optional): The label
@@ -502,7 +504,6 @@ class VoxelModelTest(object):
 
         # Could pass these as parameters, but let's keep things simple and just
         # reinitialize.
-        device = self.parent.inits.init_device(args)
 
         predictions_per_rot = ensemble_helper.AveragedEnsembled(
             trainer,
@@ -805,11 +806,10 @@ class VoxelModelTest(object):
             "checkpoints": [{"name": c, "order": i + 1} for i, c in enumerate(ckpts)],
             "entries": [],
         }
+
         model = None
         label_set_fingerprints = None
-        avg_over_ckpts_of_avgs = None
         pca_space = None
-        label_set_entry_infos = None
         label_set_entry_infos = None
         avg_over_ckpts_of_avgs = None
         for ckpt_idx, ckpt_filename in enumerate(ckpts):
@@ -838,6 +838,7 @@ class VoxelModelTest(object):
                 set2run_test_on_single_checkpoint,
                 None,  # lbl_set_codes
                 avg_over_ckpts_of_avgs,
+                device,
                 pca_space,
                 label_set_fingerprints,
             )

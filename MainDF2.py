@@ -35,7 +35,7 @@ class DeepFragFactory:
         )
 
         if bool(df_args.run_mm_model):
-            df_model = MultimodalDeepFrag()
+            df_model = MultimodalDeepFrag(args=df_args)
         else:
             df_model = DeepFrag(
                 args=df_args, 

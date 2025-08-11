@@ -31,8 +31,7 @@ def _add_generic_params(
     parser = parent_parser.add_argument_group("Common")
     parser.add_argument(
         "--cpu",
-        # default=False,
-        # action="store_true"
+        action="store_true",
     )
     parser.add_argument(
         "--wandb_project",
