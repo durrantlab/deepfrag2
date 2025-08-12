@@ -95,10 +95,7 @@ def _add_generic_params(
     )
     parser.add_argument(
         "--load_newest_checkpoint",
-        type=bool,
-        required=False,
-        default=False,
-        # action="store_true",
+        action="store_true",
         help="If set, the most recent checkpoint will be loaded.",
     )
     # TODO: JDD: Load from best validation checkpoint.

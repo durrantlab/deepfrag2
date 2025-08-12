@@ -86,11 +86,15 @@ class DeepFragModelESM2(DeepFragModel):
         if not self.esm2_model_for_mm and kwargs["esm2_model_for_mm"] is not None:
             raise Exception("It should be specified a valid name for ESM-2 models.")
 
+        self.unique_smiles = set()
         self.save_unique_smiles = None
+        self.unique_sequences = set()
         self.save_unique_sequences = None
-        if bool(kwargs["save_unique_smiles_sequences"]):
-            DeepFragModelESM2.__setup_logger('unique_smiles', os.getcwd() + os.sep + "unique_smiles.log")
-            DeepFragModelESM2.__setup_logger('unique_sequences', os.getcwd() + os.sep + "unique_sequences.log")
+        if bool(kwargs["save_unique_smiles_and_sequences"]):
+            DeepFragModelESM2.__setup_logger('unique_smiles',
+                                             kwargs["default_root_dir"] + os.sep + "unique_smiles.log")
+            DeepFragModelESM2.__setup_logger('unique_sequences',
+                                             kwargs["default_root_dir"] + os.sep + "unique_sequences.log")
             self.save_unique_smiles = logging.getLogger('unique_smiles')
             self.save_unique_smiles.propagate = False
             self.save_unique_sequences = logging.getLogger('unique_sequences')
@@ -178,9 +182,9 @@ class DeepFragModelESM2(DeepFragModel):
                  "average\n",
         )
         parser.add_argument(
-            "--save_unique_smiles_sequences",
+            "--save_unique_smiles_and_sequences",
             action="store_true",
-            help="If given, the MolBERT model will be used in the multi-modal learning.",
+            help="If given, the smiles representing ligands and amino acid sequences representing receptors are saved.",
         )
         return parent_parser
 
@@ -216,6 +220,14 @@ class DeepFragModelESM2(DeepFragModel):
 
                     combined_latent_space[idx] = latent_space_idx
 
+                    if self.save_unique_sequences and entry_info.receptor_sequence not in self.unique_sequences:
+                        self.unique_sequences.add(entry_info.receptor_sequence)
+                        self.save_unique_sequences.info(entry_info.receptor_sequence)
+
+                    if self.save_unique_smiles and entry_info.parent_smiles not in self.unique_smiles:
+                        self.unique_smiles.add(entry_info.parent_smiles)
+                        self.save_unique_smiles.info(entry_info.parent_smiles)
+
                 # apply linear layers to decrease the combined feature tensor to dimension 512
                 latent_space = self.reduction_combined_embedding(combined_latent_space)
         except Exception as e:
@@ -238,9 +250,6 @@ class DeepFragModelESM2(DeepFragModel):
                 token_representation = result["representations"][self.num_layers]
                 esm2_embedding = token_representation[0, 1:len(batch_strs[0]) + 1].mean(0)
                 self.embedding_per_seq[hash_id] = esm2_embedding
-
-            if self.save_unique_sequences:
-                self.save_unique_sequences.info(entry_info.receptor_sequence)
         else:
             esm2_embedding = self.embedding_per_seq[hash_id]
 
@@ -253,9 +262,6 @@ class DeepFragModelESM2(DeepFragModel):
             if ON_GPU is True and molbert_embedding.get_device() == -1:
                 molbert_embedding = molbert_embedding.cuda()
             self.embedding_per_parent[hash_id] = molbert_embedding
-
-            if self.save_unique_smiles:
-                self.save_unique_smiles.info(entry_info.parent_smiles)
         else:
             molbert_embedding = self.embedding_per_parent[hash_id]
 
