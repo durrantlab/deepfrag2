@@ -1,14 +1,16 @@
-# DeepFrag: A Deep Learning Framework for Fragment-Based Lead Optimization
+# DeepFrag2: A Deep Learning Framework for Fragment-Based Lead Optimization
 
 ## Overview
 
-Lead optimization involves modifying ligands to improve specific properties such as binding affinity. We here present DeepFrag, a convolutional neural network (CNN) that suggests optimizing fragment additions given the structure of a receptor/ligand complex. DeepFrag converts input receptor/parent complexes into 3D grids, where each grid point represents a cubic region of the 3D space (a voxel). We selected this representation because the 3D local context is important for fragment binding, and converting molecular structures to voxels allows us to apply CNNs, a network architecture that has been used successfully in computer vision. The DeepFrag output is a continuous-valued topological fingerprint of the suggested fragment to add. DeepFrag compares this output fingerprint to a database of fragments with precalculated fingerprints to recover the most suitable fragments for specific complexes.
+Lead optimization involves modifying ligands to improve specific properties such as binding affinity. We here present DeepFrag2, a convolutional neural network (CNN) that suggests optimizing fragment additions given the structure of a receptor/ligand complex. DeepFrag2 converts input receptor/parent complexes into 3D grids, where each grid point represents a cubic region of the 3D space (a voxel). We selected this representation because the 3D local context is important for fragment binding, and converting molecular structures to voxels allows us to apply CNNs, a network architecture that has been used successfully in computer vision. The DeepFrag2 output is a continuous-valued topological fingerprint of the suggested fragment to add. DeepFrag2 compares this output fingerprint to a database of fragments with precalculated fingerprints to recover the most suitable fragments for specific complexes.
+
+We provide a helpful [DeepFrag2 Google Colab Notebook](https://colab.research.google.com/github/durrantlab/deepfrag2/blob/main/deepfrag2_colab_notebook.ipynb) for those who wish to try DeepFrag2 without installing any software. The notebook guides users through the process of choosing a receptor-ligand complex, selecting a branching point on the ligand, choosing a pre-trained DeepFrag2 model, and generating fragment suggestions. The results are displayed in an easy-to-read table and visual grid, allowing users to quickly assess the suggested fragments.
 
 ## Documentation
 
-Below, the parameters to be used to run DeepFrag for training, testing and inference on external sets are described. The kind of fingerprint to be used to recover the most similar fragments is a common parameter tu run DeepFrag. In this version, it can be specified the `rdk10` and `molbert` values for the `fragment_representation` parameter. The next examples are described using `rdk10`.
+Below, the parameters to be used to run DeepFrag2 for training, testing and inference on external sets are described. The kind of fingerprint to be used to recover the most similar fragments is a common parameter to run DeepFrag2. In this version, it can be specified the `rdk10` and `molbert` values for the `fragment_representation` parameter. The next examples are described using `rdk10`.
 
-The output directory after running the DeepFrag framework:
+The output directory after running the DeepFrag2 framework:
 
 ```text
 DeepFrag
@@ -89,7 +91,7 @@ python MainDF2.py \
 
 ### Testing on a Custom Database
 
-To test a trained DeepFrag model on a custom database, use the same command line used to test on the MOAD database, but set the `mode` parameter to `test_on_complexes`, the `--csv` parameter to a .csv file containing the paths of the receptor-ligand complexes, and the `--data_dir` parameter to the directory where the .pdb and .sdf files of the receptor-ligand complexes are located.
+To test a trained DeepFrag2 model on a custom database, use the same command line used to test on the MOAD database, but set the `mode` parameter to `test_on_complexes`, the `--csv` parameter to a .csv file containing the paths of the receptor-ligand complexes, and the `--data_dir` parameter to the directory where the .pdb and .sdf files of the receptor-ligand complexes are located.
 
 The input .csv file consists of two columns: one column named `receptor` that contains the paths of the .pdb files corresponding to the receptors, and another column named `ligand` that contains the paths of the .sdf files corresponding to the ligands.
 
@@ -186,9 +188,9 @@ python MainDF2.py \
     --gpus 1
 ```
 
-### Using Already-Trained DeepFrag Models for Inference
+### Using Already-Trained DeepFrag2 Models for Inference
 
-To run DeepFrag in inference mode, users must specify the path of the .ckpt file corresponding to a specific DeepFrag model. The names of already-trained models (trained on the Binding MOAD database) can also be specified in the `--load_checkpoint` parameter, instead of the path to a specific model. These in-house models will be automatically downloaded into a directory  named `in-house_models`, which is created in the main directory of the DeepFrag framework. The name of the in-house models are given below:
+To run DeepFrag2 in inference mode, users must specify the path of the .ckpt file corresponding to a specific DeepFrag2 model. The names of already-trained models (trained on the Binding MOAD database) can also be specified in the `--load_checkpoint` parameter, instead of the path to a specific model. These in-house models will be automatically downloaded into a directory  named `in-house_models`, which is created in the main directory of the DeepFrag2 framework. The name of the in-house models are given below:
 
 | Name                     | Description                                                                                                     |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------|
@@ -202,9 +204,9 @@ To run DeepFrag in inference mode, users must specify the path of the .ckpt file
 
 ### Reusing Calculated Fingerprints
 
-Users can also specify fragment SMILES files to use as a custom label set via the `inference_label_sets` parameter. This option allows DeepFrag to consider chemical fragments that are not included in the small molecules of the MOAD database.
+Users can also specify fragment SMILES files to use as a custom label set via the `inference_label_sets` parameter. This option allows DeepFrag2 to consider chemical fragments that are not included in the small molecules of the MOAD database.
 
-When running DeepFrag in any inference mode, the fingerprints calculated for the chemical fragments are automatically saved (cached) to local files to avoid recomputing the same fingerprints for the same chemical fragments. Users must specify the same paths to the MOAD database and/or SMILES files to reuse the .pt files containing the calculated fingerprints.
+When running DeepFrag2 in any inference mode, the fingerprints calculated for the chemical fragments are automatically saved (cached) to local files to avoid recomputing the same fingerprints for the same chemical fragments. Users must specify the same paths to the MOAD database and/or SMILES files to reuse the .pt files containing the calculated fingerprints.
 
 ### Fingerprints
 
