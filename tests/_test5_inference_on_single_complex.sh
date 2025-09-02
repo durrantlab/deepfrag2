@@ -1,10 +1,8 @@
-. _init.sh
-
 echo "Perform inference using the fine-tuned model on a single example"
 
 mkdir -p 5.inference.output
 
-$PYTHON_EXEC -u $MAIN_DF2_PY \
+python -u ../MainDF2.py \
     --mode inference_single_complex \
     --receptor ./data_for_inference/5VUP_prot_955.pdb \
     --ligand ./data_for_inference/5VUP_lig_955.sdf \

@@ -1,15 +1,13 @@
-. _init.sh
-
 echo "Test on a small subset of the Binding MOAD (--max_pdbs_test 100)"
 
 mkdir -p 2.test_moad_trained.output
 
-$PYTHON_EXEC -u $MAIN_DF2_PY \
+python -u ../MainDF2.py \
     --mode test_on_moad \
     --load_splits ./1.train_on_moad.output/splits.saved.json \
     --load_checkpoint ./1.train_on_moad.output/last.ckpt \
-    --csv $MOAD_DIR/${EVERY_CSV_BSNM} \
-    --data_dir $MOAD_DIR/ \
+    --csv moad/every.csv \
+    --data_dir moad/ \
     --cache ./1.train_on_moad.output/every_csv.cache.json \
     --default_root_dir $(pwd)/2.test_moad_trained.output/  `# The output directory` \
     --inference_label_sets test \

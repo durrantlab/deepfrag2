@@ -1,15 +1,13 @@
-. _init.sh
-
 echo "Finetune on custom data"
 
 mkdir -p 3.finetune_custom.output
 
-$PYTHON_EXEC -u $MAIN_DF2_PY \
+python -u ../MainDF2.py \
     --mode warm_starting \
     --max_epochs 5 \
     --save_params ./3.finetune_custom.output/params.saved.json \
     --save_splits ./3.finetune_custom.output/splits.saved.json \
-    --model_for_warm_starting ./1.train_on_moad.output/model_train.pt \
+    --model_for_warm_starting ./1.train_on_moad.output/model_train_last.pt \
     --csv ./data_to_finetune/pdb_sdf_file_pairs.csv \
     --data_dir ./data_to_finetune/ \
     --cache ./3.finetune_custom.output/every_csv.cache.json \

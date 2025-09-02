@@ -1,12 +1,9 @@
-
-. _init.sh
-
 echo "Testing the finetuned data, using the test set withheld from the custom data"
 
 mkdir -p 4.finetune_test.output
 
-$PYTHON_EXEC -u $MAIN_DF2_PY \
-    --mode test \
+python -u ../MainDF2.py \
+    --mode test_on_complexes \
     --load_splits ./3.finetune_custom.output/splits.saved.json \
     --load_checkpoint ./3.finetune_custom.output/last.ckpt \
     --csv ./data_to_finetune/pdb_sdf_file_pairs.csv \
