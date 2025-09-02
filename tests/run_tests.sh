@@ -6,4 +6,5 @@
 . _test6_inference_on_custom_set.sh
 . _test7_train_on_moad_aromatic_fragments.sh
 . _test8_test_on_moad_aromatic_fragments.sh
+. _test9_test_on_cpu.sh
 . _eval_results.sh
