@@ -1,17 +1,9 @@
-. _test1.sh
-
-. _test2.sh
-
-. _test3.sh
-
-. _test4.sh
-
-. _test5.sh
-
-. _test6.sh
-
-. _test7.sh
-
-. _test8.sh
-
+. _test1_train_on_moad_subset.sh
+. _test2_test_on_moad_subset.sh
+. _test3_finetune_on_custom_data.sh
+. _test4_test_on_finetuned_model.sh
+. _test5_inference_on_single_complex.sh
+. _test6_inference_on_custom_set.sh
+. _test7_train_on_moad_aromatic_fragments.sh
+. _test8_test_on_moad_aromatic_fragments.sh
 . _eval_results.sh
