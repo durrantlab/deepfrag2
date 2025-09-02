@@ -176,7 +176,7 @@ class VoxelModelInits(object):
             print("CUDA current device: " + str(torch.cuda.current_device()))
             print("CUDA device name: " + str(torch.cuda.get_device_name(torch.cuda.current_device())))
         else:
-            print("\nCUDA is not available!!.")
+            print("\nCUDA is not available!")
 
         device = torch.device("cpu") if (args.cpu or not torch.cuda.is_available()) else torch.device("cuda")
         print("The DEVICE to be used is " + str(device) + ".\n")

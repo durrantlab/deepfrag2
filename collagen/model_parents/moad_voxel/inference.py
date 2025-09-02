@@ -122,7 +122,7 @@ class Inference(VoxelModelTest):
             if os.path.exists(label_set_fps_bin) and os.path.exists(label_set_smis_bin):
                 # Cache file exists, so load from that.
                 with open(label_set_fps_bin, "rb") as file:
-                    label_set_fps: torch.Tensor = pickle.load(file)
+                    label_set_fps: torch.Tensor = torch.load(file, map_location=device)
                     file.close()
                 with open(label_set_smis_bin, "rb") as file:
                     label_set_smis: List[str] = pickle.load(file)
@@ -151,7 +151,7 @@ class Inference(VoxelModelTest):
 
                 # Save to cache file.
                 with open(label_set_fps_bin, "wb") as file:
-                    pickle.dump(label_set_fps, file)
+                    torch.save(label_set_fps, file)
                     file.close()
                 with open(label_set_smis_bin, "wb") as file:
                     pickle.dump(label_set_smis, file)
