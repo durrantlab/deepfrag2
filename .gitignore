@@ -65,3 +65,7 @@ misc_scripts
 TODO.md
 
 in-house_models
+*_noh.pkl
+*_fps.bin
+
+*.cache.json
