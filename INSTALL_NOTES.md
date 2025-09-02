@@ -1,157 +1,158 @@
-1. Install the conda enviroment
+# Installation Guide
 
-* Create conda environment at least with python v3.8:
-  * `conda create --name env_name python==3.8`, where `env_name` is the name of
-    the environment to be created. In this manual, `env_name` is `deepfrag`
-    (`conda create --name deepfrag python==3.8`)
-* Activate the created conda environment to install the different packages:
-  * `conda activate deepfrag`
-* Install the following packages in the same order listed:
-  * `conda install -c conda-forge prody`
-  * `conda install -c pytorch pytorch=1.11`
-  * `conda install -c conda-forge pytorch-lightning=1.7.1`
-  * `conda install -c conda-forge rdkit`
-  * `conda install -c conda-forge k3d`
-  * `conda install -c conda-forge py3dmol`
-  * `conda install -c anaconda h5py`
-  * `conda install -c anaconda scikit-learn`
-  * `conda install -c conda-forge torchinfo`
-  * `conda install -c conda-forge wandb`
-  * `conda install -c pyg pyg`
-  * `conda install -c anaconda pip`
-  * `conda install filelock`
-  * `conda install regex`
-  * `conda install sacremoses`
-  * `pip install wget`
-  * `conda install "numpy<=1.21"`
-  * `pip install Fancy-aggregations`
+This guide provides instructions for setting up the DeepFrag2 environment and configuring necessary paths.
 
-2. Description of the scripts provided
+## Installation
 
-* `paths.sh`: this script is used to configure the different variables to be
-  used by the scripts detailed below (also see Section 4).
-* `MainDF2.submit_MOAD_train.sh`: this script is used create (train) a DeepFrag
-  model from scratch using the MOAD database
-* `MainDF2.submit_MOAD_train_resume.sh`: this script is used to resume the
-  training process of a DeepFrag model from a checkpoint. It is recommended when
-  the training process started with the previous script was not completed due to
-  a time limit on the computational resource used.
-* `MainDF2.submit_MOAD_test:` this script is used to perform an inference
-  process on the compounds included in the test set created from the MOAD
-  database. That test dataset was created before starting the training process
-  with the first script above mentioned.
-* `MainDF2.submit_PdbSdf_fine_tuning.sh`: this script is used to run a
-  fine-tuning process from a dataset comprised of protein-ligand pairs (denoted
-  as `PDB_SDF_FILES` in this manual), where every protein and its corresponding
-  ligand are into PDB and SDF files, respectively.
-* `MainDF2.submit_PdbSdf_test.sh`: this script is used to perform an inference
-  process on the compounds included in the test set created from the
-  `PDB_SDF_FILES` database. That test dataset was created before starting the
-  fine-tunning process if the FRACTION_TRAIN variable is less than 1.0.
-* `MainDF2.submit_inference.sh`: this script is to run an inference process on
-  an external dataset, that is, on a dataset other than the MOAD and
-  `PDB_SDF_FILES` databases that were used for the training and fine-tunning
-  process.
+These instructions assume you have [Conda](https://docs.conda.io/en/latest/miniconda.html) installed.
 
-3. Command to download DeepFrag from GitLab
-   * `git clone https://git.durrantlab.pitt.edu/jdurrant/deepfrag2.git`
+### Create and Activate the Conda Environment
 
-4. How to configure the `paths.sh` script
-   * This script contains several variables that are required to run DeepFrag.
-     See Section 5 for a complete example.
+The recommended way to install the required dependencies is by using an environment file.
 
+1. Create a Conda environment using the `environment.yml` file. This command will create a new environment named `DeepFrag2`.
+
+    ```bash
+    conda env create -f environment.yml
+    ```
+
+2. Activate the newly created environment to proceed.
+
+    ```bash
+    conda activate DeepFrag2
+    ```
+
+## Download the Source Code
+
+Clone the DeepFrag2 repository from GitLab.
+
+```bash
+git clone git@github.com:durrantlab/deepfrag2.git
+```
+
+## Configure `paths.sh`
+
+The `paths.sh` script is used to configure environment variables required by DeepFrag2. You must edit this script before running any training, finetuning, or inference scripts.
+
+Below is a breakdown of the variables in `paths.sh`. An example configuration is provided at the end of this section.
+
+### Common Parameters
+
+- **`CONDA_ENV_NAME`**: The name of the Conda environment you created.
+
+    ```bash
+    export CONDA_ENV_NAME="DeepFrag2"
+    ```
+
+- **`HOME_DF_WORK`**: The absolute path to the directory where you downloaded DeepFrag2.
+
+    ```bash
+    export HOME_DF_WORK="/path/to/your/download/location"
+    ```
+
+- **`DEEPFRAG_ROOT`**: The full path to the `deepfrag2` source code directory. This is typically constructed from `HOME_DF_WORK`.
+
+    ```bash
+    export DEEPFRAG_ROOT="${HOME_DF_WORK}/deepfrag2"
+    ```
+
+### Training on BindingMOAD Parameters
+
+- **`MOAD_PATH`**: The path to the directory where the BindingMOAD database is stored.
+
+    ```bash
+    export MOAD_PATH="/path/to/your/moad/database"
+    ```
+
+- **`EVERY_CSV`**: The full path to the `every.csv` file from the BindingMOAD database.
+
+    ```bash
+    export EVERY_CSV="${MOAD_PATH}/every.csv"
+    ```
+
+- **`BINDINGMOAD_DIR`**: The path to the directory containing the BindingMOAD structures.
+
+    ```bash
+    export BINDINGMOAD_DIR="${MOAD_PATH}/BindingMOAD_2020"
+    ```
+
+- **`OUTPUT_TRAIN_DIR`**: The directory where the outputs of the training process will be saved.
+
+    ```bash
+    export OUTPUT_TRAIN_DIR="${HOME_DF_WORK}/output_deepfrag"
+    ```
+
+### Finetuning Parameters
+
+- **`DIR_WITH_PDBSDF_FILES`**: The path to your custom dataset of protein-ligand pairs (PDB and SDF files) for finetuning.
+
+    ```bash
+    export DIR_WITH_PDBSDF_FILES="/path/to/your/finetuning_dataset"
+    ```
+
+- **`INPUT_MODEL_FOR_FINETUNING`**: The path to the pre-trained model file (`.pt`) that will be used as the starting point for finetuning.
+
+    ```bash
+    export INPUT_MODEL_FOR_FINETUNING="${OUTPUT_TRAIN_DIR}/model_mean_mean_train.pt"
+    ```
+
+- **`OUTPUT_FT_DIR`**: The directory where the outputs of the finetuning process will be saved.
+
+    ```bash
+    export OUTPUT_FT_DIR="${HOME_DF_WORK}/output_deepfrag_ft"
+    ```
+
+- **`FRACTION_TRAIN`**: The fraction of your custom dataset to use for training during finetuning (e.g., `0.8` for 80%). The rest will be split between validation and testing. Set to `1.0` to use all data for training.
+
+    ```bash
+    export FRACTION_TRAIN=0.8
+    ```
+
+### Inference Parameters
+
+- **`EXTERNAL_DATA`**: The path to an external dataset (protein-ligand pairs) for inference. These should be different from any data used in training or finetuning.
+
+    ```bash
+    export EXTERNAL_DATA="/path/to/your/inference_dataset"
+    ```
+
+### Example `paths.sh` Configuration
+
+Here is a complete example of a configured `paths.sh` file. You will need to replace the placeholder paths with the actual paths on your system.
+
+```bash
 # Common parameters
-
-* `export CONDA_ENV_NAME="my_deepfrag2_env"`
-  * `my_deepfrag2_env` must be changed by the name of the conda environment
-    created. In this manual, it was used the name of `deepfrag`.
-* `export HOME_DF_WORK="/path/to/where/deepfrag/was/downloaded"`
-  * `"/path/to/where/deepfrag/was/downloaded"` must be changed by the path where
-    the DeepFrag software was downloaded. Here will be used the `/usr/local/`
-    path as example.
-* `export DEEPFRAG_ROOT="${HOME_DF_WORK}/deepfrag2"`
-  * This variable uses the `HOME_DF_WORK` variable to create the path where the
-    DeepFrag software was downloaded.
+export CONDA_ENV_NAME="DeepFrag2"
+export HOME_DF_WORK="/usr/local"
+export DEEPFRAG_ROOT="${HOME_DF_WORK}/deepfrag2"
 
 # Training on BindingMOAD parameters
-
-* `export MOAD_PATH="/path/to/data/moad"`
-  * `"/path/to/data/moad"` must be changed by the path where the MOAD database
-    is stored.
-* `export EVERY_CSV="${MOAD_PATH}/every.csv"`
-  * This variable uses the `MOAD_PATH` variable to create the path for the
-    `every.csv`
-* `export BINDINGMOAD_DIR="${MOAD_PATH}/BindingMOAD_2020"`
-  * This variable uses the `MOAD_PATH` variable to create the path where the
-    compounds of the MOAD database are stored.
-* `export OUTPUT_TRAIN_DIR="${HOME_DF_WORK}/output_deepfrag"`
-  * This variable uses the `HOME_DF_WORK` variable to create a folder where the
-    output of the training process will be saved. In this case, the result of
-    the training process will be saved in the `output_deepfrag` folder. This
-    folder name can be changed by another one desired by the final user.
+# Assumes a 'moad' folder containing the MOAD database.
+export MOAD_PATH="/path/to/data/moad"
+export EVERY_CSV="${MOAD_PATH}/every.csv"
+export BINDINGMOAD_DIR="${MOAD_PATH}/BindingMOAD_2020"
+export OUTPUT_TRAIN_DIR="${HOME_DF_WORK}/output_deepfrag"
 
 # Finetuning parameters
-
-* `export DIR_WITH_PDBSDF_FILES="/path/to/my_dir_with_pdb_and_sdf_models"`
-  * `"/path/to/my_dir_with_pdb_and_sdf_models"` must be changed by the path where
-    is stored a dataset comprised of protein-ligand pairs (denoted as
-    `PDB_SDF_FILES` in this manual), where every protein and its corresponding
-    ligand are into PDB and SDF files, respectively. 
-* `export INPUT_MODEL_FOR_FINETUNING="${OUTPUT_TRAIN_DIR}/model_mean_mean_train.pt"`
-  * This variable uses the `OUTPUT_TRAIN_DIR` variable to create the path where it
-    is saved the final model of the training process. This model is the best
-    DeepFrag model, and it is the recommended one to fine tuning it.
-* `export OUTPUT_FT_DIR="${HOME_DF_WORK}/output_deepfrag_ft"`
-  * This variable uses the `HOME_DF_WORK` variable to create a folder where the
-    output of the fine-tuning process will be saved. In this case, the result of
-    the fine-tuning process will be saved in the `output_deepfrag_ft` folder.
-    This folder name can be changed by another one desired by the final user.
-* `export FRACTION_TRAIN=0.6`
-  * This variable contains the percentage of protein-ligand pairs to be used as
-    training set for the fine-tuning process, the remaining protein-ligand pairs
-    will be allocated in the validation and test datasets. Remember that those
-    protein-ligand pairs are stored in the path specified for the
-    `DIR_WITH_PDBSDF_FILES` variable. If all the protein-ligand pairs are used as
-    training for the fine-tuning process, then this variable must be changed to
-    1.0.
+# Assumes a folder with protein-ligand pairs for finetuning.
+export DIR_WITH_PDBSDF_FILES="/path/to/data/my_pdb_sdf_files/fine_tuning"
+export INPUT_MODEL_FOR_FINETUNING="${OUTPUT_TRAIN_DIR}/model_mean_mean_train.pt"
+export OUTPUT_FT_DIR="${HOME_DF_WORK}/output_deepfrag_ft"
+export FRACTION_TRAIN=0.8
 
 # Inference parameters
+# Assumes a folder with protein-ligand pairs for inference.
+export EXTERNAL_DATA="/path/to/data/my_pdb_sdf_files/external"
+```
 
-* `export EXTERNAL_DATA="/path/to/my_external_data/in_pdb_and_sdf_files"`
-  * `"/path/to/my_external_data/in_pdb_and_sdf_files"` must be changed by the
-    path containing protein-ligand pairs to be used as external dataset. Note
-    that these protein-ligand pairs are different to the protein-ligand pairs
-    used to run the fine-tuning process.
+## 4. Description of Provided Scripts
 
-5. Example of configuration of the `paths.sh` script
+After configuration, you can use the following scripts to run DeepFrag2:
 
-# Common parameters
-
-`export CONDA_ENV_NAME="deepfrag"`
-`export HOME_DF_WORK="/usr/local"`
-`export DEEPFRAG_ROOT="${HOME_DF_WORK}/deepfrag2"`
-
-# Training on BindingMOAD parameters
-
-`export MOAD_PATH="/usr/local/moad" (here, it is supposed that there is a moad folder containing the MOAD database)`
-`export EVERY_CSV="${MOAD_PATH}/every.csv"`
-`export BINDINGMOAD_DIR="${MOAD_PATH}/BindingMOAD_2020"`
-`export OUTPUT_TRAIN_DIR="${HOME_DF_WORK}/output_deepfrag"`
-
-# Finetuning parameters
-
-`export DIR_WITH_PDBSDF_FILES="/usr/local/my_pdb_sdf_files/fine_tuning"` (here,
-it is supposed that there is a folder named `my_pdb_sdf_files` which contain
-another folder named `external`, where this last contains the protein-ligand
-pairs to be used for fine-tuning)
-
-* `export INPUT_MODEL_FOR_FINETUNING="${OUTPUT_TRAIN_DIR}/model_mean_mean_train.pt"`
-* `export OUTPUT_FT_DIR="${HOME_DF_WORK}/output_deepfrag_ft"`
-* `export FRACTION_TRAIN=0.6`
-
-# Inference parameters
-
-* `export EXTERNAL_DATA="/usr/local/my_pdb_sdf_files/external"` (here, it is
-supposed that there is a folder named `my_pdb_sdf_files` which contain
-another folder named `external`, where this last contains the protein-ligand
-pairs to be used as external dataset)
+- `paths.sh`: Sets the required environment variables. Source this script (`source paths.sh`) before running other scripts.
+- `MainDF2.submit_MOAD_train.sh`: Trains a new DeepFrag model from scratch using the BindingMOAD database.
+- `MainDF2.submit_MOAD_train_resume.sh`: Resumes a paused or incomplete training process from a checkpoint.
+- `MainDF2.submit_MOAD_test`: Performs inference on the test set derived from the BindingMOAD database.
+- `MainDF2.submit_PdbSdf_fine_tuning.sh`: Fine-tunes a pre-trained DeepFrag model on a custom dataset of PDB/SDF pairs.
+- `MainDF2.submit_PdbSdf_test.sh`: Performs inference on the test set derived from your custom finetuning dataset.
+- `MainDF2.submit_inference.sh`: Runs inference on an external dataset not used for training or finetuning.
