@@ -73,8 +73,8 @@ class Inference(VoxelModelTest):
         """
         for elem in args.inference_label_sets.split(','):
             if elem == "train_on_moad" or elem == "train_on_complexes" or elem == "test_on_moad" or \
-                    elem == "test_on_complexes" or elem == "val" or \
-                    (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
+                elem == "test_on_complexes" or elem == "val" or \
+                (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
                 raise Exception(
                     "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing"
                     " a list of .smi files, or containing both the 'all' value and the list of .smi files."
@@ -122,7 +122,7 @@ class Inference(VoxelModelTest):
             if os.path.exists(label_set_fps_bin) and os.path.exists(label_set_smis_bin):
                 # Cache file exists, so load from that.
                 with open(label_set_fps_bin, "rb") as file:
-                    label_set_fps: torch.Tensor = torch.load(file, map_location=device)
+                    label_set_fps: torch.Tensor = torch.load(file, map_location=torch.device('cpu')).to(device)
                     file.close()
                 with open(label_set_smis_bin, "rb") as file:
                     label_set_smis: List[str] = pickle.load(file)

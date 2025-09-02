@@ -20,6 +20,9 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
 import torch  # type: ignore
 from tqdm.std import tqdm
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+import pickle
+# import multiprocessing
+# from torch import multiprocessing
 from collagen.core.molecules.mol import mols_from_smi_file
 from collagen.core.voxelization.voxelizer import VoxelParams
 from collagen.metrics.ensembled import averaged as ensemble_helper
@@ -322,7 +325,9 @@ class VoxelModelTest(object):
                 filename_fps = filename + "_" + args.fragment_representation + "_fps.bin"
                 if os.path.exists(filename_fps):
                     with open(filename_fps, "rb") as file:
-                        dictionary_smi_fps: Dict[str, torch.Tensor] = torch.load(file, map_location=device)
+                        dictionary_smi_fps: Dict[str, torch.Tensor] = torch.load(file, map_location=torch.device('cpu'))
+                        for key in dictionary_smi_fps:
+                            dictionary_smi_fps[key] = dictionary_smi_fps[key].to(device)
                         filename_fps = None
                         file.close()
                 else:

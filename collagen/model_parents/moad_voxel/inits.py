@@ -135,8 +135,8 @@ class VoxelModelInits(object):
             return self.parent.model_cls(**vars(args), num_voxel_features=self.parent.num_voxel_features)
 
         print(f"\nLoading model from checkpoint {ckpt_filename}\n")
-        model = self.parent.model_cls.load_from_checkpoint(ckpt_filename)
-
+        device = self.init_device(args)
+        model = self.parent.model_cls.load_from_checkpoint(ckpt_filename, map_location=device)
         # NOTE: This is how you load the dataset only when using paired data for
         # finetuning.
         if (
