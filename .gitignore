@@ -60,3 +60,6 @@ old*
 .idea
 
 misc_scripts/output/
+misc_scripts
+
+TODO.md
