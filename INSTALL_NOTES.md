@@ -10,9 +10,13 @@ Clone the DeepFrag2 repository from GitHub.
 git clone git@github.com:durrantlab/deepfrag2.git
 ```
 
-## Create and Activate the Conda Environment
+## Environment Setup
 
-These instructions assume you have [Conda](https://docs.conda.io/en/latest/miniconda.html) installed. The recommended way to install the required dependencies is by using an environment file.
+These instructions assume you have [Conda](https://docs.conda.io/en/latest/miniconda.html) installed. We offer two environment setups: a GPU-enabled environment for training and a CPU-only environment that is ideal for inference.
+
+### GPU Environment (for Training and Inference)
+
+The GPU (CUDA) environment is required for training new models. The recommended way to install the required dependencies is by using an environment file.
 
 1. Create a Conda environment using the `environment.yml` file. This command will create a new environment named `DeepFrag2`.
 
@@ -25,6 +29,22 @@ These instructions assume you have [Conda](https://docs.conda.io/en/latest/minic
     ```bash
     conda activate DeepFrag2
     ```
+
+### CPU-Only Environment (for Inference)
+
+For users who only need to run inference (i.e., generate fragment suggestions with pre-trained models), we provide a CPU-only environment. This version is significantly easier to install as it does not require a GPU or the CUDA toolkit. It is also very fast for inference, making it the preferred choice for most users who do not intend to train new models.
+
+Create a Conda environment using the `environment_cpu.yml` file. This will create a new environment named `DeepFrag2CPU`.
+
+```bash
+conda env create -f environment_cpu.yaml
+```
+
+Activate the newly created environment.
+
+```bash
+conda activate DeepFrag2CPU
+```
 
 ## Configuration and Usage
 

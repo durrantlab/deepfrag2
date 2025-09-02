@@ -12,7 +12,10 @@ We provide a helpful **[DeepFrag2 Google Colab Notebook](https://colab.research.
 
 ## Installation
 
-For detailed instructions on setting up the Conda environment and configuring the project, please see the **[Installation Guide](./INSTALL_NOTES.md)**.
+For detailed instructions on setting up the Conda environment and configuring the project, please see the **[Installation Guide](./INSTALL_NOTES.md)**. We provide two Conda environments:
+
+* **GPU Environment**: Required for training new models.
+* **CPU-Only Environment**: A lightweight option that is easy to install (no CUDA required) and very fast for running inference with pre-trained models. For most users who wish only to use DeepFrag2, this is the preferred option.
 
 ## Usage
 
