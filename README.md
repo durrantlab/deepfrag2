@@ -38,8 +38,9 @@ After running, the output directory (`--default_root_dir`) will be organized as 
 ├── train-loss-epoch=XX-loss=YY.ckpt <- Checkpoint from each training epoch (if saved).
 ├── cache.json                   <- Cached molecular properties to speed up data loading.
 ├── splits.json                  <- Contains the train, validation, and test set splits.
-├── *.actually_used.json         <- Lists fragments from each set used in training/testing.
-└── model_train_last.pt          <- The final trained model state dictionary.
+├── {mode}.actually_used.json    <- Lists fragments from each set used in training/testing (e.g., train_on_moad.actually_used.json).
+├── model_train_last.pt          <- The final trained model state dictionary.
+└── model_fine_tuned_last.pt     <- The final fine-tuned model state dictionary (from warm_starting).
 ```
 
 ### Training on MOAD Database
@@ -91,6 +92,65 @@ receptor,ligand
 ```
 
 - The `--data_dir` parameter, which should point to the base directory where the PDB and SDF files are located.
+
+### Resuming Training from a Checkpoint
+
+To resume an interrupted training session, use the same command as the original training (either `train_on_moad` or `train_on_complexes`) with the following modifications:
+
+- Replace `--save_splits` with `--load_splits`, keeping the same path to the `splits.json` file
+- Add `--load_checkpoint` pointing to the checkpoint file (`.ckpt`) from which to resume
+For convenience, you can use the `--load_newest_checkpoint` flag instead of specifying the path to `last.ckpt`
+- Remove `--split_method` since splits are loaded from the existing `splits.json` and `cache.json` files
+
+Example for resuming MOAD training from the last checkpoint:
+
+```bash
+python MainDF2.py \
+    --mode train_on_moad \
+    --csv path/to/moad/every.csv \
+    --data_dir path/to/moad/BindingMOAD_2020 \
+    --default_root_dir path/to/training/output \
+    --fragment_representation rdk10 \
+    --max_epochs 60 \
+    --load_splits path/to/training/output/splits.json \
+    --cache path/to/training/output/cache.json \
+    --cache_pdbs_to_disk \
+    --load_checkpoint path/to/training/output/last.ckpt \
+    --gpus 1
+```
+
+### Fine-tuning a Pre-trained Model
+
+To fine-tune an existing DeepFrag2 model on domain-specific receptor-ligand complexes, use `warm_starting` mode. This allows you to adapt a trained model to new data while preserving learned features.
+
+This approach is similar to training on a custom database. The CSV file format is the same, with `receptor` and `ligand` columns.
+
+```bash
+python MainDF2.py \
+    --mode warm_starting \
+    --csv path/to/receptor_ligand.csv \
+    --data_dir path/to/receptor_ligand/files \
+    --default_root_dir path/to/fine-tuning/output \
+    --fragment_representation rdk10 \
+    --max_epochs 60 \
+    --split_method random \
+    --save_splits path/to/fine-tuning/output/splits.json \
+    --cache path/to/fine-tuning/output/cache.json \
+    --model_for_warm_starting path/to/trained_deepfrag_model.pt \
+    --cache_pdbs_to_disk \
+    --gpus 1
+```
+
+The `--model_for_warm_starting` parameter specifies the `.pt` file of the trained DeepFrag2 model to be fine-tuned. The CSV file format is the same as for custom training, with `receptor` and `ligand` columns.
+
+#### Optional Fine-tuning Parameters
+
+```bash
+--save_params path/to/save/parameters.json
+--cpu
+--min_frag_num_heavy_atoms 1
+--max_frag_num_heavy_atoms 9999
+```
 
 ### Testing on MOAD Database
 
@@ -144,6 +204,7 @@ python MainDF2.py \
 ```
 
 The `--inference_label_sets` parameter defines the library of fragments to search for suggestions. It accepts a comma-separated list:
+
 -   `all`: Includes all fragments from the BindingMOAD database. Requires `--csv` and `--data_dir` to be set.
 -   `path/to/file.smiles`: Includes fragments from a custom SMILES file.
 -   You can combine them, e.g., `all,path/to/file1.smiles,path/to/file2.smiles`.
@@ -154,8 +215,6 @@ The `--inference_label_sets` parameter defines the library of fragments to searc
 ```bash
 --save_params path/to/save/inference_parameters.json
 --cpu
---min_frag_num_heavy_atoms 1
---max_frag_num_heavy_atoms 9999
 ```
 
 ### Inference on Multiple Complexes
@@ -175,6 +234,15 @@ python MainDF2.py \
     --data_dir path/to/moad/BindingMOAD_2020 \
     --rotations 8 \
     --gpus 1
+```
+
+#### Optional Inference Parameters
+
+```bash
+--save_params path/to/save/inference_parameters.json
+--cpu
+--min_frag_num_heavy_atoms 1
+--max_frag_num_heavy_atoms 9999
 ```
 
 ### Using Pre-trained Models for Inference
