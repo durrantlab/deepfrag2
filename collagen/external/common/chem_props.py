@@ -263,51 +263,51 @@ def is_base(mol: BackedMol, check_acid_counter_example=True) -> bool:
         rdmol.HasSubstructMatch(base_substruct) for base_substruct in base_substructs
     )
 
-def is_neutral(mol: BackedMol) -> bool:
-    """Determine if a molecule is neutral. If not acid and not base, assume
-    neutral.
+# def is_neutral(mol: BackedMol) -> bool:
+#     """Determine if a molecule is neutral. If not acid and not base, assume
+#     neutral.
 
-    Args:
-        mol: BackedMol molecule object.
+#     Args:
+#         mol: BackedMol molecule object.
 
-    Returns:
-        True if a neutral, False if not.
-    """
-    assert False, "is_neutral is now depreciated. In testing, we found we could not reliably predict neutral molecules because of many, many edge cases."
+#     Returns:
+#         True if a neutral, False if not.
+#     """
+#     assert False, "is_neutral is now depreciated. In testing, we found we could not reliably predict neutral molecules because of many, many edge cases."
 
-    if is_acid(mol):
-        return False
-    if is_base(mol):
-        return False
+#     if is_acid(mol):
+#         return False
+#     if is_base(mol):
+#         return False
 
-    # If a nitrogen is next to the bond-cut, it is not counted as basic because
-    # the atom on the other side could be something like a carbonyl carbon. But
-    # in many cases these will be basic, so they should not be included in the
-    # neutral count.
-    # smi = Chem.MolToSmiles(mol.rdmol)
-    smi = mol.smiles()  # runs through standardize_smiles_or_rdmol()
-    if "*N" in smi:
-        return False
-    if "*]N" in smi:
-        return False
-    if "N*" in smi:
-        return False
-    if "N[*" in smi:
-        return False
+#     # If a nitrogen is next to the bond-cut, it is not counted as basic because
+#     # the atom on the other side could be something like a carbonyl carbon. But
+#     # in many cases these will be basic, so they should not be included in the
+#     # neutral count.
+#     # smi = Chem.MolToSmiles(mol.rdmol)
+#     smi = mol.smiles()  # runs through standardize_smiles_or_rdmol()
+#     if "*N" in smi:
+#         return False
+#     if "*]N" in smi:
+#         return False
+#     if "N*" in smi:
+#         return False
+#     if "N[*" in smi:
+#         return False
     
-    # If a P is ever single-bound to a terminal O (let's just assume (O) to keep
-    # it simple), let's not consider it neutral. To many edge cases (see PDB
-    # 3M89, with its terminal group. Not marked as acidic, but it is).
-    if "P(O)" in smi:
-        return False
-    if "(O)P" in smi:
-        return False
-    if "P([O-])" in smi:
-        return False
-    if "([O-])P" in smi:
-        return False
+#     # If a P is ever single-bound to a terminal O (let's just assume (O) to keep
+#     # it simple), let's not consider it neutral. To many edge cases (see PDB
+#     # 3M89, with its terminal group. Not marked as acidic, but it is).
+#     if "P(O)" in smi:
+#         return False
+#     if "(O)P" in smi:
+#         return False
+#     if "P([O-])" in smi:
+#         return False
+#     if "([O-])P" in smi:
+#         return False
 
-    return True
+#     return True
     
 
 if __name__ == "__main__":

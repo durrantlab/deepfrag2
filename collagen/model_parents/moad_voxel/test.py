@@ -19,7 +19,7 @@ from collagen.model_parents.moad_voxel.test_inference_utils import (
 )
 import torch  # type: ignore
 from tqdm.std import tqdm
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import pickle
 # import multiprocessing
 # from torch import multiprocessing
@@ -325,7 +325,9 @@ class VoxelModelTest(object):
                 filename_fps = filename + "_" + args.fragment_representation + "_fps.bin"
                 if os.path.exists(filename_fps):
                     with open(filename_fps, "rb") as file:
-                        dictionary_smi_fps: torch.Tensor = pickle.load(file)
+                        dictionary_smi_fps: Dict[str, torch.Tensor] = torch.load(file, map_location=torch.device('cpu'))
+                        for key in dictionary_smi_fps:
+                            dictionary_smi_fps[key] = dictionary_smi_fps[key].to(device)
                         filename_fps = None
                         file.close()
                 else:
@@ -336,11 +338,11 @@ class VoxelModelTest(object):
                         fp_tnsrs_from_smi_file.append(dictionary_smi_fps[smi])
                     else:
                         fps = torch.tensor(
-                                mol.fingerprint(args.fragment_representation, args.fp_size),
-                                dtype=torch.float32,
-                                device=device,
-                                requires_grad=False,
-                            ).reshape((1, args.fp_size))
+                            mol.fingerprint(args.fragment_representation, args.fp_size),
+                            dtype=torch.float32,
+                            device=device,
+                            requires_grad=False,
+                        ).reshape((1, args.fp_size))
                         fp_tnsrs_from_smi_file.append(fps)
                         dictionary_smi_fps[smi] = fps
 
@@ -355,7 +357,7 @@ class VoxelModelTest(object):
 
                 if filename_fps is not None:
                     with open(filename_fps, "wb") as file:
-                        pickle.dump(dictionary_smi_fps, file)
+                        torch.save(dictionary_smi_fps, file)
                         file.close()
             label_set_fps = torch.cat(fp_tnsrs_from_smi_file)
 
