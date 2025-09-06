@@ -1,0 +1,6 @@
+include README.md
+include LICENSE.md
+recursive-include apps *
+recursive-include collagen *
+recursive-include molbert *
+recursive-include transformers *

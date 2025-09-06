@@ -69,3 +69,5 @@ in-house_models
 *_fps.bin
 
 *.cache.json
+
+*.exclude_from_git_for_now
