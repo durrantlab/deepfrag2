@@ -8,7 +8,7 @@ import argparse
 from torch import nn
 from torch import hub
 from typing import List, Optional
-from apps.deepfrag.model import DeepFragModel
+from collagen.apps.deepfrag.model import DeepFragModel
 from collagen.external.common.types import StructureEntry
 from collagen.core.molecules.fingerprints import download_molbert_ckpt, _molbert
 

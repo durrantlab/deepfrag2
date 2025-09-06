@@ -6,8 +6,8 @@ from collagen.core.loader import DataLambda
 import torch  # type: ignore
 from collagen.metrics.ensembled.parent import ParentEnsembled
 import numpy as np  # type: ignore
-from apps.deepfrag.AggregationOperators import Operator
-from apps.deepfrag.AggregationOperators import Aggregate1DTensor
+from collagen.apps.deepfrag.AggregationOperators import Operator
+from collagen.apps.deepfrag.AggregationOperators import Aggregate1DTensor
 import os.path
 from typing import TYPE_CHECKING
 

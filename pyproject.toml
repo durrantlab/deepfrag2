@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deepfrag2cpu"
+version = "1.0.0"
+description = "DeepFrag2CPU - Your package description"
+readme = "README.md"
+license = {file = "LICENSE.md"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9,<3.10"
+dependencies = [
+    "numpy==1.23.5",
+    "numba==0.56.4",
+    "ProDy==2.4.1",
+    "torch==1.11.0",
+    "torchvision==0.12.0", 
+    "torchaudio==0.11.0",
+    "pytorch-lightning==1.4.9",
+    "scipy==1.11.4",
+    "pandas==1.4.4",
+    "rdkit==2024.3.1",
+    "k3d==2.15.2",
+    "py3Dmol==2.4.0",
+    "h5py==3.7.0",
+    "scikit-learn==1.5.1",
+    "torchinfo==1.8.0",
+    "wandb==0.15.8",
+    "torch_geometric",
+    "filelock==3.13.1",
+    "regex",
+    "sacremoses==0.0.53",
+    "sentencepiece==0.2.0",
+    "tokenizers==0.20.0",
+    "torchmetrics==0.7.3",
+    "matplotlib==3.8.3",
+    "protobuf>=3.19.0,<4.0.0",
+    "Fancy-aggregations",
+    "wget",
+    "fair-esm",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8==4.0.1",
+    "mypy==1.10.0",
+    "pytest==7.1.2",
+]
+
+[project.scripts]
+deepfrag2cpu = "MainDF2:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/deepfrag2cpu"
+Repository = "https://github.com/yourusername/deepfrag2cpu"
+
+[tool.setuptools.packages.find]
+include = ["apps*", "collagen*", "molbert*", "transformers*"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]

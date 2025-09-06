@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 from argparse import Namespace
-from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
+from collagen.apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
 from collagen.external.paired_csv.interface import PairedCsvInterface
 import pytorch_lightning as pl  # type: ignore

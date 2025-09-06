@@ -13,10 +13,10 @@ def read_requirements():
 setup(
     name="deepfrag2cpu",
     version="1.0.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Jacob D. Durrant",
+    author_email="durrantj@pitt.edu",
     license="MIT",
-    description="DeepFrag2CPU - Your package description",
+    description="DeepFrag2CPU - a deep convolutional neural network for lead optimization",
     long_description=open("README.md").read() if os.path.exists("README.md") else "",
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/deepfrag2cpu",
