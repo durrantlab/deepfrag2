@@ -5,16 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "deepfrag2cpu"
 version = "1.0.1"
-description = "DeepFrag2CPU - Your package description"
+description = "DeepFrag2: A Deep Learning Framework for Fragment-Based Lead Optimization"
 readme = "README.md"
-license = {file = "LICENSE.md"}
+license = "MIT"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Jacob D. Durrant", email = "durrantj@pitt.edu"}
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Operating System :: OS Independent",
@@ -25,7 +24,7 @@ dependencies = [
     "numba==0.56.4",
     "ProDy==2.4.1",
     "torch==1.11.0",
-    "torchvision==0.12.0", 
+    "torchvision==0.12.0",
     "torchaudio==0.11.0",
     "pytorch-lightning==1.4.9",
     "scipy==1.11.4",
@@ -67,8 +66,12 @@ deepfrag2 = "InferenceDF2:main"
 Homepage = "https://github.com/yourusername/deepfrag2cpu"
 Repository = "https://github.com/yourusername/deepfrag2cpu"
 
+[tool.setuptools]
+py-modules = ["MainDF2", "InferenceDF2"]
+
 [tool.setuptools.packages.find]
+namespaces = true
 include = ["collagen*", "molbert*", "transformers*"]
 
 [tool.setuptools.package-data]
-"*" = ["*"]
+"*" = ["*.json", "*.md"]

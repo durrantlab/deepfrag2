@@ -21,7 +21,7 @@ By default, this script uses the 'gte_4_best' model and the 'gte_4_all' fragment
 set. You can specify others with --load_checkpoint and --inference_label_sets.
 See README.md for details.
 
-For advanced usage, please use the deepfrag2full script:
+For advanced usage, please use the deepfrag2full script.
 
 --------------------------------------------------------------------------------
 """
@@ -57,21 +57,20 @@ For advanced usage, please use the deepfrag2full script:
     final_argv = [filtered_argv[0]]
     for key, value in hardcoded_args_map.items():
         final_argv.append(key)
-        final_argv.append(value)
-    
+        final_argv.append(str(value))
+ 
     # Add default for --load_checkpoint if not provided by user
     if not load_checkpoint_provided:
         final_argv.extend(['--load_checkpoint', 'gte_4_best'])
-
+ 
     # Add default for --inference_label_sets if not provided by user
     if not inference_label_sets_provided:
         final_argv.extend(['--inference_label_sets', 'gte_4_all'])
-
+ 
     final_argv.extend(filtered_argv[1:])
-    
+ 
     sys.argv = final_argv
     run_main()
-
 
 if __name__ == "__main__":
     main()
