@@ -40,7 +40,7 @@ tmp.zip
 tmp/
 tmp_sync_pf.sh
 
-apps/deepfrag/collagen
+collagen/apps/deepfrag/collagen
 
 paths.sh
 
@@ -71,3 +71,5 @@ in-house_models
 *.cache.json
 
 *.exclude_from_git_for_now
+
+token.txt

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepfrag2cpu"
-version = "1.0.0"
+version = "1.0.1"
 description = "DeepFrag2CPU - Your package description"
 readme = "README.md"
 license = {file = "LICENSE.md"}
@@ -66,7 +66,7 @@ Homepage = "https://github.com/yourusername/deepfrag2cpu"
 Repository = "https://github.com/yourusername/deepfrag2cpu"
 
 [tool.setuptools.packages.find]
-include = ["apps*", "collagen*", "molbert*", "transformers*"]
+include = ["collagen*", "molbert*", "transformers*"]
 
 [tool.setuptools.package-data]
 "*" = ["*"]

@@ -12,7 +12,7 @@ def read_requirements():
 
 setup(
     name="deepfrag2cpu",
-    version="1.0.0",
+    version="1.0.1",
     author="Jacob D. Durrant",
     author_email="durrantj@pitt.edu",
     license="MIT",
@@ -21,11 +21,13 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/deepfrag2cpu",
     packages=find_packages(),
+    py_modules=["MainDF2", "InferenceDF2"],
     include_package_data=True,
     install_requires=read_requirements(),
     entry_points={
         'console_scripts': [
             'deepfrag2cpu=MainDF2:main',
+            'deepfrag2_inference=InferenceDF2:main',
         ],
     },
     classifiers=[
