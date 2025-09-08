@@ -26,8 +26,8 @@ setup(
     install_requires=read_requirements(),
     entry_points={
         'console_scripts': [
-            'deepfrag2cpu=MainDF2:main',
-            'deepfrag2_inference=InferenceDF2:main',
+            'deepfrag2full=MainDF2:main',
+            'deepfrag2=InferenceDF2:main',
         ],
     },
     classifiers=[

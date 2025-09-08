@@ -207,8 +207,10 @@ The `--inference_label_sets` parameter defines the library of fragments to searc
 
 -   `all`: Includes all fragments from the BindingMOAD database. Requires `--csv` and `--data_dir` to be set.
 -   `path/to/file.smiles`: Includes fragments from a custom SMILES file.
--   You can combine them, e.g., `all,path/to/file1.smiles,path/to/file2.smiles`.
--   If `all` is omitted, only fragments from the provided SMILES files are used.
+-   A pre-compiled fragment set name (see "Using Pre-compiled Fragment Sets for Inference" below).
+
+-   You can combine them, e.g., `all,path/to/file1.smiles,path/to/file2.smiles,gte_4_all`.
+-   If `all` is omitted, only fragments from the provided SMILES files and pre-compiled sets are used.
 
 #### Optional Inference Parameters
 
@@ -249,15 +251,36 @@ python MainDF2.py \
 
 You can use our pre-trained models by specifying their name with `--load_checkpoint` instead of a file path. The models will be downloaded automatically into an `in-house_models` directory.
 
-| Name                     | Description                                                                                                     |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `all_best`                 | Model trained on the entire MOAD database for all chemical fragment sizes.                                      |
-| `gte_4_acid_best`          | Trained on acid fragments with at least four heavy atoms.                                                       |
-| `gte_4_aliphatic_best`     | Trained on aliphatic fragments with at least four heavy atoms.                                                  |
-| `gte_4_aromatic_best`      | Trained on aromatic fragments with at least four heavy atoms.                                                   |
-| `gte_4_base_best`          | Trained on base fragments with at least four heavy atoms.                                                       |
-| `gte_4_best`               | Trained on all fragments with at least four heavy atoms.                                                        |
-| `lte_3_best`               | Trained on all fragments with a maximum of three heavy atoms.                                                   |
+| Name                       | Description                                                                |
+|----------------------------|----------------------------------------------------------------------------|
+| `all_best`                 | Model trained on the entire MOAD database for all chemical fragment sizes. |
+| `gte_4_acid_best`          | Trained on acid fragments with at least four heavy atoms.                  |
+| `gte_4_aliphatic_best`     | Trained on aliphatic fragments with at least four heavy atoms.             |
+| `gte_4_aromatic_best`      | Trained on aromatic fragments with at least four heavy atoms.              |
+| `gte_4_base_best`          | Trained on base fragments with at least four heavy atoms.                  |
+| `gte_4_best`               | Trained on all fragments with at least four heavy atoms.                   |
+| `lte_3_best`               | Trained on all fragments with a maximum of three heavy atoms.              |
+
+### Using Pre-compiled Fragment Sets for Inference
+
+You can use our pre-compiled fragment sets by specifying their name with `--inference_label_sets` instead of a file path. The SMILES files will be downloaded automatically into an `in-house_models` directory.
+
+| Name                   | Description                                                                                |
+|------------------------|--------------------------------------------------------------------------------------------|
+| `all_all`              | All fragments from the entire MOAD database.                                               |
+| `all_test`             | Test-set fragments from the entire MOAD database.                                          |
+| `gte_4_acid_all`       | Acid fragments with at least four heavy atoms from the entire MOAD database.               |
+| `gte_4_acid_test`      | Acid fragments with at least four heavy atoms from the test set of the MOAD database.      |
+| `gte_4_aliphatic_all`  | Aliphatic fragments with at least four heavy atoms from the entire MOAD database.          |
+| `gte_4_aliphatic_test` | Aliphatic fragments with at least four heavy atoms from the test set of the MOAD database. |
+| `gte_4_aromatic_all`   | Aromatic fragments with at least four heavy atoms from the entire MOAD database.           |
+| `gte_4_aromatic_test`  | Aromatic fragments with at least four heavy atoms from the test set of the MOAD database.  |
+| `gte_4_base_all`       | Base fragments with at least four heavy atoms from the entire MOAD database.               |
+| `gte_4_base_test`      | Base fragments with at least four heavy atoms from the test set of the MOAD database.      |
+| `gte_4_all`            | All fragments with at least four heavy atoms from the entire MOAD database.                |
+| `gte_4_test`           | All fragments with at least four heavy atoms from the test set of the MOAD database.       |
+| `lte_3_all`            | All fragments with at most three heavy atoms from the entire MOAD database.                |
+| `lte_3_test`           | All fragments with at most three heavy atoms from the test set of the MOAD database.       |
 
 ### Reusing Calculated Fingerprints
 

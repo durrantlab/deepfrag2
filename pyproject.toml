@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=71.0.2,<80.9", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -49,6 +49,7 @@ dependencies = [
     "Fancy-aggregations",
     "wget",
     "fair-esm",
+    "setuptools>=71.0.2,<80.9",
 ]
 
 [project.optional-dependencies]
@@ -59,7 +60,8 @@ dev = [
 ]
 
 [project.scripts]
-deepfrag2cpu = "MainDF2:main"
+deepfrag2full = "MainDF2:main"
+deepfrag2 = "InferenceDF2:main"
 
 [project.urls]
 Homepage = "https://github.com/yourusername/deepfrag2cpu"

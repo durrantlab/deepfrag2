@@ -7,7 +7,7 @@ channels:
 dependencies:
   - python=3.9
   - pip=24.0
-  - setuptools=79.0.1
+  - setuptools>=71.0.2,<80.9
   - ProDy=2.4.1
   - rdkit=2024.3.1
   - pip:

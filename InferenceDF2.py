@@ -6,20 +6,23 @@ from collagen.main import main as run_main
 def main():
     """Entry point for the simplified deepfrag2_inference script."""
     usage_example = """
-================================================================================
- deepfrag2_inference: A simplified command-line tool for fragment generation.
-================================================================================
+====================================================================================
+ deepfrag2: Simple command-line tool for fragment generation (deepfrag2 inference).
+====================================================================================
 
 Example usage:
 
-deepfrag2_inference \\
+deepfrag2 \\
     --receptor path/to/receptor.pdb \\
     --ligand path/to/ligand.sdf \\
-    --branch_atm_loc_xyz "x,y,z" \\
-    --load_checkpoint gte_4_best \\
-    --inference_label_sets path/to/fragments.smi
+    --branch_atm_loc_xyz "x,y,z"
 
-For more advanced options, please use the `deepfrag2cpu` command.
+By default, this script uses the 'gte_4_best' model and the 'gte_4_all' fragment
+set. You can specify others with --load_checkpoint and --inference_label_sets.
+See README.md for details.
+
+For advanced usage, please use the deepfrag2full script:
+
 --------------------------------------------------------------------------------
 """
     print(usage_example)
@@ -30,8 +33,10 @@ For more advanced options, please use the `deepfrag2cpu` command.
         '--cache': None,
     }
 
-    # Check if user provided --load_checkpoint
-    load_checkpoint_provided = any(arg.startswith('--load_checkpoint') for arg in sys.argv[1:])
+    # Check if user provided arguments
+    user_args = sys.argv[1:]
+    load_checkpoint_provided = any(arg.startswith('--load_checkpoint') for arg in user_args)
+    inference_label_sets_provided = any(arg.startswith('--inference_label_sets') for arg in user_args)
 
     # Filter existing sys.argv to remove hardcoded args
     filtered_argv = [sys.argv[0]]
@@ -57,6 +62,10 @@ For more advanced options, please use the `deepfrag2cpu` command.
     # Add default for --load_checkpoint if not provided by user
     if not load_checkpoint_provided:
         final_argv.extend(['--load_checkpoint', 'gte_4_best'])
+
+    # Add default for --inference_label_sets if not provided by user
+    if not inference_label_sets_provided:
+        final_argv.extend(['--inference_label_sets', 'gte_4_all'])
 
     final_argv.extend(filtered_argv[1:])
     

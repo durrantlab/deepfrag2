@@ -1,7 +1,7 @@
 """Utilities for MOAD voxel model."""
 
 from argparse import Namespace
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 from collagen.checkpoints import get_last_checkpoint
 from collagen.core.loader import DataLambda, MultiLoader
 from collagen.core.voxelization.voxelizer import VoxelParams
@@ -100,6 +100,46 @@ class VoxelModelUtils(object):
             )
         )
 
+    def resolve_and_download_smi_files(
+        self, smi_codes: List[str]
+    ) -> List[str]:
+        """Resolve SMILES file short names to local paths, downloading if needed.
+
+        Args:
+            smi_codes (List[str]): A list of SMILES file short names or paths.
+
+        Returns:
+            List[str]: A list of local paths to the SMILES files.
+        """
+        url_by_in_house_smi = {
+            "all_all": "https://durrantlab.pitt.edu/apps/deepfrag2/models/all_all_sets_frags.smi",
+            "all_test": "https://durrantlab.pitt.edu/apps/deepfrag2/models/all_test_set_frags.smi",
+            "gte_4_acid_all": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_acid_all_sets_frags.smi",
+            "gte_4_acid_test": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_acid_test_set_frags.smi",
+            "gte_4_aliphatic_all": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aliphatic_all_sets_frags.smi",
+            "gte_4_aliphatic_test": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aliphatic_test_set_frags.smi",
+            "gte_4_aromatic_all": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aromatic_all_sets_frags.smi",
+            "gte_4_aromatic_test": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aromatic_test_set_frags.smi",
+            "gte_4_base_all": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_base_all_sets_frags.smi",
+            "gte_4_base_test": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_base_test_set_frags.smi",
+            "gte_4_all": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_all_sets_frags.smi",
+            "gte_4_test": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_test_set_frags.smi",
+            "lte_3_all": "https://durrantlab.pitt.edu/apps/deepfrag2/models/lte_3_all_sets_frags.smi",
+            "lte_3_test": "https://durrantlab.pitt.edu/apps/deepfrag2/models/lte_3_test_set_frags.smi",
+        }
+        resolved_paths = []
+        for code in smi_codes:
+            if code in url_by_in_house_smi:
+                filename = os.path.basename(url_by_in_house_smi[code])
+                resolved_paths.append(
+                    VoxelModelUtils.__download_deepfrag_smi(
+                        filename, url_by_in_house_smi[code]
+                    )
+                )
+            elif code.endswith(".smi") or code.endswith(".smiles"):
+                resolved_paths.append(code)
+        return resolved_paths
+
     @staticmethod
     def get_checkpoint_filename(
         args: Namespace, validate_args: bool = True
@@ -182,6 +222,22 @@ class VoxelModelUtils(object):
         return deepfrag_model_path
 
     @staticmethod
+    def __download_deepfrag_smi(smi_filename, smi_url):
+        """Download an in-house DeepFrag SMILES file."""
+        current_directory = os.getcwd() + os.sep + "in-house_models"
+        if not os.path.exists(current_directory):
+            os.makedirs(current_directory, exist_ok=True)
+        smi_path = current_directory + os.sep + smi_filename
+        if not os.path.exists(smi_path):
+            print("Starting download of the DeepFrag SMILES file: ", smi_filename)
+            wget.download(
+                smi_url,
+                smi_path,
+                VoxelModelUtils.__bar_progress_smi,
+            )
+        return smi_path
+
+    @staticmethod
     def __bar_progress(current: float, total: float, width=80):
         """Progress bar for downloading Molbert model.
 
@@ -191,6 +247,23 @@ class VoxelModelUtils(object):
             width (int, optional): Width of the progress bar. Defaults to 80.
         """
         progress_message = "Downloading DeepFrag model: %d%% [%d / %d] bytes" % (
+            current / total * 100,
+            current,
+            total,
+        )
+        # Don't use print() as it will print in new line every time.
+        sys.stdout.write("\r" + progress_message)
+        sys.stdout.flush()
+
+    @staticmethod
+    def __bar_progress_smi(current: float, total: float, width=80):
+        """Progress bar for downloading a DeepFrag SMILES file.
+        Args:
+            current (float): Current progress.
+            total (float): Total progress.
+            width (int, optional): Width of the progress bar. Defaults to 80.
+        """
+        progress_message = "Downloading DeepFrag SMILES file: %d%% [%d / %d] bytes" % (
             current / total * 100,
             current,
             total,

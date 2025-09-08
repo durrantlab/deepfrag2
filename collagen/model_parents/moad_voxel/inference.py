@@ -200,14 +200,27 @@ class Inference(VoxelModelTest):
             raise Exception(
                 "There are not training, validation, or test sets in inference mode"
             )
+        
+        valid_in_house_smi_names = [
+            "all_all", "all_test", "gte_4_acid_all", "gte_4_acid_test",
+            "gte_4_aliphatic_all", "gte_4_aliphatic_test", "gte_4_aromatic_all",
+            "gte_4_aromatic_test", "gte_4_base_all", "gte_4_base_test",
+            "gte_4_all", "gte_4_test", "lte_3_all", "lte_3_test"
+        ]
 
         for elem in args.inference_label_sets.split(','):
-            if elem == "train_on_moad" or elem == "train_on_complexes" or elem == "test_on_moad" or \
-                    elem == "test_on_complexes" or elem == "val" or \
-                    (elem != "all" and not (elem.endswith(".smi") or elem.endswith(".smiles"))):
+            is_disallowed_keyword = elem in ["train_on_moad", "train_on_complexes", "test_on_moad", "test_on_complexes", "val"]
+            is_valid_format = (
+                elem == "all" or 
+                elem.endswith(".smi") or 
+                elem.endswith(".smiles") or 
+                elem in valid_in_house_smi_names
+            )
+
+            if is_disallowed_keyword or not is_valid_format:
                 raise Exception(
-                    "Must specify the --inference_label_sets parameter either containing the 'all' value, or containing "
-                    "a list of .smi files, or containing both the 'all' value and the list of .smi files."
+                    "Must specify the --inference_label_sets parameter with 'all', a path to a .smi/.smiles file, "
+                    "a pre-compiled fragment set name, or a comma-separated combination of these."
                 )
 
     def _get_load_splits(self, args):
