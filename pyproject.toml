@@ -64,6 +64,7 @@ dev = [
 [project.scripts]
 deepfrag2full = "MainDF2:main"
 deepfrag2 = "InferenceDF2:main"
+deepfrag2_test = "collagen.apps.deepfrag.run_pip_test:main"
 
 [project.urls]
 Homepage = "https://durrantlab.pitt.edu/deepfrag2/"
@@ -73,8 +74,8 @@ Repository = "https://github.com/durrantlab/deepfrag2"
 py-modules = ["MainDF2", "InferenceDF2"]
 
 [tool.setuptools.packages.find]
-namespaces = true
+namespaces = false
 include = ["collagen*", "molbert*", "transformers*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.json", "*.md"]
+"*" = ["*.json", "*.md", "*.pdb", "*.sdf"]
