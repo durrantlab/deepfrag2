@@ -3,8 +3,8 @@ requires = ["setuptools>=71.0.2,<80.9", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deepfrag2cpu"
-version = "1.0.2"
+name = "deepfrag2"
+version = "1.0.0"
 description = "DeepFrag2: A Deep Learning Framework for Fragment-Based Lead Optimization"
 readme = "README.md"
 license = "MIT"
@@ -12,11 +12,14 @@ authors = [
     {name = "Jacob D. Durrant", email = "durrantj@pitt.edu"}
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
 ]
 requires-python = ">=3.9,<3.10"
 dependencies = [
@@ -63,8 +66,8 @@ deepfrag2full = "MainDF2:main"
 deepfrag2 = "InferenceDF2:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/deepfrag2cpu"
-Repository = "https://github.com/yourusername/deepfrag2cpu"
+Homepage = "https://durrantlab.pitt.edu/deepfrag2/"
+Repository = "https://github.com/durrantlab/deepfrag2"
 
 [tool.setuptools]
 py-modules = ["MainDF2", "InferenceDF2"]

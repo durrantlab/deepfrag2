@@ -64,8 +64,11 @@ For advanced usage, please use the deepfrag2full script.
 
     # Add hardcoded arguments
     for key, value in hardcoded_args_map.items():
-        final_argv.extend([key, str(value)])
-
+        if isinstance(value, bool):
+            if value:
+                final_argv.append(key)
+        else:
+            final_argv.extend([key, str(value)])
     # Add default for --load_checkpoint if not provided by user
     if not load_checkpoint_provided:
         final_argv.extend(['--load_checkpoint', 'gte_4_best'])

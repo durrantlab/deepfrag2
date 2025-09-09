@@ -26,4 +26,4 @@ protobuf>=3.19.0,<4.0.0
 Fancy-aggregations
 wget
 fair-esm
-setuptools>=71.0.2,<80.9
+setuptools==71.0.2
