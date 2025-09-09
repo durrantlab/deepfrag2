@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepfrag2cpu"
-version = "1.0.1"
+version = "1.0.2"
 description = "DeepFrag2: A Deep Learning Framework for Fragment-Based Lead Optimization"
 readme = "README.md"
 license = "MIT"

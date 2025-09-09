@@ -35,6 +35,7 @@ For advanced usage, please use the deepfrag2full script.
         '--mode': 'inference_single_complex',
         '--default_root_dir': './',
         '--cache': 'None',
+        "--cpu": True,
     }
 
     # Manually parse for '--out' and filter it out
