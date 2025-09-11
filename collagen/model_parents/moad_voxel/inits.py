@@ -138,7 +138,7 @@ class VoxelModelInits(object):
         device = self.init_device(args)
         model = self.parent.model_cls.load_from_checkpoint(ckpt_filename, map_location=device)
         # NOTE: This is how you load the dataset only when using paired data for
-        # finetuning.
+        # fine-tuning.
         if (
             fragment_set
             and isinstance(fragment_set, PairedCsvInterface)
@@ -178,7 +178,24 @@ class VoxelModelInits(object):
         else:
             print("\nCUDA is not available!")
 
-        device = torch.device("cpu") if (args.cpu or not torch.cuda.is_available()) else torch.device("cuda")
+        # To avoid an exception when calling the 'init_trainer' method. That exception happens
+        # because cuda is not available and 'accelerator' is equal to null, then the cpu is not
+        # used since it is not specified in the 'accelerator' argument.
+        if args.cpu or not torch.cuda.is_available():
+            device = torch.device("cpu")
+            args.accelerator = 'cpu'
+        else:
+            device = torch.device("cuda")
+            args.accelerator = 'gpu'
+            args.devices = args.gpus
+
+        # Remove this argument of the Namespace to avoid any issue with the Trainer construction. The
+        # --gpus argument was removed in pytorch lightning from v2.0.
+        #
+        # However, this argument is kept as input argument to avoid creating additional arguments
+        if hasattr(args, "gpus"):
+            del args.gpus
+
         print("The DEVICE to be used is " + str(device) + ".\n")
         return device
 
