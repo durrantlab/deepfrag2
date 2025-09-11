@@ -1,6 +1,8 @@
 # Installation Guide
 
-This guide provides instructions for setting up the DeepFrag2 environment.
+This guide provides detailed instructions for setting up the DeepFrag2 environment from the source code using Conda. This installation method is intended for users who wish to train new models, fine-tune existing ones, or contribute to the development of DeepFrag2. It supports both GPU and CPU environments.
+
+For users who only require CPU-based inference with pre-trained models, a simpler installation is available via `pip`. For instructions on how to install the pip package, please refer to the main [README.md](./README.md) file.
 
 ## Download the Source Code
 
