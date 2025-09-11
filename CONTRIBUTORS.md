@@ -1,6 +1,7 @@
 Contributors
 ============
 
-* Harrison Green
 * Jacob Durrant
-* David Koes
+* Harrison Green
+* Cesar Raul Garcia Jacas
+* Shayne Wierbowski
