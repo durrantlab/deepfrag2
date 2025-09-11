@@ -12,7 +12,7 @@ defined by the argparser or must be explicitly defined via the API.
 # here.
 
 import argparse
-from apps.deepfrag.AggregationOperators import Operator
+from collagen.apps.deepfrag.AggregationOperators import Operator
 
 
 def get_default_args() -> dict:

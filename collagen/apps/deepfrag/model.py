@@ -8,7 +8,7 @@ from collagen.metrics.metrics import mse_loss
 from collagen.test.viz_debug import save_batch_first_item_channels
 from torch import nn  # type: ignore
 import pytorch_lightning as pl  # type: ignore
-from apps.deepfrag.AggregationOperators import *
+from collagen.apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
 import random
 
