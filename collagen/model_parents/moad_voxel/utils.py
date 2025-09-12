@@ -212,7 +212,7 @@ class VoxelModelUtils(object):
 
         deepfrag_model_path = current_directory + os.sep + deepfrag_model_ckpt
         if not os.path.exists(deepfrag_model_path):
-            print(f"Downloading DeepFrag model {deepfrag_model_ckpt} from {deepfrag_model_url}")
+            print(f"Downloading DeepFrag2 model {deepfrag_model_ckpt} from {deepfrag_model_url}")
             try:
                 wget.download(
                     deepfrag_model_url,
@@ -220,6 +220,7 @@ class VoxelModelUtils(object):
                     VoxelModelUtils.__bar_progress,
                 )
             except Exception as e:
+                print("")
                 assert False, f"Unable to download file {deepfrag_model_url} to {deepfrag_model_path}. Please place the file manually in the pretrained_models directory and try again."
         return deepfrag_model_path
 
