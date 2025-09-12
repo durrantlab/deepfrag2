@@ -203,8 +203,9 @@ class VoxelModelUtils(object):
         return ckpt
 
     @staticmethod
-    def __download_file(url: str, out: str, bar):
+    def __download_file(url: str, out: str, bar, desc: str = "file"):
         """Download a file from a URL, with error handling."""
+        print(f"Downloading DeepFrag2 {desc} {out} from {url}")
         try:
             wget.download(
                 url,
@@ -225,8 +226,7 @@ class VoxelModelUtils(object):
 
         deepfrag_model_path = current_directory + os.sep + deepfrag_model_ckpt
         if not os.path.exists(deepfrag_model_path):
-            print(f"Downloading DeepFrag2 model {deepfrag_model_ckpt} from {deepfrag_model_url}")
-            VoxelModelUtils.__download_file(deepfrag_model_url, deepfrag_model_path, VoxelModelUtils.__bar_progress)
+            VoxelModelUtils.__download_file(deepfrag_model_url, deepfrag_model_path, VoxelModelUtils.__bar_progress, desc="model")
         return deepfrag_model_path
 
     @staticmethod
@@ -237,8 +237,7 @@ class VoxelModelUtils(object):
             os.makedirs(current_directory, exist_ok=True)
         smi_path = current_directory + os.sep + smi_filename
         if not os.path.exists(smi_path):
-            print("Starting download of the DeepFrag SMILES file: ", smi_filename)
-            VoxelModelUtils.__download_file(smi_url, smi_path, VoxelModelUtils.__bar_progress_smi)
+            VoxelModelUtils.__download_file(smi_url, smi_path, VoxelModelUtils.__bar_progress_smi, desc="label set (SMILES)")
         return smi_path
 
     @staticmethod
