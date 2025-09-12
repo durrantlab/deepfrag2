@@ -12,7 +12,7 @@ python -u ../MainDF2.py \
     --default_root_dir $(pwd)/6.inference_custom_set.output/ \
     --rotations 2 \
     --load_checkpoint gte_4_best \
-    --inference_label_sets ./data_for_inference/label_set.smi \
+    --inference_label_sets gte_4_all \
     --cache_pdbs_to_disk \
     --cache None \
     | tee 5.OUT-python_out.txt
