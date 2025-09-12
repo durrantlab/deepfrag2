@@ -195,7 +195,6 @@ class VoxelModelInits(object):
         else:
             device = torch.device("cuda")
             args.accelerator = 'gpu'
-            import pdb; pdb.set_trace()  # TODO: Remove this line after debugging.
             args.devices = args_gpus
 
         # Remove this argument of the Namespace to avoid any issue with the Trainer construction. The
