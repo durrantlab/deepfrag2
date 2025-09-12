@@ -16,6 +16,7 @@ from collagen.external.common.parent_interface import ParentInterface
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
+args_gpus: int = 1
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
 class VoxelModelInits(object):
@@ -170,6 +171,7 @@ class VoxelModelInits(object):
         Returns:
             torch.device: The device.
         """
+        global args_gpus
         if torch.cuda.is_available():
             print("\nCUDA is available: " + str(torch.cuda.is_available()))
             print("CUDA device count: " + str(torch.cuda.device_count()))
@@ -181,13 +183,20 @@ class VoxelModelInits(object):
         # To avoid an exception when calling the 'init_trainer' method. That exception happens
         # because cuda is not available and 'accelerator' is equal to null, then the cpu is not
         # used since it is not specified in the 'accelerator' argument.
+        if hasattr(args, "gpus"):
+            # gpus will be removed from args, so you must store the value in a
+            # global variable for future use. Related to pytorch_lightning
+            # compativility.
+            args_gpus = args.gpus
+
         if args.cpu or not torch.cuda.is_available():
             device = torch.device("cpu")
             args.accelerator = 'cpu'
         else:
             device = torch.device("cuda")
             args.accelerator = 'gpu'
-            args.devices = args.gpus
+            import pdb; pdb.set_trace()  # TODO: Remove this line after debugging.
+            args.devices = args_gpus
 
         # Remove this argument of the Namespace to avoid any issue with the Trainer construction. The
         # --gpus argument was removed in pytorch lightning from v2.0.
