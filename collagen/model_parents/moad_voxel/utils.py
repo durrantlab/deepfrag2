@@ -203,6 +203,19 @@ class VoxelModelUtils(object):
         return ckpt
 
     @staticmethod
+    def __download_file(url: str, out: str, bar):
+        """Download a file from a URL, with error handling."""
+        try:
+            wget.download(
+                url,
+                out,
+                bar,
+            )
+        except Exception as _:
+            print("")
+            assert False, f"Unable to download file {url} to {out}. Please download the file manually, copy it to that local path, and try again."
+    
+    @staticmethod
     def __download_deepfrag_ckpt(deepfrag_model_ckpt, deepfrag_model_url):
         """Download an in-house DeepFrag model checkpoint."""
 
@@ -213,15 +226,7 @@ class VoxelModelUtils(object):
         deepfrag_model_path = current_directory + os.sep + deepfrag_model_ckpt
         if not os.path.exists(deepfrag_model_path):
             print(f"Downloading DeepFrag2 model {deepfrag_model_ckpt} from {deepfrag_model_url}")
-            try:
-                wget.download(
-                    deepfrag_model_url,
-                    deepfrag_model_path,
-                    VoxelModelUtils.__bar_progress,
-                )
-            except Exception as e:
-                print("")
-                assert False, f"Unable to download file {deepfrag_model_url} to {deepfrag_model_path}. Please place the file manually in the pretrained_models directory and try again."
+            VoxelModelUtils.__download_file(deepfrag_model_url, deepfrag_model_path, VoxelModelUtils.__bar_progress)
         return deepfrag_model_path
 
     @staticmethod
@@ -233,11 +238,7 @@ class VoxelModelUtils(object):
         smi_path = current_directory + os.sep + smi_filename
         if not os.path.exists(smi_path):
             print("Starting download of the DeepFrag SMILES file: ", smi_filename)
-            wget.download(
-                smi_url,
-                smi_path,
-                VoxelModelUtils.__bar_progress_smi,
-            )
+            VoxelModelUtils.__download_file(smi_url, smi_path, VoxelModelUtils.__bar_progress_smi)
         return smi_path
 
     @staticmethod
