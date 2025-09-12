@@ -206,25 +206,27 @@ class VoxelModelUtils(object):
     def __download_deepfrag_ckpt(deepfrag_model_ckpt, deepfrag_model_url):
         """Download an in-house DeepFrag model checkpoint."""
 
-        current_directory = os.getcwd() + os.sep + "in-house_models"
+        current_directory = os.getcwd() + os.sep + "pretrained_models"
         if not os.path.exists(current_directory):
             os.makedirs(current_directory, exist_ok=True)
 
         deepfrag_model_path = current_directory + os.sep + deepfrag_model_ckpt
         if not os.path.exists(deepfrag_model_path):
-            print("Starting download of the DeepFrag model: ", deepfrag_model_ckpt)
-            wget.download(
-                deepfrag_model_url,
-                deepfrag_model_path,
-                VoxelModelUtils.__bar_progress,
-            )
-
+            print(f"Downloading DeepFrag model {deepfrag_model_ckpt} from {deepfrag_model_url}")
+            try:
+                wget.download(
+                    deepfrag_model_url,
+                    deepfrag_model_path,
+                    VoxelModelUtils.__bar_progress,
+                )
+            except Exception as e:
+                assert False, f"Unable to download file {deepfrag_model_url} to {deepfrag_model_path}. Please place the file manually in the pretrained_models directory and try again."
         return deepfrag_model_path
 
     @staticmethod
     def __download_deepfrag_smi(smi_filename, smi_url):
         """Download an in-house DeepFrag SMILES file."""
-        current_directory = os.getcwd() + os.sep + "in-house_models"
+        current_directory = os.getcwd() + os.sep + "pretrained_models"
         if not os.path.exists(current_directory):
             os.makedirs(current_directory, exist_ok=True)
         smi_path = current_directory + os.sep + smi_filename

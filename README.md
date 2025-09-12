@@ -272,7 +272,7 @@ python MainDF2.py \
 
 ### Using Pre-trained Models for Inference
 
-You can use our pre-trained models by specifying their name with `--load_checkpoint` instead of a file path. The models will be downloaded automatically into an `in-house_models` directory.
+You can use our pre-trained models by specifying their name with `--load_checkpoint` instead of a file path. The models will be downloaded automatically into an `pretrained_models` directory.
 
 | Name                       | Description                                                                |
 |----------------------------|----------------------------------------------------------------------------|
@@ -286,7 +286,7 @@ You can use our pre-trained models by specifying their name with `--load_checkpo
 
 ### Using Pre-compiled Fragment Sets for Inference
 
-You can use our pre-compiled fragment sets by specifying their name with `--inference_label_sets` instead of a file path. The SMILES files will be downloaded automatically into an `in-house_models` directory.
+You can use our pre-compiled fragment sets by specifying their name with `--inference_label_sets` instead of a file path. The SMILES files will be downloaded automatically into an `pretrained_models` directory.
 
 | Name                   | Description                                                                                |
 |------------------------|--------------------------------------------------------------------------------------------|
