@@ -15,6 +15,15 @@ import sys
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
+url_by_in_house_pt_model = {
+  "all_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/all_last_for_finetuning.pt",
+  "gte_4_acid_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_acid_last_for_finetuning.pt",
+  "gte_4_aliphatic_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aliphatic_last_for_finetuning.pt",
+  "gte_4_aromatic_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aromatic_last_for_finetuning.pt",
+  "gte_4_base_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_base_last_for_finetuning.pt",
+  "gte_4_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_last_for_finetuning.pt",
+  "lte_3_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/lte_3_last_for_finetuning.pt",
+}
 
 class VoxelModelUtils(object):
     """Provides utility funcitons."""
@@ -230,6 +239,17 @@ class VoxelModelUtils(object):
         return deepfrag_model_path
 
     @staticmethod
+    def download_deepfrag_pt(deepfrag_model_pt, deepfrag_model_url):
+        """Download an in-house DeepFrag model checkpoint for fine-tuning."""
+        current_directory = os.getcwd() + os.sep + "pretrained_models"
+        if not os.path.exists(current_directory):
+            os.makedirs(current_directory, exist_ok=True)
+        deepfrag_model_path = current_directory + os.sep + deepfrag_model_pt
+        if not os.path.exists(deepfrag_model_path):
+            VoxelModelUtils.__download_file(deepfrag_model_url, deepfrag_model_path, VoxelModelUtils.__bar_progress_ft, desc="model for fine-tuning")
+        return deepfrag_model_path
+
+    @staticmethod
     def __download_deepfrag_smi(smi_filename, smi_url):
         """Download an in-house DeepFrag SMILES file."""
         current_directory = os.getcwd() + os.sep + "pretrained_models"
@@ -267,6 +287,23 @@ class VoxelModelUtils(object):
             width (int, optional): Width of the progress bar. Defaults to 80.
         """
         progress_message = "Downloading DeepFrag SMILES file: %d%% [%d / %d] bytes" % (
+            current / total * 100,
+            current,
+            total,
+        )
+        # Don't use print() as it will print in new line every time.
+        sys.stdout.write("\r" + progress_message)
+        sys.stdout.flush()
+
+    @staticmethod
+    def __bar_progress_ft(current: float, total: float, width=80):
+        """Progress bar for downloading a DeepFrag model for fine-tuning.
+        Args:
+            current (float): Current progress.
+            total (float): Total progress.
+            width (int, optional): Width of the progress bar. Defaults to 80.
+        """
+        progress_message = "Downloading DeepFrag model for fine-tuning: %d%% [%d / %d] bytes" % (
             current / total * 100,
             current,
             total,
