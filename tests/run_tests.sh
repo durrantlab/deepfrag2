@@ -7,4 +7,5 @@
 . _test7_train_on_moad_aromatic_fragments.sh
 . _test8_test_on_moad_aromatic_fragments.sh
 . _test9_test_on_cpu.sh
+. _test10_download_pretrained.sh
 . _eval_results.sh

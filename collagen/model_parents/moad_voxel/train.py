@@ -48,7 +48,6 @@ class VoxelModelTrain(object):
         #     continue
 
         model = self.parent.inits.init_model(args, ckpt_filename)
-        print("\nDeepFrag is using " + str(model.device) + " to run.\n")
 
         model_stats = summary(model, (16, self.parent.num_voxel_features, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
@@ -69,7 +68,6 @@ class VoxelModelTrain(object):
         data_interface, train_data, val_data = self.get_train_val_sets(args, True, device)
 
         model = self.parent.inits.init_warm_model(args, data_interface)
-        print("\nDeepFrag is using " + str(model.device) + " to run.\n")
 
         model_stats = summary(model, (16, self.parent.num_voxel_features, 24, 24, 24), verbose=0)
         summary_str = str(model_stats)
