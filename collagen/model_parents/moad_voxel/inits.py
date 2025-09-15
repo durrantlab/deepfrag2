@@ -12,11 +12,23 @@ from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch  # type: ignore
 import os
 from collagen.external.common.parent_interface import ParentInterface
+import wget
+import sys
 
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
 args_gpus: int = 1
+
+url_by_in_house_model = {
+  "all_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/all_last_for_finetuning.pt",
+  "gte_4_acid_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_acid_last_for_finetuning.pt",
+  "gte_4_aliphatic_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aliphatic_last_for_finetuning.pt",
+  "gte_4_aromatic_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_aromatic_last_for_finetuning.pt",
+  "gte_4_base_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_base_last_for_finetuning.pt",
+  "gte_4_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/gte_4_last_for_finetuning.pt",
+  "lte_3_last_for_finetuning": "https://durrantlab.pitt.edu/apps/deepfrag2/models/lte_3_last_for_finetuning.pt",
+}
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
 class VoxelModelInits(object):
@@ -218,13 +230,60 @@ class VoxelModelInits(object):
             args: The arguments parsed by argparse.
             data_interface: The database (e.g., MOAD) interface.
 
-
         Returns:
             pl.LightningModule: The model.
         """
+        if not os.path.exists(args.model_for_warm_starting):
+            if args.model_for_warm_starting in url_by_in_house_model:
+                VoxelModelInits.__download_deepfrag_pt(
+                    args.model_for_warm_starting + ".pt",
+                    url_by_in_house_model[args.model_for_warm_starting])
+                args.model_for_warm_starting = args.model_for_warm_starting + ".pt"
+            else:
+                raise ValueError(
+                    "The .pt file does not exist or is not a default model (see --model_for_warm_starting argument)."
+                )
+
         model = self.parent.model_cls(**vars(args), num_voxel_features=self.parent.num_voxel_features)
         state_dict = torch.load(args.model_for_warm_starting)
         model.load_state_dict(state_dict)
         if isinstance(data_interface, PairedCsvInterface) and isinstance(model, DeepFragModelPairedDataFinetune):
             model.set_database(data_interface)
         return model
+
+    @staticmethod
+    def __download_deepfrag_pt(deepfrag_model_pt, deepfrag_model_url):
+        """Download an in-house DeepFrag model checkpoint."""
+
+        current_directory = os.getcwd() + os.sep + "in-house_models"
+        if not os.path.exists(current_directory):
+            os.makedirs(current_directory, exist_ok=True)
+
+        deepfrag_model_path = current_directory + os.sep + deepfrag_model_pt
+        if not os.path.exists(deepfrag_model_path):
+            print("Starting download of the DeepFrag model for fine-tuning: ", deepfrag_model_pt)
+            wget.download(
+                deepfrag_model_url,
+                deepfrag_model_path,
+                VoxelModelInits.__bar_progress,
+            )
+
+        return deepfrag_model_path
+
+    @staticmethod
+    def __bar_progress(current: float, total: float, width=80):
+        """Progress bar for downloading Molbert model.
+
+        Args:
+            current (float): Current progress.
+            total (float): Total progress.
+            width (int, optional): Width of the progress bar. Defaults to 80.
+        """
+        progress_message = "Downloading DeepFrag model for fine-tuning: %d%% [%d / %d] bytes" % (
+            current / total * 100,
+            current,
+            total,
+        )
+        # Don't use print() as it will print in new line every time.
+        sys.stdout.write("\r" + progress_message)
+        sys.stdout.flush()
