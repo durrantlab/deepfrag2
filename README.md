@@ -18,7 +18,7 @@ For users who only need to run inference with pre-trained models, DeepFrag2 can 
 
 1.  **Create and activate a new Conda environment:**
     ```bash
-    conda create -n deepfrag2 python=3.9
+    conda create -n deepfrag2 python=3.9 pip=24.0
     conda activate deepfrag2
     ```
 
