@@ -315,10 +315,10 @@ class VoxelModelTest(object):
         """
         if label_set_smis is None:
             label_set_smis = []
-
-        smi_files = [
+        smi_files_or_codes = [
             f for f in lbl_set_codes if f not in ["train", "val", "test", "all"]
         ]
+        smi_files = self.parent.utils.resolve_and_download_smi_files(smi_files_or_codes)
         if smi_files:
             fp_tnsrs_from_smi_file = [label_set_fps] if len(label_set_smis) > 0 else []
             for filename in smi_files:

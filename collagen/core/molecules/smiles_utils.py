@@ -181,7 +181,7 @@ def standardize_smiles_or_rdmol(smiles_or_mol: Union[str, Chem.Mol], none_if_fai
         else:
             smiles = smiles_or_mol if isinstance(smiles_or_mol, str) else Chem.MolToSmiles(smiles_or_mol)
             print(f"CAUGHT EXCEPTION: Could not standardize SMILES: {smiles} >> ", e)
-            # append to moose.log
-            with open("moose.log", "a") as f:
+            # append to bad_smiles.log
+            with open("bad_smiles.log", "a") as f:
                 f.write(smiles + "\t" + str(e) + "\n")
             return smiles
