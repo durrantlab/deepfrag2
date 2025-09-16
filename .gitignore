@@ -40,7 +40,7 @@ tmp.zip
 tmp/
 tmp_sync_pf.sh
 
-apps/deepfrag/collagen
+collagen/apps/deepfrag/collagen
 
 paths.sh
 
@@ -49,6 +49,7 @@ tests/data_to_finetune/*.pdb
 tests/data_to_finetune/*.sdf
 tests/?.OUT*
 tests/*.output
+tests/??.OUT*
 
 **/lightning_logs
 **/lightning_logs/**
@@ -64,8 +65,12 @@ misc_scripts
 
 TODO.md
 
-in-house_models
+pretrained_models
 *_noh.pkl
 *_fps.bin
 
 *.cache.json
+
+*.exclude_from_git_for_now
+
+token.txt

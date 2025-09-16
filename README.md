@@ -6,16 +6,39 @@ Lead optimization involves modifying ligands to improve specific properties such
 
 DeepFrag2 converts input receptor/parent complexes into 3D grids, where each grid point represents a cubic region of the 3D space (a voxel). We selected this representation because the 3D local context is important for fragment binding, and converting molecular structures to voxels allows us to apply CNNs, a network architecture that has been used successfully in computer vision. The DeepFrag2 output is a continuous-valued topological fingerprint of the suggested fragment to add. DeepFrag2 compares this output fingerprint to a database of fragments with precalculated fingerprints to recover the most suitable fragments for specific complexes.
 
-### Try DeepFrag2 in Your Browser
-
 We provide a helpful **[DeepFrag2 Google Colab Notebook](https://colab.research.google.com/github/durrantlab/deepfrag2/blob/main/deepfrag2_colab_notebook.ipynb)** for those who wish to try DeepFrag2 without installing any software. The notebook guides users through the process of choosing a receptor-ligand complex, selecting a branching point on the ligand, choosing a pre-trained DeepFrag2 model, and generating fragment suggestions. The results are displayed in an easy-to-read table and visual grid, allowing users to quickly assess the suggested fragments.
 
 ## Installation
 
-For detailed instructions on setting up the Conda environment and configuring the project, please see the **[Installation Guide](./INSTALL_NOTES.md)**. We provide two Conda environments:
+DeepFrag2 can be installed via pip for a CPU-only inference, or from source using Conda for full functionality (including GPU support for training).
+
+### Installation via Pip (for CPU-Only Inference)
+
+For users who only need to run inference with pre-trained models, DeepFrag2 can be installed from PyPI. This method provides a quick, CPU-only setup. To avoid dependency conflicts, it is **strongly recommended** to install DeepFrag2 into a new, clean Conda environment.
+
+1.  **Create and activate a new Conda environment:**
+    ```bash
+    conda create -n deepfrag2 python=3.9 pip=24.0
+    conda activate deepfrag2
+    ```
+
+2.  **Install DeepFrag2 using pip:**
+    ```bash
+    pip install deepfrag2==2.0.0
+    ```
+
+This installation makes the following command-line tools available in your environment:
+
+*   `deepfrag2`: A simplified command for running inference on a single complex.
+*   `deepfrag2full`: The complete script for all modes of operation (training, testing, inference, etc.), equivalent to `python MainDF2.py` in a source installation.
+*   `deepfrag2_test`: A command to run a quick test case to verify that the installation is working correctly.
+
+### Installation from Source with Conda (for Training and Development)
+
+For detailed instructions on setting up Conda environments for training, fine-tuning, or development, please see the **[Installation Guide](./INSTALL_NOTES.md)**. This is the recommended approach for users who need to train new models or modify the source code. Two environments are provided:
 
 * **GPU Environment**: Required for training new models.
-* **CPU-Only Environment**: A lightweight option that is easy to install (no CUDA required) and very fast for running inference with pre-trained models. For most users who wish only to use DeepFrag2, this is the preferred option.
+* **CPU-Only Environment**: A lightweight option for running inference with pre-trained models without requiring a GPU.
 
 ## Usage
 
@@ -141,7 +164,7 @@ python MainDF2.py \
     --gpus 1
 ```
 
-The `--model_for_warm_starting` parameter specifies the `.pt` file of the trained DeepFrag2 model to be fine-tuned. The CSV file format is the same as for custom training, with `receptor` and `ligand` columns.
+The `--model_for_warm_starting` parameter specifies the `.pt` file of the trained DeepFrag2 model to be fine-tuned. You can also use one of the pre-trained models available for fine-tuning by specifying its name (see "Using Pre-trained Models for Fine-tuning (Warm Starting)" below). The CSV file format is the same as for custom training, with `receptor` and `ligand` columns.
 
 #### Optional Fine-tuning Parameters
 
@@ -207,8 +230,10 @@ The `--inference_label_sets` parameter defines the library of fragments to searc
 
 -   `all`: Includes all fragments from the BindingMOAD database. Requires `--csv` and `--data_dir` to be set.
 -   `path/to/file.smiles`: Includes fragments from a custom SMILES file.
--   You can combine them, e.g., `all,path/to/file1.smiles,path/to/file2.smiles`.
--   If `all` is omitted, only fragments from the provided SMILES files are used.
+-   A pre-compiled fragment set name (see "Using Pre-compiled Fragment Sets for Inference" below).
+
+-   You can combine them, e.g., `all,path/to/file1.smiles,path/to/file2.smiles,gte_4_all`.
+-   If `all` is omitted, only fragments from the provided SMILES files and pre-compiled sets are used.
 
 #### Optional Inference Parameters
 
@@ -245,25 +270,64 @@ python MainDF2.py \
 --max_frag_num_heavy_atoms 9999
 ```
 
-### Using Pre-trained Models for Inference
+### Downloadable Models and Fragment Sets
 
-You can use our pre-trained models by specifying their name with `--load_checkpoint` instead of a file path. The models will be downloaded automatically into an `in-house_models` directory.
+#### Using Pre-trained Models for Inference
 
-| Name                     | Description                                                                                                     |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `all_best`                 | Model trained on the entire MOAD database for all chemical fragment sizes.                                      |
-| `gte_4_acid_best`          | Trained on acid fragments with at least four heavy atoms.                                                       |
-| `gte_4_aliphatic_best`     | Trained on aliphatic fragments with at least four heavy atoms.                                                  |
-| `gte_4_aromatic_best`      | Trained on aromatic fragments with at least four heavy atoms.                                                   |
-| `gte_4_base_best`          | Trained on base fragments with at least four heavy atoms.                                                       |
-| `gte_4_best`               | Trained on all fragments with at least four heavy atoms.                                                        |
-| `lte_3_best`               | Trained on all fragments with a maximum of three heavy atoms.                                                   |
+You can use our pre-trained models by specifying their name with `--load_checkpoint` instead of a file path. The models will be downloaded automatically into an `pretrained_models` directory.
 
-### Reusing Calculated Fingerprints
+| Name                       | Description                                                                |
+|----------------------------|----------------------------------------------------------------------------|
+| `all_best`                 | Model trained on the entire MOAD database for all chemical fragment sizes. |
+| `gte_4_acid_best`          | Trained on acid fragments with at least four heavy atoms.                  |
+| `gte_4_aliphatic_best`     | Trained on aliphatic fragments with at least four heavy atoms.             |
+| `gte_4_aromatic_best`      | Trained on aromatic fragments with at least four heavy atoms.              |
+| `gte_4_base_best`          | Trained on base fragments with at least four heavy atoms.                  |
+| `gte_4_best`               | Trained on all fragments with at least four heavy atoms.                   |
+| `lte_3_best`               | Trained on all fragments with a maximum of three heavy atoms.              |
+
+#### Using Pre-trained Models for Fine-tuning (Warm Starting)
+
+You can use our pre-trained models for fine-tuning by specifying their name with `--model_for_warm_starting` instead of a file path. The models will be downloaded automatically into a `pretrained_models` directory. These are the final checkpoints from training, suitable for resuming training or fine-tuning.
+
+| Name                                  | Description                                                                |
+|---------------------------------------|----------------------------------------------------------------------------|
+| `all_last_for_finetuning`             | Model trained on the entire MOAD database for all chemical fragment sizes. |
+| `gte_4_acid_last_for_finetuning`      | Trained on acid fragments with at least four heavy atoms.                  |
+| `gte_4_aliphatic_last_for_finetuning` | Trained on aliphatic fragments with at least four heavy atoms.             |
+| `gte_4_aromatic_last_for_finetuning`  | Trained on aromatic fragments with at least four heavy atoms.              |
+| `gte_4_base_last_for_finetuning`      | Trained on base fragments with at least four heavy atoms.                  |
+| `gte_4_last_for_finetuning`           | Trained on all fragments with at least four heavy atoms.                   |
+| `lte_3_last_for_finetuning`           | Trained on all fragments with a maximum of three heavy atoms.              |
+
+#### Using Pre-compiled Fragment Sets for Inference
+
+You can use our pre-compiled fragment sets by specifying their name with `--inference_label_sets` instead of a file path. The SMILES files will be downloaded automatically into an `pretrained_models` directory.
+
+| Name                   | Description                                                                                |
+|------------------------|--------------------------------------------------------------------------------------------|
+| `all_all`              | All fragments from the entire MOAD database.                                               |
+| `all_test`             | Test-set fragments from the entire MOAD database.                                          |
+| `gte_4_acid_all`       | Acid fragments with at least four heavy atoms from the entire MOAD database.               |
+| `gte_4_acid_test`      | Acid fragments with at least four heavy atoms from the test set of the MOAD database.      |
+| `gte_4_aliphatic_all`  | Aliphatic fragments with at least four heavy atoms from the entire MOAD database.          |
+| `gte_4_aliphatic_test` | Aliphatic fragments with at least four heavy atoms from the test set of the MOAD database. |
+| `gte_4_aromatic_all`   | Aromatic fragments with at least four heavy atoms from the entire MOAD database.           |
+| `gte_4_aromatic_test`  | Aromatic fragments with at least four heavy atoms from the test set of the MOAD database.  |
+| `gte_4_base_all`       | Base fragments with at least four heavy atoms from the entire MOAD database.               |
+| `gte_4_base_test`      | Base fragments with at least four heavy atoms from the test set of the MOAD database.      |
+| `gte_4_all`            | All fragments with at least four heavy atoms from the entire MOAD database.                |
+| `gte_4_test`           | All fragments with at least four heavy atoms from the test set of the MOAD database.       |
+| `lte_3_all`            | All fragments with at most three heavy atoms from the entire MOAD database.                |
+| `lte_3_test`           | All fragments with at most three heavy atoms from the test set of the MOAD database.       |
+
+### Technical Details: Fingerprints and Fingerprint Caching
+
+#### Reusing Calculated Fingerprints
 
 When running inference with `--inference_label_sets all`, DeepFrag2 automatically caches the calculated fingerprints of fragments to speed up subsequent runs. These cache files (`*_all_label_set_fps.bin` and `*_all_label_set_smis.bin`) are saved in the same directory as the MOAD `every.csv` file specified by the `--csv` parameter. To clear the cache and force regeneration, you must delete these `.bin` files.
 
-### Fingerprints
+#### Fingerprints
 
 DeepFrag2 supports several fingerprint representations, specified with the `--fragment_representation` flag.
 

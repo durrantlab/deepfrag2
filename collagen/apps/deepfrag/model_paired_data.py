@@ -1,7 +1,7 @@
 """DeepFrag model that uses additional SDF data for training."""
 
 from typing import List, Optional, TYPE_CHECKING
-from apps.deepfrag.model import DeepFragModel
+from collagen.apps.deepfrag.model import DeepFragModel
 from collagen.external.common.types import StructureEntry
 from collagen.external.paired_csv.interface import PairedCsvInterface
 from collagen.metrics import cos_loss

@@ -1,10 +1,10 @@
 """Run DeepFrag."""
 
 import argparse
-from apps.deepfrag.run import DeepFrag
+from collagen.apps.deepfrag.run import DeepFrag
 from collagen.external.common.datasets.fragment_dataset import FragmentDataset
 from collagen.external.common.types import StructureEntryForMultimodal
-from apps.deepfrag.model_fusing_modalities import DeepFragModelESM2
+from collagen.apps.deepfrag.model_fusing_modalities import DeepFragModelESM2
 
 
 class MultimodalDeepFrag(DeepFrag):

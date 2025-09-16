@@ -15,4 +15,4 @@ python -u ../MainDF2.py \
     --cache None \
     --cpu \
     --json_params common_params.json.inp \
-    | tee 4.OUT-python_out.txt
+    | tee 9.OUT-python_out.txt

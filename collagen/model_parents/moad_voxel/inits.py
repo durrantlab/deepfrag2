@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 from argparse import Namespace
-from apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
+from collagen.apps.deepfrag.model_paired_data import DeepFragModelPairedDataFinetune
 from collagen.core.voxelization.voxelizer import VoxelParams, VoxelParamsDefault
 from collagen.external.paired_csv.interface import PairedCsvInterface
 import pytorch_lightning as pl  # type: ignore
@@ -12,10 +12,12 @@ from ...checkpoints import MyModelCheckpoint, MyModelCheckpointEveryEpoch
 import torch  # type: ignore
 import os
 from collagen.external.common.parent_interface import ParentInterface
+from collagen.model_parents.moad_voxel.utils import url_by_in_house_pt_model
 
 if TYPE_CHECKING:
     from collagen.model_parents.moad_voxel.moad_voxel import VoxelModelParent
 
+args_gpus: int = 1
 
 # A few function to initialize the trainer, model, voxel parameters, and device.
 class VoxelModelInits(object):
@@ -138,7 +140,7 @@ class VoxelModelInits(object):
         device = self.init_device(args)
         model = self.parent.model_cls.load_from_checkpoint(ckpt_filename, map_location=device)
         # NOTE: This is how you load the dataset only when using paired data for
-        # finetuning.
+        # fine-tuning.
         if (
             fragment_set
             and isinstance(fragment_set, PairedCsvInterface)
@@ -170,6 +172,7 @@ class VoxelModelInits(object):
         Returns:
             torch.device: The device.
         """
+        global args_gpus
         if torch.cuda.is_available():
             print("\nCUDA is available: " + str(torch.cuda.is_available()))
             print("CUDA device count: " + str(torch.cuda.device_count()))
@@ -178,7 +181,30 @@ class VoxelModelInits(object):
         else:
             print("\nCUDA is not available!")
 
-        device = torch.device("cpu") if (args.cpu or not torch.cuda.is_available()) else torch.device("cuda")
+        # To avoid an exception when calling the 'init_trainer' method. That exception happens
+        # because cuda is not available and 'accelerator' is equal to null, then the cpu is not
+        # used since it is not specified in the 'accelerator' argument.
+        if hasattr(args, "gpus"):
+            # gpus will be removed from args, so you must store the value in a
+            # global variable for future use. Related to pytorch_lightning
+            # compativility.
+            args_gpus = args.gpus
+
+        if args.cpu or not torch.cuda.is_available():
+            device = torch.device("cpu")
+            args.accelerator = 'cpu'
+        else:
+            device = torch.device("cuda")
+            args.accelerator = 'gpu'
+            args.devices = args_gpus
+
+        # Remove this argument of the Namespace to avoid any issue with the Trainer construction. The
+        # --gpus argument was removed in pytorch lightning from v2.0.
+        #
+        # However, this argument is kept as input argument to avoid creating additional arguments
+        if hasattr(args, "gpus"):
+            del args.gpus
+
         print("The DEVICE to be used is " + str(device) + ".\n")
         return device
 
@@ -193,10 +219,19 @@ class VoxelModelInits(object):
             args: The arguments parsed by argparse.
             data_interface: The database (e.g., MOAD) interface.
 
-
         Returns:
             pl.LightningModule: The model.
         """
+        if not os.path.exists(args.model_for_warm_starting):
+            if args.model_for_warm_starting in url_by_in_house_pt_model:
+                args.model_for_warm_starting = self.parent.utils.download_deepfrag_pt(
+                    args.model_for_warm_starting + ".pt",
+                    url_by_in_house_pt_model[args.model_for_warm_starting])
+            else:
+                raise ValueError(
+                    "The .pt file does not exist or is not a default model (see --model_for_warm_starting argument)."
+                )
+
         model = self.parent.model_cls(**vars(args), num_voxel_features=self.parent.num_voxel_features)
         state_dict = torch.load(args.model_for_warm_starting)
         model.load_state_dict(state_dict)

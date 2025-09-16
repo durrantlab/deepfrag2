@@ -53,7 +53,6 @@ def _add_generic_params(
         + "\tIf inference_multiple_complexes, runs inference on an external set comprised of protein-ligand pairs, that is, a SDF file per each ligand and a PDB file per each receptor.\n",
     )
 
-    # TODO: Why was this added to jacob branch but not in cesar branch?
     parser.add_argument(
         "--test_predictions_file",
         type=str,
