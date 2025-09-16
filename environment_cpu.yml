@@ -1,4 +1,5 @@
 name: DeepFrag2CPU
+version: 2.0.0
 
 channels:
   - conda-forge

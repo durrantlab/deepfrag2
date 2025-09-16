@@ -24,7 +24,7 @@ For users who only need to run inference with pre-trained models, DeepFrag2 can 
 
 2.  **Install DeepFrag2 using pip:**
     ```bash
-    pip install deepfrag2
+    pip install deepfrag2==2.0.0
     ```
 
 This installation makes the following command-line tools available in your environment:
@@ -164,7 +164,7 @@ python MainDF2.py \
     --gpus 1
 ```
 
-The `--model_for_warm_starting` parameter specifies the `.pt` file of the trained DeepFrag2 model to be fine-tuned. The CSV file format is the same as for custom training, with `receptor` and `ligand` columns.
+The `--model_for_warm_starting` parameter specifies the `.pt` file of the trained DeepFrag2 model to be fine-tuned. You can also use one of the pre-trained models available for fine-tuning by specifying its name (see "Using Pre-trained Models for Fine-tuning (Warm Starting)" below). The CSV file format is the same as for custom training, with `receptor` and `ligand` columns.
 
 #### Optional Fine-tuning Parameters
 
@@ -270,7 +270,9 @@ python MainDF2.py \
 --max_frag_num_heavy_atoms 9999
 ```
 
-### Using Pre-trained Models for Inference
+### Downloadable Models and Fragment Sets
+
+#### Using Pre-trained Models for Inference
 
 You can use our pre-trained models by specifying their name with `--load_checkpoint` instead of a file path. The models will be downloaded automatically into an `pretrained_models` directory.
 
@@ -284,7 +286,21 @@ You can use our pre-trained models by specifying their name with `--load_checkpo
 | `gte_4_best`               | Trained on all fragments with at least four heavy atoms.                   |
 | `lte_3_best`               | Trained on all fragments with a maximum of three heavy atoms.              |
 
-### Using Pre-compiled Fragment Sets for Inference
+#### Using Pre-trained Models for Fine-tuning (Warm Starting)
+
+You can use our pre-trained models for fine-tuning by specifying their name with `--model_for_warm_starting` instead of a file path. The models will be downloaded automatically into a `pretrained_models` directory. These are the final checkpoints from training, suitable for resuming training or fine-tuning.
+
+| Name                                  | Description                                                                |
+|---------------------------------------|----------------------------------------------------------------------------|
+| `all_last_for_finetuning`             | Model trained on the entire MOAD database for all chemical fragment sizes. |
+| `gte_4_acid_last_for_finetuning`      | Trained on acid fragments with at least four heavy atoms.                  |
+| `gte_4_aliphatic_last_for_finetuning` | Trained on aliphatic fragments with at least four heavy atoms.             |
+| `gte_4_aromatic_last_for_finetuning`  | Trained on aromatic fragments with at least four heavy atoms.              |
+| `gte_4_base_last_for_finetuning`      | Trained on base fragments with at least four heavy atoms.                  |
+| `gte_4_last_for_finetuning`           | Trained on all fragments with at least four heavy atoms.                   |
+| `lte_3_last_for_finetuning`           | Trained on all fragments with a maximum of three heavy atoms.              |
+
+#### Using Pre-compiled Fragment Sets for Inference
 
 You can use our pre-compiled fragment sets by specifying their name with `--inference_label_sets` instead of a file path. The SMILES files will be downloaded automatically into an `pretrained_models` directory.
 
@@ -305,11 +321,13 @@ You can use our pre-compiled fragment sets by specifying their name with `--infe
 | `lte_3_all`            | All fragments with at most three heavy atoms from the entire MOAD database.                |
 | `lte_3_test`           | All fragments with at most three heavy atoms from the test set of the MOAD database.       |
 
-### Reusing Calculated Fingerprints
+### Technical Details: Fingerprints and Fingerprint Caching
+
+#### Reusing Calculated Fingerprints
 
 When running inference with `--inference_label_sets all`, DeepFrag2 automatically caches the calculated fingerprints of fragments to speed up subsequent runs. These cache files (`*_all_label_set_fps.bin` and `*_all_label_set_smis.bin`) are saved in the same directory as the MOAD `every.csv` file specified by the `--csv` parameter. To clear the cache and force regeneration, you must delete these `.bin` files.
 
-### Fingerprints
+#### Fingerprints
 
 DeepFrag2 supports several fingerprint representations, specified with the `--fragment_representation` flag.
 

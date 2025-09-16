@@ -49,6 +49,7 @@ tests/data_to_finetune/*.pdb
 tests/data_to_finetune/*.sdf
 tests/?.OUT*
 tests/*.output
+tests/??.OUT*
 
 **/lightning_logs
 **/lightning_logs/**

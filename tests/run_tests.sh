@@ -8,4 +8,8 @@
 . _test8_test_on_moad_aromatic_fragments.sh
 . _test9_test_on_cpu.sh
 . _test10_download_pretrained.sh
+. _test11_train_on_moad_subset_molbert.sh
+. _test12_test_on_moad_subset_molbert.sh
+. _test13_finetune_on_custom_data_download.sh
+
 . _eval_results.sh
