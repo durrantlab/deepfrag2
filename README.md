@@ -24,7 +24,7 @@ For users who only need to run inference with pre-trained models, DeepFrag2 can 
 
 2.  **Install DeepFrag2 using pip:**
     ```bash
-    pip install deepfrag2
+    pip install deepfrag2==2.0.0
     ```
 
 This installation makes the following command-line tools available in your environment:
