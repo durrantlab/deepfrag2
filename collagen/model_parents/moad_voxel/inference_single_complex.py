@@ -180,8 +180,3 @@ class InferenceSingleComplex(Inference):
                 line = f"{entry.fragment_smiles}\t{score_cos_similarity:.3f}"
                 f.write(line + "\n")
                 print(line)
-
-        # TODO: Cesar: Need to check on some known answers as a "sanity check".
-
-        # TODO: Cesar:  Can we add the fragments in most_similar[0] to the parent
-        # molecule, to make a composite ligand ready for docking?
