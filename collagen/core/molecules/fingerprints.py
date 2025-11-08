@@ -4,6 +4,7 @@ import numpy as np  # type: ignore
 import rdkit.Chem.AllChem as Chem  # type: ignore
 from rdkit.Chem import DataStructs  # type: ignore
 from rdkit.Chem import AllChem  # type: ignore
+from rdkit.Chem import MACCSkeys
 import os
 import sys
 from zipfile import ZipFile
@@ -140,24 +141,6 @@ def _Morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return array
 
 
-def _rdk10_x_morgan(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
-    """Creates a vector fusing RDK and Morgan Fingerprints.
-
-    Args:
-        m (rdkit.Chem.rdchem.Mol): RDKit molecule.
-        size (int): Size of the fingerprint.
-        smiles (str): SMILES string (not used).
-
-    Returns:
-        np.array: Fingerprint.
-    """
-    rdk10_vals = _rdk10(m, size, smiles)
-    morgan_vals = _Morgan(m, size, smiles)
-    rdk10_morgan_vals = np.add(rdk10_vals, morgan_vals)
-    rdk10_morgan_vals[rdk10_morgan_vals > 0] = 1
-    return rdk10_morgan_vals
-
-
 @lru_cache
 def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     """Molbert fingerprints.
@@ -179,10 +162,19 @@ def _molbert(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str) -> np.array:
     return MOLBERT_MODEL.transform_single(smiles)[0][0]
 
 
+def _MACCSkeys(m: "rdkit.Chem.rdchem.Mol", size: int, smiles: str):
+    """MACCSkeys fingerprints."""
+
+    fp = MACCSkeys.GenMACCSKeys(Chem.MolFromSmiles(smiles))
+    n_fp = list(map(int, list(fp.ToBitString())))
+    return np.array(n_fp)
+
+
 FINGERPRINTS = {
     "rdk10": _rdk10,
-    "rdk10_x_morgan": _rdk10_x_morgan,
     "molbert": _molbert,
+    "morgan": _Morgan,
+    "maccs": _MACCSkeys,
 }
 
 

@@ -235,7 +235,7 @@ class DeepFragModel(pl.LightningModule):
             "--fragment_representation",
             required=False,
             type=str,
-            help="The type of fragment representations to be calculated: rdk10, rdk10_x_morgan, molbert",  # Intentionally leaving some off, like molbert_shuffled, which is for debugging.
+            help="The type of fragment representations to be calculated: rdk10, morgan, maccs, and molbert",  # Intentionally leaving some off, like molbert_shuffled, which is for debugging.
         )  # , default="rdk10")
         parser.add_argument(
             "--aggregation_3x3_patches",
