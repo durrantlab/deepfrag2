@@ -44,6 +44,7 @@ class DeepFragFactory:
 
         return df_model, df_args
 
+
 def main():
     numba_logger = logging.getLogger("numba")
     numba_logger.setLevel(logging.WARNING)
