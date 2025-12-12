@@ -38,14 +38,15 @@ def main():
         voxel_params.receptor_featurizer.size() +
         voxel_params.ligand_featurizer.size()
     )
+    print(f"Calculated num_voxel_features: {num_voxel_features}")
 
-    # VoxelModelParent.setup_fingerprint_scheme sets args.fp_size based on
-    # args.fragment_representation. This is required by the model __init__.
+    # This function calculates 'fp_size' based on the 'fragment_representation'
+    # argument (e.g., rdk10 -> 2048) and adds it to the args namespace.
     VoxelModelParent.setup_fingerprint_scheme(args)
+    print(f"Fingerprint size (output layer): {args.fp_size}")
 
     # Determine if using multimodal or standard model
     if hasattr(args, "run_mm_model") and args.run_mm_model:
-        # Note: This might download ESM models if not present
         model = DeepFragModelESM2(
             num_voxel_features=num_voxel_features,
             **vars(args)
@@ -56,11 +57,18 @@ def main():
             **vars(args)
         )
 
+    # Prepare hyperparameters dictionary for the checkpoint. We must explicitly
+    # include 'num_voxel_features' because it is an __init__ argument that
+    # defaults to 10, but our architecture uses 9. If missing,
+    # load_from_checkpoint will instantiate the model with the wrong input
+    # shape.
+    hparams = vars(args)
+    hparams["num_voxel_features"] = num_voxel_features
+
     # Create checkpoint dictionary mimicking PyTorch Lightning structure
-    # so it can be loaded by VoxelModelParent.load_from_checkpoint
     checkpoint = {
         "state_dict": model.state_dict(),
-        "hyper_parameters": vars(args),
+        "hyper_parameters": hparams,
         "epoch": 0,
         "global_step": 0,
     }

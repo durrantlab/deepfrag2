@@ -16,6 +16,17 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
     ModelCheckpoint class.
     """
 
+    @property
+    def state_key(self) -> str:
+        """Generate a unique state key for this callback instance.
+        
+        This is required when multiple ModelCheckpoint callbacks are used
+        in the same Trainer to avoid state collision errors in PL >= 1.7.
+        """
+        # We use the class name, monitor, and filename template to ensure uniqueness
+        # since inits.py uses distinct values for these across the 3 instances.
+        return f"{self.__class__.__name__}_{self.monitor}_{self.filename}"
+
     def on_save_checkpoint(self, trainer: "pl.Trainer", pl_module, checkpoint) -> dict:
         """Run when saving a checkpoint.
 
