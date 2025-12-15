@@ -219,10 +219,29 @@ class MultiLoader(object):
         data_idxs = list(range(len(self.data)))
         if self.shuffle:
             np.random.shuffle(data_idxs)
+
         batches_idxs = []
         num_data = len(data_idxs)
         for i in range(0, num_data, self.batch_size):
             batches_idxs.append(data_idxs[i : i + self.batch_size])
+
+        # SYNCHRONOUS MODE FOR DEBUGGING
+        if self.num_dataloader_workers == 0:
+            print("DEBUG: Running data loader synchronously (Main Thread)...")
+            # Process batches sequentially in the main thread
+            for batch_indices in batches_idxs:
+                # We reuse _process2 but run it immediately.
+                # _process2 expects a list of batches, so we wrap it.
+                sync_return_list = []
+                _process2([batch_indices], sync_return_list, "sync_debug")
+                
+                # If _process2 failed, it printed the error but might not have appended anything
+                if len(sync_return_list) > 0:
+                    yield sync_return_list.pop(0)
+                else:
+                    # Logic failure or exception caught in _process2
+                    raise RuntimeError("Synchronous data loading failed. See traceback above.")
+            return
 
         # Group the batches. Each of these groups of batches goes to its own
         # processor.
@@ -263,6 +282,7 @@ class MultiLoader(object):
         num_warnings = 0
 
         count = 0
+
         while len(self.groups_of_batches) > 0:
             self._add_procs(iden)
 
@@ -281,6 +301,7 @@ class MultiLoader(object):
                     )
                     num_warnings = num_warnings + 1
                 time.sleep(0.1)
+
             if waited:
                 print(
                     "Voxel grids finished. Current count: " + str(len(self.return_list))

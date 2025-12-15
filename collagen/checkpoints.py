@@ -27,16 +27,12 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
         # since inits.py uses distinct values for these across the 3 instances.
         return f"{self.__class__.__name__}_{self.monitor}_{self.filename}"
 
-    def on_save_checkpoint(self, trainer: "pl.Trainer", pl_module, checkpoint) -> dict:
-        """Run when saving a checkpoint.
-
-        Args:
-            trainer (pl.Trainer): Not used...
-            pl_module (any): Not used...
-            checkpoint (any): Not used...
-
-        Returns:
-            dict: The dictionary of values to save.
+    def state_dict(self) -> dict:
+        """Save the callback state.
+        
+        This replaces on_save_checkpoint from earlier versions. It is the
+        standard PyTorch method for state persistence and works across virtually
+        all PL versions.
         """
         return {
             "monitor": self.monitor,
@@ -49,20 +45,17 @@ class MyModelCheckpoint(pl.callbacks.ModelCheckpoint):
             "kth_best_model_path": self.kth_best_model_path,
         }
 
-    def on_load_checkpoint(self, trainer: "pl.Trainer", pl_module, callback_state):
-        """Run when loading a checkpoint.
-
-        Args:
-            trainer (pl.Trainer): Not used...
-            pl_module (any): Not used...
-            callback_state (dict): The state of values loaded.
+    def load_state_dict(self, state_dict: dict) -> None:
+        """Load the callback state.
+        
+        This replaces on_load_checkpoint from previous versions. It avoids the
+        signature mismatches introduced in PL 1.8.
         """
-        self.best_model_score = callback_state["best_model_score"]
-        self.best_model_path = callback_state["best_model_path"]
-        self.best_model_score = callback_state["best_model_score"]
-        self.best_k_models = callback_state["best_k_models"]
-        self.save_last = callback_state["save_last"]
-        self.kth_best_model_path = callback_state["kth_best_model_path"]
+        self.best_model_score = state_dict["best_model_score"]
+        self.best_model_path = state_dict["best_model_path"]
+        self.best_k_models = state_dict["best_k_models"]
+        self.save_last = state_dict["save_last"]
+        self.kth_best_model_path = state_dict["kth_best_model_path"]
 
 
 class MyModelCheckpointEveryEpoch(MyModelCheckpoint):
@@ -79,7 +72,8 @@ class MyModelCheckpointEveryEpoch(MyModelCheckpoint):
             filepath (str): The path to save the checkpoint.
         """
         super()._save_checkpoint(trainer, filepath)
-
+        # Note: This relies on internal implementation details of ModelCheckpoint.
+        # dump_checkpoint returns the checkpoint dictionary.
         state_dict_model = trainer._checkpoint_connector.dump_checkpoint(False)[
             "state_dict"
         ]

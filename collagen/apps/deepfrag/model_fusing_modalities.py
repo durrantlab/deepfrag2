@@ -198,13 +198,29 @@ class DeepFragModelESM2(DeepFragModel):
         Returns:
             torch.Tensor: The predicted fragment fingerprint.
         """
-        latent_space = self.encoder(voxel)
+        if not voxel.is_contiguous():
+            voxel = voxel.contiguous()
+
+        # Robust execution strategy (see DeepFragModel.forward for details)
+        try:
+            latent_space = self.encoder(voxel)
+        except RuntimeError:
+            prev_enabled = torch.backends.cudnn.enabled
+            torch.backends.cudnn.enabled = False
+            try:
+                latent_space = self.encoder(voxel)
+            finally:
+                torch.backends.cudnn.enabled = prev_enabled
+
         if ON_GPU is True and latent_space.get_device() == -1:
             latent_space = latent_space.cuda()
 
         try:
             if entry_infos is not None:
-                combined_latent_space = torch.zeros((latent_space.size()[0], self.combined_embedding_size), dtype=torch.float32)
+                combined_latent_space = torch.zeros(
+                    (latent_space.size()[0], self.combined_embedding_size),
+                    dtype=torch.float32,
+                )
                 if ON_GPU is True and combined_latent_space.get_device() == -1:
                     combined_latent_space = combined_latent_space.cuda()
 
@@ -212,19 +228,31 @@ class DeepFragModelESM2(DeepFragModel):
                     latent_space_idx = latent_space[idx]
                     if self.esm2_model_for_mm:
                         # concatenate with ESM-2 embedding
-                        latent_space_idx = torch.cat((latent_space_idx, self.__esm2_model_processing(entry_info)))
-
+                        latent_space_idx = torch.cat(
+                            (
+                                latent_space_idx,
+                                self.__esm2_model_processing(entry_info),
+                            )
+                        )
                     if self.molbert_model_for_mm:
                         # concatenate with MolBert embedding
-                        latent_space_idx = torch.cat((latent_space_idx, self.__molbert_model_processing(entry_info)))
-
+                        latent_space_idx = torch.cat(
+                            (
+                                latent_space_idx,
+                                self.__molbert_model_processing(entry_info),
+                            )
+                        )
                     combined_latent_space[idx] = latent_space_idx
-
-                    if self.save_unique_sequences and entry_info.receptor_sequence not in self.unique_sequences:
+                    if (
+                        self.save_unique_sequences
+                        and entry_info.receptor_sequence not in self.unique_sequences
+                    ):
                         self.unique_sequences.add(entry_info.receptor_sequence)
                         self.save_unique_sequences.info(entry_info.receptor_sequence)
-
-                    if self.save_unique_smiles and entry_info.parent_smiles not in self.unique_smiles:
+                    if (
+                        self.save_unique_smiles
+                        and entry_info.parent_smiles not in self.unique_smiles
+                    ):
                         self.unique_smiles.add(entry_info.parent_smiles)
                         self.save_unique_smiles.info(entry_info.parent_smiles)
 

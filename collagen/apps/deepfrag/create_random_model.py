@@ -7,6 +7,7 @@ passed to test.py or inference scripts to establish a random baseline.
 
 import os
 import torch
+import pytorch_lightning as pl
 from collagen.core.args import get_args
 from collagen.apps.deepfrag.model import DeepFragModel
 from collagen.apps.deepfrag.model_fusing_modalities import DeepFragModelESM2
@@ -40,8 +41,8 @@ def main():
     )
     print(f"Calculated num_voxel_features: {num_voxel_features}")
 
-    # This function calculates 'fp_size' based on the 'fragment_representation'
-    # argument (e.g., rdk10 -> 2048) and adds it to the args namespace.
+    # Calculate 'fp_size' based on 'fragment_representation' argument 
+    # (e.g., rdk10 -> 2048) and add it to the args namespace.
     VoxelModelParent.setup_fingerprint_scheme(args)
     print(f"Fingerprint size (output layer): {args.fp_size}")
 
@@ -71,6 +72,8 @@ def main():
         "hyper_parameters": hparams,
         "epoch": 0,
         "global_step": 0,
+        # PyTorch Lightning requires this key to verify checkpoint compatibility
+        "pytorch-lightning_version": pl.__version__,
     }
 
     output_path = "random_untrained.ckpt"

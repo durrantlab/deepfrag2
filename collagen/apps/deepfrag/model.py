@@ -11,6 +11,7 @@ import pytorch_lightning as pl  # type: ignore
 from collagen.apps.deepfrag.AggregationOperators import *
 from collagen.metrics import cos_loss
 import random
+import torch.backends.cudnn as cudnn
 
 
 class DeepFragModel(pl.LightningModule):
@@ -26,6 +27,10 @@ class DeepFragModel(pl.LightningModule):
             **kwargs: additional keyword arguments.
         """
         super().__init__()
+        # Optimization: Enable cuDNN benchmark. This allows cuDNN to find the
+        # best algorithm for the hardware. Safe for all versions.
+        if torch.cuda.is_available():
+            cudnn.benchmark = True
 
         self.fp_size = kwargs["fp_size"]
 
@@ -43,9 +48,9 @@ class DeepFragModel(pl.LightningModule):
         self.predictions = None
         self.prediction_targets = None
         self.prediction_targets_entry_infos = None
-
-        self.debug_voxels = kwargs["debug_voxels"] if "debug_voxels" in kwargs else False
-
+        self.debug_voxels = (
+            kwargs["debug_voxels"] if "debug_voxels" in kwargs else False
+        )
         # Only record the examples used for the first epoch. After first epoch,
         # add to below to stop recording. Will eventually contain "train",
         # "val", and "test".
@@ -101,7 +106,6 @@ class DeepFragModel(pl.LightningModule):
             nn.ReLU(),
             # Here's your latent space?
         )
-
         # self.decoder = nn.Sequential(
         #     # Linear transform (fully connected). Increases features to 512.
         #     nn.Linear(512, 64),
@@ -189,7 +193,6 @@ class DeepFragModel(pl.LightningModule):
                 # Values ranging between 0 and 1
                 nn.Sigmoid(),
             )
-        
         self.has_saved_some_debug_voxels = False
 
     def on_train_start(self):
@@ -269,15 +272,34 @@ class DeepFragModel(pl.LightningModule):
 
     def forward(self, voxel: torch.Tensor, entry_infos: Optional[List[StructureEntry]] = None) -> torch.Tensor:
         """Forward pass of the model.
-        
+
         Args:
             voxel (torch.Tensor): The voxel grid.
             entry_infos: the information for each voxel
-            
+
         Returns:
             torch.Tensor: The predicted fragment fingerprint.
         """
-        latent_space = self.encoder(voxel)
+        # Ensure memory is contiguous.
+        if not voxel.is_contiguous():
+            voxel = voxel.contiguous()
+
+        # Robust execution strategy:
+        # 1. Try running with cuDNN (fastest).
+        # 2. If it fails (due to A100 incompatibility or version mismatch),
+        #    catch the error and disable cuDNN.
+        # 3. Retry. PyTorch will use native CUDA kernels (still on GPU).
+        try:
+            latent_space = self.encoder(voxel)
+        except RuntimeError:
+            prev_enabled = torch.backends.cudnn.enabled
+            torch.backends.cudnn.enabled = False
+            try:
+                latent_space = self.encoder(voxel)
+            finally:
+                # Restore original state so we don't permanently disable cuDNN
+                torch.backends.cudnn.enabled = prev_enabled
+
         fps = self.deepfrag_after_encoder(latent_space)
         # frag_voxel = self.decoder(latent_space)
         return fps
@@ -320,7 +342,9 @@ class DeepFragModel(pl.LightningModule):
         )
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]], batch_idx: int
+        self,
+        batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]],
+        batch_idx: int,
     ) -> torch.Tensor:
         """Training step.
 
@@ -426,6 +450,10 @@ class DeepFragModel(pl.LightningModule):
                 and target fingerprints, and the entry infos.
         """
         voxels, fps, entry_infos = batch
+
+        # print(f"DEBUG: voxels.shape={voxels.shape}, dtype={voxels.dtype}, device={voxels.device}")
+        # print(f"DEBUG: contiguous={voxels.is_contiguous()}, min={voxels.min()}, max={voxels.max()}")
+
         pred = self(voxels, entry_infos)
 
         batch_size = voxels.shape[0]
