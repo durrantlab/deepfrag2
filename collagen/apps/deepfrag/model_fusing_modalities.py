@@ -54,14 +54,22 @@ class DeepFragModelESM2(DeepFragModel):
         if not kwargs["fusing_strategy_for_mm"]:
             raise Exception("It must be specified a strategy to combine modalities.")
         if kwargs["fusing_strategy_for_mm"] != "concatenate":
-            raise Exception("The fusing strategy is only concatenate in multi-modal learning .")
-
+            raise Exception(
+                "The fusing strategy is only concatenate in multi-modal learning ."
+            )
         self.esm2_model_for_mm = False
         self.molbert_model_for_mm = False
-        self.combined_embedding_size = 512 if kwargs["fusing_strategy_for_mm"] == "concatenate" else 0
-
-        for esm2_model_name in ["esm2_t6_8M_UR50D", "esm2_t12_35M_UR50D", "esm2_t30_150M_UR50D", "esm2_t33_650M_UR50D",
-                                "esm2_t36_3B_UR50D", "esm2_t48_15B_UR50D"]:
+        self.combined_embedding_size = (
+            512 if kwargs["fusing_strategy_for_mm"] == "concatenate" else 0
+        )
+        for esm2_model_name in [
+            "esm2_t6_8M_UR50D",
+            "esm2_t12_35M_UR50D",
+            "esm2_t30_150M_UR50D",
+            "esm2_t33_650M_UR50D",
+            "esm2_t36_3B_UR50D",
+            "esm2_t48_15B_UR50D",
+        ]:
             if kwargs["esm2_model_for_mm"] == esm2_model_name:
                 # download and load the ESM-2 model
                 download_esm2_model(esm2_model_name)
@@ -71,7 +79,9 @@ class DeepFragModelESM2(DeepFragModel):
                 self.embedding_per_seq = {}
 
                 # attributes to work with the combined multimodal features
-                self.combined_embedding_size += DeepFragModelESM2.__get_embedding_size(kwargs["esm2_model_for_mm"])
+                self.combined_embedding_size += DeepFragModelESM2.__get_embedding_size(
+                    kwargs["esm2_model_for_mm"]
+                )
                 self.esm2_model_for_mm = True
                 break
 
@@ -82,7 +92,9 @@ class DeepFragModelESM2(DeepFragModel):
             self.combined_embedding_size += 1536  # MolBert embedding size
 
         if not self.esm2_model_for_mm and not self.molbert_model_for_mm:
-            raise Exception("ESM-2 model and/or MolBert model should be specified for multi-modal learning.")
+            raise Exception(
+                "ESM-2 model and/or MolBert model should be specified for multi-modal learning."
+            )
         if not self.esm2_model_for_mm and kwargs["esm2_model_for_mm"] is not None:
             raise Exception("It should be specified a valid name for ESM-2 models.")
 
@@ -91,13 +103,17 @@ class DeepFragModelESM2(DeepFragModel):
         self.unique_sequences = set()
         self.save_unique_sequences = None
         if bool(kwargs["save_unique_smiles_and_sequences"]):
-            DeepFragModelESM2.__setup_logger('unique_smiles',
-                                             kwargs["default_root_dir"] + os.sep + "unique_smiles.log")
-            DeepFragModelESM2.__setup_logger('unique_sequences',
-                                             kwargs["default_root_dir"] + os.sep + "unique_sequences.log")
-            self.save_unique_smiles = logging.getLogger('unique_smiles')
+            DeepFragModelESM2.__setup_logger(
+                "unique_smiles",
+                kwargs["default_root_dir"] + os.sep + "unique_smiles.log",
+            )
+            DeepFragModelESM2.__setup_logger(
+                "unique_sequences",
+                kwargs["default_root_dir"] + os.sep + "unique_sequences.log",
+            )
+            self.save_unique_smiles = logging.getLogger("unique_smiles")
             self.save_unique_smiles.propagate = False
-            self.save_unique_sequences = logging.getLogger('unique_sequences')
+            self.save_unique_sequences = logging.getLogger("unique_sequences")
             self.save_unique_sequences.propagate = False
 
         self.reduction_combined_embedding = nn.Sequential(
@@ -113,8 +129,10 @@ class DeepFragModelESM2(DeepFragModel):
     @staticmethod
     def __setup_logger(logger_name, log_file, level=logging.INFO):
         log_setup = logging.getLogger(logger_name)
-        formatter = logging.Formatter('%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-        file_handler = logging.FileHandler(log_file, mode='a')
+        formatter = logging.Formatter(
+            "%(levelname)s: %(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p"
+        )
+        file_handler = logging.FileHandler(log_file, mode="a")
         file_handler.setFormatter(formatter)
         # stream_handler = logging.StreamHandler()
         # stream_handler.setFormatter(formatter)
@@ -139,7 +157,7 @@ class DeepFragModelESM2(DeepFragModel):
 
     @staticmethod
     def add_model_args(
-            parent_parser: argparse.ArgumentParser,
+        parent_parser: argparse.ArgumentParser,
     ) -> argparse.ArgumentParser:
         """Add model-specific arguments to the parser.
 
@@ -188,7 +206,9 @@ class DeepFragModelESM2(DeepFragModel):
         )
         return parent_parser
 
-    def forward(self, voxel: torch.Tensor, entry_infos: Optional[List[StructureEntry]] = None) -> torch.Tensor:
+    def forward(
+        self, voxel: torch.Tensor, entry_infos: Optional[List[StructureEntry]] = None
+    ) -> torch.Tensor:
         """Forward pass of the model.
 
         Args:
@@ -201,16 +221,10 @@ class DeepFragModelESM2(DeepFragModel):
         if not voxel.is_contiguous():
             voxel = voxel.contiguous()
 
-        # Robust execution strategy (see DeepFragModel.forward for details)
-        try:
-            latent_space = self.encoder(voxel)
-        except RuntimeError:
-            prev_enabled = torch.backends.cudnn.enabled
-            torch.backends.cudnn.enabled = False
-            try:
-                latent_space = self.encoder(voxel)
-            finally:
-                torch.backends.cudnn.enabled = prev_enabled
+        # Enforce cuDNN disable for native 3D convs (prevents A100 crash)
+        self._enforce_cudnn_settings()
+
+        latent_space = self.encoder(voxel)
 
         if ON_GPU is True and latent_space.get_device() == -1:
             latent_space = latent_space.cuda()
@@ -268,15 +282,19 @@ class DeepFragModelESM2(DeepFragModel):
         hash_id = hash(entry_info.receptor_sequence)
         if hash_id not in self.embedding_per_seq.keys():
             # building the input data to the ESM-2 model
-            batch_labels, batch_strs, batch_tokens = BATCH_CONVERTER([(hash_id, entry_info.receptor_sequence)])
+            batch_labels, batch_strs, batch_tokens = BATCH_CONVERTER(
+                [(hash_id, entry_info.receptor_sequence)]
+            )
             if ON_GPU is True and batch_tokens.get_device() == -1:
                 batch_tokens = batch_tokens.cuda()
 
             # Extract per-residue representations
             with torch.no_grad():
-                result = ESM2_MODEL(batch_tokens, repr_layers=[self.num_layers], return_contacts=False)
+                result = ESM2_MODEL(
+                    batch_tokens, repr_layers=[self.num_layers], return_contacts=False
+                )
                 token_representation = result["representations"][self.num_layers]
-                esm2_embedding = token_representation[0, 1:len(batch_strs[0]) + 1].mean(0)
+                esm2_embedding = token_representation[0, 1 : len(batch_strs[0]) + 1].mean(0)
                 self.embedding_per_seq[hash_id] = esm2_embedding
         else:
             esm2_embedding = self.embedding_per_seq[hash_id]
@@ -286,7 +304,9 @@ class DeepFragModelESM2(DeepFragModel):
     def __molbert_model_processing(self, entry_info):
         hash_id = hash(entry_info.parent_smiles)
         if hash_id not in self.embedding_per_parent.keys():
-            molbert_embedding = torch.tensor(_molbert(m=None, size=0, smiles=entry_info.parent_smiles))
+            molbert_embedding = torch.tensor(
+                _molbert(m=None, size=0, smiles=entry_info.parent_smiles)
+            )
             if ON_GPU is True and molbert_embedding.get_device() == -1:
                 molbert_embedding = molbert_embedding.cuda()
             self.embedding_per_parent[hash_id] = molbert_embedding

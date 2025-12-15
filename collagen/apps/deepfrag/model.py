@@ -29,8 +29,11 @@ class DeepFragModel(pl.LightningModule):
         super().__init__()
         # Optimization: Enable cuDNN benchmark. This allows cuDNN to find the
         # best algorithm for the hardware. Safe for all versions.
+        # UPDATE: On A100s with PyTorch 2.x/1.11+, 3D convs often crash cuDNN.
+        # We default these to False to improve stability.
         if torch.cuda.is_available():
-            cudnn.benchmark = True
+            cudnn.benchmark = False
+            cudnn.enabled = False
 
         self.fp_size = kwargs["fp_size"]
 
@@ -197,6 +200,7 @@ class DeepFragModel(pl.LightningModule):
 
     def on_train_start(self):
         """Called when the actual training begins (after sanity check).
+
         This is a good place to reset the validation example tracking. The
         problem is the "Validation sanity check" step, which records only two
         batches worth of receptors. You want to record all the validation
@@ -206,23 +210,34 @@ class DeepFragModel(pl.LightningModule):
         super().on_train_start()
         
         # Remove 'val' from the stop recording set if it was added during sanity check
-        if 'val' in self._examples_used_stop_recording:
-            self._examples_used_stop_recording.remove('val')
+        if "val" in self._examples_used_stop_recording:
+            self._examples_used_stop_recording.remove("val")
             # print("Reset validation example tracking after sanity check")
             
             # Also clear any validation examples recorded during sanity check
-            if 'val' in self._examples_used:
-                self._examples_used['val'] = {}
+            if "val" in self._examples_used:
+                self._examples_used["val"] = {}
+
+    def _enforce_cudnn_settings(self):
+        """Force cuDNN to be disabled.
+
+        This is necessary because PyTorch Lightning or other libraries might
+        re-enable it during training setup. A100 GPUs often crash with
+        3D convolutions if cuDNN is enabled.
+        """
+        if torch.cuda.is_available():
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.enabled = False
 
     @staticmethod
     def add_model_args(
         parent_parser: argparse.ArgumentParser,
     ) -> argparse.ArgumentParser:
         """Add model-specific arguments to the parser.
-        
+
         Args:
             parent_parser (argparse.ArgumentParser): The parser to add to.
-            
+
         Returns:
             argparse.ArgumentParser: The parser with model-specific arguments added.
         """
@@ -270,7 +285,9 @@ class DeepFragModel(pl.LightningModule):
         )
         return parent_parser
 
-    def forward(self, voxel: torch.Tensor, entry_infos: Optional[List[StructureEntry]] = None) -> torch.Tensor:
+    def forward(
+        self, voxel: torch.Tensor, entry_infos: Optional[List[StructureEntry]] = None
+    ) -> torch.Tensor:
         """Forward pass of the model.
 
         Args:
@@ -280,25 +297,13 @@ class DeepFragModel(pl.LightningModule):
         Returns:
             torch.Tensor: The predicted fragment fingerprint.
         """
+        self._enforce_cudnn_settings()
+
         # Ensure memory is contiguous.
         if not voxel.is_contiguous():
             voxel = voxel.contiguous()
 
-        # Robust execution strategy:
-        # 1. Try running with cuDNN (fastest).
-        # 2. If it fails (due to A100 incompatibility or version mismatch),
-        #    catch the error and disable cuDNN.
-        # 3. Retry. PyTorch will use native CUDA kernels (still on GPU).
-        try:
-            latent_space = self.encoder(voxel)
-        except RuntimeError:
-            prev_enabled = torch.backends.cudnn.enabled
-            torch.backends.cudnn.enabled = False
-            try:
-                latent_space = self.encoder(voxel)
-            finally:
-                # Restore original state so we don't permanently disable cuDNN
-                torch.backends.cudnn.enabled = prev_enabled
+        latent_space = self.encoder(voxel)
 
         fps = self.deepfrag_after_encoder(latent_space)
         # frag_voxel = self.decoder(latent_space)
@@ -356,8 +361,9 @@ class DeepFragModel(pl.LightningModule):
         Returns:
             torch.Tensor: The loss.
         """
-        voxels, fps, entry_infos = batch
+        self._enforce_cudnn_settings()
 
+        voxels, fps, entry_infos = batch
         # if not os.path.exists("voxels_debug"):
         if self.debug_voxels and not self.has_saved_some_debug_voxels:
             for i in range(len(entry_infos)):
@@ -410,7 +416,9 @@ class DeepFragModel(pl.LightningModule):
     #     self.first_epoch = False
 
     def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]], batch_idx: int
+        self,
+        batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]],
+        batch_idx: int,
     ):
         """Run validation step.
 
@@ -419,6 +427,8 @@ class DeepFragModel(pl.LightningModule):
                 batch to validate on.
             batch_idx (int): The batch index.
         """
+        self._enforce_cudnn_settings()
+
         voxels, fps, entry_infos = batch
 
         # print("::", voxels.shape, fps.shape, len(smis))
@@ -436,7 +446,9 @@ class DeepFragModel(pl.LightningModule):
         self.log("val_loss", loss, batch_size=batch_size)
 
     def test_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]], batch_idx: int
+        self,
+        batch: Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]],
+        batch_idx: int,
     ) -> Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]:
         """Run inferance on a given batch.
 
@@ -449,6 +461,8 @@ class DeepFragModel(pl.LightningModule):
             Tuple[torch.Tensor, torch.Tensor, List[StructureEntry]]: The predicted
                 and target fingerprints, and the entry infos.
         """
+        self._enforce_cudnn_settings()
+
         voxels, fps, entry_infos = batch
 
         # print(f"DEBUG: voxels.shape={voxels.shape}, dtype={voxels.dtype}, device={voxels.device}")
@@ -472,7 +486,7 @@ class DeepFragModel(pl.LightningModule):
     def training_epoch_end(self, outputs: List[dict]):
         """Run at the end of the training epoch with the outputs of all
             training steps. Logs the info.
-        
+
         Args:
             outputs (List[dict]): List of outputs you defined in
                 training_step(), or if there are multiple dataloaders, a list
@@ -491,14 +505,15 @@ class DeepFragModel(pl.LightningModule):
                 "loss_per_epoch", {"avg_loss": avg_loss, "step": self.current_epoch + 1}
             )
         except Exception:
-            self.log("loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1})
-
+            self.log(
+                "loss_per_epoch", {"avg_loss": -1, "step": self.current_epoch + 1}
+            )
         # with open("debug.txt", "a") as f: f.write(f"end training_epoch_end\n")
 
     def validation_epoch_end(self, outputs: List[dict]):
         """Run at the end of the validation epoch with the outputs of all
             validation steps. Logs the info.
-        
+
         Args:
             outputs (List[dict]): List of outputs you defined in
                 validation_step(), or if there are multiple dataloaders, a

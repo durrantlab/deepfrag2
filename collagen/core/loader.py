@@ -45,6 +45,10 @@ def _process2(batch_of_batches: List[List[Any]], return_list: List[Any], id: str
             assert DATA is not None, "DATA is None"
 
             return_list.append(COLLATE([DATA[x] for x in batch]))
+        except (BrokenPipeError, EOFError, ConnectionResetError):
+            # The parent process is dead or closed the pipe. Exit silently to
+            # avoid spamming the console with tracebacks.
+            return
         except Exception as e:
             if os.path.exists("/mnt/extra/"):
                 now = datetime.now()
@@ -154,7 +158,9 @@ class MultiLoader(object):
             if p.is_alive():
                 if cur_time - timestamp > TIMEOUT:
                     # It's been running for too long
-                    print(f"timed out, killing a process: {p.name}. Insufficient memory?")
+                    print(
+                        f"timed out, killing a process: {p.name}. Insufficient memory?"
+                    )
                     if (
                         "molbert" not in self.fragment_representation
                         and platform.system().lower() != "windows"
@@ -240,7 +246,9 @@ class MultiLoader(object):
                     yield sync_return_list.pop(0)
                 else:
                     # Logic failure or exception caught in _process2
-                    raise RuntimeError("Synchronous data loading failed. See traceback above.")
+                    raise RuntimeError(
+                        "Synchronous data loading failed. See traceback above."
+                    )
             return
 
         # Group the batches. Each of these groups of batches goes to its own

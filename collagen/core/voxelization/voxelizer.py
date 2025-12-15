@@ -83,7 +83,9 @@ class VoxelParams(object):
     def validate(self):
         """Validate the VoxelParams object."""
         assert self.resolution > 0, f"resolution must be >0 (got {self.resolution})"
-        assert self.receptor_featurizer is not None, "receptor_featurizer must not be None"
+        assert (
+            self.receptor_featurizer is not None
+        ), "receptor_featurizer must not be None"
         assert self.ligand_featurizer is not None, "ligand_featurizer must not be None"
 
     def tensor_size(self, batch=1, feature_mult=1) -> Tuple[int, int, int, int, int]:
@@ -98,14 +100,16 @@ class VoxelParams(object):
         Returns:
             Tuple[int, int, int, int, int]: The tensor size.
         """
-        assert self.receptor_featurizer is not None, "receptor_featurizer must not be None"
-        assert self.ligand_featurizer is not None, "ligand_featurizer must not be None" 
-
+        assert (
+            self.receptor_featurizer is not None
+        ), "receptor_featurizer must not be None"
+        assert self.ligand_featurizer is not None, "ligand_featurizer must not be None"
         # N = self.atom_featurizer.size() * feature_mult
         # W = self.width
         # return (batch, N, W, W, W)
-    
-        N = (self.receptor_featurizer.size() + self.ligand_featurizer.size()) * feature_mult
+        N = (
+            self.receptor_featurizer.size() + self.ligand_featurizer.size()
+        ) * feature_mult
         W = self.width
         return (batch, N, W, W, W)
 
@@ -122,7 +126,7 @@ class VoxelParamsDefault(object):
         acc_type=VoxelParams.AccType.SUM,
         # atom_featurizer=DeepFragReceptorFeaturizer([6, 8, 7, 16]),
         receptor_featurizer=DeepFragReceptorFeaturizer([6, 8, 7, 16]),
-        ligand_featurizer=DeepFragLigandFeaturizer([6, 8, 7])
+        ligand_featurizer=DeepFragLigandFeaturizer([6, 8, 7]),
     )
 
 
@@ -140,19 +144,10 @@ def numba_ptr(tensor: "torch.Tensor", cpu: bool = False) -> Any:
     if cpu:
         return tensor.numpy()
 
-    # Get Cuda context.
-    ctx = numba.cuda.cudadrv.driver.driver.get_active_context()
-
-    memory = numba.cuda.cudadrv.driver.MemoryPointer(
-        ctx, ctypes.c_ulong(tensor.data_ptr()), tensor.numel() * 4
-    )
-    return numba.cuda.cudadrv.devicearray.DeviceNDArray(
-        tensor.size(),
-        [i * 4 for i in tensor.stride()],
-        np.dtype("float32"),
-        gpu_data=memory,
-        stream=torch.cuda.current_stream().cuda_stream,
-    )
+    # Robustly convert PyTorch tensor to Numba DeviceNDArray using the
+    # __cuda_array_interface__. This avoids manual context management and
+    # pointers, which can be fragile across PyTorch/Numba versions.
+    return numba.cuda.as_cuda_array(tensor)
 
 
 # @numba.cuda.jit
@@ -526,8 +521,9 @@ def _get_num_blocks_and_threads(num_points: int) -> Tuple[int, int]:
     # print("MAX_THREADS_PER_BLOCK", gpu.MAX_THREADS_PER_BLOCK)  # 1024
 
     # Try to make the number of threads per block a multiple of 32.
-    threads_per_block = [32 * i for i in range(1, 1 + gpu.MAX_THREADS_PER_BLOCK // 32)]
-
+    threads_per_block = [
+        32 * i for i in range(1, 1 + gpu.MAX_THREADS_PER_BLOCK // 32)
+    ]
     # Keep the number of threads per block and the number of blocks as close to equal as you can without violating the first tip.
     nums_blocks = [math.ceil(num_points / t) for t in threads_per_block]
     diffs = [math.fabs(t - n) for t, n in zip(threads_per_block, nums_blocks)]

@@ -2,6 +2,7 @@
 
 from argparse import Namespace
 from typing import TYPE_CHECKING, Optional, Tuple, Union
+import pytorch_lightning as pl  # type: ignore
 from collagen.core.loader import DataLambda
 from collagen.external.common.parent_interface import ParentInterface
 from collagen.external.paired_csv.interface import PairedCsvInterface
@@ -36,6 +37,15 @@ class VoxelModelTrain(object):
         """
         # Runs training.
         device = self.parent.inits.init_device(args)
+
+        # Check PyTorch Lightning version to determine how to handle checkpoints
+        pl_version = int(pl.__version__.split(".")[0])
+
+        if pl_version < 2 and ckpt_filename:
+            # For PL 1.x, resume_from_checkpoint is passed to Trainer via args
+            # (assuming Trainer.from_argparse_args is used)
+            args.resume_from_checkpoint = ckpt_filename
+
         trainer = VoxelModelInits.init_trainer(args)
         data_interface, train_data, val_data = self.get_train_val_sets(args, False, device)
 
@@ -53,7 +63,11 @@ class VoxelModelTrain(object):
         summary_str = str(model_stats)
         print(summary_str)
 
-        trainer.fit(model, train_data, val_data, ckpt_path=ckpt_filename)
+        # For PL >= 2.0, ckpt_path is passed to fit()
+        if pl_version >= 2:
+            trainer.fit(model, train_data, val_data, ckpt_path=ckpt_filename)
+        else:
+            trainer.fit(model, train_data, val_data)
 
         self.parent.save_examples_used(model, args)
 
