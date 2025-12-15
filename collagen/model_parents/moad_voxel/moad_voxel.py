@@ -145,9 +145,13 @@ class VoxelModelParent:
         """
         if args.fragment_representation in [
             "rdk10",
-            "rdk10_x_morgan",
+            "morgan",
         ]:
             args.__setattr__("fp_size", 2048)
+        elif args.fragment_representation in [
+            "maccs",
+        ]:
+            args.__setattr__("fp_size", 167)
         elif args.fragment_representation in [
             "molbert",
         ]:
